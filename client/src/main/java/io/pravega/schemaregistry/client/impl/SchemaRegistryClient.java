@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,13 +28,13 @@ import java.util.List;
  */
 public interface SchemaRegistryClient {
     /**
-     * Adds a new group under the specified scope. 
+     * Adds a new group to the specified scope. 
      * 
      * @param scope Name of the scope to add the group to. 
      * @param group Name of group that uniquely identifies the group within a scope. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param compatibility Compatibility policy to apply for the group. 
-     * @param subgroupByEventType Property to describe whether group should be subdivided into sub groups by event types. 
+     * @param subgroupBySchemaName Property to describe whether group should be subdivided into sub groups by event types. 
      *                            Event Types are uniquely identified by {@link SchemaInfo#name}. 
      * @param enableEncoding Property that indicates whether registry service should generating an encoding id. If 
      *                       set to false, {@link EncodingInfo} and {@link EncodingId} are not generated for schemas in 
@@ -42,7 +42,15 @@ public interface SchemaRegistryClient {
      * @return True indicates if the group was added successfully, false if it exists. 
      */
     boolean addGroup(String scope, String group, SchemaType schemaType, Compatibility compatibility, 
-                     boolean subgroupByEventType, boolean enableEncoding);
+                     boolean subgroupBySchemaName, boolean enableEncoding);
+    
+    /**
+     * Remove group from the specified scope. 
+     * 
+     * @param scope Name of the scope to add the group to. 
+     * @param group Name of group that uniquely identifies the group within a scope. 
+     */
+    void removeGroup(String scope, String group);
 
     /**
      * Gets group's properties. 

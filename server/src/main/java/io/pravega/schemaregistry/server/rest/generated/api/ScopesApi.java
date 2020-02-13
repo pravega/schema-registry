@@ -8,12 +8,12 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.jaxrs.*;
 
 import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToSubgroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CanReadUsingSchemaRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CheckCompatibilityRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.EncodingId;
 import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
@@ -71,7 +71,7 @@ public class ScopesApi  {
    }
 
     @POST
-    @Path("/{scopeName}/Groups/{GroupName}/schemas")
+    @Path("/{scopeName}/groups/{groupName}/schemas")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "adds a new schema to the group", response = VersionInfo.class, tags={ "Schema", })
@@ -88,27 +88,8 @@ public class ScopesApi  {
     throws NotFoundException {
         return delegate.addSchemaToGroupIfAbsent(scopeName,groupName,addSchemaToGroupRequest,securityContext);
     }
-    @POST
-    @Path("/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "adds a new schema to the group", response = VersionInfo.class, tags={ "Schema", })
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to subgroup", response = VersionInfo.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = VersionInfo.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = VersionInfo.class) })
-    public Response addSchemaToSubgroupIfAbsent(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
-,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
-,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToSubgroupRequest addSchemaToSubgroupRequest
-,@Context SecurityContext securityContext)
-    throws NotFoundException {
-        return delegate.addSchemaToSubgroupIfAbsent(scopeName,groupName,subgroupName,addSchemaToSubgroupRequest,securityContext);
-    }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/schemas/canRead")
+    @Path("/{scopeName}/groups/{groupName}/schemas/canRead")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = void.class, tags={ "Schema", })
@@ -126,7 +107,7 @@ public class ScopesApi  {
         return delegate.canRead(scopeName,groupName,canReadUsingSchemaRequest,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/schemas/compatibility")
+    @Path("/{scopeName}/groups/{groupName}/schemas/compatibility")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = void.class, tags={ "Schema", })
@@ -179,7 +160,7 @@ public class ScopesApi  {
         return delegate.createScope(createScopeRequest,securityContext);
     }
     @DELETE
-    @Path("/{scopeName}/Groups/{GroupName}")
+    @Path("/{scopeName}/groups/{groupName}")
     
     
     @io.swagger.annotations.ApiOperation(value = "", notes = "Delete a Group", response = void.class, tags={ "Group", })
@@ -195,8 +176,26 @@ public class ScopesApi  {
     throws NotFoundException {
         return delegate.deleteGroup(scopeName,groupName,securityContext);
     }
+    @DELETE
+    @Path("/{scopeName}")
+    
+    
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Delete a scope", response = void.class, tags={ "Scope", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 204, message = "Successfully deleted the scope", response = void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 412, message = "Cannot delete scope since it has non-empty list of Groups", response = void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting a scope", response = void.class) })
+    public Response deleteScope(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.deleteScope(scopeName,securityContext);
+    }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/compressions")
+    @Path("/{scopeName}/groups/{groupName}/compressions")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CompressionsList.class, tags={ "Encoding", })
@@ -213,7 +212,7 @@ public class ScopesApi  {
         return delegate.getCompressionsList(scopeName,groupName,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/encodings/{EncodingId}")
+    @Path("/{scopeName}/groups/{groupName}/encodings/{encodingId}")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = EncodingInfo.class, tags={ "Encoding", })
@@ -223,15 +222,15 @@ public class ScopesApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = EncodingInfo.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = EncodingInfo.class) })
-    public Response getEncodingId(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
-,@ApiParam(value = "Encoding id that identifies a unique combination of encoding and compression",required=true) @PathParam("EncodingId") String encodingId
+    public Response getEncodingInfo(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Encoding id that identifies a unique combination of encoding and compression",required=true) @PathParam("encodingId") Integer encodingId
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getEncodingId(scopeName,groupName,encodingId,securityContext);
+        return delegate.getEncodingInfo(scopeName,groupName,encodingId,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}")
+    @Path("/{scopeName}/groups/{groupName}")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = GroupProperty.class, tags={ "Group", })
@@ -248,7 +247,7 @@ public class ScopesApi  {
         return delegate.getGroupProperties(scopeName,groupName,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/schemas")
+    @Path("/{scopeName}/groups/{groupName}/schemas")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaWithVersionList.class, tags={ "Schema", })
@@ -265,7 +264,7 @@ public class ScopesApi  {
         return delegate.getGroupSchemas(scopeName,groupName,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/schemas/latest")
+    @Path("/{scopeName}/groups/{groupName}/schemas/latest")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaWithVersion.class, tags={ "Schema", })
@@ -282,7 +281,7 @@ public class ScopesApi  {
         return delegate.getLatestGroupSchema(scopeName,groupName,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas/latest")
+    @Path("/{scopeName}/groups/{groupName}/subgroups/{subgroupName}/schemas/latest")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaWithVersion.class, tags={ "Schema", })
@@ -300,16 +299,16 @@ public class ScopesApi  {
         return delegate.getLatestSubgroupSchema(scopeName,groupName,subgroupName,securityContext);
     }
     @PUT
-    @Path("/{scopeName}/Groups/{GroupName}/encodings")
+    @Path("/{scopeName}/groups/{groupName}/encodings")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = EncodingInfo.class, tags={ "Encoding", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = EncodingId.class, tags={ "Encoding", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingInfo.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingId.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = EncodingInfo.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = EncodingId.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = EncodingInfo.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = EncodingId.class) })
     public Response getOrGenerateEncodingId(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
@@ -318,26 +317,7 @@ public class ScopesApi  {
         return delegate.getOrGenerateEncodingId(scopeName,groupName,getEncodingIdRequest,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas/version")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags={ "Schema", })
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaInfo.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaInfo.class) })
-    public Response getSchemaFromSubgroupVersion(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
-,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
-,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaFromVersionRequest getSchemaFromVersionRequest
-,@Context SecurityContext securityContext)
-    throws NotFoundException {
-        return delegate.getSchemaFromSubgroupVersion(scopeName,groupName,subgroupName,getSchemaFromVersionRequest,securityContext);
-    }
-    @GET
-    @Path("/{scopeName}/Groups/{GroupName}/schemas/version")
+    @Path("/{scopeName}/groups/{groupName}/schemas/version")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags={ "Schema", })
@@ -355,7 +335,7 @@ public class ScopesApi  {
         return delegate.getSchemaFromVersion(scopeName,groupName,getSchemaFromVersionRequest,securityContext);
     }
     @GET
-    @Path("/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas")
+    @Path("/{scopeName}/groups/{groupName}/subgroups/{subgroupName}/schemas")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all schemas registered under a sub Group", response = SchemaWithVersionList.class, tags={ "Schema", })
@@ -403,7 +383,7 @@ public class ScopesApi  {
         return delegate.listScopes(securityContext);
     }
     @PUT
-    @Path("/{scopeName}/Groups/{GroupName}")
+    @Path("/{scopeName}/groups/{groupName}")
     @Consumes({ "application/json" })
     
     @io.swagger.annotations.ApiOperation(value = "", notes = "update compatibility policy of an existing Group", response = void.class, tags={ "Group", })

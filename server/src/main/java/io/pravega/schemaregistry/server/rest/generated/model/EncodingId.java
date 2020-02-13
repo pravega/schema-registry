@@ -21,52 +21,30 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * VersionInfo
+ * EncodingId
  */
 
-public class VersionInfo   {
-  @JsonProperty("schemaName")
-  private String schemaName = null;
+public class EncodingId   {
+  @JsonProperty("encodingId")
+  private Integer encodingId = null;
 
-  @JsonProperty("version")
-  private Integer version = null;
-
-  public VersionInfo schemaName(String schemaName) {
-    this.schemaName = schemaName;
+  public EncodingId encodingId(Integer encodingId) {
+    this.encodingId = encodingId;
     return this;
   }
 
   /**
-   * Get schemaName
-   * @return schemaName
+   * Get encodingId
+   * @return encodingId
    **/
-  @JsonProperty("schemaName")
+  @JsonProperty("encodingId")
   @ApiModelProperty(value = "")
-  public String getSchemaName() {
-    return schemaName;
+  public Integer getEncodingId() {
+    return encodingId;
   }
 
-  public void setSchemaName(String schemaName) {
-    this.schemaName = schemaName;
-  }
-
-  public VersionInfo version(Integer version) {
-    this.version = version;
-    return this;
-  }
-
-  /**
-   * Get version
-   * @return version
-   **/
-  @JsonProperty("version")
-  @ApiModelProperty(value = "")
-  public Integer getVersion() {
-    return version;
-  }
-
-  public void setVersion(Integer version) {
-    this.version = version;
+  public void setEncodingId(Integer encodingId) {
+    this.encodingId = encodingId;
   }
 
 
@@ -78,24 +56,22 @@ public class VersionInfo   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    VersionInfo versionInfo = (VersionInfo) o;
-    return Objects.equals(this.schemaName, versionInfo.schemaName) &&
-        Objects.equals(this.version, versionInfo.version);
+    EncodingId encodingId = (EncodingId) o;
+    return Objects.equals(this.encodingId, encodingId.encodingId);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaName, version);
+    return Objects.hash(encodingId);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class VersionInfo {\n");
+    sb.append("class EncodingId {\n");
     
-    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
-    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    encodingId: ").append(toIndentedString(encodingId)).append("\n");
     sb.append("}");
     return sb.toString();
   }

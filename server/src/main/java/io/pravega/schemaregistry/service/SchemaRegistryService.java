@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -11,8 +11,11 @@ package io.pravega.schemaregistry.service;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
+import io.pravega.schemaregistry.contract.Compatibility;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.CompressionType;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.EncodingId;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.EncodingInfo;
@@ -24,11 +27,24 @@ import io.pravega.schemaregistry.contract.SchemaRegistryContract.VersionInfo;
 
 public interface SchemaRegistryService {
     /**
+     *
+     * @return
+     */
+    CompletableFuture<List<String>> listScopes();
+
+    /**
      * 
      * @param scope
      * @return
      */
     CompletableFuture<Void> createScope(String scope);
+
+    /**
+     * 
+     * @param scope
+     * @return
+     */
+    CompletableFuture<Map<String, GroupProperties>> listGroupsInScope(String scope);
 
     /**
      * 
@@ -48,6 +64,15 @@ public interface SchemaRegistryService {
     CompletableFuture<GroupProperties> getGroupProperties(String scope, String group);
 
     /**
+     *
+     * @param scopeName
+     * @param groupName
+     * @param compatibility
+     * @return
+     */
+    CompletableFuture<Void> updateCompatibilityPolicy(String scopeName, String groupName, Compatibility compatibility);
+
+    /**
      * 
      * @param scope
      * @param group
@@ -59,23 +84,21 @@ public interface SchemaRegistryService {
      * 
      * @param scope
      * @param group
-     * @param subgroup
      * @param schema
      * @param rules
      * @return
      */
-    CompletableFuture<VersionInfo> addSchemaIfAbsent(String scope, String group, @Nullable String subgroup, SchemaInfo schema,
+    CompletableFuture<VersionInfo> addSchemaIfAbsent(String scope, String group, SchemaInfo schema,
                                                      SchemaValidationRules rules);
 
     /**
      * 
      * @param scope
      * @param group
-     * @param subgroup
      * @param version
      * @return
      */
-    CompletableFuture<SchemaInfo> getSchema(String scope, String group, @Nullable String subgroup, VersionInfo version);
+    CompletableFuture<SchemaInfo> getSchema(String scope, String group, VersionInfo version);
 
     /**
      * 
@@ -90,12 +113,11 @@ public interface SchemaRegistryService {
      * 
      * @param scope
      * @param group
-     * @param subgroup
      * @param version
      * @param compressionType
      * @return
      */
-    CompletableFuture<EncodingId> getEncodingId(String scope, String group, @Nullable String subgroup, VersionInfo version, 
+    CompletableFuture<EncodingId> getEncodingId(String scope, String group, VersionInfo version, 
                                                 CompressionType compressionType);
 
     /**
@@ -124,7 +146,7 @@ public interface SchemaRegistryService {
      * @param schema
      * @return
      */
-    CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, @Nullable String subgroup, SchemaInfo schema);
+    CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, SchemaInfo schema);
 
     /**
      * 
@@ -135,8 +157,7 @@ public interface SchemaRegistryService {
      * @param readVersion
      * @return
      */
-    CompletableFuture<Boolean> canRead(String scope, String group, @Nullable String subgroup, VersionInfo writeVersion, 
-                                       VersionInfo readVersion);
+    CompletableFuture<Boolean> canRead(String scope, String group, VersionInfo writeVersion, VersionInfo readVersion);
 
     /**
      * 
@@ -146,5 +167,15 @@ public interface SchemaRegistryService {
      * @param schema
      * @return
      */
-    CompletableFuture<Boolean> checkCompatibility(String scope, String group, @Nullable String subgroup, SchemaInfo schema);
+    CompletableFuture<Boolean> checkCompatibility(String scope, String group, SchemaInfo schema);
+
+    /**
+     * 
+     * @param scopeName
+     * @param groupName
+     * @return
+     */
+    CompletableFuture<Void> deleteGroup(String scopeName, String groupName);
+
+    CompletableFuture<List<CompressionType>> getCompressions(String scope, String group);
 }

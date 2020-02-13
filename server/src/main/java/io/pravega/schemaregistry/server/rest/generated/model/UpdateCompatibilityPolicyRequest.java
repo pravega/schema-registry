@@ -26,26 +26,26 @@ import javax.validation.constraints.*;
  */
 
 public class UpdateCompatibilityPolicyRequest   {
-  @JsonProperty("schemaInfo")
-  private Compatibility schemaInfo = null;
+  @JsonProperty("compatibility")
+  private Compatibility compatibility = null;
 
-  public UpdateCompatibilityPolicyRequest schemaInfo(Compatibility schemaInfo) {
-    this.schemaInfo = schemaInfo;
+  public UpdateCompatibilityPolicyRequest compatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
     return this;
   }
 
   /**
-   * Get schemaInfo
-   * @return schemaInfo
+   * Get compatibility
+   * @return compatibility
    **/
-  @JsonProperty("schemaInfo")
+  @JsonProperty("compatibility")
   @ApiModelProperty(value = "")
-  public Compatibility getSchemaInfo() {
-    return schemaInfo;
+  public Compatibility getCompatibility() {
+    return compatibility;
   }
 
-  public void setSchemaInfo(Compatibility schemaInfo) {
-    this.schemaInfo = schemaInfo;
+  public void setCompatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
   }
 
 
@@ -58,12 +58,12 @@ public class UpdateCompatibilityPolicyRequest   {
       return false;
     }
     UpdateCompatibilityPolicyRequest updateCompatibilityPolicyRequest = (UpdateCompatibilityPolicyRequest) o;
-    return Objects.equals(this.schemaInfo, updateCompatibilityPolicyRequest.schemaInfo);
+    return Objects.equals(this.compatibility, updateCompatibilityPolicyRequest.compatibility);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo);
+    return Objects.hash(compatibility);
   }
 
 
@@ -72,7 +72,7 @@ public class UpdateCompatibilityPolicyRequest   {
     StringBuilder sb = new StringBuilder();
     sb.append("class UpdateCompatibilityPolicyRequest {\n");
     
-    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
+    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("}");
     return sb.toString();
   }

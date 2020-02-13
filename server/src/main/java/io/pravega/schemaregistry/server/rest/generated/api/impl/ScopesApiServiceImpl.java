@@ -4,12 +4,12 @@ import io.pravega.schemaregistry.server.rest.generated.api.*;
 import io.pravega.schemaregistry.server.rest.generated.model.*;
 
 import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToSubgroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CanReadUsingSchemaRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CheckCompatibilityRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.EncodingId;
 import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
@@ -40,11 +40,6 @@ public class ScopesApiServiceImpl extends ScopesApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response addSchemaToSubgroupIfAbsent(String scopeName, String groupName, String subgroupName, AddSchemaToSubgroupRequest addSchemaToSubgroupRequest, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
     public Response canRead(String scopeName, String groupName, CanReadUsingSchemaRequest canReadUsingSchemaRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
@@ -70,12 +65,17 @@ public class ScopesApiServiceImpl extends ScopesApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
+    public Response deleteScope(String scopeName, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
     public Response getCompressionsList(String scopeName, String groupName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getEncodingId(String scopeName, String groupName, String encodingId, SecurityContext securityContext) throws NotFoundException {
+    public Response getEncodingInfo(String scopeName, String groupName, Integer encodingId, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -101,11 +101,6 @@ public class ScopesApiServiceImpl extends ScopesApiService {
     }
     @Override
     public Response getOrGenerateEncodingId(String scopeName, String groupName, GetEncodingIdRequest getEncodingIdRequest, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response getSchemaFromSubgroupVersion(String scopeName, String groupName, String subgroupName, GetSchemaFromVersionRequest getSchemaFromVersionRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

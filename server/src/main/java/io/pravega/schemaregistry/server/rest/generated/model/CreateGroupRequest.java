@@ -36,11 +36,11 @@ public class CreateGroupRequest   {
   @JsonProperty("compatibilityPolicy")
   private Compatibility compatibilityPolicy = null;
 
-  @JsonProperty("embedHeader")
-  private Boolean embedHeader = null;
+  @JsonProperty("enableEncoding")
+  private Boolean enableEncoding = null;
 
-  @JsonProperty("allowSubgroups")
-  private Boolean allowSubgroups = null;
+  @JsonProperty("groupByEventType")
+  private Boolean groupByEventType = null;
 
   public CreateGroupRequest groupName(String groupName) {
     this.groupName = groupName;
@@ -99,42 +99,42 @@ public class CreateGroupRequest   {
     this.compatibilityPolicy = compatibilityPolicy;
   }
 
-  public CreateGroupRequest embedHeader(Boolean embedHeader) {
-    this.embedHeader = embedHeader;
+  public CreateGroupRequest enableEncoding(Boolean enableEncoding) {
+    this.enableEncoding = enableEncoding;
     return this;
   }
 
   /**
-   * Get embedHeader
-   * @return embedHeader
+   * Get enableEncoding
+   * @return enableEncoding
    **/
-  @JsonProperty("embedHeader")
+  @JsonProperty("enableEncoding")
   @ApiModelProperty(value = "")
-  public Boolean getEmbedHeader() {
-    return embedHeader;
+  public Boolean getEnableEncoding() {
+    return enableEncoding;
   }
 
-  public void setEmbedHeader(Boolean embedHeader) {
-    this.embedHeader = embedHeader;
+  public void setEnableEncoding(Boolean enableEncoding) {
+    this.enableEncoding = enableEncoding;
   }
 
-  public CreateGroupRequest allowSubgroups(Boolean allowSubgroups) {
-    this.allowSubgroups = allowSubgroups;
+  public CreateGroupRequest groupByEventType(Boolean groupByEventType) {
+    this.groupByEventType = groupByEventType;
     return this;
   }
 
   /**
-   * Get allowSubgroups
-   * @return allowSubgroups
+   * Get groupByEventType
+   * @return groupByEventType
    **/
-  @JsonProperty("allowSubgroups")
+  @JsonProperty("groupByEventType")
   @ApiModelProperty(value = "")
-  public Boolean getAllowSubgroups() {
-    return allowSubgroups;
+  public Boolean getGroupByEventType() {
+    return groupByEventType;
   }
 
-  public void setAllowSubgroups(Boolean allowSubgroups) {
-    this.allowSubgroups = allowSubgroups;
+  public void setGroupByEventType(Boolean groupByEventType) {
+    this.groupByEventType = groupByEventType;
   }
 
 
@@ -150,13 +150,13 @@ public class CreateGroupRequest   {
     return Objects.equals(this.groupName, createGroupRequest.groupName) &&
         Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
         Objects.equals(this.compatibilityPolicy, createGroupRequest.compatibilityPolicy) &&
-        Objects.equals(this.embedHeader, createGroupRequest.embedHeader) &&
-        Objects.equals(this.allowSubgroups, createGroupRequest.allowSubgroups);
+        Objects.equals(this.enableEncoding, createGroupRequest.enableEncoding) &&
+        Objects.equals(this.groupByEventType, createGroupRequest.groupByEventType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, compatibilityPolicy, embedHeader, allowSubgroups);
+    return Objects.hash(groupName, schemaType, compatibilityPolicy, enableEncoding, groupByEventType);
   }
 
 
@@ -168,8 +168,8 @@ public class CreateGroupRequest   {
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    compatibilityPolicy: ").append(toIndentedString(compatibilityPolicy)).append("\n");
-    sb.append("    embedHeader: ").append(toIndentedString(embedHeader)).append("\n");
-    sb.append("    allowSubgroups: ").append(toIndentedString(allowSubgroups)).append("\n");
+    sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
+    sb.append("    groupByEventType: ").append(toIndentedString(groupByEventType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

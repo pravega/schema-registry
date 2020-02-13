@@ -71,29 +71,13 @@ paths:
           description: Scope with the given name already exists
         500:
           description: Internal server error while creating a scope
-  /Scopes/{ScopeName}:
+  /scopes/{scopeName}:
     parameters:
       - in: path
         name: scopeName
         description: Scope name
         required: true
         type: string
-    get:
-      tags:
-      - "Scope"
-      operationId: getScope
-      description: Retrieve details of an existing scope
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Successfully retrieved the scope details
-          schema:
-            $ref: "#/definitions/Scope"
-        404:
-          description: Scope with the given name not found
-        500:
-          description: Internal server error while fetching scope details
     delete:
       tags:
       - "Scope"
@@ -156,9 +140,9 @@ paths:
                   $ref: "#/definitions/SchemaType"
               compatibilityPolicy:
                   $ref: "#/definitions/Compatibility"
-              embedHeader:
+              enableEncoding:
                 type: boolean
-              allowSubgroups:
+              groupByEventType:
                 type: boolean
       responses:
         201:
@@ -169,7 +153,7 @@ paths:
           description: Group with given name already exists
         500:
           description: Internal server error while creating a Group
-  /scopes/{scopeName}/Groups/{GroupName}:
+  /scopes/{scopeName}/groups/{groupName}:
     parameters:
       - in: path
         name: scopeName
@@ -212,7 +196,7 @@ paths:
           schema:
             type: object
             properties:
-              schemaInfo:
+              compatibility:
                   $ref: "#/definitions/Compatibility"
       responses:
         200:
@@ -235,7 +219,7 @@ paths:
           description: Group not found
         500:
           description: Internal server error while deleting the Group
-  /scopes/{scopeName}/Groups/{GroupName}/schemas:
+  /scopes/{scopeName}/groups/{groupName}/schemas:
     parameters:
       - in: path
         name: scopeName
@@ -293,7 +277,7 @@ paths:
           description: Scope not found
         500:
           description: Internal server error while creating a Group
-  /scopes/{scopeName}/Groups/{GroupName}/schemas/latest:
+  /scopes/{scopeName}/groups/{groupName}/schemas/latest:
     parameters:
       - in: path
         name: scopeName
@@ -321,7 +305,7 @@ paths:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/schemas/compatibility:
+  /scopes/{scopeName}/groups/{groupName}/schemas/compatibility:
     parameters:
       - in: path
         name: scopeName
@@ -359,7 +343,7 @@ paths:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/schemas/canRead:
+  /scopes/{scopeName}/groups/{groupName}/schemas/canRead:
     parameters:
       - in: path
         name: scopeName
@@ -401,7 +385,7 @@ paths:
         500:
           description: Internal server error while fetching Group details
           
-  /scopes/{scopeName}/Groups/{GroupName}/schemas/version:
+  /scopes/{scopeName}/groups/{groupName}/schemas/version:
     parameters:
       - in: path
         name: scopeName
@@ -441,7 +425,7 @@ paths:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas:
+  /scopes/{scopeName}/groups/{groupName}/subgroups/{subgroupName}/schemas:
     parameters:
       - in: path
         name: scopeName
@@ -474,37 +458,7 @@ paths:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-    post:
-      tags:
-      - "Schema"
-      operationId: addSchemaToSubgroupIfAbsent
-      description: adds a new schema to the group
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: AddSchemaToSubgroupRequest
-          description: Add new schema to group
-          required: true
-          schema:
-            type: object
-            properties:
-              schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
-              rules:
-                  $ref: "#/definitions/ValidationRules"
-      produces:
-        - application/json
-      responses:
-        201:
-          description: Successfully added schema to subgroup
-          schema:
-            $ref: "#/definitions/VersionInfo"
-        404:
-          description: Scope not found
-        500:
-          description: Internal server error while creating a Group
-  /scopes/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas/latest:
+  /scopes/{scopeName}/groups/{groupName}/subgroups/{subgroupName}/schemas/latest:
     parameters:
       - in: path
         name: scopeName
@@ -537,52 +491,7 @@ paths:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas/version:
-    parameters:
-      - in: path
-        name: scopeName
-        description: Scope name
-        required: true
-        type: string
-      - in: path
-        name: GroupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: SubgroupName
-        description: Subgroup name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getSchemaFromSubgroupVersion
-      description: Fetch the properties of an existing Group
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: getSchemaFromVersionRequest
-          description: Get schema corresponding to the version
-          required: true
-          schema:
-            type: object
-            properties:
-              versionInfo:
-                  $ref: "#/definitions/VersionInfo"
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Schema corresponding to the version
-          schema:
-            $ref: "#/definitions/SchemaInfo"
-        404:
-          description: Scope or Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/encodings:
+  /scopes/{scopeName}/groups/{groupName}/encodings:
     parameters:
       - in: path
         name: scopeName
@@ -621,12 +530,12 @@ paths:
         200:
           description: Found Encoding
           schema:
-            $ref: "#/definitions/EncodingInfo"
+            $ref: "#/definitions/EncodingId"
         404:
           description: Scope or Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/encodings/{EncodingId}:
+  /scopes/{scopeName}/groups/{groupName}/encodings/{encodingId}:
     parameters:
       - in: path
         name: scopeName
@@ -634,19 +543,20 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
       - in: path
-        name: EncodingId
+        name: encodingId
         description: Encoding id that identifies a unique combination of encoding and compression
         required: true
-        type: string
+        type: integer
+        format: int32
     get:
       tags:
       - "Encoding"
-      operationId: getEncodingId
+      operationId: getEncodingInfo
       description: Fetch the properties of an existing Group
       produces:
         - application/json
@@ -659,7 +569,7 @@ paths:
           description: Scope or Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/Groups/{GroupName}/compressions:
+  /scopes/{scopeName}/groups/{groupName}/compressions:
     parameters:
       - in: path
         name: scopeName
@@ -716,9 +626,9 @@ definitions:
           $ref: "#/definitions/Compatibility"
       schemaType:
           $ref: "#/definitions/SchemaType"
-      allowSubgroup:
+      subgroupBySchemaName:
           type: boolean
-      embedHeaders:
+      enableEncoding:
           type: boolean
   SchemaType:
     type: object
@@ -752,8 +662,10 @@ definitions:
   VersionInfo:
     type: object
     properties:
+      schemaName:
+        type: string
       version:
-        type: number
+        type: integer
         format: int32
   SchemaWithVersion:
     type: object
@@ -781,6 +693,12 @@ definitions:
           - Custom
       customTypeName:
         type: string
+  EncodingId:
+    type: object
+    properties:
+      encodingId:
+        type: integer
+        format: int32
   EncodingInfo:
     type: object
     properties:

@@ -7,8 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage;
+package io.pravega.schemaregistry.exceptions;
 
-public class Group {
-    Etag groupEtag;
+public class EntityExistsException extends Exception {
 }

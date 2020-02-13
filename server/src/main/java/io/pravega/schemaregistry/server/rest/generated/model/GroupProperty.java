@@ -36,11 +36,11 @@ public class GroupProperty   {
   @JsonProperty("schemaType")
   private SchemaType schemaType = null;
 
-  @JsonProperty("allowSubgroup")
-  private Boolean allowSubgroup = null;
+  @JsonProperty("subgroupBySchemaName")
+  private Boolean subgroupBySchemaName = null;
 
-  @JsonProperty("embedHeaders")
-  private Boolean embedHeaders = null;
+  @JsonProperty("enableEncoding")
+  private Boolean enableEncoding = null;
 
   public GroupProperty groupName(String groupName) {
     this.groupName = groupName;
@@ -99,42 +99,42 @@ public class GroupProperty   {
     this.schemaType = schemaType;
   }
 
-  public GroupProperty allowSubgroup(Boolean allowSubgroup) {
-    this.allowSubgroup = allowSubgroup;
+  public GroupProperty subgroupBySchemaName(Boolean subgroupBySchemaName) {
+    this.subgroupBySchemaName = subgroupBySchemaName;
     return this;
   }
 
   /**
-   * Get allowSubgroup
-   * @return allowSubgroup
+   * Get subgroupBySchemaName
+   * @return subgroupBySchemaName
    **/
-  @JsonProperty("allowSubgroup")
+  @JsonProperty("subgroupBySchemaName")
   @ApiModelProperty(value = "")
-  public Boolean getAllowSubgroup() {
-    return allowSubgroup;
+  public Boolean getSubgroupBySchemaName() {
+    return subgroupBySchemaName;
   }
 
-  public void setAllowSubgroup(Boolean allowSubgroup) {
-    this.allowSubgroup = allowSubgroup;
+  public void setSubgroupBySchemaName(Boolean subgroupBySchemaName) {
+    this.subgroupBySchemaName = subgroupBySchemaName;
   }
 
-  public GroupProperty embedHeaders(Boolean embedHeaders) {
-    this.embedHeaders = embedHeaders;
+  public GroupProperty enableEncoding(Boolean enableEncoding) {
+    this.enableEncoding = enableEncoding;
     return this;
   }
 
   /**
-   * Get embedHeaders
-   * @return embedHeaders
+   * Get enableEncoding
+   * @return enableEncoding
    **/
-  @JsonProperty("embedHeaders")
+  @JsonProperty("enableEncoding")
   @ApiModelProperty(value = "")
-  public Boolean getEmbedHeaders() {
-    return embedHeaders;
+  public Boolean getEnableEncoding() {
+    return enableEncoding;
   }
 
-  public void setEmbedHeaders(Boolean embedHeaders) {
-    this.embedHeaders = embedHeaders;
+  public void setEnableEncoding(Boolean enableEncoding) {
+    this.enableEncoding = enableEncoding;
   }
 
 
@@ -150,13 +150,13 @@ public class GroupProperty   {
     return Objects.equals(this.groupName, groupProperty.groupName) &&
         Objects.equals(this.compatibilityPolicy, groupProperty.compatibilityPolicy) &&
         Objects.equals(this.schemaType, groupProperty.schemaType) &&
-        Objects.equals(this.allowSubgroup, groupProperty.allowSubgroup) &&
-        Objects.equals(this.embedHeaders, groupProperty.embedHeaders);
+        Objects.equals(this.subgroupBySchemaName, groupProperty.subgroupBySchemaName) &&
+        Objects.equals(this.enableEncoding, groupProperty.enableEncoding);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, compatibilityPolicy, schemaType, allowSubgroup, embedHeaders);
+    return Objects.hash(groupName, compatibilityPolicy, schemaType, subgroupBySchemaName, enableEncoding);
   }
 
 
@@ -168,8 +168,8 @@ public class GroupProperty   {
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    compatibilityPolicy: ").append(toIndentedString(compatibilityPolicy)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
-    sb.append("    allowSubgroup: ").append(toIndentedString(allowSubgroup)).append("\n");
-    sb.append("    embedHeaders: ").append(toIndentedString(embedHeaders)).append("\n");
+    sb.append("    subgroupBySchemaName: ").append(toIndentedString(subgroupBySchemaName)).append("\n");
+    sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
     sb.append("}");
     return sb.toString();
   }
