@@ -9,11 +9,11 @@
  */
 package io.pravega.schemaregistry.server.rest;
 
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
-import io.pravega.schemaregistry.contract.SchemaValidationRules;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaType;
 import io.pravega.schemaregistry.server.rest.generated.model.ValidationRules;
+import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
 
 public class ModelHelper {
     public static SchemaRegistryContract.SchemaInfo decode(SchemaInfo schemaInfo) {

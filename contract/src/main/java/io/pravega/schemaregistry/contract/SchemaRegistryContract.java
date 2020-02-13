@@ -20,8 +20,8 @@ public interface SchemaRegistryContract {
     class GroupProperties {
         private final SchemaType schemaType;
         private final Compatibility compatibility;
-        private final boolean allowSubgroups;
-        private final boolean encodeHeader;
+        private final boolean subgroupByEventType;
+        private final boolean enableEncoding;
     }
 
     @Data
@@ -33,7 +33,6 @@ public interface SchemaRegistryContract {
     @Data
     class EncodingInfo {
         private final SchemaInfo schemaInfo;
-        private final VersionInfo versionInfo;
         private final CompressionType compressionType;
     }
 
@@ -44,7 +43,8 @@ public interface SchemaRegistryContract {
 
     @Data
     class VersionInfo {
-        static final VersionInfo NON_EXISTENT = new VersionInfo(-1);
+        static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
+        private final String schemaName;
         private final int version;
     }
 
@@ -86,5 +86,9 @@ public interface SchemaRegistryContract {
         Snappy,
         GZip,
         Custom
+    }
+
+    public class SchemaValidationRules {
+        Compatibility compatibilityRule;
     }
 }

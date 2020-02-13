@@ -13,7 +13,13 @@ import lombok.Data;
 
 import java.net.URI;
 
+/**
+ * Registry client configuration used to create registry client. 
+ */
 @Data
 public class RegistryClientConfig {
+    /**
+     * URI for connecting with registry client
+     */
     private final URI schemaRegistryUri;
 }

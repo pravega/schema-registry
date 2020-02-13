@@ -9,8 +9,11 @@
  */
 package io.pravega.schemaregistry.client.impl;
 
+import org.apache.commons.lang3.NotImplementedException;
+
 public class RegistryClientFactory {
-    public RegistryClient createRegistryClient(RegistryClientConfig config) {
-        return null;
+    public SchemaRegistryClient createRegistryClient(RegistryClientConfig config) {
+        // TODO: create rest client for registry. 
+        throw new NotImplementedException("create registry client");
     }
 }

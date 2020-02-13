@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.server.rest;
 
 import io.pravega.client.netty.impl.ConnectionFactory;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
-import io.pravega.schemaregistry.contract.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
 import io.pravega.schemaregistry.server.rest.generated.api.NotFoundException;
 import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToSubgroupRequest;
