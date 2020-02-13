@@ -3,12 +3,13 @@ package io.pravega.schemaregistry.server.rest.generated.api.impl;
 import io.pravega.schemaregistry.server.rest.generated.api.*;
 import io.pravega.schemaregistry.server.rest.generated.model.*;
 
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaRequest1;
+import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToSubgroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CanReadUsingSchemaRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CheckCompatibilityRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
@@ -17,6 +18,7 @@ import io.pravega.schemaregistry.server.rest.generated.model.GroupsList;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersionList;
+import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
 import io.pravega.schemaregistry.server.rest.generated.model.UpdateCompatibilityPolicyRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 
@@ -33,12 +35,12 @@ import javax.validation.constraints.*;
 
 public class ScopesApiServiceImpl extends ScopesApiService {
     @Override
-    public Response addSchemaToGroupIfAbsent(String scopeName, String groupName, AddSchemaRequest addSchemaRequest, SecurityContext securityContext) throws NotFoundException {
+    public Response addSchemaToGroupIfAbsent(String scopeName, String groupName, AddSchemaToGroupRequest addSchemaToGroupRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response addSchemaToSubgroupIfAbsent(String scopeName, String groupName, String subgroupName, AddSchemaRequest1 addSchemaRequest, SecurityContext securityContext) throws NotFoundException {
+    public Response addSchemaToSubgroupIfAbsent(String scopeName, String groupName, String subgroupName, AddSchemaToSubgroupRequest addSchemaToSubgroupRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -54,6 +56,11 @@ public class ScopesApiServiceImpl extends ScopesApiService {
     }
     @Override
     public Response createGroup(String scopeName, CreateGroupRequest createGroupRequest, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
+    public Response createScope(CreateScopeRequest createScopeRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -114,6 +121,11 @@ public class ScopesApiServiceImpl extends ScopesApiService {
     }
     @Override
     public Response listGroups(String scopeName,  String ERROR_UNKNOWN, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
+    public Response listScopes(SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

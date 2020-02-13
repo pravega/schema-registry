@@ -30,7 +30,7 @@ tags:
 schemes:
   - http
 paths:
-  /Scopes:
+  /scopes:
     get:
       tags:
       - "Scope"
@@ -272,7 +272,7 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: AddSchemaRequest
+          name: AddSchemaToGroupRequest
           description: Add new schema to group
           required: true
           schema:
@@ -280,6 +280,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+              rules:
+                  $ref: "#/definitions/ValidationRules"
       produces:
         - application/json
       responses:
@@ -481,7 +483,7 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: AddSchemaRequest
+          name: AddSchemaToSubgroupRequest
           description: Add new schema to group
           required: true
           schema:
@@ -489,6 +491,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+              rules:
+                  $ref: "#/definitions/ValidationRules"
       produces:
         - application/json
       responses:

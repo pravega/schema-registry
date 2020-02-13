@@ -7,12 +7,13 @@ import io.pravega.schemaregistry.server.rest.generated.api.factories.ScopesApiSe
 import io.swagger.annotations.ApiParam;
 import io.swagger.jaxrs.*;
 
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaRequest1;
+import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToSubgroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CanReadUsingSchemaRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CheckCompatibilityRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
@@ -21,6 +22,7 @@ import io.pravega.schemaregistry.server.rest.generated.model.GroupsList;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersionList;
+import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
 import io.pravega.schemaregistry.server.rest.generated.model.UpdateCompatibilityPolicyRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 
@@ -82,10 +84,10 @@ public class ScopesApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
-,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaRequest addSchemaRequest
+,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToGroupRequest addSchemaToGroupRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.addSchemaToGroupIfAbsent(scopeName,groupName,addSchemaRequest,securityContext);
+        return delegate.addSchemaToGroupIfAbsent(scopeName,groupName,addSchemaToGroupRequest,securityContext);
     }
     @POST
     @Path("/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas")
@@ -101,10 +103,10 @@ public class ScopesApi  {
     public Response addSchemaToSubgroupIfAbsent(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
-,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaRequest1 addSchemaRequest
+,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToSubgroupRequest addSchemaToSubgroupRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.addSchemaToSubgroupIfAbsent(scopeName,groupName,subgroupName,addSchemaRequest,securityContext);
+        return delegate.addSchemaToSubgroupIfAbsent(scopeName,groupName,subgroupName,addSchemaToSubgroupRequest,securityContext);
     }
     @GET
     @Path("/{scopeName}/Groups/{GroupName}/schemas/canRead")
@@ -160,6 +162,22 @@ public class ScopesApi  {
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.createGroup(scopeName,createGroupRequest,securityContext);
+    }
+    @POST
+    
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Create a new Scope", response = Void.class, tags={ "Scope", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully created the Scope", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Scope with the given name already exists", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a scope", response = Void.class) })
+    public Response createScope(@ApiParam(value = "Create scope" ,required=true) CreateScopeRequest createScopeRequest
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.createScope(createScopeRequest,securityContext);
     }
     @DELETE
     @Path("/{scopeName}/Groups/{GroupName}")
@@ -371,6 +389,19 @@ public class ScopesApi  {
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.listGroups(scopeName,ERROR_UNKNOWN,securityContext);
+    }
+    @GET
+    
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "List all available Scopes in schema registry", response = ScopesList.class, tags={ "Scope", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "List of currently available Scopes", response = ScopesList.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching list of scopes", response = Void.class) })
+    public Response listScopes(@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.listScopes(securityContext);
     }
     @PUT
     @Path("/{scopeName}/Groups/{GroupName}")

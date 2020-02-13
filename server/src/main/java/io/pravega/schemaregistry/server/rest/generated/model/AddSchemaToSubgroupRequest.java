@@ -17,19 +17,23 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
+import io.pravega.schemaregistry.server.rest.generated.model.ValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * AddSchemaRequest1
+ * AddSchemaToSubgroupRequest
  */
 
-public class AddSchemaRequest1   {
+public class AddSchemaToSubgroupRequest   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
-  public AddSchemaRequest1 schemaInfo(SchemaInfo schemaInfo) {
+  @JsonProperty("rules")
+  private ValidationRules rules = null;
+
+  public AddSchemaToSubgroupRequest schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -48,6 +52,25 @@ public class AddSchemaRequest1   {
     this.schemaInfo = schemaInfo;
   }
 
+  public AddSchemaToSubgroupRequest rules(ValidationRules rules) {
+    this.rules = rules;
+    return this;
+  }
+
+  /**
+   * Get rules
+   * @return rules
+   **/
+  @JsonProperty("rules")
+  @ApiModelProperty(value = "")
+  public ValidationRules getRules() {
+    return rules;
+  }
+
+  public void setRules(ValidationRules rules) {
+    this.rules = rules;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -57,22 +80,24 @@ public class AddSchemaRequest1   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddSchemaRequest1 addSchemaRequest1 = (AddSchemaRequest1) o;
-    return Objects.equals(this.schemaInfo, addSchemaRequest1.schemaInfo);
+    AddSchemaToSubgroupRequest addSchemaToSubgroupRequest = (AddSchemaToSubgroupRequest) o;
+    return Objects.equals(this.schemaInfo, addSchemaToSubgroupRequest.schemaInfo) &&
+        Objects.equals(this.rules, addSchemaToSubgroupRequest.rules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo);
+    return Objects.hash(schemaInfo, rules);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddSchemaRequest1 {\n");
+    sb.append("class AddSchemaToSubgroupRequest {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
+    sb.append("    rules: ").append(toIndentedString(rules)).append("\n");
     sb.append("}");
     return sb.toString();
   }
