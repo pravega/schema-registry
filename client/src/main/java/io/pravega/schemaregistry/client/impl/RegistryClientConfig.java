@@ -19,7 +19,7 @@ import java.net.URI;
 @Data
 public class RegistryClientConfig {
     /**
-     * URI for connecting with registry client
+     * URI for connecting with registry client.
      */
     private final URI schemaRegistryUri;
 }

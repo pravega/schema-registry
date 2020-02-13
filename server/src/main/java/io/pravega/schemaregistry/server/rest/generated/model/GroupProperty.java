@@ -110,7 +110,7 @@ public class GroupProperty   {
    **/
   @JsonProperty("allowSubgroup")
   @ApiModelProperty(value = "")
-  public Boolean isAllowSubgroup() {
+  public Boolean getAllowSubgroup() {
     return allowSubgroup;
   }
 
@@ -129,7 +129,7 @@ public class GroupProperty   {
    **/
   @JsonProperty("embedHeaders")
   @ApiModelProperty(value = "")
-  public Boolean isEmbedHeaders() {
+  public Boolean getEmbedHeaders() {
     return embedHeaders;
   }
 

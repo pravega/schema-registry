@@ -26,7 +26,6 @@ import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
 import io.pravega.schemaregistry.server.rest.generated.model.UpdateCompatibilityPolicyRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 
-import java.util.Map;
 import java.util.List;
 import io.pravega.schemaregistry.server.rest.generated.api.NotFoundException;
 
@@ -79,9 +78,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to the group", response = VersionInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = VersionInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = VersionInfo.class) })
     public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToGroupRequest addSchemaToGroupRequest
@@ -97,9 +96,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to subgroup", response = VersionInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = VersionInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = VersionInfo.class) })
     public Response addSchemaToSubgroupIfAbsent(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
@@ -112,13 +111,13 @@ public class ScopesApi  {
     @Path("/{scopeName}/Groups/{GroupName}/schemas/canRead")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = Void.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = void.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Compatibility check", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Compatibility check", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = void.class) })
     public Response canRead(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Get schema is compatible with existing schemas for existing compatibility setting" ,required=true) CanReadUsingSchemaRequest canReadUsingSchemaRequest
@@ -130,13 +129,13 @@ public class ScopesApi  {
     @Path("/{scopeName}/Groups/{GroupName}/schemas/compatibility")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = Void.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = void.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema is compatible", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema is compatible", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = void.class) })
     public Response checkCompatibility(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Get schema is compatible with existing schemas for existing compatibility setting" ,required=true) CheckCompatibilityRequest checkCompatibilityRequest
@@ -148,15 +147,15 @@ public class ScopesApi  {
     @Path("/{scopeName}/groups")
     @Consumes({ "application/json" })
     
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Create a new Group", response = Void.class, tags={ "Groups", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Create a new Group", response = void.class, tags={ "Groups", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added group to the namespace", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added group to the namespace", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 409, message = "Group with given name already exists", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Group with given name already exists", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = void.class) })
     public Response createGroup(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "The Group configuration" ,required=true) CreateGroupRequest createGroupRequest
 ,@Context SecurityContext securityContext)
@@ -167,13 +166,13 @@ public class ScopesApi  {
     
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Create a new Scope", response = Void.class, tags={ "Scope", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Create a new Scope", response = void.class, tags={ "Scope", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully created the Scope", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully created the Scope", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 409, message = "Scope with the given name already exists", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Scope with the given name already exists", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a scope", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a scope", response = void.class) })
     public Response createScope(@ApiParam(value = "Create scope" ,required=true) CreateScopeRequest createScopeRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
@@ -183,13 +182,13 @@ public class ScopesApi  {
     @Path("/{scopeName}/Groups/{GroupName}")
     
     
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Delete a Group", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Delete a Group", response = void.class, tags={ "Group", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 204, message = "Successfully deleted the Group", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 204, message = "Successfully deleted the Group", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = void.class) })
     public Response deleteGroup(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@Context SecurityContext securityContext)
@@ -204,9 +203,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found Compressions", response = CompressionsList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = CompressionsList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = CompressionsList.class) })
     public Response getCompressionsList(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@Context SecurityContext securityContext)
@@ -221,9 +220,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = EncodingInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = EncodingInfo.class) })
     public Response getEncodingId(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Encoding id that identifies a unique combination of encoding and compression",required=true) @PathParam("EncodingId") String encodingId
@@ -239,9 +238,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group properties", response = GroupProperty.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = GroupProperty.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = GroupProperty.class) })
     public Response getGroupProperties(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@Context SecurityContext securityContext)
@@ -256,9 +255,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Versioned history of schemas registered under the group", response = SchemaWithVersionList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaWithVersionList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaWithVersionList.class) })
     public Response getGroupSchemas(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@Context SecurityContext securityContext)
@@ -273,9 +272,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group properties", response = SchemaWithVersion.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaWithVersion.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaWithVersion.class) })
     public Response getLatestGroupSchema(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@Context SecurityContext securityContext)
@@ -290,9 +289,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found latest schema in subgroup", response = SchemaWithVersion.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaWithVersion.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaWithVersion.class) })
     public Response getLatestSubgroupSchema(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
@@ -308,9 +307,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group or encoding id with given name not found", response = EncodingInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = EncodingInfo.class) })
     public Response getOrGenerateEncodingId(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
@@ -326,9 +325,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaInfo.class) })
     public Response getSchemaFromSubgroupVersion(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
@@ -345,9 +344,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaInfo.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaInfo.class) })
     public Response getSchemaFromVersion(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaFromVersionRequest getSchemaFromVersionRequest
@@ -363,9 +362,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Versioned history of schemas registered under the group", response = SchemaWithVersionList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = SchemaWithVersionList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaWithVersionList.class) })
     public Response getSubGroupSchemas(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
@@ -381,9 +380,9 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "List of all groups under the given scope namespace", response = GroupsList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = GroupsList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching the list of Groups for the given scope", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching the list of Groups for the given scope", response = GroupsList.class) })
     public Response listGroups(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "") @QueryParam("") String ERROR_UNKNOWN
 ,@Context SecurityContext securityContext)
@@ -398,7 +397,7 @@ public class ScopesApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "List of currently available Scopes", response = ScopesList.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching list of scopes", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching list of scopes", response = ScopesList.class) })
     public Response listScopes(@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.listScopes(securityContext);
@@ -407,15 +406,15 @@ public class ScopesApi  {
     @Path("/{scopeName}/Groups/{GroupName}")
     @Consumes({ "application/json" })
     
-    @io.swagger.annotations.ApiOperation(value = "", notes = "update compatibility policy of an existing Group", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "update compatibility policy of an existing Group", response = void.class, tags={ "Group", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Updated compatibility policy", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Updated compatibility policy", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Scope or Group with given name not found", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 409, message = "Conflict while attempting to update policy.", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Conflict while attempting to update policy.", response = void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = void.class) })
     public Response updateCompatibilityPolicy(@ApiParam(value = "Scope name",required=true) @PathParam("scopeName") String scopeName
 ,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
 ,@ApiParam(value = "update group policy" ,required=true) UpdateCompatibilityPolicyRequest updateCompatibilityPolicyRequest

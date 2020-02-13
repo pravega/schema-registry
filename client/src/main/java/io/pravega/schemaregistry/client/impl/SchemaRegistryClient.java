@@ -152,7 +152,7 @@ public interface SchemaRegistryClient {
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupByEventType}
      * the subgroup name is taken from the SchemaInfo. 
-     * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
+     * Version is uniquely identified by {@link SchemaInfo#schemaDataBase64}. 
      * 
      * @param scope Name of scope. 
      * @param group Name of group. 

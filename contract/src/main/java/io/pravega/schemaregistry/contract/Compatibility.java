@@ -51,8 +51,8 @@ public interface Compatibility {
     }
 
     /**
-     * Check for compatibility with a subset of previous schemas for backward compatibility till version from
-     * {@linkplain CompatibilityTill#version}  
+     * Check for compatibility with a subset of previous schemas for backward compatibility till version 
+     * from {@linkplain CompatibilityTill#version}.  
      */
     @Data
     public class BackwardTill implements Compatibility {
@@ -65,7 +65,7 @@ public interface Compatibility {
 
     /**
      * Check for compatibility with a subset of previous schemas for backward compatibility till version from 
-     * {@linkplain CompatibilityTill#version}
+     * {@linkplain CompatibilityTill#version}.
      */
     @Data
     public class ForwardTill implements Compatibility {

@@ -11,9 +11,7 @@ package io.pravega.schemaregistry.contract;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
-import lombok.Getter;
-
-import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 public interface SchemaRegistryContract {
     @Data
@@ -48,19 +46,12 @@ public interface SchemaRegistryContract {
         private final int version;
     }
 
-    @Getter
+    @Data
     class SchemaInfo {
         private final String name;
         private final SchemaType schemaType;
-        private final byte[] schemaData;
+        private final String schemaDataBase64;
         private final ImmutableMap<String, String> properties;
-
-        public SchemaInfo(String name, SchemaType schemaType, byte[] schemaData, Map<String, String> properties) {
-            this.name = name;
-            this.schemaType = schemaType;
-            this.schemaData = schemaData;
-            this.properties = ImmutableMap.copyOf(properties);
-        }
     }
 
     enum SchemaType {
@@ -70,15 +61,23 @@ public interface SchemaRegistryContract {
         Json,
         Custom;
 
+        private AtomicReference<String> customTypeName;
+
+        SchemaType() {
+            this.customTypeName = new AtomicReference<>();
+        }
+
         public String getCustomTypeName() {
-            return customTypeName;
+            return customTypeName.get();
         }
 
         public void setCustomTypeName(String customTypeName) {
-            this.customTypeName = customTypeName;
+            if (this.equals(SchemaType.Custom)) {
+                this.customTypeName.set(customTypeName);
+            } else {
+                throw new UnsupportedOperationException();
+            }
         }
-
-        private String customTypeName;
     }
 
     enum CompressionType {
@@ -88,7 +87,8 @@ public interface SchemaRegistryContract {
         Custom
     }
 
+    @Data
     public class SchemaValidationRules {
-        Compatibility compatibilityRule;
+        private final Compatibility compatibilityRule;
     }
 }

@@ -250,7 +250,7 @@ project('server') {
     }
 
     javadoc {
-        title = "Serializers"
+        title = "Registry Server"
         dependsOn delombok
         source = delombok.outputDir
         failOnError = false
