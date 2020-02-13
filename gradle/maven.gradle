@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@ plugins.withId('maven') {
                 // Only configure publishing if a URL was provided
                 if (project.hasProperty("publishUrl")) {
                     if (publishUrl == "mavenCentral") {
-                        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
+                        repository(url: "https://oss.sonatype.org/io.pravega.service/local/staging/deploy/maven2/") {
                             authentication(userName: publishUsername, password: publishPassword)
                         }
                         snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {

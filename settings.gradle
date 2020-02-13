@@ -8,14 +8,11 @@
  *     http://www.apache.org/licenses/LICENSE-2.0
  *
  */
+rootProject.name = 'schemaregistry'
 
-
-plugins.withId('com.github.spotbugs') {
-    spotbugs {
-        toolVersion = spotbugsVersion
-        effort = "max"        
-        includeFilter = file("$rootDir/checkstyle/spotbugs-include.xml")
-        excludeFilter = file("$rootDir/checkstyle/spotbugs-exclude.xml")
-
-    }    
- }
+include 'client',
+        'common',
+        'mocks',
+        'server',
+        'serializers',
+        'contract'
