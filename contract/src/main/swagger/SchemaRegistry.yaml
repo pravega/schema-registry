@@ -1,0 +1,825 @@
+#
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Description of the Pravega Schema Registry APIs.
+
+swagger: "2.0"
+info:
+  description: "REST APIs for Pravega Schema Registry."
+  version: "0.0.1"
+  title: Pravega Schema Registry APIs
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+basePath: "/v1"
+tags:
+- name: "Scope"
+  description: "Scope related APIs"
+- name: "Group"
+  description: "Group related APIs"
+- name: "Schema"
+  description: "Schema related APIs"
+- name: "Encoding"
+  description: "Encoding related APIs"
+schemes:
+  - http
+paths:
+  /Scopes:
+    get:
+      tags:
+      - "Scope"
+      operationId: listScopes
+      description: List all available Scopes in schema registry
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of currently available Scopes
+          schema:
+            $ref: "#/definitions/ScopesList"
+        500:
+          description: Internal server error while fetching list of scopes
+    post:
+      tags:
+      - "Scope"
+      operationId: createScope
+      description: Create a new Scope
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CreateScopeRequest
+          description: Create scope
+          required: true
+          schema:
+            type: object
+            properties:
+              scopeName:
+                type: string
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully created the Scope
+        409:
+          description: Scope with the given name already exists
+        500:
+          description: Internal server error while creating a scope
+  /Scopes/{ScopeName}:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Scope"
+      operationId: getScope
+      description: Retrieve details of an existing scope
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Successfully retrieved the scope details
+          schema:
+            $ref: "#/definitions/Scope"
+        404:
+          description: Scope with the given name not found
+        500:
+          description: Internal server error while fetching scope details
+    delete:
+      tags:
+      - "Scope"
+      operationId: deleteScope
+      description: Delete a scope
+      responses:
+        204:
+          description: Successfully deleted the scope
+        404:
+          description: Scope not found
+        412:
+          description: Cannot delete scope since it has non-empty list of Groups
+        500:
+          description: Internal server error while deleting a scope
+  /scopes/{scopeName}/groups:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      parameters:
+        - in: query
+          required: false
+          type: string
+      operationId: listGroups
+      description: List groups within the given scope
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of all groups under the given scope namespace
+          schema:
+            $ref: "#/definitions/GroupsList"
+        404:
+          description: Scope not found
+        500:
+          description: Internal server error while fetching the list of Groups for the given scope
+    post:
+      tags:
+      - "Groups"
+      operationId: createGroup
+      description: Create a new Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CreateGroupRequest
+          description: The Group configuration
+          required: true
+          schema:
+            type: object
+            properties:
+              groupName:
+                type: string
+              schemaType:
+                  $ref: "#/definitions/SchemaType"
+              compatibilityPolicy:
+                  $ref: "#/definitions/Compatibility"
+              embedHeader:
+                type: boolean
+              allowSubgroups:
+                type: boolean
+      responses:
+        201:
+          description: Successfully added group to the namespace
+        404:
+          description: Scope not found
+        409:
+          description: Group with given name already exists
+        500:
+          description: Internal server error while creating a Group
+  /scopes/{scopeName}/Groups/{GroupName}:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getGroupProperties
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group properties
+          schema:
+            $ref: "#/definitions/GroupProperty"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    put:
+      tags:
+      - "Group"
+      operationId: updateCompatibilityPolicy
+      description: update compatibility policy of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: UpdateCompatibilityPolicyRequest
+          description: update group policy
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/Compatibility"
+      responses:
+        200:
+          description: Updated compatibility policy
+        404:
+          description: Scope or Group with given name not found
+        409:
+          description: Conflict while attempting to update policy. 
+        500:
+          description: Internal server error while fetching Group details
+    delete:
+      tags:
+      - "Group"
+      operationId: deleteGroup
+      description: Delete a Group
+      responses:
+        204:
+          description: Successfully deleted the Group
+        404:
+          description: Group not found
+        500:
+          description: Internal server error while deleting the Group
+  /scopes/{scopeName}/Groups/{GroupName}/schemas:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getGroupSchemas
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaWithVersionList"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    post:
+      tags:
+      - "Schema"
+      operationId: addSchemaToGroupIfAbsent
+      description: adds a new schema to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: AddSchemaRequest
+          description: Add new schema to group
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully added schema to the group
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Scope not found
+        500:
+          description: Internal server error while creating a Group
+  /scopes/{scopeName}/Groups/{GroupName}/schemas/latest:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getLatestGroupSchema
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group properties
+          schema:
+            $ref: "#/definitions/SchemaWithVersion"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/schemas/compatibility:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: checkCompatibility
+      description: check if given schema is compatible with schemas in the registry for current policy setting. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CheckCompatibilityRequest
+          description: Get schema is compatible with existing schemas for existing compatibility setting
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema is compatible
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/schemas/canRead:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: canRead
+      description: check if given schema is compatible with schemas in the registry for current policy setting. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CanReadUsingSchemaRequest
+          description: Get schema is compatible with existing schemas for existing compatibility setting
+          required: true
+          schema:
+            type: object
+            properties:
+              writerVersion:
+                  $ref: "#/definitions/VersionInfo"
+              readerVersion:
+                  $ref: "#/definitions/VersionInfo"
+                  
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Compatibility check
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+          
+  /scopes/{scopeName}/Groups/{GroupName}/schemas/version:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSchemaFromVersion
+      description: Fetch the properties of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetSchemaFromVersionRequest
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              versionInfo:
+                  $ref: "#/definitions/VersionInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: SubgroupName
+        description: Subgroup name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSubGroupSchemas
+      description: Fetch all schemas registered under a sub Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaWithVersionList"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    post:
+      tags:
+      - "Schema"
+      operationId: addSchemaToSubgroupIfAbsent
+      description: adds a new schema to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: AddSchemaRequest
+          description: Add new schema to group
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully added schema to subgroup
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Scope not found
+        500:
+          description: Internal server error while creating a Group
+  /scopes/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas/latest:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: SubgroupName
+        description: Subgroup name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getLatestSubgroupSchema
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found latest schema in subgroup
+          schema:
+            $ref: "#/definitions/SchemaWithVersion"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/subgroups/{SubgroupName}/schemas/version:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: SubgroupName
+        description: Subgroup name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSchemaFromSubgroupVersion
+      description: Fetch the properties of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: getSchemaFromVersionRequest
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              versionInfo:
+                  $ref: "#/definitions/VersionInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Scope or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/encodings:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    put:
+      tags:
+      - "Encoding"
+      operationId: getOrGenerateEncodingId
+      description: Fetch the properties of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetEncodingIdRequest
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              subgroupName: 
+                type: string
+              versionInfo:
+                  $ref: "#/definitions/VersionInfo"
+              compressionType:
+                  $ref: "#/definitions/CompressionType"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Encoding
+          schema:
+            $ref: "#/definitions/EncodingInfo"
+        404:
+          description: Scope or Group or encoding id with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/encodings/{EncodingId}:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: EncodingId
+        description: Encoding id that identifies a unique combination of encoding and compression
+        required: true
+        type: string
+    get:
+      tags:
+      - "Encoding"
+      operationId: getEncodingId
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Encoding
+          schema:
+            $ref: "#/definitions/EncodingInfo"
+        404:
+          description: Scope or Group or encoding id with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /scopes/{scopeName}/Groups/{GroupName}/compressions:
+    parameters:
+      - in: path
+        name: scopeName
+        description: Scope name
+        required: true
+        type: string
+      - in: path
+        name: GroupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Encoding"
+      operationId: getCompressionsList
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Compressions
+          schema:
+            $ref: "#/definitions/CompressionsList"
+        404:
+          description: Scope or Group or encoding id with given name not found
+        500:
+          description: Internal server error while fetching Group details
+definitions:
+  ScopeProperty:
+    type: object
+    properties:
+      scopeName:
+        type: string
+  ScopesList:
+    type: object
+    properties:
+      scopes:
+        type: array
+        items:
+          $ref: "#/definitions/ScopeProperty"
+  GroupsList:
+    type: object
+    properties:
+      groups:
+        type: array
+        items:
+          $ref: "#/definitions/GroupProperty"
+  GroupProperty:
+    type: object
+    properties:
+      groupName:
+        type: string
+      compatibilityPolicy:
+          $ref: "#/definitions/Compatibility"
+      schemaType:
+          $ref: "#/definitions/SchemaType"
+      allowSubgroup:
+          type: boolean
+      embedHeaders:
+          type: boolean
+  SchemaType:
+    type: object
+    properties:
+      schemaType:
+        type: string
+        enum: 
+          - None
+          - Avro
+          - Protobuf
+          - Json
+          - Custom
+      customTypeName:
+        type: string  
+  SchemaInfo:
+    type: object
+    properties:
+      schemaName:
+        type: string
+      schemaType:
+          $ref: "#/definitions/SchemaType"
+      schemaData:
+        type: string
+        format: binary
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
+  VersionInfo:
+    type: object
+    properties:
+      version:
+        type: number
+        format: int32
+  SchemaWithVersion:
+    type: object
+    properties:
+      schemaInfo:
+        $ref: "#/definitions/SchemaInfo"
+      version:
+        $ref: "#/definitions/VersionInfo"
+  SchemaWithVersionList:
+    type: object
+    properties:
+      scopes:
+        type: array
+        items:
+          $ref: "#/definitions/SchemaWithVersion"        
+  CompressionType:
+    type: object
+    properties:
+      compressionType:
+        type: string
+        enum:
+          - None
+          - Snappy
+          - Gzip
+          - Custom
+      customTypeName:
+        type: string
+  EncodingInfo:
+    type: object
+    properties:
+      schemaInfo:
+          $ref: "#/definitions/SchemaInfo"        
+      versionInfo:
+          $ref: "#/definitions/VersionInfo"        
+      compressionType:
+          $ref: "#/definitions/CompressionType"
+  Compatibility:
+    type: object
+    properties:
+       policy:
+        type: string
+        enum:
+          - AllowAny
+          - DisallowAll
+          - Backward
+          - Forward
+          - Forward_Transitive
+          - Backward_Transitive
+          - BackwardTill
+          - ForwardTill
+          - BackwardAndForwardTill
+          - Full
+          - Full_Transitive
+        backwardTill:
+            $ref: "#/definitions/VersionInfo"        
+        forwardTill:
+            $ref: "#/definitions/VersionInfo"        
+  ValidationRules:
+    type: object
+    properties:
+       ruleType:
+        type: string
+        enum:
+          - Compatibility
+        compatibilityRule:
+            $ref: "#/definitions/Compatibility"        
+  CompressionsList:
+    type: object
+    properties:
+       compressionTypes:
+        type: array
+        items:
+          $ref: "#/definitions/CompressionType"
