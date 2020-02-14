@@ -9,24 +9,24 @@
  */
 package io.pravega.schemaregistry.server.rest;
 
-import io.pravega.schemaregistry.server.rest.generated.api.NotFoundException;
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
-import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.EncodingId;
-import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.GroupProperty;
-import io.pravega.schemaregistry.server.rest.generated.model.GroupsList;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolutionList;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
-import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
-import io.pravega.schemaregistry.server.rest.generated.model.UpdateValidationRulesPolicyRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.ValidateRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
+import io.pravega.schemaregistry.contract.rest.generated.api.NotFoundException;
+import io.pravega.schemaregistry.contract.rest.generated.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.CompressionsList;
+import io.pravega.schemaregistry.contract.rest.generated.model.CreateGroupRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.CreateScopeRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.EncodingId;
+import io.pravega.schemaregistry.contract.rest.generated.model.EncodingInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.GetEncodingIdRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.GetSchemaFromVersionRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.GroupProperty;
+import io.pravega.schemaregistry.contract.rest.generated.model.GroupsList;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaEvolutionList;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.rest.generated.model.ScopesList;
+import io.pravega.schemaregistry.contract.rest.generated.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.ValidateRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.VersionInfo;
 import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;

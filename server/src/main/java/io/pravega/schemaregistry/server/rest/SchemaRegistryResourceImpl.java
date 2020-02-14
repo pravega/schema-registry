@@ -13,24 +13,26 @@ import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
 import io.pravega.schemaregistry.exceptions.EntityExistsException;
-import io.pravega.schemaregistry.server.rest.generated.api.NotFoundException;
-import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
-import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.EncodingId;
-import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.GroupsList;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolutionList;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
-import io.pravega.schemaregistry.server.rest.generated.model.ScopeProperty;
-import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
-import io.pravega.schemaregistry.server.rest.generated.model.UpdateValidationRulesPolicyRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.ValidateRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
+import io.pravega.schemaregistry.contract.rest.generated.api.NotFoundException;
+import io.pravega.schemaregistry.contract.rest.generated.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.CompressionsList;
+import io.pravega.schemaregistry.contract.rest.generated.model.CreateGroupRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.CreateScopeRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.EncodingId;
+import io.pravega.schemaregistry.contract.rest.generated.model.EncodingInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.GetEncodingIdRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.GetSchemaFromVersionRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.GroupsList;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaEvolutionList;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.rest.generated.model.ScopeProperty;
+import io.pravega.schemaregistry.contract.rest.generated.model.ScopesList;
+import io.pravega.schemaregistry.contract.rest.generated.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.ValidateRequest;
+import io.pravega.schemaregistry.contract.rest.generated.model.VersionInfo;
+import io.pravega.schemaregistry.server.rest.ApiV1;
+import io.pravega.schemaregistry.server.rest.ModelHelper;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
@@ -146,7 +148,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
         SchemaRegistryContract.SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
         SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         SchemaRegistryContract.GroupProperties properties = new SchemaRegistryContract.GroupProperties(
-                schemaType, validationRules, createGroupRequest.getGroupByEventType(), createGroupRequest.getEnableEncoding());
+                schemaType, validationRules, createGroupRequest.isGroupByEventType(), createGroupRequest.isEnableEncoding());
         registryService.createGroup(scopeName, createGroupRequest.getGroupName(), properties)
                        .thenApply(createStatus -> {
                            if (!createStatus) {

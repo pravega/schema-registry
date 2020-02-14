@@ -10,19 +10,19 @@
 package io.pravega.schemaregistry.server.rest;
 
 import com.google.common.collect.ImmutableMap;
-import io.pravega.schemaregistry.server.rest.generated.model.CompressionType;
-import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
-import io.pravega.schemaregistry.server.rest.generated.model.EncodingId;
-import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.GroupProperty;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolutionList;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaType;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
-import io.pravega.schemaregistry.server.rest.generated.model.Compatibility;
+import io.pravega.schemaregistry.contract.rest.generated.model.CompressionType;
+import io.pravega.schemaregistry.contract.rest.generated.model.CompressionsList;
+import io.pravega.schemaregistry.contract.rest.generated.model.EncodingId;
+import io.pravega.schemaregistry.contract.rest.generated.model.EncodingInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.GroupProperty;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaEvolutionList;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaType;
+import io.pravega.schemaregistry.contract.rest.generated.model.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.rest.generated.model.Compatibility;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
-import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
+import io.pravega.schemaregistry.contract.rest.generated.model.VersionInfo;
 
 import java.util.Base64;
 import java.util.List;
@@ -40,7 +40,7 @@ public class ModelHelper {
         return null;
     }
 
-    public static SchemaValidationRules decode(io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules rules) {
+    public static SchemaValidationRules decode(io.pravega.schemaregistry.contract.rest.generated.model.SchemaValidationRules rules) {
         return null;
     }
 
