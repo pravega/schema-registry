@@ -45,10 +45,10 @@ public interface SchemaStore {
     
     CompletableFuture<SchemaInfo> getSchema(String scope, String group, VersionInfo versionInfo);
 
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group);
-
     CompletableFuture<SchemaInfo> getSchema(String scope, String group, String subgroup, VersionInfo versionInfo);
 
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group);
+    
     CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group, String subgroup);
 
     CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(Group group, SchemaInfo schemaInfo);

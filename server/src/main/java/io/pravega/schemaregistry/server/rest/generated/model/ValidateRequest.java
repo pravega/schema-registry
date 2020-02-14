@@ -17,19 +17,23 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * CheckCompatibilityRequest
+ * ValidateRequest
  */
 
-public class CheckCompatibilityRequest   {
+public class ValidateRequest   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
-  public CheckCompatibilityRequest schemaInfo(SchemaInfo schemaInfo) {
+  @JsonProperty("validationRules")
+  private SchemaValidationRules validationRules = null;
+
+  public ValidateRequest schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -48,6 +52,25 @@ public class CheckCompatibilityRequest   {
     this.schemaInfo = schemaInfo;
   }
 
+  public ValidateRequest validationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
+    return this;
+  }
+
+  /**
+   * Get validationRules
+   * @return validationRules
+   **/
+  @JsonProperty("validationRules")
+  @ApiModelProperty(value = "")
+  public SchemaValidationRules getValidationRules() {
+    return validationRules;
+  }
+
+  public void setValidationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -57,22 +80,24 @@ public class CheckCompatibilityRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CheckCompatibilityRequest checkCompatibilityRequest = (CheckCompatibilityRequest) o;
-    return Objects.equals(this.schemaInfo, checkCompatibilityRequest.schemaInfo);
+    ValidateRequest validateRequest = (ValidateRequest) o;
+    return Objects.equals(this.schemaInfo, validateRequest.schemaInfo) &&
+        Objects.equals(this.validationRules, validateRequest.validationRules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo);
+    return Objects.hash(schemaInfo, validationRules);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CheckCompatibilityRequest {\n");
+    sb.append("class ValidateRequest {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
+    sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("}");
     return sb.toString();
   }

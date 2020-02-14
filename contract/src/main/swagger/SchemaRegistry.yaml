@@ -102,10 +102,6 @@ paths:
     get:
       tags:
       - "Group"
-      parameters:
-        - in: query
-          required: false
-          type: string
       operationId: listGroups
       description: List groups within the given scope
       produces:
@@ -121,7 +117,7 @@ paths:
           description: Internal server error while fetching the list of Groups for the given scope
     post:
       tags:
-      - "Groups"
+      - "Group"
       operationId: createGroup
       description: Create a new Group
       consumes:
@@ -138,8 +134,8 @@ paths:
                 type: string
               schemaType:
                   $ref: "#/definitions/SchemaType"
-              compatibilityPolicy:
-                  $ref: "#/definitions/Compatibility"
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
               enableEncoding:
                 type: boolean
               groupByEventType:
@@ -184,23 +180,23 @@ paths:
     put:
       tags:
       - "Group"
-      operationId: updateCompatibilityPolicy
-      description: update compatibility policy of an existing Group
+      operationId: updateSchemaValidationRules
+      description: update schema validation rules of an existing Group
       consumes:
         - application/json
       parameters:
         - in: body
-          name: UpdateCompatibilityPolicyRequest
+          name: UpdateValidationRulesPolicyRequest
           description: update group policy
           required: true
           schema:
             type: object
             properties:
-              compatibility:
-                  $ref: "#/definitions/Compatibility"
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
       responses:
         200:
-          description: Updated compatibility policy
+          description: Updated schema validation policy
         404:
           description: Scope or Group with given name not found
         409:
@@ -242,7 +238,7 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaWithVersionList"
+            $ref: "#/definitions/SchemaEvolutionList"
         404:
           description: Scope or Group with given name not found
         500:
@@ -265,7 +261,7 @@ paths:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
               rules:
-                  $ref: "#/definitions/ValidationRules"
+                  $ref: "#/definitions/SchemaValidationRules"
       produces:
         - application/json
       responses:
@@ -305,7 +301,7 @@ paths:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/schemas/compatibility:
+  /scopes/{scopeName}/groups/{groupName}/schemas/validate:
     parameters:
       - in: path
         name: scopeName
@@ -320,71 +316,31 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: checkCompatibility
+      operationId: validate
       description: check if given schema is compatible with schemas in the registry for current policy setting. 
       consumes:
         - application/json
       parameters:
         - in: body
-          name: CheckCompatibilityRequest
-          description: Get schema is compatible with existing schemas for existing compatibility setting
+          name: ValidateRequest
+          description: Checks if schema is valid with respect to supplied validation rules
           required: true
           schema:
             type: object
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
       produces:
         - application/json
       responses:
         200:
-          description: Schema is compatible
+          description: Schema is valid
         404:
           description: Scope or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/schemas/canRead:
-    parameters:
-      - in: path
-        name: scopeName
-        description: Scope name
-        required: true
-        type: string
-      - in: path
-        name: GroupName
-        description: Group name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: canRead
-      description: check if given schema is compatible with schemas in the registry for current policy setting. 
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: CanReadUsingSchemaRequest
-          description: Get schema is compatible with existing schemas for existing compatibility setting
-          required: true
-          schema:
-            type: object
-            properties:
-              writerVersion:
-                  $ref: "#/definitions/VersionInfo"
-              readerVersion:
-                  $ref: "#/definitions/VersionInfo"
-                  
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Compatibility check
-        404:
-          description: Scope or Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-          
   /scopes/{scopeName}/groups/{groupName}/schemas/version:
     parameters:
       - in: path
@@ -453,7 +409,7 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaWithVersionList"
+            $ref: "#/definitions/SchemaEvolutionList"
         404:
           description: Scope or Group with given name not found
         500:
@@ -674,13 +630,22 @@ definitions:
         $ref: "#/definitions/SchemaInfo"
       version:
         $ref: "#/definitions/VersionInfo"
-  SchemaWithVersionList:
+  SchemaEvolution:
+    type: object
+    properties:
+      schemaInfo:
+        $ref: "#/definitions/SchemaInfo"
+      version:
+        $ref: "#/definitions/VersionInfo"
+      validationRules:
+        $ref: "#/definitions/SchemaValidationRules"
+  SchemaEvolutionList:
     type: object
     properties:
       scopes:
         type: array
         items:
-          $ref: "#/definitions/SchemaWithVersion"        
+          $ref: "#/definitions/SchemaEvolution"        
   CompressionType:
     type: object
     properties:
@@ -729,7 +694,14 @@ definitions:
             $ref: "#/definitions/VersionInfo"        
         forwardTill:
             $ref: "#/definitions/VersionInfo"        
-  ValidationRules:
+  SchemaValidationRules:
+    type: object
+    properties:
+       rules:
+        type: array
+        items:
+            $ref: "#/definitions/Rule"        
+  Rule:
     type: object
     properties:
        ruleType:

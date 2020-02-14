@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.server.rest;
 
-import com.google.common.base.Strings;
 import io.pravega.common.Exceptions;
 import lombok.Builder;
 import lombok.Getter;

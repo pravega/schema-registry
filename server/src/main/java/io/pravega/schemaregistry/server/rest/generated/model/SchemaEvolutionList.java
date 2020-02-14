@@ -16,65 +16,46 @@ package io.pravega.schemaregistry.server.rest.generated.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonValue;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolution;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * ValidationRules
+ * SchemaEvolutionList
  */
 
-public class ValidationRules   {
-  /**
-   * Gets or Sets ruleType
-   */
-  public enum RuleTypeEnum {
-    COMPATIBILITY("Compatibility");
+public class SchemaEvolutionList   {
+  @JsonProperty("scopes")
+  private List<SchemaEvolution> scopes = null;
 
-    private String value;
-
-    RuleTypeEnum(String value) {
-      this.value = value;
-    }
-
-    @Override
-    @JsonValue
-    public String toString() {
-      return String.valueOf(value);
-    }
-
-    @JsonCreator
-    public static RuleTypeEnum fromValue(String text) {
-      for (RuleTypeEnum b : RuleTypeEnum.values()) {
-        if (String.valueOf(b.value).equals(text)) {
-          return b;
-        }
-      }
-      return null;
-    }
+  public SchemaEvolutionList scopes(List<SchemaEvolution> scopes) {
+    this.scopes = scopes;
+    return this;
   }
 
-  @JsonProperty("ruleType")
-  private RuleTypeEnum ruleType = null;
-
-  public ValidationRules ruleType(RuleTypeEnum ruleType) {
-    this.ruleType = ruleType;
+  public SchemaEvolutionList addScopesItem(SchemaEvolution scopesItem) {
+    if (this.scopes == null) {
+      this.scopes = new ArrayList<SchemaEvolution>();
+    }
+    this.scopes.add(scopesItem);
     return this;
   }
 
   /**
-   * Get ruleType
-   * @return ruleType
+   * Get scopes
+   * @return scopes
    **/
-  @JsonProperty("ruleType")
+  @JsonProperty("scopes")
   @ApiModelProperty(value = "")
-  public RuleTypeEnum getRuleType() {
-    return ruleType;
+  public List<SchemaEvolution> getScopes() {
+    return scopes;
   }
 
-  public void setRuleType(RuleTypeEnum ruleType) {
-    this.ruleType = ruleType;
+  public void setScopes(List<SchemaEvolution> scopes) {
+    this.scopes = scopes;
   }
 
 
@@ -86,22 +67,22 @@ public class ValidationRules   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ValidationRules validationRules = (ValidationRules) o;
-    return Objects.equals(this.ruleType, validationRules.ruleType);
+    SchemaEvolutionList schemaEvolutionList = (SchemaEvolutionList) o;
+    return Objects.equals(this.scopes, schemaEvolutionList.scopes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(ruleType);
+    return Objects.hash(scopes);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ValidationRules {\n");
+    sb.append("class SchemaEvolutionList {\n");
     
-    sb.append("    ruleType: ").append(toIndentedString(ruleType)).append("\n");
+    sb.append("    scopes: ").append(toIndentedString(scopes)).append("\n");
     sb.append("}");
     return sb.toString();
   }

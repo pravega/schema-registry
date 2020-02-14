@@ -11,13 +11,15 @@ package io.pravega.schemaregistry.contract;
 
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
+
+import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 public interface SchemaRegistryContract {
     @Data
     class GroupProperties {
         private final SchemaType schemaType;
-        private final Compatibility compatibility;
+        private final SchemaValidationRules schemaValidationRules;
         private final boolean subgroupBySchemaName;
         private final boolean enableEncoding;
     }
@@ -26,6 +28,13 @@ public interface SchemaRegistryContract {
     class SchemaWithVersion {
         private final SchemaInfo schema;
         private final VersionInfo version;
+    }
+
+    @Data
+    class SchemaEvolution {
+        private final SchemaInfo schema;
+        private final VersionInfo version;
+        private final SchemaValidationRules rules;
     }
 
     @Data
@@ -89,6 +98,10 @@ public interface SchemaRegistryContract {
 
     @Data
     public class SchemaValidationRules {
-        private final Compatibility compatibilityRule;
+        private final List<Rule> rules;
+    }
+    
+    public interface Rule {
+        
     }
 }

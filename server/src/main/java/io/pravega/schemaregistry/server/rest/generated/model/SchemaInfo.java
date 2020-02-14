@@ -13,6 +13,7 @@
 
 package io.pravega.schemaregistry.server.rest.generated.model;
 
+import java.util.Arrays;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -137,7 +138,7 @@ public class SchemaInfo   {
     SchemaInfo schemaInfo = (SchemaInfo) o;
     return Objects.equals(this.schemaName, schemaInfo.schemaName) &&
         Objects.equals(this.schemaType, schemaInfo.schemaType) &&
-        Objects.equals(this.schemaData, schemaInfo.schemaData) &&
+        Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
         Objects.equals(this.properties, schemaInfo.properties);
   }
 

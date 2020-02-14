@@ -16,44 +16,31 @@ package io.pravega.schemaregistry.server.rest.generated.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules;
+import io.pravega.schemaregistry.server.rest.generated.model.Rule;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * AddSchemaToGroupRequest
+ * SchemaValidationRules
  */
 
-public class AddSchemaToGroupRequest   {
-  @JsonProperty("schemaInfo")
-  private SchemaInfo schemaInfo = null;
-
+public class SchemaValidationRules   {
   @JsonProperty("rules")
-  private SchemaValidationRules rules = null;
+  private List<Rule> rules = null;
 
-  public AddSchemaToGroupRequest schemaInfo(SchemaInfo schemaInfo) {
-    this.schemaInfo = schemaInfo;
+  public SchemaValidationRules rules(List<Rule> rules) {
+    this.rules = rules;
     return this;
   }
 
-  /**
-   * Get schemaInfo
-   * @return schemaInfo
-   **/
-  @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
-  public SchemaInfo getSchemaInfo() {
-    return schemaInfo;
-  }
-
-  public void setSchemaInfo(SchemaInfo schemaInfo) {
-    this.schemaInfo = schemaInfo;
-  }
-
-  public AddSchemaToGroupRequest rules(SchemaValidationRules rules) {
-    this.rules = rules;
+  public SchemaValidationRules addRulesItem(Rule rulesItem) {
+    if (this.rules == null) {
+      this.rules = new ArrayList<Rule>();
+    }
+    this.rules.add(rulesItem);
     return this;
   }
 
@@ -63,11 +50,11 @@ public class AddSchemaToGroupRequest   {
    **/
   @JsonProperty("rules")
   @ApiModelProperty(value = "")
-  public SchemaValidationRules getRules() {
+  public List<Rule> getRules() {
     return rules;
   }
 
-  public void setRules(SchemaValidationRules rules) {
+  public void setRules(List<Rule> rules) {
     this.rules = rules;
   }
 
@@ -80,23 +67,21 @@ public class AddSchemaToGroupRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddSchemaToGroupRequest addSchemaToGroupRequest = (AddSchemaToGroupRequest) o;
-    return Objects.equals(this.schemaInfo, addSchemaToGroupRequest.schemaInfo) &&
-        Objects.equals(this.rules, addSchemaToGroupRequest.rules);
+    SchemaValidationRules schemaValidationRules = (SchemaValidationRules) o;
+    return Objects.equals(this.rules, schemaValidationRules.rules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, rules);
+    return Objects.hash(rules);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddSchemaToGroupRequest {\n");
+    sb.append("class SchemaValidationRules {\n");
     
-    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    rules: ").append(toIndentedString(rules)).append("\n");
     sb.append("}");
     return sb.toString();

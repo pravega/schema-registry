@@ -11,12 +11,15 @@ package io.pravega.schemaregistry.contract;
 
 import lombok.Data;
 
+import static io.pravega.schemaregistry.contract.SchemaRegistryContract.Rule;
+import static io.pravega.schemaregistry.contract.SchemaRegistryContract.VersionInfo;
+
 /**
  * Defines different Compatibility policy options for schema evolution. 
  * Backward compatibility means a new schema can read data written by old schema. 
  * Forward compatibility means an old schema can read data written by new schema. 
  */
-public interface Compatibility {
+public interface Compatibility extends Rule {
 
     /**
      * Allow any changes to schemas. 
@@ -96,7 +99,7 @@ public interface Compatibility {
      */
     @Data
     public class CompatibilityTill {
-        private final SchemaRegistryContract.VersionInfo version;
+        private final VersionInfo version;
     }
 
     /**
@@ -104,7 +107,7 @@ public interface Compatibility {
      */
     public class Transitive extends CompatibilityTill {
         public Transitive() {
-            super(SchemaRegistryContract.VersionInfo.NON_EXISTENT);
+            super(VersionInfo.NON_EXISTENT);
         }
     }
 }

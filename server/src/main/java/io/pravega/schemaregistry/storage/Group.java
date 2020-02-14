@@ -9,6 +9,9 @@
  */
 package io.pravega.schemaregistry.storage;
 
+import lombok.Data;
+
+@Data
 public class Group {
-    Etag groupEtag;
+    private final Etag groupEtag;
 }

@@ -15,11 +15,10 @@ import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.EncodingId;
 import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.GroupProperty;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolutionList;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaType;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersionList;
-import io.pravega.schemaregistry.server.rest.generated.model.ValidationRules;
 import io.pravega.schemaregistry.server.rest.generated.model.Compatibility;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
@@ -29,6 +28,8 @@ import java.util.Base64;
 import java.util.List;
 
 public class ModelHelper {
+
+    // region decode
     public static SchemaRegistryContract.SchemaInfo decode(SchemaInfo schemaInfo) {
         SchemaRegistryContract.SchemaType schemaType = decode(schemaInfo.getSchemaType());
         return new SchemaRegistryContract.SchemaInfo(schemaInfo.getSchemaName(), schemaType, Base64.getEncoder().encodeToString(schemaInfo.getSchemaData()), 
@@ -39,7 +40,7 @@ public class ModelHelper {
         return null;
     }
 
-    public static SchemaValidationRules decode(ValidationRules rules) {
+    public static SchemaValidationRules decode(io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules rules) {
         return null;
     }
 
@@ -47,7 +48,17 @@ public class ModelHelper {
         return null;
     }
 
-    public static SchemaWithVersionList encode(List<SchemaRegistryContract.SchemaWithVersion> schemasWithVersions) {
+    public static SchemaRegistryContract.CompressionType decode(CompressionType compressionType) {
+        return null;
+    }
+
+    public static SchemaRegistryContract.VersionInfo decode(VersionInfo versionInfo) {
+        return null;
+    }
+    // endregion
+    
+    // region encode
+    public static SchemaEvolutionList encode(List<SchemaRegistryContract.SchemaEvolution> schemasWithVersions) {
         return null;
     }
 
@@ -59,26 +70,18 @@ public class ModelHelper {
         return null;
     }
 
-    public static GroupProperty convertToGroupProperty(String groupName, SchemaRegistryContract.GroupProperties groupProperties) {
+    public static GroupProperty encode(String groupName, SchemaRegistryContract.GroupProperties groupProperties) {
         return ModelHelper.encode(groupProperties).groupName(groupName);
     }
 
     public static VersionInfo encode(SchemaRegistryContract.VersionInfo versionInfo) {
         return null;
     }
-
-    public static SchemaRegistryContract.VersionInfo decode(VersionInfo versionInfo) {
-        return null;
-    }
-
+    
     public static SchemaInfo encode(SchemaRegistryContract.SchemaInfo schemaWithVersion) {
         return null;
     }
-
-    public static SchemaRegistryContract.CompressionType decode(CompressionType compressionType) {
-        return null;
-    }
-
+    
     public static EncodingId encode(SchemaRegistryContract.EncodingId encodingInfo) {
         return null;
     }
@@ -90,4 +93,5 @@ public class ModelHelper {
     public static CompressionsList encodeCompressionList(List<SchemaRegistryContract.CompressionType> list) {
         return null;
     }
+    // endregion
 }

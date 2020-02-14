@@ -16,36 +16,65 @@ package io.pravega.schemaregistry.server.rest.generated.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.server.rest.generated.model.Compatibility;
+import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * UpdateCompatibilityPolicyRequest
+ * Rule
  */
 
-public class UpdateCompatibilityPolicyRequest   {
-  @JsonProperty("compatibility")
-  private Compatibility compatibility = null;
+public class Rule   {
+  /**
+   * Gets or Sets ruleType
+   */
+  public enum RuleTypeEnum {
+    COMPATIBILITY("Compatibility");
 
-  public UpdateCompatibilityPolicyRequest compatibility(Compatibility compatibility) {
-    this.compatibility = compatibility;
+    private String value;
+
+    RuleTypeEnum(String value) {
+      this.value = value;
+    }
+
+    @Override
+    @JsonValue
+    public String toString() {
+      return String.valueOf(value);
+    }
+
+    @JsonCreator
+    public static RuleTypeEnum fromValue(String text) {
+      for (RuleTypeEnum b : RuleTypeEnum.values()) {
+        if (String.valueOf(b.value).equals(text)) {
+          return b;
+        }
+      }
+      return null;
+    }
+  }
+
+  @JsonProperty("ruleType")
+  private RuleTypeEnum ruleType = null;
+
+  public Rule ruleType(RuleTypeEnum ruleType) {
+    this.ruleType = ruleType;
     return this;
   }
 
   /**
-   * Get compatibility
-   * @return compatibility
+   * Get ruleType
+   * @return ruleType
    **/
-  @JsonProperty("compatibility")
+  @JsonProperty("ruleType")
   @ApiModelProperty(value = "")
-  public Compatibility getCompatibility() {
-    return compatibility;
+  public RuleTypeEnum getRuleType() {
+    return ruleType;
   }
 
-  public void setCompatibility(Compatibility compatibility) {
-    this.compatibility = compatibility;
+  public void setRuleType(RuleTypeEnum ruleType) {
+    this.ruleType = ruleType;
   }
 
 
@@ -57,22 +86,22 @@ public class UpdateCompatibilityPolicyRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UpdateCompatibilityPolicyRequest updateCompatibilityPolicyRequest = (UpdateCompatibilityPolicyRequest) o;
-    return Objects.equals(this.compatibility, updateCompatibilityPolicyRequest.compatibility);
+    Rule rule = (Rule) o;
+    return Objects.equals(this.ruleType, rule.ruleType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compatibility);
+    return Objects.hash(ruleType);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class UpdateCompatibilityPolicyRequest {\n");
+    sb.append("class Rule {\n");
     
-    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
+    sb.append("    ruleType: ").append(toIndentedString(ruleType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

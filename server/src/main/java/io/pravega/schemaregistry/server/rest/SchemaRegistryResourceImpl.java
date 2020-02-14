@@ -9,16 +9,12 @@
  */
 package io.pravega.schemaregistry.server.rest;
 
-import io.pravega.client.netty.impl.ConnectionFactory;
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.contract.Compatibility;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
 import io.pravega.schemaregistry.exceptions.EntityExistsException;
 import io.pravega.schemaregistry.server.rest.generated.api.NotFoundException;
 import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CanReadUsingSchemaRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CheckCompatibilityRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
@@ -27,12 +23,13 @@ import io.pravega.schemaregistry.server.rest.generated.model.EncodingInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GroupsList;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolutionList;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersionList;
 import io.pravega.schemaregistry.server.rest.generated.model.ScopeProperty;
 import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
-import io.pravega.schemaregistry.server.rest.generated.model.UpdateCompatibilityPolicyRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.ValidateRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.shared.NameUtils;
@@ -46,7 +43,8 @@ import javax.ws.rs.core.SecurityContext;
 
 import java.util.concurrent.CompletionException;
 
-import static javax.ws.rs.core.Response.*;
+import static javax.ws.rs.core.Response.Status;
+import static javax.ws.rs.core.Response.status;
 
 /**
  * Schema Registry Resource implementation.
@@ -57,11 +55,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     @Context
     HttpHeaders headers;
 
-    private ConnectionFactory connectionFactory;
     private SchemaRegistryService registryService;
     
-    public SchemaRegistryResourceImpl(ConnectionFactory connectionFactory, SchemaRegistryService registryService) {
-        this.connectionFactory = connectionFactory;
+    public SchemaRegistryResourceImpl(SchemaRegistryService registryService) {
         this.registryService = registryService;
     }
 
@@ -111,12 +107,26 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     }
 
     @Override
-    public void listGroups(String scopeName, String ERROR_UNKNOWN, SecurityContext securityContext,
+    public void deleteScope(String scopeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        registryService.deleteScope(scopeName)
+                       .thenApply(status -> {
+                           return Response.status(Status.OK).build(); })
+                       .exceptionally(exception -> {
+                           log.warn("getGroupProperties failed with exception: ", exception);
+                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                       .thenApply(response -> {
+                           asyncResponse.resume(response);
+                           return response;
+                       });
+    }
+
+    @Override
+    public void listGroups(String scopeName, SecurityContext securityContext,
                            AsyncResponse asyncResponse) throws NotFoundException {
         registryService.listGroupsInScope(scopeName)
                        .thenApply(groupsInScope -> {
                            GroupsList groupsList = new GroupsList();
-                           groupsInScope.forEach((x, y) -> groupsList.addGroupsItem(ModelHelper.convertToGroupProperty(x, y)));
+                           groupsInScope.forEach((x, y) -> groupsList.addGroupsItem(ModelHelper.encode(x, y)));
                            return Response.status(Status.OK).entity(groupsList).build(); })
                        .exceptionally(exception -> {
                            if (Exceptions.unwrap(exception) instanceof NotFoundException) {
@@ -134,9 +144,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     public void createGroup(String scopeName, CreateGroupRequest createGroupRequest, SecurityContext securityContext,
                             AsyncResponse asyncResponse) throws NotFoundException {
         SchemaRegistryContract.SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
-        Compatibility compatibility = ModelHelper.decode(createGroupRequest.getCompatibilityPolicy());
+        SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         SchemaRegistryContract.GroupProperties properties = new SchemaRegistryContract.GroupProperties(
-                schemaType, compatibility, createGroupRequest.getGroupByEventType(), createGroupRequest.getEnableEncoding());
+                schemaType, validationRules, createGroupRequest.getGroupByEventType(), createGroupRequest.getEnableEncoding());
         registryService.createGroup(scopeName, createGroupRequest.getGroupName(), properties)
                        .thenApply(createStatus -> {
                            if (!createStatus) {
@@ -151,7 +161,6 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
                            return response;
                        });
     }
-
 
     @Override
     public void getGroupProperties(String scopeName, String groupName, SecurityContext securityContext,
@@ -168,11 +177,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     }
 
     @Override
-    public void updateCompatibilityPolicy(String scopeName, String groupName, UpdateCompatibilityPolicyRequest updateCompatibilityPolicyRequest,
-                                          SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        Compatibility compatibility = ModelHelper.decode(updateCompatibilityPolicyRequest.getCompatibility());
-        registryService.updateCompatibilityPolicy(scopeName, groupName, compatibility)
-                       .thenApply(status -> Response.status(Status.OK).build())
+    public void updateSchemaValidationRules(String scopeName, String groupName, UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        SchemaValidationRules rules = ModelHelper.decode(updateValidationRulesPolicyRequest.getValidationRules());
+        registryService.updateSchemaValidationPolicy(scopeName, groupName, rules)
+                       .thenApply(groupProperty -> Response.status(Status.OK).build())
                        .exceptionally(exception -> {
                            log.warn("getGroupProperties failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
@@ -196,18 +204,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
                            return response;
                        });
     }
-
-    @Override
-    public void deleteScope(String scopeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        
-    }
-
+    
     @Override
     public void getGroupSchemas(String scopeName, String groupName, SecurityContext securityContext,
                                 AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getAllSchemas(scopeName, groupName, null)
-                       .thenApply(schemasWithVersions -> {
-                           SchemaWithVersionList list = ModelHelper.encode(schemasWithVersions);
+        registryService.getGroupEvolutionHistory(scopeName, groupName, null)
+                       .thenApply(schemasEvolutionList -> {
+                           SchemaEvolutionList list = ModelHelper.encode(schemasEvolutionList);
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
                            log.warn("getGroupProperties failed with exception: ", exception);
@@ -252,7 +255,23 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
                            return response;
                        });
     }
-    
+
+    @Override
+    public void validate(String scopeName, String groupName, ValidateRequest validateRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        SchemaRegistryContract.SchemaInfo schemaInfo = ModelHelper.decode(validateRequest.getSchemaInfo());
+        SchemaValidationRules rules = ModelHelper.decode(validateRequest.getValidationRules());
+        registryService.validateSchema(scopeName, groupName, schemaInfo, rules)
+                       .thenApply(compatible -> {
+                           return Response.status(Status.OK).build(); })
+                       .exceptionally(exception -> {
+                           log.warn("getGroupProperties failed with exception: ", exception);
+                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                       .thenApply(response -> {
+                           asyncResponse.resume(response);
+                           return response;
+                       });
+    }
+
     @Override
     public void getSchemaFromVersion(String scopeName, String groupName, GetSchemaFromVersionRequest getSchemaFromVersionRequest,
                                      SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
@@ -340,9 +359,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     @Override
     public void getSubGroupSchemas(String scopeName, String groupName, String subgroupName, SecurityContext securityContext, 
                                        AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getAllSchemas(scopeName, groupName, subgroupName)
+        registryService.getGroupEvolutionHistory(scopeName, groupName, subgroupName)
                        .thenApply(schemasWithVersions -> {
-                           SchemaWithVersionList list = ModelHelper.encode(schemasWithVersions);
+                           SchemaEvolutionList list = ModelHelper.encode(schemasWithVersions);
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
                            log.warn("getGroupProperties failed with exception: ", exception);
@@ -351,38 +370,5 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
                            asyncResponse.resume(response);
                            return response;
                        });
-    }
-
-
-    @Override
-    public void canRead(String scopeName, String groupName, CanReadUsingSchemaRequest canReadUsingSchemaRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        SchemaRegistryContract.VersionInfo writerVersion = ModelHelper.decode(canReadUsingSchemaRequest.getWriterVersion());
-        SchemaRegistryContract.VersionInfo readerVersion = ModelHelper.decode(canReadUsingSchemaRequest.getReaderVersion());
-        registryService.canRead(scopeName, groupName, writerVersion, readerVersion)
-                       .thenApply(canRead -> {
-                           return Response.status(Status.OK).build(); })
-                       .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
-                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
-                       .thenApply(response -> {
-                           asyncResponse.resume(response);
-                           return response;
-                       });
-    }
-
-    @Override
-    public void checkCompatibility(String scopeName, String groupName, CheckCompatibilityRequest checkCompatibilityRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        SchemaRegistryContract.SchemaInfo schemaInfo = ModelHelper.decode(checkCompatibilityRequest.getSchemaInfo());
-        registryService.checkCompatibility(scopeName, groupName, schemaInfo)
-                       .thenApply(compatible -> {
-                           return Response.status(Status.OK).build(); })
-                       .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
-                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
-                       .thenApply(response -> {
-                           asyncResponse.resume(response);
-                           return response;
-                       });
-
     }
 }

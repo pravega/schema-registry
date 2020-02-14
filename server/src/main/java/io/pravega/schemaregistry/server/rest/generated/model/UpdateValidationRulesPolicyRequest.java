@@ -16,46 +16,36 @@ package io.pravega.schemaregistry.server.rest.generated.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaWithVersionList
+ * UpdateValidationRulesPolicyRequest
  */
 
-public class SchemaWithVersionList   {
-  @JsonProperty("scopes")
-  private List<SchemaWithVersion> scopes = null;
+public class UpdateValidationRulesPolicyRequest   {
+  @JsonProperty("validationRules")
+  private SchemaValidationRules validationRules = null;
 
-  public SchemaWithVersionList scopes(List<SchemaWithVersion> scopes) {
-    this.scopes = scopes;
-    return this;
-  }
-
-  public SchemaWithVersionList addScopesItem(SchemaWithVersion scopesItem) {
-    if (this.scopes == null) {
-      this.scopes = new ArrayList<SchemaWithVersion>();
-    }
-    this.scopes.add(scopesItem);
+  public UpdateValidationRulesPolicyRequest validationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
     return this;
   }
 
   /**
-   * Get scopes
-   * @return scopes
+   * Get validationRules
+   * @return validationRules
    **/
-  @JsonProperty("scopes")
+  @JsonProperty("validationRules")
   @ApiModelProperty(value = "")
-  public List<SchemaWithVersion> getScopes() {
-    return scopes;
+  public SchemaValidationRules getValidationRules() {
+    return validationRules;
   }
 
-  public void setScopes(List<SchemaWithVersion> scopes) {
-    this.scopes = scopes;
+  public void setValidationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
   }
 
 
@@ -67,22 +57,22 @@ public class SchemaWithVersionList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaWithVersionList schemaWithVersionList = (SchemaWithVersionList) o;
-    return Objects.equals(this.scopes, schemaWithVersionList.scopes);
+    UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest = (UpdateValidationRulesPolicyRequest) o;
+    return Objects.equals(this.validationRules, updateValidationRulesPolicyRequest.validationRules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(scopes);
+    return Objects.hash(validationRules);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaWithVersionList {\n");
+    sb.append("class UpdateValidationRulesPolicyRequest {\n");
     
-    sb.append("    scopes: ").append(toIndentedString(scopes)).append("\n");
+    sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("}");
     return sb.toString();
   }

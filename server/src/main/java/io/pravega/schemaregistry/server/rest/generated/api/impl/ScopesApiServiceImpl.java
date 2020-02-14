@@ -4,8 +4,6 @@ import io.pravega.schemaregistry.server.rest.generated.api.*;
 import io.pravega.schemaregistry.server.rest.generated.model.*;
 
 import io.pravega.schemaregistry.server.rest.generated.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CanReadUsingSchemaRequest;
-import io.pravega.schemaregistry.server.rest.generated.model.CheckCompatibilityRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CompressionsList;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateGroupRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.CreateScopeRequest;
@@ -15,11 +13,12 @@ import io.pravega.schemaregistry.server.rest.generated.model.GetEncodingIdReques
 import io.pravega.schemaregistry.server.rest.generated.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.GroupProperty;
 import io.pravega.schemaregistry.server.rest.generated.model.GroupsList;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaEvolutionList;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersion;
-import io.pravega.schemaregistry.server.rest.generated.model.SchemaWithVersionList;
 import io.pravega.schemaregistry.server.rest.generated.model.ScopesList;
-import io.pravega.schemaregistry.server.rest.generated.model.UpdateCompatibilityPolicyRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.server.rest.generated.model.ValidateRequest;
 import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 
 import java.util.List;
@@ -36,16 +35,6 @@ import javax.validation.constraints.*;
 public class ScopesApiServiceImpl extends ScopesApiService {
     @Override
     public Response addSchemaToGroupIfAbsent(String scopeName, String groupName, AddSchemaToGroupRequest addSchemaToGroupRequest, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response canRead(String scopeName, String groupName, CanReadUsingSchemaRequest canReadUsingSchemaRequest, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response checkCompatibility(String scopeName, String groupName, CheckCompatibilityRequest checkCompatibilityRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -115,7 +104,7 @@ public class ScopesApiServiceImpl extends ScopesApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response listGroups(String scopeName,  String ERROR_UNKNOWN, SecurityContext securityContext) throws NotFoundException {
+    public Response listGroups(String scopeName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -125,7 +114,12 @@ public class ScopesApiServiceImpl extends ScopesApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response updateCompatibilityPolicy(String scopeName, String groupName, UpdateCompatibilityPolicyRequest updateCompatibilityPolicyRequest, SecurityContext securityContext) throws NotFoundException {
+    public Response updateSchemaValidationRules(String scopeName, String groupName, UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
+    public Response validate(String scopeName, String groupName, ValidateRequest validateRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

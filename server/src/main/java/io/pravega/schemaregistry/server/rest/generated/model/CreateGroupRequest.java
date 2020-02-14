@@ -16,8 +16,8 @@ package io.pravega.schemaregistry.server.rest.generated.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.server.rest.generated.model.Compatibility;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaType;
+import io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -33,8 +33,8 @@ public class CreateGroupRequest   {
   @JsonProperty("schemaType")
   private SchemaType schemaType = null;
 
-  @JsonProperty("compatibilityPolicy")
-  private Compatibility compatibilityPolicy = null;
+  @JsonProperty("validationRules")
+  private SchemaValidationRules validationRules = null;
 
   @JsonProperty("enableEncoding")
   private Boolean enableEncoding = null;
@@ -80,23 +80,23 @@ public class CreateGroupRequest   {
     this.schemaType = schemaType;
   }
 
-  public CreateGroupRequest compatibilityPolicy(Compatibility compatibilityPolicy) {
-    this.compatibilityPolicy = compatibilityPolicy;
+  public CreateGroupRequest validationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
     return this;
   }
 
   /**
-   * Get compatibilityPolicy
-   * @return compatibilityPolicy
+   * Get validationRules
+   * @return validationRules
    **/
-  @JsonProperty("compatibilityPolicy")
+  @JsonProperty("validationRules")
   @ApiModelProperty(value = "")
-  public Compatibility getCompatibilityPolicy() {
-    return compatibilityPolicy;
+  public SchemaValidationRules getValidationRules() {
+    return validationRules;
   }
 
-  public void setCompatibilityPolicy(Compatibility compatibilityPolicy) {
-    this.compatibilityPolicy = compatibilityPolicy;
+  public void setValidationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
   }
 
   public CreateGroupRequest enableEncoding(Boolean enableEncoding) {
@@ -149,14 +149,14 @@ public class CreateGroupRequest   {
     CreateGroupRequest createGroupRequest = (CreateGroupRequest) o;
     return Objects.equals(this.groupName, createGroupRequest.groupName) &&
         Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
-        Objects.equals(this.compatibilityPolicy, createGroupRequest.compatibilityPolicy) &&
+        Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
         Objects.equals(this.enableEncoding, createGroupRequest.enableEncoding) &&
         Objects.equals(this.groupByEventType, createGroupRequest.groupByEventType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, compatibilityPolicy, enableEncoding, groupByEventType);
+    return Objects.hash(groupName, schemaType, validationRules, enableEncoding, groupByEventType);
   }
 
 
@@ -167,7 +167,7 @@ public class CreateGroupRequest   {
     
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
-    sb.append("    compatibilityPolicy: ").append(toIndentedString(compatibilityPolicy)).append("\n");
+    sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
     sb.append("    groupByEventType: ").append(toIndentedString(groupByEventType)).append("\n");
     sb.append("}");

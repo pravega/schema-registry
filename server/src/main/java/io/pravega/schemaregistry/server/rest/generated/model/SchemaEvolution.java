@@ -18,22 +18,26 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaInfo;
 import io.pravega.schemaregistry.server.rest.generated.model.SchemaValidationRules;
+import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * AddSchemaToGroupRequest
+ * SchemaEvolution
  */
 
-public class AddSchemaToGroupRequest   {
+public class SchemaEvolution   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
-  @JsonProperty("rules")
-  private SchemaValidationRules rules = null;
+  @JsonProperty("version")
+  private VersionInfo version = null;
 
-  public AddSchemaToGroupRequest schemaInfo(SchemaInfo schemaInfo) {
+  @JsonProperty("validationRules")
+  private SchemaValidationRules validationRules = null;
+
+  public SchemaEvolution schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -52,23 +56,42 @@ public class AddSchemaToGroupRequest   {
     this.schemaInfo = schemaInfo;
   }
 
-  public AddSchemaToGroupRequest rules(SchemaValidationRules rules) {
-    this.rules = rules;
+  public SchemaEvolution version(VersionInfo version) {
+    this.version = version;
     return this;
   }
 
   /**
-   * Get rules
-   * @return rules
+   * Get version
+   * @return version
    **/
-  @JsonProperty("rules")
+  @JsonProperty("version")
   @ApiModelProperty(value = "")
-  public SchemaValidationRules getRules() {
-    return rules;
+  public VersionInfo getVersion() {
+    return version;
   }
 
-  public void setRules(SchemaValidationRules rules) {
-    this.rules = rules;
+  public void setVersion(VersionInfo version) {
+    this.version = version;
+  }
+
+  public SchemaEvolution validationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
+    return this;
+  }
+
+  /**
+   * Get validationRules
+   * @return validationRules
+   **/
+  @JsonProperty("validationRules")
+  @ApiModelProperty(value = "")
+  public SchemaValidationRules getValidationRules() {
+    return validationRules;
+  }
+
+  public void setValidationRules(SchemaValidationRules validationRules) {
+    this.validationRules = validationRules;
   }
 
 
@@ -80,24 +103,26 @@ public class AddSchemaToGroupRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddSchemaToGroupRequest addSchemaToGroupRequest = (AddSchemaToGroupRequest) o;
-    return Objects.equals(this.schemaInfo, addSchemaToGroupRequest.schemaInfo) &&
-        Objects.equals(this.rules, addSchemaToGroupRequest.rules);
+    SchemaEvolution schemaEvolution = (SchemaEvolution) o;
+    return Objects.equals(this.schemaInfo, schemaEvolution.schemaInfo) &&
+        Objects.equals(this.version, schemaEvolution.version) &&
+        Objects.equals(this.validationRules, schemaEvolution.validationRules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, rules);
+    return Objects.hash(schemaInfo, version, validationRules);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddSchemaToGroupRequest {\n");
+    sb.append("class SchemaEvolution {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
-    sb.append("    rules: ").append(toIndentedString(rules)).append("\n");
+    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("}");
     return sb.toString();
   }
