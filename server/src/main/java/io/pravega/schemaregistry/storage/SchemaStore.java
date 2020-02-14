@@ -9,14 +9,18 @@
  */
 package io.pravega.schemaregistry.storage;
 
-import io.pravega.schemaregistry.contract.Compatibility;
+import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.EncodingId;
+import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.VersionInfo;
 import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.*;
 
 public interface SchemaStore {
     CompletableFuture<Void> createScope(String scope);
@@ -36,7 +40,7 @@ public interface SchemaStore {
 
     CompletableFuture<List<String>> listSubGroups(String scope, String group);
     
-    CompletableFuture<Pair<List<SchemaWithVersion>, ContinuationToken>> listSchemasInGroup(String scope, String group, 
+    CompletableFuture<Pair<List<SchemaWithVersion>, ContinuationToken>> listSchemasInGroup(String scope, String group,
                                                                                            ContinuationToken token);
 
     CompletableFuture<Pair<List<SchemaWithVersion>, ContinuationToken>> listSchemasInSubgroup(String scope, String group,

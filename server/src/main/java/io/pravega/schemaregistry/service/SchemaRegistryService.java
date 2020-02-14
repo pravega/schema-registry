@@ -9,20 +9,20 @@
  */
 package io.pravega.schemaregistry.service;
 
+import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.EncodingId;
+import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.VersionInfo;
+
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.CompressionType;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.EncodingId;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.EncodingInfo;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.GroupProperties;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaInfo;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaWithVersion;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract.VersionInfo;
 
 public interface SchemaRegistryService {
     /**
@@ -171,12 +171,12 @@ public interface SchemaRegistryService {
      * @param subgroup Name of subgroup. 
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    CompletableFuture<List<SchemaRegistryContract.SchemaEvolution>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
+    CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}
      * the subgroup name is taken from the SchemaInfo. 
-     * Version is uniquely identified by {@link SchemaInfo#schemaDataBase64}. 
+     * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      *
      * @param scope Name of scope. 
      * @param group Name of group. 

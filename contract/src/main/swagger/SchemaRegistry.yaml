@@ -42,7 +42,7 @@ paths:
         200:
           description: List of currently available Scopes
           schema:
-            $ref: "#/definitions/ScopesList"
+            $ref: "#/definitions/ScopesListModel"
         500:
           description: Internal server error while fetching list of scopes
     post:
@@ -110,7 +110,7 @@ paths:
         200:
           description: List of all groups under the given scope namespace
           schema:
-            $ref: "#/definitions/GroupsList"
+            $ref: "#/definitions/GroupsListModel"
         404:
           description: Scope not found
         500:
@@ -133,9 +133,9 @@ paths:
               groupName:
                 type: string
               schemaType:
-                  $ref: "#/definitions/SchemaType"
+                  $ref: "#/definitions/SchemaTypeModel"
               validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
+                  $ref: "#/definitions/SchemaValidationRulesModel"
               enableEncoding:
                 type: boolean
               groupByEventType:
@@ -172,7 +172,7 @@ paths:
         200:
           description: Found Group properties
           schema:
-            $ref: "#/definitions/GroupProperty"
+            $ref: "#/definitions/GroupPropertiesModel"
         404:
           description: Scope or Group with given name not found
         500:
@@ -193,7 +193,7 @@ paths:
             type: object
             properties:
               validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
+                  $ref: "#/definitions/SchemaValidationRulesModel"
       responses:
         200:
           description: Updated schema validation policy
@@ -238,7 +238,7 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaEvolutionList"
+            $ref: "#/definitions/SchemaEvolutionListModel"
         404:
           description: Scope or Group with given name not found
         500:
@@ -259,16 +259,16 @@ paths:
             type: object
             properties:
               schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
+                  $ref: "#/definitions/SchemaInfoModel"
               rules:
-                  $ref: "#/definitions/SchemaValidationRules"
+                  $ref: "#/definitions/SchemaValidationRulesModel"
       produces:
         - application/json
       responses:
         201:
           description: Successfully added schema to the group
           schema:
-            $ref: "#/definitions/VersionInfo"
+            $ref: "#/definitions/VersionInfoModel"
         404:
           description: Scope not found
         500:
@@ -296,7 +296,7 @@ paths:
         200:
           description: Found Group properties
           schema:
-            $ref: "#/definitions/SchemaWithVersion"
+            $ref: "#/definitions/SchemaWithVersionModel"
         404:
           description: Scope or Group with given name not found
         500:
@@ -329,9 +329,9 @@ paths:
             type: object
             properties:
               schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
+                  $ref: "#/definitions/SchemaInfoModel"
               validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
+                  $ref: "#/definitions/SchemaValidationRulesModel"
       produces:
         - application/json
       responses:
@@ -369,14 +369,14 @@ paths:
             type: object
             properties:
               versionInfo:
-                  $ref: "#/definitions/VersionInfo"
+                  $ref: "#/definitions/VersionInfoModel"
       produces:
         - application/json
       responses:
         200:
           description: Schema corresponding to the version
           schema:
-            $ref: "#/definitions/SchemaInfo"
+            $ref: "#/definitions/SchemaInfoModel"
         404:
           description: Scope or Group with given name not found
         500:
@@ -409,7 +409,7 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaEvolutionList"
+            $ref: "#/definitions/SchemaEvolutionListModel"
         404:
           description: Scope or Group with given name not found
         500:
@@ -442,7 +442,7 @@ paths:
         200:
           description: Found latest schema in subgroup
           schema:
-            $ref: "#/definitions/SchemaWithVersion"
+            $ref: "#/definitions/SchemaWithVersionModel"
         404:
           description: Scope or Group with given name not found
         500:
@@ -477,16 +477,16 @@ paths:
               subgroupName: 
                 type: string
               versionInfo:
-                  $ref: "#/definitions/VersionInfo"
+                  $ref: "#/definitions/VersionInfoModel"
               compressionType:
-                  $ref: "#/definitions/CompressionType"
+                  $ref: "#/definitions/CompressionTypeModel"
       produces:
         - application/json
       responses:
         200:
           description: Found Encoding
           schema:
-            $ref: "#/definitions/EncodingId"
+            $ref: "#/definitions/EncodingIdModel"
         404:
           description: Scope or Group or encoding id with given name not found
         500:
@@ -520,7 +520,7 @@ paths:
         200:
           description: Found Encoding
           schema:
-            $ref: "#/definitions/EncodingInfo"
+            $ref: "#/definitions/EncodingInfoModel"
         404:
           description: Scope or Group or encoding id with given name not found
         500:
@@ -548,45 +548,45 @@ paths:
         200:
           description: Found Compressions
           schema:
-            $ref: "#/definitions/CompressionsList"
+            $ref: "#/definitions/CompressionsListModel"
         404:
           description: Scope or Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
 definitions:
-  ScopeProperty:
+  ScopePropertyModel:
     type: object
     properties:
       scopeName:
         type: string
-  ScopesList:
+  ScopesListModel:
     type: object
     properties:
       scopes:
         type: array
         items:
-          $ref: "#/definitions/ScopeProperty"
-  GroupsList:
+          $ref: "#/definitions/ScopePropertyModel"
+  GroupsListModel:
     type: object
     properties:
       groups:
         type: array
         items:
-          $ref: "#/definitions/GroupProperty"
-  GroupProperty:
+          $ref: "#/definitions/GroupPropertiesModel"
+  GroupPropertiesModel:
     type: object
     properties:
       groupName:
         type: string
-      compatibilityPolicy:
-          $ref: "#/definitions/Compatibility"
+      schemaValidationRules:
+          $ref: "#/definitions/SchemaValidationRulesModel"
       schemaType:
-          $ref: "#/definitions/SchemaType"
+          $ref: "#/definitions/SchemaTypeModel"
       subgroupBySchemaName:
           type: boolean
       enableEncoding:
           type: boolean
-  SchemaType:
+  SchemaTypeModel:
     type: object
     properties:
       schemaType:
@@ -599,13 +599,13 @@ definitions:
           - Custom
       customTypeName:
         type: string  
-  SchemaInfo:
+  SchemaInfoModel:
     type: object
     properties:
       schemaName:
         type: string
       schemaType:
-          $ref: "#/definitions/SchemaType"
+          $ref: "#/definitions/SchemaTypeModel"
       schemaData:
         type: string
         format: binary
@@ -615,7 +615,7 @@ definitions:
           type: string
           minLength: 0
           maxLength: 40
-  VersionInfo:
+  VersionInfoModel:
     type: object
     properties:
       schemaName:
@@ -623,30 +623,30 @@ definitions:
       version:
         type: integer
         format: int32
-  SchemaWithVersion:
+  SchemaWithVersionModel:
     type: object
     properties:
       schemaInfo:
-        $ref: "#/definitions/SchemaInfo"
+        $ref: "#/definitions/SchemaInfoModel"
       version:
-        $ref: "#/definitions/VersionInfo"
-  SchemaEvolution:
+        $ref: "#/definitions/VersionInfoModel"
+  SchemaEvolutionModel:
     type: object
     properties:
       schemaInfo:
-        $ref: "#/definitions/SchemaInfo"
+        $ref: "#/definitions/SchemaInfoModel"
       version:
-        $ref: "#/definitions/VersionInfo"
+        $ref: "#/definitions/VersionInfoModel"
       validationRules:
-        $ref: "#/definitions/SchemaValidationRules"
-  SchemaEvolutionList:
+        $ref: "#/definitions/SchemaValidationRulesModel"
+  SchemaEvolutionListModel:
     type: object
     properties:
-      scopes:
+      schemas:
         type: array
         items:
-          $ref: "#/definitions/SchemaEvolution"        
-  CompressionType:
+          $ref: "#/definitions/SchemaEvolutionModel"        
+  CompressionTypeModel:
     type: object
     properties:
       compressionType:
@@ -658,25 +658,25 @@ definitions:
           - Custom
       customTypeName:
         type: string
-  EncodingId:
+  EncodingIdModel:
     type: object
     properties:
       encodingId:
         type: integer
         format: int32
-  EncodingInfo:
+  EncodingInfoModel:
     type: object
     properties:
       schemaInfo:
-          $ref: "#/definitions/SchemaInfo"        
+          $ref: "#/definitions/SchemaInfoModel"        
       versionInfo:
-          $ref: "#/definitions/VersionInfo"        
+          $ref: "#/definitions/VersionInfoModel"        
       compressionType:
-          $ref: "#/definitions/CompressionType"
-  Compatibility:
+          $ref: "#/definitions/CompressionTypeModel"
+  CompatibilityModel:
     type: object
     properties:
-       policy:
+      policy:
         type: string
         enum:
           - AllowAny
@@ -690,30 +690,30 @@ definitions:
           - BackwardAndForwardTill
           - Full
           - Full_Transitive
-        backwardTill:
-            $ref: "#/definitions/VersionInfo"        
-        forwardTill:
-            $ref: "#/definitions/VersionInfo"        
-  SchemaValidationRules:
+      backwardTill:
+        $ref: "#/definitions/VersionInfoModel"        
+      forwardTill:
+        $ref: "#/definitions/VersionInfoModel"        
+  SchemaValidationRulesModel:
     type: object
     properties:
        rules:
         type: array
         items:
-            $ref: "#/definitions/Rule"        
-  Rule:
+            $ref: "#/definitions/RuleModel"        
+  RuleModel:
     type: object
     properties:
        ruleType:
         type: string
         enum:
           - Compatibility
-        compatibilityRule:
-            $ref: "#/definitions/Compatibility"        
-  CompressionsList:
+       compatibilityRule:
+        $ref: "#/definitions/CompatibilityModel"
+  CompressionsListModel:
     type: object
     properties:
        compressionTypes:
         type: array
         items:
-          $ref: "#/definitions/CompressionType"
+          $ref: "#/definitions/CompressionTypeModel"
