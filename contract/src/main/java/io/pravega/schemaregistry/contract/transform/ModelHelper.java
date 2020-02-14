@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.server.rest;
+package io.pravega.schemaregistry.contract.transform;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -66,7 +66,7 @@ public class ModelHelper {
         return new SchemaValidationRules(rulesList);
     }
 
-    private static SchemaValidationRule decode(RuleModel rule) {
+    public static SchemaValidationRule decode(RuleModel rule) {
         switch (rule.getRuleType()) {
             case COMPATIBILITY: 
                 return decode(rule.getCompatibilityRule());
@@ -108,11 +108,11 @@ public class ModelHelper {
                                          .version(encode(schemaEvolution.getVersion())).validationRules(encode(schemaEvolution.getRules()));
     }
 
-    private static SchemaValidationRulesModel encode(SchemaValidationRules rules) {
+    public static SchemaValidationRulesModel encode(SchemaValidationRules rules) {
         return new SchemaValidationRulesModel().rules(rules.getRules().stream().map(ModelHelper::encode).collect(Collectors.toList()));
     }
 
-    private static RuleModel encode(SchemaValidationRule rule) {
+    public static RuleModel encode(SchemaValidationRule rule) {
         if (rule instanceof Compatibility) {
             RuleModel model = new RuleModel().ruleType(RuleModel.RuleTypeEnum.COMPATIBILITY);
             model = model.compatibilityRule(encode((Compatibility) rule));
@@ -122,7 +122,7 @@ public class ModelHelper {
         }
     }
 
-    private static CompatibilityModel encode(Compatibility compatibility) {
+    public static CompatibilityModel encode(Compatibility compatibility) {
         CompatibilityModel policy = new CompatibilityModel().policy(
                 CompatibilityModel.PolicyEnum.fromValue(compatibility.getCompatibility().name()));
         if (compatibility.getBackwardTill() != null) {

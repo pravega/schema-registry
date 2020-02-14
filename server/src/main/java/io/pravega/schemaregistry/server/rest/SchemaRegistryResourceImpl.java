@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.server.rest;
 
 import io.pravega.common.Exceptions;
+import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
