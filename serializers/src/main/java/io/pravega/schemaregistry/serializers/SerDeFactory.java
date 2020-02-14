@@ -29,7 +29,7 @@ import java.util.function.BiFunction;
 import static io.pravega.schemaregistry.contract.SchemaRegistryContract.CompressionType;
 import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaType;
 
-public class SerializerFactory {
+public class SerDeFactory {
     private static final Compressor.Noop NOOP = new Compressor.Noop();
     public static final BiFunction<ByteBuffer, CompressionType, ByteBuffer> UNCOMPRESS_LAMBDA = (byteBuffer, compressionType) -> {
         switch (compressionType) {
@@ -42,7 +42,7 @@ public class SerializerFactory {
 
     private final SchemaRegistryClient registryClient;
 
-    public SerializerFactory(SchemaRegistryClient registryClient) {
+    public SerDeFactory(SchemaRegistryClient registryClient) {
         this.registryClient = registryClient;
     }
     

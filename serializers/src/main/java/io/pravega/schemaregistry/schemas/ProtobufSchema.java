@@ -18,7 +18,6 @@ import lombok.Data;
 import lombok.Getter;
 
 import javax.annotation.Nullable;
-import java.util.Collections;
 
 @Data
 public class ProtobufSchema<T extends Message> implements SchemaData<T> {
@@ -44,11 +43,6 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
     @Override
     public SchemaRegistryContract.SchemaInfo getSchemaInfo() {
         return schemaInfo;
-    }
-
-    @Override
-    public SchemaRegistryContract.SchemaType getSchemaType() {
-        return SchemaRegistryContract.SchemaType.Protobuf;
     }
 }
 

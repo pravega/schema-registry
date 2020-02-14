@@ -22,4 +22,6 @@ public class SerializerConfig {
     private final boolean deserializeIntoWriterSchema;
     private final SchemaRegistryContract.CompressionType compressionType;
     private final SchemaRegistryContract.SchemaValidationRules validationRules;
+    
+    
 }

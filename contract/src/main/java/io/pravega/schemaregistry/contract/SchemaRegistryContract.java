@@ -12,7 +12,9 @@ package io.pravega.schemaregistry.contract;
 import com.google.common.collect.ImmutableMap;
 import lombok.Data;
 
+import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 import java.util.concurrent.atomic.AtomicReference;
 
 public interface SchemaRegistryContract {
@@ -59,8 +61,31 @@ public interface SchemaRegistryContract {
     class SchemaInfo {
         private final String name;
         private final SchemaType schemaType;
-        private final String schemaDataBase64;
+        private final byte[] schemaData;
         private final ImmutableMap<String, String> properties;
+
+        @Override
+        public boolean equals(Object o) {
+            if (this == o) {
+                return true;
+            }
+            if (o == null || getClass() != o.getClass()) {
+                return false;
+            }
+            SchemaInfo that = (SchemaInfo) o;
+            return Objects.equals(name, that.name) &&
+                    schemaType == that.schemaType &&
+                    Arrays.equals(schemaData, that.schemaData) &&
+                    Objects.equals(properties, that.properties);
+        }
+
+        @Override
+        public int hashCode() {
+
+            int result = Objects.hash(name, schemaType, properties);
+            result = 31 * result + Arrays.hashCode(schemaData);
+            return result;
+        }
     }
 
     enum SchemaType {

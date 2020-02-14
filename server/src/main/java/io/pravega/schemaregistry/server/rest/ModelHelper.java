@@ -24,7 +24,6 @@ import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaValidationRules;
 import io.pravega.schemaregistry.server.rest.generated.model.VersionInfo;
 
-import java.util.Base64;
 import java.util.List;
 
 public class ModelHelper {
@@ -32,7 +31,8 @@ public class ModelHelper {
     // region decode
     public static SchemaRegistryContract.SchemaInfo decode(SchemaInfo schemaInfo) {
         SchemaRegistryContract.SchemaType schemaType = decode(schemaInfo.getSchemaType());
-        return new SchemaRegistryContract.SchemaInfo(schemaInfo.getSchemaName(), schemaType, Base64.getEncoder().encodeToString(schemaInfo.getSchemaData()), 
+        return new SchemaRegistryContract.SchemaInfo(schemaInfo.getSchemaName(), schemaType, 
+                schemaInfo.getSchemaData(), 
                 ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 

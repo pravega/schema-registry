@@ -13,5 +13,6 @@ import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaIn
 
 public interface SchemaData<T> {
     byte[] getSchemaBytes();
+    
     SchemaInfo getSchemaInfo();
 }

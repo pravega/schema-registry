@@ -74,7 +74,7 @@ public abstract class AbstractPravegaSerializer<T> {
             this.version.compareAndSet(null, latestSchema.getVersion());
         } else {
             if (registerSchema) {
-                // register schema 
+                // register schema
                 this.version.compareAndSet(null, 
                         client.addSchemaIfAbsent(scope, groupId, schema.get(), config.getValidationRules()));
             } else {

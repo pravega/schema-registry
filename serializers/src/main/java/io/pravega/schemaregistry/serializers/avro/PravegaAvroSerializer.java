@@ -41,8 +41,9 @@ public class PravegaAvroSerializer<T> extends AbstractPravegaSerializer<T> {
     @Override
     protected void serialize(T var, SchemaRegistryContract.SchemaInfo schemaInfo, OutputStream outputStream) {
         Schema schema;
+        Schema.Parser parser = new Schema.Parser();
         if (avroSchema == null) {
-            schema = Schema.parse(new String(schemaInfo.getSchemaData()));
+            schema = parser.parse(new String(schemaInfo.getSchemaData()));
         } else {
             schema = avroSchema.getSchema();
         }

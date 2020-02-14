@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.schemas;
 
+import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import lombok.Getter;
 import org.apache.avro.Schema;
@@ -16,9 +17,7 @@ import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificData;
 
-import java.util.Collections;
-
-public class AvroSchema<T> implements SchemaData<T>{
+public class AvroSchema<T> implements SchemaData<T> {
     @Getter
     private final Schema schema;
     private final SchemaRegistryContract.SchemaInfo schemaInfo;
@@ -27,7 +26,7 @@ public class AvroSchema<T> implements SchemaData<T>{
         this.schema = schema;
         this.schemaInfo = new SchemaRegistryContract.SchemaInfo(
                 schema.getName(),
-                SchemaRegistryContract.SchemaType.Avro, getSchemaBytes(), Collections.emptyMap());
+                SchemaRegistryContract.SchemaType.Avro, getSchemaBytes(), ImmutableMap.of());
     }
 
     static <T> AvroSchema<T> of(Class<T> tClass) {
@@ -52,10 +51,5 @@ public class AvroSchema<T> implements SchemaData<T>{
     @Override
     public SchemaRegistryContract.SchemaInfo getSchemaInfo() {
         return schemaInfo;
-    }
-
-    @Override
-    public SchemaRegistryContract.SchemaType getSchemaType() {
-        return schemaInfo.getSchemaType();
     }
 }

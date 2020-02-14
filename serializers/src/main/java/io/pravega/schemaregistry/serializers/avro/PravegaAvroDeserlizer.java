@@ -41,21 +41,22 @@ public class PravegaAvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
     @Override
     protected T deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = Schema.parse(new String(writerSchemaInfo.getSchemaData()));
+        Schema.Parser parser = new Schema.Parser();
+        Schema writerSchema = parser.parse(new String(writerSchemaInfo.getSchemaData()));
         Schema readerSchema;
         if (avroSchema == null) {
             if (readerSchemaInfo == null) {
                 // read using writer schema
                 readerSchema = writerSchema;
             } else {
-                readerSchema = Schema.parse(new String(readerSchemaInfo.getSchemaData()));
+                readerSchema = parser.parse(new String(readerSchemaInfo.getSchemaData()));
             }
         } else {
             readerSchema = avroSchema.getSchema();
         }
         
         GenericDatumReader<T> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
-        BinaryDecoder _decoder = DecoderFactory.get().binaryDecoder(buffer.array(), null);
-        return genericDatumReader.read(null, _decoder);
+        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(buffer.array(), null);
+        return genericDatumReader.read(null, decoder);
     }
 }

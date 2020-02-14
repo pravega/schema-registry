@@ -14,8 +14,11 @@ import java.nio.ByteBuffer;
 import static io.pravega.schemaregistry.contract.SchemaRegistryContract.*;
 
 public interface Compressor {
+
     CompressionType getCompressionType();
+
     ByteBuffer compress(ByteBuffer data);
+
     ByteBuffer uncompress(ByteBuffer data);
     
     class Noop implements Compressor {

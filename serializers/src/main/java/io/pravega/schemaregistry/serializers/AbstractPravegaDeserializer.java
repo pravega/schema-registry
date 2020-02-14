@@ -56,7 +56,7 @@ public abstract class AbstractPravegaDeserializer<T> {
         this.groupId = groupId;
         this.client = client;
         this.schemaInfo = new AtomicReference<>();
-        if (schema != null){
+        if (schema != null) {
             schemaInfo.set(schema.getSchemaInfo());
         }
         this.config = config;

@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.Compatibility;
 import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import lombok.SneakyThrows;
 
@@ -41,9 +40,10 @@ public class PravegaSerDe<T> implements Serializer<T> {
         return abstractPravegaDeserializer.deserialize(data);
     }
 
-    public void addGroup(String scope, String groupId, SchemaRegistryContract.SchemaType schemaType, Compatibility compatibility,
-                          boolean allowSubgroups, boolean encodeHeader) {
-        registryClient.addGroup(scope, groupId, schemaType, compatibility, allowSubgroups, encodeHeader);
+    public void addGroup(String scope, String groupId, SchemaRegistryContract.SchemaType schemaType, 
+                         SchemaRegistryContract.SchemaValidationRules compatibility, boolean subgroupByEventType, 
+                         boolean enablingEncoding) {
+        registryClient.addGroup(scope, groupId, schemaType, compatibility, subgroupByEventType, enablingEncoding);
     }
 
 }
