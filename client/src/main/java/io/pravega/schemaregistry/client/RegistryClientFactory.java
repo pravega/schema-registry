@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.client.impl;
+package io.pravega.schemaregistry.client;
 
 import org.apache.commons.lang3.NotImplementedException;
 

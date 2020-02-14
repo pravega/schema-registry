@@ -6,12 +6,12 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.schemas;
 
-include 'client',
-        'common',
-        'server',
-        'serializers',
-        'contract'
+import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaInfo;
+
+public interface SchemaData<T> {
+    byte[] getSchemaBytes();
+    SchemaInfo getSchemaInfo();
+}

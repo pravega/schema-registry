@@ -1,0 +1,36 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ */
+package io.pravega.schemaregistry.serializers.protobuf;
+
+import com.google.protobuf.Message;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializers.AbstractPravegaSerializer;
+import io.pravega.schemaregistry.serializers.SerializerConfig;
+import lombok.SneakyThrows;
+import java.io.OutputStream;
+
+public class PravegaProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
+    ProtobufSchema<T> protobufSchema;
+    public PravegaProtobufSerializer(String scope, String groupId, String subGroupId,
+                                     SchemaRegistryClient client, ProtobufSchema<T> schema,
+                                     SerializerConfig config, Compressor compressor) {
+        super(scope, groupId, subGroupId, client, schema, config, compressor);
+        this.protobufSchema = schema;
+    }
+
+    @SneakyThrows
+    @Override
+    protected void serialize(T var, SchemaRegistryContract.SchemaInfo schemaInfo, OutputStream outputStream) {
+        var.writeTo(outputStream);
+    }
+}
