@@ -12,10 +12,14 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.Data;
 
 /**
- * Object that encapsulates schemaInfo with its associated version. 
+ * Describes changes to the group (or subgroup) and the validation rules {@link SchemaEvolutionEpoch#rules} that were 
+ * applied while registering {@link SchemaEvolutionEpoch#schema} and the unique {@link SchemaEvolutionEpoch#version} identifier 
+ * that was assigned to it. 
  */
 @Data
-public class SchemaWithVersion {
+public class SchemaEvolutionEpoch {
     private final SchemaInfo schema;
     private final VersionInfo version;
+    private final SchemaValidationRules rules;
 }
+

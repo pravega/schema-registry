@@ -11,6 +11,12 @@ package io.pravega.schemaregistry.contract.data;
 
 import lombok.Data;
 
+/**
+ * Different types of compressions used for compressing data while writing it to the stream. 
+ * A compression type and schema version combination uniquely identifies encoding format for the serialized data.
+ * If a custom compression type which is not identified by the enum is desired by the application, it can be specified using
+ * {@link Type#custom} with {@link CompressionType#customTypeName}.  
+ */
 @Data
 public class CompressionType {
     public enum Type {

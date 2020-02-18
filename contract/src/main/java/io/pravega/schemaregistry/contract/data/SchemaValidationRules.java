@@ -9,10 +9,11 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import com.google.common.collect.ImmutableList;
 import lombok.Data;
-import java.util.List;
 
 @Data
 public class SchemaValidationRules {
-    private final List<SchemaValidationRule> rules;
+    private final ImmutableList<SchemaValidationRule> rules;
+    private final Compatibility compatibility;
 }

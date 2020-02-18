@@ -16,11 +16,9 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.RuleModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.CompatibilityModel;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
@@ -28,34 +26,26 @@ import javax.validation.constraints.*;
  */
 
 public class SchemaValidationRulesModel   {
-  @JsonProperty("rules")
-  private List<RuleModel> rules = null;
+  @JsonProperty("compatibility")
+  private CompatibilityModel compatibility = null;
 
-  public SchemaValidationRulesModel rules(List<RuleModel> rules) {
-    this.rules = rules;
-    return this;
-  }
-
-  public SchemaValidationRulesModel addRulesItem(RuleModel rulesItem) {
-    if (this.rules == null) {
-      this.rules = new ArrayList<RuleModel>();
-    }
-    this.rules.add(rulesItem);
+  public SchemaValidationRulesModel compatibility(CompatibilityModel compatibility) {
+    this.compatibility = compatibility;
     return this;
   }
 
   /**
-   * Get rules
-   * @return rules
+   * Get compatibility
+   * @return compatibility
    **/
-  @JsonProperty("rules")
+  @JsonProperty("compatibility")
   @ApiModelProperty(value = "")
-  public List<RuleModel> getRules() {
-    return rules;
+  public CompatibilityModel getCompatibility() {
+    return compatibility;
   }
 
-  public void setRules(List<RuleModel> rules) {
-    this.rules = rules;
+  public void setCompatibility(CompatibilityModel compatibility) {
+    this.compatibility = compatibility;
   }
 
 
@@ -68,12 +58,12 @@ public class SchemaValidationRulesModel   {
       return false;
     }
     SchemaValidationRulesModel schemaValidationRulesModel = (SchemaValidationRulesModel) o;
-    return Objects.equals(this.rules, schemaValidationRulesModel.rules);
+    return Objects.equals(this.compatibility, schemaValidationRulesModel.compatibility);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(rules);
+    return Objects.hash(compatibility);
   }
 
 
@@ -82,7 +72,7 @@ public class SchemaValidationRulesModel   {
     StringBuilder sb = new StringBuilder();
     sb.append("class SchemaValidationRulesModel {\n");
     
-    sb.append("    rules: ").append(toIndentedString(rules)).append("\n");
+    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("}");
     return sb.toString();
   }

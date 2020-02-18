@@ -697,19 +697,8 @@ definitions:
   SchemaValidationRulesModel:
     type: object
     properties:
-       rules:
-        type: array
-        items:
-            $ref: "#/definitions/RuleModel"        
-  RuleModel:
-    type: object
-    properties:
-       ruleType:
-        type: string
-        enum:
-          - Compatibility
-       compatibilityRule:
-        $ref: "#/definitions/CompatibilityModel"
+       compatibility:
+        $ref: "#/definitions/CompatibilityModel"        
   CompressionsListModel:
     type: object
     properties:

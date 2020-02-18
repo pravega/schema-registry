@@ -48,6 +48,7 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 import java.util.concurrent.CompletionException;
+import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status;
 import static javax.ws.rs.core.Response.status;
@@ -69,10 +70,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
 
     @Override
     public void listScopes(SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.listScopes()
+        registryService.listScopes(null)
                          .thenApply(scopesList -> {
                              ScopesListModel scopes = new ScopesListModel();
-                             scopesList.forEach(x -> {
+                             scopesList.getList().forEach(x -> {
                                  scopes.addScopesItem(new ScopePropertyModel().scopeName(x));
                              });
                              return Response.status(Status.OK).entity(scopes).build(); })
@@ -129,10 +130,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     @Override
     public void listGroups(String scopeName, SecurityContext securityContext,
                            AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.listGroupsInScope(scopeName)
+        registryService.listGroupsInScope(scopeName, null)
                        .thenApply(groupsInScope -> {
                            GroupsListModel groupsList = new GroupsListModel();
-                           groupsInScope.forEach((x, y) -> groupsList.addGroupsItem(ModelHelper.encode(x, y)));
+                           groupsInScope.getMap().forEach((x, y) -> groupsList.addGroupsItem(ModelHelper.encode(x, y)));
                            return Response.status(Status.OK).entity(groupsList).build(); })
                        .exceptionally(exception -> {
                            if (Exceptions.unwrap(exception) instanceof NotFoundException) {
@@ -216,7 +217,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
                                 AsyncResponse asyncResponse) throws NotFoundException {
         registryService.getGroupEvolutionHistory(scopeName, groupName, null)
                        .thenApply(schemasEvolutionList -> {
-                           SchemaEvolutionListModel list = ModelHelper.encode(schemasEvolutionList);
+                           SchemaEvolutionListModel list = new SchemaEvolutionListModel()
+                                   .schemas(schemasEvolutionList.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
                            log.warn("getGroupProperties failed with exception: ", exception);
@@ -335,7 +337,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
                                     AsyncResponse asyncResponse) throws NotFoundException {
         registryService.getCompressions(scopeName, groupName)
                        .thenApply(list -> {
-                           CompressionsListModel compressionsList = ModelHelper.encodeCompressionList(list);
+                           CompressionsListModel compressionsList = new CompressionsListModel()
+                                   .compressionTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(compressionsList).build(); })
                        .exceptionally(exception -> {
                            log.warn("getGroupProperties failed with exception: ", exception);
@@ -366,8 +369,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
     public void getSubGroupSchemas(String scopeName, String groupName, String subgroupName, SecurityContext securityContext, 
                                        AsyncResponse asyncResponse) throws NotFoundException {
         registryService.getGroupEvolutionHistory(scopeName, groupName, subgroupName)
-                       .thenApply(schemasWithVersions -> {
-                           SchemaEvolutionListModel list = ModelHelper.encode(schemasWithVersions);
+                       .thenApply(schemaEpochs -> {
+                           SchemaEvolutionListModel list = new SchemaEvolutionListModel()
+                                   .schemas(schemaEpochs.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
                            log.warn("getGroupProperties failed with exception: ", exception);

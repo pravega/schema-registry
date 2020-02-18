@@ -7,7 +7,9 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.data;
+package io.pravega.schemaregistry.rules;
+
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.util.List;
 

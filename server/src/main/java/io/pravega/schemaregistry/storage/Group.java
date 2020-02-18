@@ -9,9 +9,13 @@
  */
 package io.pravega.schemaregistry.storage;
 
+import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import lombok.Data;
 
 @Data
 public class Group {
+    private final String scope;
+    private final String group;
+    private final SchemaValidationRules groupPolicy;
     private final Etag groupEtag;
 }

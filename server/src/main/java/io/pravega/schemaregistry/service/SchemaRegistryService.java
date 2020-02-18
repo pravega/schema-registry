@@ -9,27 +9,31 @@
  */
 package io.pravega.schemaregistry.service;
 
+import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
+import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.storage.ContinuationToken;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public interface SchemaRegistryService {
     /**
      * Lists all scopes.
-     * @return CompletableFuture which holds list of scope names upon completion.
+     * 
+     * @param token Continuation Token. 
+     * @return CompletableFuture which holds list of scope names upon completion. 
      */
-    CompletableFuture<List<String>> listScopes();
+    CompletableFuture<ListWithToken<String>> listScopes(String token);
 
     /**
      * Creates new scope if absent. This api is idempotent. 
@@ -49,9 +53,10 @@ public interface SchemaRegistryService {
      * Lists groups in scope. 
      * 
      * @param scope Name of scope.
+     * @param continuationToken continuation token
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
-    CompletableFuture<Map<String, GroupProperties>> listGroupsInScope(String scope);
+    CompletableFuture<MapWithToken<String, GroupProperties>> listGroupsInScope(String scope, String continuationToken);
 
     /**
      * Creates new group within a scope. Idempotent behaviour. If group already exists, it returns false. 
@@ -84,7 +89,7 @@ public interface SchemaRegistryService {
      *
      * @param scope Name of scope. 
      * @param group Name of group. 
-     * @param validationRules New compatibility setting for the group.
+     * @param validationRules New validation rules for the group.
      * @return CompletableFuture which is completed when validation policy update completes.
      */
     CompletableFuture<Void> updateSchemaValidationPolicy(String scope, String group, SchemaValidationRules validationRules);
@@ -94,10 +99,11 @@ public interface SchemaRegistryService {
      * 
      * @param scope Name of scope. 
      * @param group Name of group. 
+     * @param token Continuation token.
      * @return CompletableFuture which holds list of subgroups upon completion. 
      * If group is configured to store schemas in subgroups then subgroups are returned. Otherwise an empty list is returned.
      */
-    CompletableFuture<List<String>> getSubgroups(String scope, String group);
+    CompletableFuture<ListWithToken<String>> getSubgroups(String scope, String group, ContinuationToken token);
 
     /**
      * Adds schema to the group. If group is configured to include schemas by event type in subgroups, then 
@@ -171,7 +177,7 @@ public interface SchemaRegistryService {
      * @param subgroup Name of subgroup. 
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
+    CompletableFuture<List<SchemaEvolutionEpoch>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}

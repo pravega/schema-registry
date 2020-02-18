@@ -7,14 +7,15 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.data;
+package io.pravega.schemaregistry;
 
+import io.pravega.schemaregistry.storage.ContinuationToken;
 import lombok.Data;
 
-@Data
-public class SchemaEvolution {
-    private final SchemaInfo schema;
-    private final VersionInfo version;
-    private final SchemaValidationRules rules;
-}
+import java.util.Map;
 
+@Data
+public class MapWithToken<K, V> {
+    private final Map<K, V> map;
+    private final ContinuationToken token;
+}

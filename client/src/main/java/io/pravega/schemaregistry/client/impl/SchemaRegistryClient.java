@@ -13,7 +13,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
+import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -42,7 +42,7 @@ public interface SchemaRegistryClient {
     void deleteScope(String scope);
 
     /**
-     * Adds a new group to the specified scope. 
+     * Adds a new group to the specified scope. Refer to {@link GroupProperties} for details about each property. 
      * 
      * @param scope Name of the scope to add the group to. 
      * @param group Name of group that uniquely identifies the group within a scope. 
@@ -171,7 +171,7 @@ public interface SchemaRegistryClient {
      * @param subgroup Name of subgroup. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaEvolution> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
+    List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}

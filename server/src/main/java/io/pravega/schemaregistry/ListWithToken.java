@@ -7,16 +7,15 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage;
+package io.pravega.schemaregistry;
 
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.storage.ContinuationToken;
 import lombok.Data;
 
+import java.util.List;
+
 @Data
-public class Subgroup {
-    private final String scope;
-    private final String group;
-    private final String subgroup;
-    private final SchemaValidationRules groupPolicy;
-    private final Etag etag;
+public class ListWithToken<T> {
+    private final List<T> list;
+    private final ContinuationToken token;
 }

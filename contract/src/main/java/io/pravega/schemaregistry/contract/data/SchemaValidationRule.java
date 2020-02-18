@@ -10,7 +10,8 @@
 package io.pravega.schemaregistry.contract.data;
 
 /**
- * Base interface to define all schema validation rules. 
+ * Base interface to define all schema validation rules. Schema validation rules are applied whenever new schemas are registered
+ * and only schemas that satisfy validation rules are accepted by the registry into the group.  
  */
 public interface SchemaValidationRule {
 }

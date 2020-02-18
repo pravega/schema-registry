@@ -12,27 +12,41 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.Data;
 
 /**
- * Defines different Compatibility policy options for schema evolution. 
- * Backward compatibility means a new schema can read data written by old schema. 
- * Forward compatibility means an old schema can read data written by new schema. 
+ * Defines different Compatibility policy options for schema evolution for schemas within a group (or subgroup).
+
+ * {@link Type#AllowAny}: allow any changes to schema without any checks performed by the registry. 
+ * {@link Type#DisallowAll}: disables any changes to the schema for the group.
+ * {@link Type#Backward}: a new schema can read data written by last schema. 
+ * {@link Type#BackwardTransitive}: a new schema can read data written by any of previous schemas. 
+ * {@link Type#BackwardTill}: a new schema can read data written by any of previous schemas till schema 
+ * identified by version {@link Compatibility#backwardTill}. 
+ * {@link Type#Forward}: last schema can read data written by new schema. 
+ * {@link Type#ForwardTransitive}: all previous schemas can read data written by new schema. 
+ * {@link Type#ForwardTill}: All previous schemas till schema identified by version {@link Compatibility#forwardTill}
+ * can read data written by new schema. 
+ * {@link Type#Full}: both backward and forward.
+ * {@link Type#FullTransitive}: both backward and forward compatibility with all previous schemas.
+ * {@link Type#BackwardTillAndForwardTill}: All previous schemas till schema identified by version {@link Compatibility#forwardTill}
+ * can read data written by new schema. New schema can be used to read data written by any of previous schemas till schema 
+ * identified by version {@link Compatibility#backwardTill}. 
  */
 @Data
-public class Compatibility implements SchemaValidationRule {
-    private final CompatibilityType compatibility;
+public class Compatibility {
+    private final Type compatibility;
     private final VersionInfo backwardTill;
     private final VersionInfo forwardTill;
 
-    public Compatibility(CompatibilityType compatibility) {
+    public Compatibility(Type compatibility) {
         this(compatibility, null, null);
     }
 
-    public Compatibility(CompatibilityType compatibility, VersionInfo backwardTill, VersionInfo forwardTill) {
+    public Compatibility(Type compatibility, VersionInfo backwardTill, VersionInfo forwardTill) {
         this.compatibility = compatibility;
         this.backwardTill = backwardTill;
         this.forwardTill = forwardTill;
     }
     
-    public static enum CompatibilityType {
+    public enum Type {
         AllowAny, 
         DisallowAll, 
         Backward,
@@ -41,6 +55,8 @@ public class Compatibility implements SchemaValidationRule {
         Forward, 
         ForwardTill,
         ForwardTransitive,
-        BackwardTillAndForwardTill;
+        BackwardTillAndForwardTill,
+        Full,
+        FullTransitive;
     }
 }

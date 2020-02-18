@@ -15,6 +15,17 @@ import lombok.Data;
 import java.util.Arrays;
 import java.util.Objects;
 
+/**
+ * Encapsulates properties of a schema. 
+ * {@link SchemaInfo#name} name of the schema. This is used to identify the exact event type and used if a group needs to
+ * be divided into subgroups. (ref: {@link GroupProperties#subgroupBySchemaName}). 
+ * {@link SchemaInfo#schemaType} Serialization format.
+ * {@link SchemaInfo#schemaData} Schema as an array of 8-bit unsigned bytes. This is schema-type specific and to be consumed
+ * by schema-type specific parsers. 
+ * {@link SchemaInfo#properties} A key value map of strings where user defined metadata can be recorded with schemas.
+ * This is not interpreted by the registry service or client and can be used by applications for sharing any additional 
+ * application specific information with the schema.
+ */
 @Data
 public class SchemaInfo {
     private final String name;

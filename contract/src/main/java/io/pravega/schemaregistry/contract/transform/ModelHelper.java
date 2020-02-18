@@ -9,14 +9,14 @@
  */
 package io.pravega.schemaregistry.contract.transform;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
+import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -24,23 +24,15 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompatibilityModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompressionTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsListModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingIdModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfoModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupPropertiesModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.RuleModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionListModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfoModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaTypeModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersionModel;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
-
-import javax.ws.rs.NotSupportedException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.stream.Collectors;
 
 public class ModelHelper {
 
@@ -61,25 +53,15 @@ public class ModelHelper {
     }
 
     public static SchemaValidationRules decode(SchemaValidationRulesModel rules) {
-        List<SchemaValidationRule> rulesList = new ArrayList<>(rules.getRules().size());
-        rules.getRules().forEach(x -> rulesList.add(decode(x)));
-        return new SchemaValidationRules(rulesList);
+        Compatibility compatibilityRule = decode(rules.getCompatibility());
+        return new SchemaValidationRules(ImmutableList.of(), compatibilityRule);
     }
-
-    public static SchemaValidationRule decode(RuleModel rule) {
-        switch (rule.getRuleType()) {
-            case COMPATIBILITY: 
-                return decode(rule.getCompatibilityRule());
-            default:
-                throw new NotSupportedException(rule.getRuleType().name());
-        }
-    }
-
+    
     public static Compatibility decode(CompatibilityModel compatibility) {
         VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
         return new Compatibility(
-                Compatibility.CompatibilityType.valueOf(compatibility.getPolicy().name()),
+                Compatibility.Type.valueOf(compatibility.getPolicy().name()),
                 backwardTill, forwardTill);
     }
 
@@ -98,30 +80,16 @@ public class ModelHelper {
     // endregion
 
     // region encode
-    public static SchemaEvolutionListModel encode(List<SchemaEvolution> schemasWithVersions) {
-        return new SchemaEvolutionListModel().schemas(schemasWithVersions.stream().map(ModelHelper::encode).collect(Collectors.toList()));
-    }
-
-    public static SchemaEvolutionModel encode(SchemaEvolution schemaEvolution) {
+    public static SchemaEvolutionModel encode(SchemaEvolutionEpoch schemaEvolution) {
         SchemaInfoModel encode = encode(schemaEvolution.getSchema());
         return new SchemaEvolutionModel().schemaInfo(encode)
                                          .version(encode(schemaEvolution.getVersion())).validationRules(encode(schemaEvolution.getRules()));
     }
 
     public static SchemaValidationRulesModel encode(SchemaValidationRules rules) {
-        return new SchemaValidationRulesModel().rules(rules.getRules().stream().map(ModelHelper::encode).collect(Collectors.toList()));
+        return new SchemaValidationRulesModel().compatibility(encode(rules.getCompatibility()));
     }
-
-    public static RuleModel encode(SchemaValidationRule rule) {
-        if (rule instanceof Compatibility) {
-            RuleModel model = new RuleModel().ruleType(RuleModel.RuleTypeEnum.COMPATIBILITY);
-            model = model.compatibilityRule(encode((Compatibility) rule));
-            return model;
-        } else {
-            throw new NotSupportedException(rule.toString());
-        }
-    }
-
+    
     public static CompatibilityModel encode(Compatibility compatibility) {
         CompatibilityModel policy = new CompatibilityModel().policy(
                 CompatibilityModel.PolicyEnum.fromValue(compatibility.getCompatibility().name()));
@@ -173,12 +141,7 @@ public class ModelHelper {
     public static EncodingIdModel encode(EncodingId encodingId) {
         return new EncodingIdModel().encodingId(encodingId.getId());
     }
-
-    public static EncodingInfoModel encode(EncodingInfo encodingInfo) {
-        return new EncodingInfoModel().compressionType(encode(encodingInfo.getCompression()))
-                                      .schemaInfo(encode(encodingInfo.getSchemaInfo()));
-    }
-
+    
     public static CompressionTypeModel encode(CompressionType compression) {
         if (compression.getCompressionType().equals(CompressionType.Type.Custom)) {
             return new CompressionTypeModel().compressionType(CompressionTypeModel.CompressionTypeEnum.CUSTOM)
@@ -187,9 +150,12 @@ public class ModelHelper {
             return new CompressionTypeModel().compressionType(CompressionTypeModel.CompressionTypeEnum.fromValue(compression.getCompressionType().name()));
         }
     }
-
-    public static CompressionsListModel encodeCompressionList(List<CompressionType> list) {
-        return new CompressionsListModel().compressionTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
+    
+    public static EncodingInfoModel encode(EncodingInfo encodingInfo) {
+        return new EncodingInfoModel().compressionType(encode(encodingInfo.getCompression()))
+                                      .versionInfo(encode(encodingInfo.getVersionInfo()))
+                                      .schemaInfo(encode(encodingInfo.getSchemaInfo()));
     }
+
     // endregion
 }

@@ -137,7 +137,7 @@ public class SchemaInfoModel   {
     }
     SchemaInfoModel schemaInfoModel = (SchemaInfoModel) o;
     return Objects.equals(this.schemaName, schemaInfoModel.schemaName) &&
-        Objects.equals(this.schemaType, schemaInfoModel.schemaType) && 
+        Objects.equals(this.schemaType, schemaInfoModel.schemaType) &&
         Arrays.equals(this.schemaData, schemaInfoModel.schemaData) &&
         Objects.equals(this.properties, schemaInfoModel.properties);
   }
