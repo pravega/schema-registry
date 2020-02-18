@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.CompressionType;
@@ -20,54 +21,80 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.rules.CompatibilityChecker;
 import io.pravega.schemaregistry.storage.ContinuationToken;
+import io.pravega.schemaregistry.storage.SchemaStore;
 
 import javax.annotation.Nullable;
+import java.util.InputMismatchException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
-public interface SchemaRegistryService {
+public class SchemaRegistryService {
+    private final SchemaStore store;
+
+    public SchemaRegistryService(SchemaStore store) {
+        this.store = store;
+    }
+
     /**
      * Lists all scopes.
-     * 
-     * @param token Continuation Token. 
+     *
+     * @param continuationToken Continuation Token. 
      * @return CompletableFuture which holds list of scope names upon completion. 
      */
-    CompletableFuture<ListWithToken<String>> listScopes(String token);
+    public CompletableFuture<ListWithToken<String>> listScopes(String continuationToken) {
+        return store.listScopes(ContinuationToken.parse(continuationToken));
+    }
 
     /**
      * Creates new scope if absent. This api is idempotent. 
      * @param scope Name of scope.
      * @return CompletableFuture which is completed when create scope completes.
      */
-    CompletableFuture<Void> createScope(String scope);
+    public CompletableFuture<Void> createScope(String scope) {
+        return store.createScope(scope);
+    }
 
     /**
      * Deletes a scope.  
      * @param scope Name of scope.
      * @return CompletableFuture which is completed when delete scope completes.
      */
-    CompletableFuture<Void> deleteScope(String scope);
+    public CompletableFuture<Void> deleteScope(String scope) {
+        return store.deleteScope(scope);
+    }
 
     /**
      * Lists groups in scope. 
-     * 
+     *
      * @param scope Name of scope.
      * @param continuationToken continuation token
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
-    CompletableFuture<MapWithToken<String, GroupProperties>> listGroupsInScope(String scope, String continuationToken);
+    public CompletableFuture<MapWithToken<String, GroupProperties>> listGroupsInScope(String scope, String continuationToken) {
+        return store.listGroups(scope, ContinuationToken.parse(continuationToken))
+                .thenCompose(reply -> {
+                    ContinuationToken token = reply.getToken();
+                    List<String> list = reply.getList();
+                    return Futures.allOfWithResults(list.stream().collect(Collectors.toMap(x -> x, x -> store.getGroupProperties(scope, x))))
+                           .thenApply(groups -> new MapWithToken<>(groups, token));
+                });
+    }
 
     /**
      * Creates new group within a scope. Idempotent behaviour. If group already exists, it returns false. 
-     * 
+     *
      * @param scope Name of scope.
      * @param group Name of group. 
      * @param groupProperties Group properties.
      * @return CompletableFuture which is completed when create group completes. True indicates this was 
      * new group, false indicates it was an existing group. 
      */
-    CompletableFuture<Boolean> createGroup(String scope, String group, GroupProperties groupProperties);
+    public CompletableFuture<Boolean> createGroup(String scope, String group, GroupProperties groupProperties) {
+        return store.createGroupInScope(scope, group, groupProperties);
+    }
 
     /**
      * Gets group's properties. 
@@ -77,12 +104,14 @@ public interface SchemaRegistryService {
      * Event Types are uniquely identified by {@link SchemaInfo#name}. 
      * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify 
      * encoding properties in {@link EncodingInfo}.
-     * 
+     *
      * @param scope Name of scope. 
      * @param group Name of group. 
      * @return CompletableFuture which holds group properties upon completion. 
      */
-    CompletableFuture<GroupProperties> getGroupProperties(String scope, String group);
+    public CompletableFuture<GroupProperties> getGroupProperties(String scope, String group) {
+        return store.getGroupProperties(scope, group);
+    }
 
     /**
      * Update group's schema validation policy. 
@@ -92,18 +121,23 @@ public interface SchemaRegistryService {
      * @param validationRules New validation rules for the group.
      * @return CompletableFuture which is completed when validation policy update completes.
      */
-    CompletableFuture<Void> updateSchemaValidationPolicy(String scope, String group, SchemaValidationRules validationRules);
+    public CompletableFuture<Void> updateSchemaValidationPolicy(String scope, String group, SchemaValidationRules validationRules) {
+        return Futures.toVoid(store.getGroupEtag(scope, group)
+                .thenCompose(etag -> store.updateCompatibilityPolicy(scope, group, etag, validationRules)));
+    }
 
     /**
      * Gets list of subgroups registered under the group. Subgroups are identified by {@link SchemaInfo#name}
-     * 
+     *
      * @param scope Name of scope. 
      * @param group Name of group. 
      * @param token Continuation token.
      * @return CompletableFuture which holds list of subgroups upon completion. 
      * If group is configured to store schemas in subgroups then subgroups are returned. Otherwise an empty list is returned.
      */
-    CompletableFuture<ListWithToken<String>> getSubgroups(String scope, String group, ContinuationToken token);
+    public CompletableFuture<ListWithToken<String>> getSubgroups(String scope, String group, ContinuationToken token) {
+        return store.listSubGroups(scope, group, token);
+    }
 
     /**
      * Adds schema to the group. If group is configured to include schemas by event type in subgroups, then 
@@ -117,8 +151,29 @@ public interface SchemaRegistryService {
      * @param rules Schema validation rules to apply. 
      * @return CompletableFuture that holds versionInfo which uniquely identifies where the schema is added in the group.   
      */
-    CompletableFuture<VersionInfo> addSchemaIfAbsent(String scope, String group, SchemaInfo schema,
-                                                     SchemaValidationRules rules);
+    public CompletableFuture<VersionInfo> addSchemaIfAbsent(String scope, String group, SchemaInfo schema, SchemaValidationRules rules) {
+        // 1. get group policy
+        // 2. get checker for schema type.
+        // validate schema against group policy + rules on schema
+        // 3. conditionally update the schema
+        CompatibilityChecker checker;
+        
+        return store.getGroupEtag(scope, group)
+            .thenCompose(etag -> store.getGroupProperties(scope, group)
+                         .thenCompose(prop -> {
+                             SchemaValidationRules policy = prop.getSchemaValidationRules();
+                             if (prop.isSubgroupBySchemaName()) {
+                                 String subgroup = schema.getName();
+                                 // todo: apply policy
+                                 // get schemas for subgroup for validation
+                                 return store.conditionallyAddSchemaToSubgroup(scope, group, subgroup, etag, schema);
+                             } else {
+                                 // todo: apply policy
+                                 // get schemas for group for validation
+                                 return store.conditionallyAddSchemaToGroup(scope, group, etag, schema);
+                             }
+                         }));
+    }
 
     /**
      * Gets schema corresponding to the version. 
@@ -128,7 +183,9 @@ public interface SchemaRegistryService {
      * @param version Version which uniquely identifies schema within a group. 
      * @return CompletableFuture that holds Schema info corresponding to the version info. 
      */
-    CompletableFuture<SchemaInfo> getSchema(String scope, String group, VersionInfo version);
+    public CompletableFuture<SchemaInfo> getSchema(String scope, String group, VersionInfo version) {
+        return store.getSchema(scope, group, version);
+    }
 
     /**
      * Gets encoding info against the requested encoding Id. 
@@ -139,7 +196,9 @@ public interface SchemaRegistryService {
      * @param encodingId Encoding id that uniquely identifies a schema within a group. 
      * @return CompletableFuture that holds Encoding info corresponding to the encoding id. 
      */
-    CompletableFuture<EncodingInfo> getEncodingInfo(String scope, String group, EncodingId encodingId);
+    public CompletableFuture<EncodingInfo> getEncodingInfo(String scope, String group, EncodingId encodingId) {
+        return store.getEncodingInfo(scope, group, encodingId);
+    }
 
     /**
      * Gets an encoding id that uniquely identifies a combination of Schema version and compression type. 
@@ -150,8 +209,9 @@ public interface SchemaRegistryService {
      * @param compressionType compression type
      * @return CompletableFuture that holds Encoding id for the pair of version and compression type.
      */
-    CompletableFuture<EncodingId> getEncodingId(String scope, String group, VersionInfo version, 
-                                                CompressionType compressionType);
+    public CompletableFuture<EncodingId> getEncodingId(String scope, String group, VersionInfo version, CompressionType compressionType) {
+        return store.createOrGetEncodingId(scope, group, version, compressionType);
+    }
 
     /**
      * Gets latest schema and version for the group (or subgroup, if specified). 
@@ -164,7 +224,13 @@ public interface SchemaRegistryService {
      *
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group (or subgroup).
      */
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group, @Nullable String subgroup);
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group, @Nullable String subgroup) {
+        if (subgroup == null) {
+            return store.getLatestSchema(scope, group);
+        } else {
+            return store.getLatestSchema(scope, group, subgroup);
+        }
+    }
 
     /**
      * Gets all schemas with corresponding versions for the group (or subgroup, if specified). 
@@ -177,7 +243,19 @@ public interface SchemaRegistryService {
      * @param subgroup Name of subgroup. 
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    CompletableFuture<List<SchemaEvolutionEpoch>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
+    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup) {
+        return store.getGroupProperties(scope, group)
+                .thenCompose(prop -> {
+                    if (prop.isSubgroupBySchemaName()) {
+                        if (subgroup == null) {
+                            throw new InputMismatchException();
+                        } 
+                        return store.getSubGroupHistory(scope, group, subgroup);
+                    } else {
+                        return store.getGroupHistory(scope, group);
+                    }
+                });
+    }
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}
@@ -189,8 +267,10 @@ public interface SchemaRegistryService {
      * @param schema SchemaInfo that captures schema name and schema data. 
      * @return CompletableFuture that holds VersionInfo corresponding to schema. 
      */
-    CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, SchemaInfo schema);
-    
+    public CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, SchemaInfo schema) {
+        return store.getSchemaVersion(scope, group, schema);
+    }
+
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group (/subgroup) 
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
@@ -201,7 +281,28 @@ public interface SchemaRegistryService {
      * @param validationRules validation rules to apply.
      * @return True if it satisfies validation checks, false otherwise. 
      */
-    CompletableFuture<Boolean> validateSchema(String scope, String group, SchemaInfo schema, SchemaValidationRules validationRules);
+    public CompletableFuture<Boolean> validateSchema(String scope, String group, SchemaInfo schema, SchemaValidationRules validationRules) {
+        // based on compatibility policy, fetch specific schemas for the group/subgroup and perform validations
+        // TODO: validate schema
+        
+        return store.getGroupProperties(scope, group)
+                .thenCompose(prop -> {
+                    if (prop.isSubgroupBySchemaName()) {
+                        // TODO: based on policy fetch a subset of history
+                        return store.getSubGroupHistory(scope, group, schema.getName())
+                                .thenApply(history -> {
+                                    // validate against policy and history
+                                    return true;
+                                });
+                    } else {
+                        return store.getGroupHistory(scope, group)
+                                .thenApply(history -> {
+                                    // validate against policy and history
+                                    return true;
+                                });
+                    }
+                });
+    }
 
     /**
      * Deletes group.  
@@ -209,7 +310,9 @@ public interface SchemaRegistryService {
      * @param group Name of group. 
      * @return CompletableFuture which is completed when group is deleted. 
      */
-    CompletableFuture<Void> deleteGroup(String scope, String group);
+    public CompletableFuture<Void> deleteGroup(String scope, String group) {
+        return store.deleteGroup(scope, group);
+    }
 
     /**
      * List of compressions used for encoding in the group. This will be returned only if {@link GroupProperties#enableEncoding}
@@ -219,5 +322,7 @@ public interface SchemaRegistryService {
      * @param group Name of group. 
      * @return CompletableFuture that holds list of compressions used for encoding in the group. 
      */
-    CompletableFuture<List<CompressionType>> getCompressions(String scope, String group);
+    public CompletableFuture<List<CompressionType>> getCompressions(String scope, String group) {
+        return store.getCompressions(scope, group);
+    }
 }

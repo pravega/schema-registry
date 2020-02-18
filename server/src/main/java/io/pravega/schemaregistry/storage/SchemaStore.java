@@ -14,6 +14,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
@@ -36,13 +37,11 @@ public interface SchemaStore {
 
     CompletableFuture<Void> deleteGroup(String scope, String group);
 
-    CompletableFuture<Group> getGroup(String scope, String group);
-    
-    CompletableFuture<Subgroup> getSubgroup(String scope, String group, String subgroup);
+    CompletableFuture<Etag> getGroupEtag(String scope, String group);
     
     CompletableFuture<GroupProperties> getGroupProperties(String scope, String group);
     
-    CompletableFuture<Group> updateCompatibilityPolicy(Group group, SchemaValidationRules policy);
+    CompletableFuture<Etag> updateCompatibilityPolicy(String scope, String group, Etag etag, SchemaValidationRules policy);
 
     CompletableFuture<ListWithToken<String>> listSubGroups(String scope, String group, ContinuationToken token);
     
@@ -59,9 +58,9 @@ public interface SchemaStore {
     
     CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group, String subgroup);
 
-    CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(Group group, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String scope, String group, Etag etag, SchemaInfo schemaInfo);
 
-    CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(Subgroup subgroup, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String scope, String group, String subgroup, Etag etag, SchemaInfo schemaInfo);
     
     CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, SchemaInfo schemaInfo);
     
@@ -70,4 +69,8 @@ public interface SchemaStore {
     CompletableFuture<EncodingInfo> getEncodingInfo(String scope, String group, EncodingId encodingId);
 
     CompletableFuture<List<CompressionType>> getCompressions(String scope, String group);
+
+    CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String scope, String group);
+    
+    CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String scope, String group, String subgroup);
 }

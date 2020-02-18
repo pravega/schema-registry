@@ -210,7 +210,7 @@ project('server') {
 
     apply plugin: 'application'
     applicationName = "schema-registry"
-    mainClassName = "io.pravega.schemaregistry.io.pravega.service.Main"
+    mainClassName = "io.pravega.schemaregistry.service.Main"
     applicationDefaultJvmArgs = ["-server", "-Xms128m", "-XX:+HeapDumpOnOutOfMemoryError",
                                  "-Dconfig.file=PRAVEGA_APP_HOME/conf/schemaregistry.config.properties",
                                  "-Dlogback.configurationFile=PRAVEGA_APP_HOME/conf/logback.xml",

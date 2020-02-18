@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.server.rest;
@@ -45,7 +45,7 @@ import javax.ws.rs.core.SecurityContext;
 /**
  * Controller APIs exposed via REST.
  * Different interfaces will hold different groups of APIs.
- * <p>
+ * 
  * ##############################IMPORTANT NOTE###################################
  * Do not make any API changes here directly, you need to update swagger/Controller.yaml and generate
  * the server stubs as documented in swagger/README.md before updating this file.

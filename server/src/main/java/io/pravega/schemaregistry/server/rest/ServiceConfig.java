@@ -17,12 +17,12 @@ import lombok.Getter;
  * REST server config.
  */
 @Getter
-public class RESTServerConfigImpl {
+public class ServiceConfig {
     private final String host;
     private final int port;
 
     @Builder
-    RESTServerConfigImpl(final String host, final int port) {
+    ServiceConfig(final String host, final int port) {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
 
