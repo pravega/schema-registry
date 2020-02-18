@@ -7,7 +7,7 @@
  * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.server.rest;
+package io.pravega.schemaregistry.server.rest.v1;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsListModel;
@@ -38,16 +38,17 @@ import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
 import javax.ws.rs.container.AsyncResponse;
+import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 /**
- * Controller APIs exposed via REST.
+ * Schema Registry APIs exposed via REST.
  * Different interfaces will hold different groups of APIs.
  * 
  * ##############################IMPORTANT NOTE###################################
- * Do not make any API changes here directly, you need to update swagger/Controller.yaml and generate
+ * Do not make any API changes here directly, you need to update swagger/schemaregistry.yaml and generate
  * the server stubs as documented in swagger/README.md before updating this file.
  */
 public final class ApiV1 {
@@ -78,7 +79,7 @@ public final class ApiV1 {
         public void addSchemaToGroupIfAbsent(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName, 
                                              @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName, 
                                              @ApiParam(value = "Add new schema to group", required = true) AddSchemaToGroupRequest addSchemaToGroupRequest, 
-                                             @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                                             @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -93,7 +94,7 @@ public final class ApiV1 {
         public void validate(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
                 @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @POST
@@ -107,7 +108,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = void.class)})
         public void createGroup(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "The Group configuration", required = true) CreateGroupRequest createGroupRequest,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @POST
@@ -119,7 +120,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Scope with the given name already exists", response = void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a scope", response = void.class)})
         public void createScope(@ApiParam(value = "Create scope", required = true) CreateScopeRequest createScopeRequest,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @DELETE
@@ -131,7 +132,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = void.class)})
         public void deleteGroup(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @DELETE
@@ -143,7 +144,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 412, message = "Cannot delete scope since it has non-empty list of Groups", response = void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting a scope", response = void.class)})
         public void deleteScope(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -156,7 +157,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = CompressionsListModel.class)})
         public void getCompressionsList(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                                         @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
-                                        @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                                        @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -170,7 +171,7 @@ public final class ApiV1 {
         public void getEncodingInfo(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                                     @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                     @ApiParam(value = "Encoding id that identifies a unique combination of encoding and compression", required = true) @PathParam("EncodingIdModel") Integer encodingId,
-                                    @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                                    @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -183,7 +184,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = GroupPropertiesModel.class)})
         public void getGroupProperties(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -196,7 +197,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaEvolutionListModel.class)})
         public void getGroupSchemas(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -209,7 +210,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = SchemaWithVersionModel.class)})
         public void getLatestGroupSchema(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -223,7 +224,7 @@ public final class ApiV1 {
         public void getLatestSubgroupSchema(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
                 @ApiParam(value = "Subgroup name", required = true) @PathParam("SubgroupName") String subgroupName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @PUT
@@ -238,7 +239,7 @@ public final class ApiV1 {
         public void getOrGenerateEncodingId(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                                             @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
                                             @ApiParam(value = "Get schema corresponding to the version", required = true) GetEncodingIdRequest getEncodingIdModelRequest,
-                                            @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                                            @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -253,7 +254,7 @@ public final class ApiV1 {
         public void getSchemaFromVersion(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
                 @ApiParam(value = "Get schema corresponding to the version", required = true) GetSchemaFromVersionRequest getSchemaFromVersionRequest,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -267,7 +268,7 @@ public final class ApiV1 {
         public void getSubGroupSchemas(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
                 @ApiParam(value = "Subgroup name", required = true) @PathParam("SubgroupName") String subgroupName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -279,7 +280,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Scope not found", response = GroupsListModel.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching the list of Groups for the given scope", response = GroupsListModel.class)})
         public void listGroups(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @GET
@@ -288,7 +289,7 @@ public final class ApiV1 {
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "List of currently available Scopes", response = ScopesListModel.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching list of scopes", response = ScopesListModel.class)})
-        public void listScopes(@Context SecurityContext securityContext, AsyncResponse asyncResponse)
+        public void listScopes(@Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
         @PUT
@@ -303,7 +304,7 @@ public final class ApiV1 {
         public void updateSchemaValidationRules(@ApiParam(value = "Scope name", required = true) @PathParam("scopeName") String scopeName,
                 @ApiParam(value = "Group name", required = true) @PathParam("GroupName") String groupName,
                 @ApiParam(value = "update group policy", required = true) UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest,
-                @Context SecurityContext securityContext, AsyncResponse asyncResponse)
+                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
     }
 }

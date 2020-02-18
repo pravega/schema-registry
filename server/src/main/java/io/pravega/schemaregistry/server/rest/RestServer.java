@@ -18,6 +18,8 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.UriBuilder;
 
+import io.pravega.schemaregistry.server.rest.resources.PingImpl;
+import io.pravega.schemaregistry.server.rest.resources.SchemaRegistryResourceImpl;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -47,6 +49,7 @@ public class RestServer extends AbstractIdleService {
         this.baseUri = UriBuilder.fromUri(serverURI).port(restServerConfig.getPort()).build();
 
         final Set<Object> resourceObjs = new HashSet<>();
+        resourceObjs.add(new PingImpl());
         resourceObjs.add(new SchemaRegistryResourceImpl(registryService));
 
         final RegistryApplication application = new RegistryApplication(resourceObjs);

@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.server.rest;
+package io.pravega.schemaregistry.server.rest.resources;
 
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
@@ -36,6 +36,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
 import io.pravega.schemaregistry.exceptions.EntityExistsException;
+import io.pravega.schemaregistry.server.rest.v1.ApiV1;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;

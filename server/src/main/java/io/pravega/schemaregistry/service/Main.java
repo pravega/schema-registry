@@ -20,12 +20,13 @@ import lombok.extern.slf4j.Slf4j;
 public class Main {
     public static void main(String[] args) {
         // TODO: read config host and port from service configuration
-        ServiceConfig config = ServiceConfig.builder().build();
-        SchemaStore schemaStore = SchemaStoreFactory.createStore(StoreType.Pravega);
+        ServiceConfig config = ServiceConfig.builder().host("localhost").port(1234).build();
+        SchemaStore schemaStore = SchemaStoreFactory.createStore(StoreType.InMemory);
         SchemaRegistryService service = new SchemaRegistryService(schemaStore);
         RestServer restServer = new RestServer(service, config);
         restServer.startAsync();
         log.info("Awaiting start of REST server");
         restServer.awaitRunning();
+        restServer.awaitTerminated();
     }
 }
