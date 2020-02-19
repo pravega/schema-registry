@@ -36,7 +36,7 @@ public class Compatibility {
     private final VersionInfo backwardTill;
     private final VersionInfo forwardTill;
 
-    public Compatibility(Type compatibility) {
+    private Compatibility(Type compatibility) {
         this(compatibility, null, null);
     }
 
@@ -59,4 +59,21 @@ public class Compatibility {
         Full,
         FullTransitive;
     }
+
+    public static Compatibility of(Compatibility.Type type) {
+        return new Compatibility(type);
+    }
+
+    public static Compatibility backwardTill(VersionInfo backwardTill) {
+        return new Compatibility(Type.BackwardTill, backwardTill, null);
+    }
+
+    public static Compatibility forwardTill(VersionInfo forwardTill) {
+        return new Compatibility(Type.ForwardTill, null, forwardTill);
+    }
+
+    public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
+        return new Compatibility(Type.ForwardTill, backwardTill, forwardTill);
+    }
+
 }

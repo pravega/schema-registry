@@ -39,9 +39,9 @@ public class CompatibilityModel   {
     
     FORWARD("Forward"),
     
-    FORWARD_TRANSITIVE("Forward_Transitive"),
+    FORWARDTRANSITIVE("ForwardTransitive"),
     
-    BACKWARD_TRANSITIVE("Backward_Transitive"),
+    BACKWARDTRANSITIVE("BackwardTransitive"),
     
     BACKWARDTILL("BackwardTill"),
     
@@ -51,7 +51,7 @@ public class CompatibilityModel   {
     
     FULL("Full"),
     
-    FULL_TRANSITIVE("Full_Transitive");
+    FULLTRANSITIVE("FullTransitive");
 
     private String value;
 
