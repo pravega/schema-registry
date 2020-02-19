@@ -7,16 +7,16 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.client.impl;
+package io.pravega.schemaregistry.storage.impl;
 
-import lombok.Data;
+import io.pravega.schemaregistry.ListWithToken;
 
-import java.net.URI;
+public interface Scopes {
+    ListWithToken<String> getScopes();
 
-/**
- * Registry client configuration used to create registry client. 
- */
-@Data
-public class RegistryClientConfig {
-    private final URI schemaRegistryUri;
+    void addNewScope(String scope);
+
+    void removeScope(String scope);
+
+    Scope getScope(String scope);
 }

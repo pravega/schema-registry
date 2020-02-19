@@ -9,13 +9,15 @@
  */
 package io.pravega.schemaregistry.storage;
 
+import io.pravega.schemaregistry.storage.impl.InMemoryScopes;
+import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import org.apache.commons.lang3.NotImplementedException;
 
 public class SchemaStoreFactory {
     public static SchemaStore createStore(StoreType type) {
         switch (type) {
             case InMemory:
-                return new InMemorySchemaStore();
+                return new SchemaStoreImpl(new InMemoryScopes());
             case Pravega:
             default:
                 throw new NotImplementedException("pravega store not implemented yet");

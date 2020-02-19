@@ -7,16 +7,12 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.client.impl;
+package io.pravega.schemaregistry.storage;
 
-import lombok.Data;
-
-import java.net.URI;
-
-/**
- * Registry client configuration used to create registry client. 
- */
-@Data
-public class RegistryClientConfig {
-    private final URI schemaRegistryUri;
+public class StoreExceptions {
+    public static class WriteConflictException extends RuntimeException {
+    }
+    
+    public static class DataNotFoundException extends RuntimeException {
+    }
 }

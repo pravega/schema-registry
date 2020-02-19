@@ -7,7 +7,17 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage;
+package io.pravega.schemaregistry.storage.records;
 
-public class Etag {
+import io.pravega.schemaregistry.storage.Position;
+import lombok.Data;
+
+@Data
+public class InMemoryPosition implements Position {
+    private final int position;
+
+    @Override
+    public long getPosition() {
+        return position;
+    }
 }

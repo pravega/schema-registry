@@ -123,7 +123,7 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<Void> updateSchemaValidationPolicy(String scope, String group, SchemaValidationRules validationRules) {
         return Futures.toVoid(store.getGroupEtag(scope, group)
-                .thenCompose(etag -> store.updateCompatibilityPolicy(scope, group, etag, validationRules)));
+                .thenCompose(etag -> store.updateValidationPolicy(scope, group, etag, validationRules)));
     }
 
     /**
@@ -166,11 +166,11 @@ public class SchemaRegistryService {
                                  String subgroup = schema.getName();
                                  // todo: apply policy
                                  // get schemas for subgroup for validation
-                                 return store.conditionallyAddSchemaToSubgroup(scope, group, subgroup, etag, schema);
+                                 return store.addSchemaToSubgroup(scope, group, subgroup, etag, schema);
                              } else {
                                  // todo: apply policy
                                  // get schemas for group for validation
-                                 return store.conditionallyAddSchemaToGroup(scope, group, etag, schema);
+                                 return store.addSchemaToGroup(scope, group, etag, schema);
                              }
                          }));
     }

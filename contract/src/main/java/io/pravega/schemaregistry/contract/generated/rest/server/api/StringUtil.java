@@ -22,7 +22,7 @@ public class StringUtil {
    * 
    * Note: This might be replaced by utility method from commons-lang or guava someday
    * if one of those libraries is added as dependency.
-   * </p>
+   * 
    *
    * @param array     The array of strings
    * @param separator The separator
