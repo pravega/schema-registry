@@ -48,7 +48,7 @@ public class ModelHelper {
             case CUSTOM:
                 return SchemaType.custom(schemaType.getCustomTypeName());
             default:
-                return SchemaType.of(SchemaType.Type.valueOf(schemaType.getSchemaType().name()));
+                return SchemaType.of(searchEnum(SchemaType.Type.class, schemaType.getSchemaType().name()));
         }
     }
 
@@ -56,12 +56,12 @@ public class ModelHelper {
         Compatibility compatibilityRule = decode(rules.getCompatibility());
         return new SchemaValidationRules(ImmutableList.of(), compatibilityRule);
     }
-    
+
     public static Compatibility decode(CompatibilityModel compatibility) {
         VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
         return new Compatibility(
-                Compatibility.Type.valueOf(compatibility.getPolicy().name()),
+                searchEnum(Compatibility.Type.class, compatibility.getPolicy().name()),
                 backwardTill, forwardTill);
     }
 
@@ -70,7 +70,7 @@ public class ModelHelper {
             case CUSTOM:
                 return CompressionType.custom(compressionType.getCustomTypeName());
             default:
-                return CompressionType.of(CompressionType.Type.valueOf(compressionType.getCompressionType().name()));
+                return CompressionType.of(searchEnum(CompressionType.Type.class, compressionType.getCompressionType().name()));
         }
     }
 
@@ -89,10 +89,10 @@ public class ModelHelper {
     public static SchemaValidationRulesModel encode(SchemaValidationRules rules) {
         return new SchemaValidationRulesModel().compatibility(encode(rules.getCompatibility()));
     }
-    
+
     public static CompatibilityModel encode(Compatibility compatibility) {
         CompatibilityModel policy = new CompatibilityModel().policy(
-                CompatibilityModel.PolicyEnum.fromValue(compatibility.getCompatibility().name()));
+                searchEnum(CompatibilityModel.PolicyEnum.class, compatibility.getCompatibility().name()));
         if (compatibility.getBackwardTill() != null) {
             VersionInfoModel backwardTill = encode(compatibility.getBackwardTill());
             policy = policy.backwardTill(backwardTill);
@@ -134,23 +134,25 @@ public class ModelHelper {
             SchemaTypeModel schemaTypeModel = new SchemaTypeModel().schemaType(SchemaTypeModel.SchemaTypeEnum.CUSTOM);
             return schemaTypeModel.customTypeName(schemaType.getCustomTypeName());
         } else {
-            return new SchemaTypeModel().schemaType(SchemaTypeModel.SchemaTypeEnum.fromValue(schemaType.getSchemaType().name()));
+            return new SchemaTypeModel().schemaType(
+                    searchEnum(SchemaTypeModel.SchemaTypeEnum.class, schemaType.getSchemaType().name()));
         }
     }
 
     public static EncodingIdModel encode(EncodingId encodingId) {
         return new EncodingIdModel().encodingId(encodingId.getId());
     }
-    
+
     public static CompressionTypeModel encode(CompressionType compression) {
         if (compression.getCompressionType().equals(CompressionType.Type.Custom)) {
             return new CompressionTypeModel().compressionType(CompressionTypeModel.CompressionTypeEnum.CUSTOM)
                                              .customTypeName(compression.getCustomTypeName());
         } else {
-            return new CompressionTypeModel().compressionType(CompressionTypeModel.CompressionTypeEnum.fromValue(compression.getCompressionType().name()));
+            return new CompressionTypeModel().compressionType(
+                    searchEnum(CompressionTypeModel.CompressionTypeEnum.class, compression.getCompressionType().name()));
         }
     }
-    
+
     public static EncodingInfoModel encode(EncodingInfo encodingInfo) {
         return new EncodingInfoModel().compressionType(encode(encodingInfo.getCompression()))
                                       .versionInfo(encode(encodingInfo.getVersionInfo()))
@@ -158,4 +160,14 @@ public class ModelHelper {
     }
 
     // endregion
+
+    private static <T extends Enum<?>> T searchEnum(Class<T> enumeration,
+                                                    String search) {
+        for (T each : enumeration.getEnumConstants()) {
+            if (each.name().compareToIgnoreCase(search) == 0) {
+                return each;
+            }
+        }
+        throw new IllegalArgumentException();
+    }
 }

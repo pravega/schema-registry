@@ -48,7 +48,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
-import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status;
@@ -158,9 +157,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.ScopesApi {
         registryService.createGroup(scopeName, createGroupRequest.getGroupName(), properties)
                        .thenApply(createStatus -> {
                            if (!createStatus) {
-                               throw new CompletionException(new EntityExistsException());
+                               return Response.status(Status.CONFLICT).build();
                            }
-                           return Response.status(Status.OK).build(); })
+                           return Response.status(Status.OK).build(); 
+                       })
                        .exceptionally(exception -> {
                            log.warn("createGroup failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })

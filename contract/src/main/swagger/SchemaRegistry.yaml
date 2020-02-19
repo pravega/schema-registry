@@ -683,13 +683,13 @@ definitions:
           - DisallowAll
           - Backward
           - Forward
-          - Forward_Transitive
-          - Backward_Transitive
+          - ForwardTransitive
+          - BackwardTransitive
           - BackwardTill
           - ForwardTill
           - BackwardAndForwardTill
           - Full
-          - Full_Transitive
+          - FullTransitive
       backwardTill:
         $ref: "#/definitions/VersionInfoModel"        
       forwardTill:
