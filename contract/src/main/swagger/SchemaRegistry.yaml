@@ -157,7 +157,7 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
@@ -223,22 +223,34 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getGroupSchemas
-      description: Fetch the properties of an existing Group
+      operationId: getSchemaVersion
+      description: Get the version for the schema if it is registered.
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetSchemaVersion
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
       produces:
         - application/json
       responses:
         200:
-          description: Versioned history of schemas registered under the group
+          description: Schema version
           schema:
-            $ref: "#/definitions/SchemaEvolutionList"
+            $ref: "#/definitions/VersionInfo"
         404:
           description: Namespace or Group with given name not found
         500:
@@ -273,34 +285,6 @@ paths:
           description: Namespace not found
         500:
           description: Internal server error while creating a Group
-  /namespaces/{namespaceName}/groups/{groupName}/schemas/latest:
-    parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
-      - in: path
-        name: GroupName
-        description: Group name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getLatestGroupSchema
-      description: Fetch the properties of an existing Group
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Found Group properties
-          schema:
-            $ref: "#/definitions/SchemaWithVersion"
-        404:
-          description: Namespace or Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
   /namespaces/{namespaceName}/groups/{groupName}/schemas/validate:
     parameters:
       - in: path
@@ -309,7 +293,7 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
@@ -341,7 +325,7 @@ paths:
           description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/schemas/version:
+  /namespaces/{namespaceName}/groups/{groupName}/schemas/versions:
     parameters:
       - in: path
         name: namespaceName
@@ -349,7 +333,51 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    parameters:
+      - in: path
+        name: namespaceName
+        description: Namespace name
+        required: true
+        type: string
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getGroupSchemas
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaEvolutionList"
+        404:
+          description: Namespace or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /namespaces/{namespaceName}/groups/{groupName}/schemas/versions/{versionId}:
+    parameters:
+      - in: path
+        name: namespaceName
+        description: Namespace name
+        required: true
+        type: string
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: versionId
         description: Group name
         required: true
         type: string
@@ -380,8 +408,8 @@ paths:
         404:
           description: Namespace or Group with given name not found
         500:
-          description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas:
+          description: Internal server error while fetching Group details  
+  /namespaces/{namespaceName}/groups/{groupName}/schemas/versions/latest:
     parameters:
       - in: path
         name: namespaceName
@@ -389,12 +417,68 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getLatestGroupSchema
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group properties
+          schema:
+            $ref: "#/definitions/SchemaWithVersion"
+        404:
+          description: Namespace or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /namespaces/{namespaceName}/groups/{groupName}/subgroups:
+    parameters:
+      - in: path
+        name: namespaceName
+        description: Namespace name
+        required: true
+        type: string
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSubGroups
+      description: Fetch all subgroups under a Group. Schemas under a group can be subgrouped based on event type. A subgroup denotes a set of schemas that are evolved separately.  
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of subgroups under the group
+          schema:
+            $ref: "#/definitions/SchemaEvolutionList"
+        404:
+          description: Namespace or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions:
+    parameters:
+      - in: path
+        name: namespaceName
+        description: Namespace name
+        required: true
+        type: string
+      - in: path
+        name: groupName
         description: Group name
         required: true
         type: string
       - in: path
-        name: SubgroupName
+        name: subgroupName
         description: Subgroup name
         required: true
         type: string
@@ -414,7 +498,7 @@ paths:
           description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/latest:
+  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions/{versionId}:
     parameters:
       - in: path
         name: namespaceName
@@ -422,12 +506,62 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
       - in: path
-        name: SubgroupName
+        name: subgroupName
+        description: Subgroup name
+        required: true
+        type: string
+      - in: path
+        name: versionId
+        description: version id
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSchemaFromSubgroupVersion
+      description: Fetch the properties of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetSchemaFromSubgroupVersionRequest
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              versionInfo:
+                  $ref: "#/definitions/VersionInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Namespace or Group with given name not found
+        500:
+          description: Internal server error while fetching Group details  
+  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions/latest:
+    parameters:
+      - in: path
+        name: namespaceName
+        description: Namespace name
+        required: true
+        type: string
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: subgroupName
         description: Subgroup name
         required: true
         type: string
@@ -455,7 +589,7 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
@@ -533,7 +667,7 @@ paths:
         required: true
         type: string
       - in: path
-        name: GroupName
+        name: groupName
         description: Group name
         required: true
         type: string
@@ -573,6 +707,13 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/GroupProperties"
+  SubgroupsList:
+    type: object
+    properties:
+      groups:
+        type: array
+        items:
+          type: string
   GroupProperties:
     type: object
     properties:

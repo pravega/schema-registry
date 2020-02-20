@@ -10,6 +10,8 @@
 package io.pravega.schemaregistry.server.rest.resources;
 
 import io.pravega.common.Exceptions;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromSubgroupVersionRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.NamespaceProperty;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -134,16 +136,16 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            return Response.status(Status.OK).entity(groupsList).build(); })
                        .exceptionally(exception -> {
                            if (Exceptions.unwrap(exception) instanceof NotFoundException) {
-                               
+                               return Response.status(Status.NOT_FOUND).build();
                            }
-                           log.warn("listNamespaces failed with exception: ", exception);
+                           log.warn("listGroups failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
                            return response;
                        });
     }
-
+    
     @Override
     public void createGroup(String namespaceName, CreateGroupRequest createGroupRequest, SecurityContext securityContext,
                             AsyncResponse asyncResponse) throws NotFoundException {
@@ -187,7 +189,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
         registryService.updateSchemaValidationPolicy(namespaceName, groupName, rules)
                        .thenApply(groupProperty -> Response.status(Status.OK).build())
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("updateSchemaValidationRules failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -202,7 +204,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                        .thenApply(status -> {
                            return Response.status(Status.OK).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("deleteGroup failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -219,7 +221,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                                    .schemas(schemasEvolutionList.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getGroupSchemas failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -235,7 +237,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            SchemaWithVersion schema = ModelHelper.encode(schemaWithVersion);
                            return Response.status(Status.OK).entity(schema).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getLatestGroupSchema failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -254,7 +256,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            VersionInfo version = ModelHelper.encode(versionInfo);
                            return Response.status(Status.OK).entity(version).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("addSchemaToGroupIfAbsent failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -270,7 +272,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                        .thenApply(compatible -> {
                            return Response.status(Status.OK).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("validate failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -279,7 +281,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     }
 
     @Override
-    public void getSchemaFromVersion(String namespaceName, String groupName, GetSchemaFromVersionRequest getSchemaFromVersionRequest,
+    public void getSchemaFromVersion(String namespaceName, String groupName, String versionId, GetSchemaFromVersionRequest getSchemaFromVersionRequest,
                                      SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(getSchemaFromVersionRequest.getVersionInfo());
         registryService.getSchema(namespaceName, groupName, versionInfo)
@@ -287,7 +289,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
                            return Response.status(Status.OK).entity(schema).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getSchemaFromVersion failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -305,7 +307,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            EncodingId id = ModelHelper.encode(encodingId);
                            return Response.status(Status.OK).entity(id).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getOrGenerateEncodingId failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -314,6 +316,43 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     }
 
     @Override
+    public void getSchemaVersion(String namespaceName, String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
+        io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(getSchemaVersion.getSchemaInfo());
+
+        registryService.getSchemaVersion(namespaceName, groupName, schemaInfo)
+                       .thenApply(version -> {
+                           VersionInfo versionInfo = ModelHelper.encode(version);
+                           return Response.status(Status.OK).entity(versionInfo).build(); })
+                       .exceptionally(exception -> {
+                           log.warn("getSchemaVersion failed with exception: ", exception);
+                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                       .thenApply(response -> {
+                           asyncResponse.resume(response);
+                           return response;
+                       });
+    }
+
+    @Override
+    public void getSchemaFromSubgroupVersion(String namespaceName, String groupName, String subgroupName, String versionId,
+                                             GetSchemaFromSubgroupVersionRequest getSchemaFromSubgroupVersionRequest, 
+                                             SecurityContext securityContext, AsyncResponse asyncResponse) 
+            throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
+        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(
+                getSchemaFromSubgroupVersionRequest.getVersionInfo());
+        registryService.getSchema(namespaceName, groupName, versionInfo)
+                       .thenApply(schemaWithVersion -> {
+                           SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
+                           return Response.status(Status.OK).entity(schema).build(); })
+                       .exceptionally(exception -> {
+                           log.warn("getSchemaFromSubgroupVersion failed with exception: ", exception);
+                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                       .thenApply(response -> {
+                           asyncResponse.resume(response);
+                           return response;
+                       });
+    }
+    
+    @Override
     public void getEncodingInfo(String namespaceName, String groupName, Integer encodingId, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.EncodingId id = new io.pravega.schemaregistry.contract.data.EncodingId(encodingId);
         registryService.getEncodingInfo(namespaceName, groupName, id)
@@ -321,7 +360,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            EncodingInfo encoding = ModelHelper.encode(encodingInfo);
                            return Response.status(Status.OK).entity(encoding).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getEncodingInfo failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -339,7 +378,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                                    .compressionTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(compressionsList).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getCompressionsList failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -355,7 +394,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            SchemaWithVersion schema = ModelHelper.encode(schemaWithVersion);
                            return Response.status(Status.OK).entity(schema).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getLatestSubgroupSchema failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -372,7 +411,21 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                                    .schemas(schemaEpochs.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getGroupProperties failed with exception: ", exception);
+                           log.warn("getSubGroupSchemas failed with exception: ", exception);
+                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                       .thenApply(response -> {
+                           asyncResponse.resume(response);
+                           return response;
+                       });
+    }
+
+    @Override
+    public void getSubGroups(String namespaceName, String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
+        registryService.getSubgroups(namespaceName, groupName, null)
+                       .thenApply(subgroups -> {
+                           return Response.status(Status.OK).entity(subgroups.getList()).build(); })
+                       .exceptionally(exception -> {
+                           log.warn("getSubGroups failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);

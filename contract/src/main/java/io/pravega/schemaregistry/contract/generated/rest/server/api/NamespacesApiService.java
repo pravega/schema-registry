@@ -12,7 +12,9 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRe
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromSubgroupVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
@@ -45,8 +47,11 @@ public abstract class NamespacesApiService {
     public abstract Response getLatestGroupSchema(String namespaceName,String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getLatestSubgroupSchema(String namespaceName,String groupName,String subgroupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getOrGenerateEncodingId(String namespaceName,String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemaFromVersion(String namespaceName,String groupName,GetSchemaFromVersionRequest getSchemaFromVersionRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaFromSubgroupVersion(String namespaceName,String groupName,String subgroupName,String versionId,GetSchemaFromSubgroupVersionRequest getSchemaFromSubgroupVersionRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaFromVersion(String namespaceName,String groupName,String versionId,GetSchemaFromVersionRequest getSchemaFromVersionRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaVersion(String namespaceName,String groupName,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSubGroupSchemas(String namespaceName,String groupName,String subgroupName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSubGroups(String namespaceName,String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response listGroups(String namespaceName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response listNamespaces(SecurityContext securityContext) throws NotFoundException;
     public abstract Response updateSchemaValidationRules(String namespaceName,String groupName,UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest,SecurityContext securityContext) throws NotFoundException;
