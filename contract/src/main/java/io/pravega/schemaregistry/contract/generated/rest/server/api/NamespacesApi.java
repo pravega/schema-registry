@@ -14,7 +14,9 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRe
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromSubgroupVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
@@ -82,7 +84,7 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToGroupRequest addSchemaToGroupRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
@@ -135,7 +137,7 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class) })
     public Response deleteGroup(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.deleteGroup(namespaceName,groupName,securityContext);
@@ -170,7 +172,7 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getCompressionsList(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getCompressionsList(namespaceName,groupName,securityContext);
@@ -205,13 +207,13 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getGroupProperties(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getGroupProperties(namespaceName,groupName,securityContext);
     }
     @GET
-    @Path("/{namespaceName}/groups/{groupName}/schemas")
+    @Path("/{namespaceName}/groups/{groupName}/schemas/versions")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaEvolutionList.class, tags={ "Schema", })
@@ -222,13 +224,13 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getGroupSchemas(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getGroupSchemas(namespaceName,groupName,securityContext);
     }
     @GET
-    @Path("/{namespaceName}/groups/{groupName}/schemas/latest")
+    @Path("/{namespaceName}/groups/{groupName}/schemas/versions/latest")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaWithVersion.class, tags={ "Schema", })
@@ -239,13 +241,13 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getLatestGroupSchema(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getLatestGroupSchema(namespaceName,groupName,securityContext);
     }
     @GET
-    @Path("/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/latest")
+    @Path("/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions/latest")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaWithVersion.class, tags={ "Schema", })
@@ -256,8 +258,8 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getLatestSubgroupSchema(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
-,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Subgroup name",required=true) @PathParam("subgroupName") String subgroupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getLatestSubgroupSchema(namespaceName,groupName,subgroupName,securityContext);
@@ -274,14 +276,34 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getOrGenerateEncodingId(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getOrGenerateEncodingId(namespaceName,groupName,getEncodingIdRequest,securityContext);
     }
     @GET
-    @Path("/{namespaceName}/groups/{groupName}/schemas/version")
+    @Path("/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions/{versionId}")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response getSchemaFromSubgroupVersion(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Subgroup name",required=true) @PathParam("subgroupName") String subgroupName
+,@ApiParam(value = "version id",required=true) @PathParam("versionId") String versionId
+,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaFromSubgroupVersionRequest getSchemaFromSubgroupVersionRequest
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSchemaFromSubgroupVersion(namespaceName,groupName,subgroupName,versionId,getSchemaFromSubgroupVersionRequest,securityContext);
+    }
+    @GET
+    @Path("/{namespaceName}/groups/{groupName}/schemas/versions/{versionId}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags={ "Schema", })
@@ -292,14 +314,33 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSchemaFromVersion(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("versionId") String versionId
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaFromVersionRequest getSchemaFromVersionRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersion(namespaceName,groupName,getSchemaFromVersionRequest,securityContext);
+        return delegate.getSchemaFromVersion(namespaceName,groupName,versionId,getSchemaFromVersionRequest,securityContext);
     }
     @GET
-    @Path("/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas")
+    @Path("/{namespaceName}/groups/{groupName}/schemas")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema version", response = VersionInfo.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response getSchemaVersion(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaVersion getSchemaVersion
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSchemaVersion(namespaceName,groupName,getSchemaVersion,securityContext);
+    }
+    @GET
+    @Path("/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all schemas registered under a sub Group", response = SchemaEvolutionList.class, tags={ "Schema", })
@@ -310,11 +351,28 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSubGroupSchemas(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
-,@ApiParam(value = "Subgroup name",required=true) @PathParam("SubgroupName") String subgroupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Subgroup name",required=true) @PathParam("subgroupName") String subgroupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getSubGroupSchemas(namespaceName,groupName,subgroupName,securityContext);
+    }
+    @GET
+    @Path("/{namespaceName}/groups/{groupName}/subgroups")
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all subgroups under a Group. Schemas under a group can be subgrouped based on event type. A subgroup denotes a set of schemas that are evolved separately.", response = SchemaEvolutionList.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "List of subgroups under the group", response = SchemaEvolutionList.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response getSubGroups(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSubGroups(namespaceName,groupName,securityContext);
     }
     @GET
     @Path("/{namespaceName}/groups")
@@ -359,7 +417,7 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response updateSchemaValidationRules(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "update group policy" ,required=true) UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
@@ -377,7 +435,7 @@ public class NamespacesApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response validate(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
-,@ApiParam(value = "Group name",required=true) @PathParam("GroupName") String groupName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Checks if schema is valid with respect to supplied validation rules" ,required=true) ValidateRequest validateRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
