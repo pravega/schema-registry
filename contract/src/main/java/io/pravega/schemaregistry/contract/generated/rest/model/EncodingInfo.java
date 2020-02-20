@@ -16,28 +16,28 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfoModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * EncodingInfoModel
+ * EncodingInfo
  */
 
-public class EncodingInfoModel   {
+public class EncodingInfo   {
   @JsonProperty("schemaInfo")
-  private SchemaInfoModel schemaInfo = null;
+  private SchemaInfo schemaInfo = null;
 
   @JsonProperty("versionInfo")
-  private VersionInfoModel versionInfo = null;
+  private VersionInfo versionInfo = null;
 
   @JsonProperty("compressionType")
-  private CompressionTypeModel compressionType = null;
+  private CompressionType compressionType = null;
 
-  public EncodingInfoModel schemaInfo(SchemaInfoModel schemaInfo) {
+  public EncodingInfo schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -48,15 +48,15 @@ public class EncodingInfoModel   {
    **/
   @JsonProperty("schemaInfo")
   @ApiModelProperty(value = "")
-  public SchemaInfoModel getSchemaInfo() {
+  public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
 
-  public void setSchemaInfo(SchemaInfoModel schemaInfo) {
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
   }
 
-  public EncodingInfoModel versionInfo(VersionInfoModel versionInfo) {
+  public EncodingInfo versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
     return this;
   }
@@ -67,15 +67,15 @@ public class EncodingInfoModel   {
    **/
   @JsonProperty("versionInfo")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getVersionInfo() {
+  public VersionInfo getVersionInfo() {
     return versionInfo;
   }
 
-  public void setVersionInfo(VersionInfoModel versionInfo) {
+  public void setVersionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
   }
 
-  public EncodingInfoModel compressionType(CompressionTypeModel compressionType) {
+  public EncodingInfo compressionType(CompressionType compressionType) {
     this.compressionType = compressionType;
     return this;
   }
@@ -86,11 +86,11 @@ public class EncodingInfoModel   {
    **/
   @JsonProperty("compressionType")
   @ApiModelProperty(value = "")
-  public CompressionTypeModel getCompressionType() {
+  public CompressionType getCompressionType() {
     return compressionType;
   }
 
-  public void setCompressionType(CompressionTypeModel compressionType) {
+  public void setCompressionType(CompressionType compressionType) {
     this.compressionType = compressionType;
   }
 
@@ -103,10 +103,10 @@ public class EncodingInfoModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EncodingInfoModel encodingInfoModel = (EncodingInfoModel) o;
-    return Objects.equals(this.schemaInfo, encodingInfoModel.schemaInfo) &&
-        Objects.equals(this.versionInfo, encodingInfoModel.versionInfo) &&
-        Objects.equals(this.compressionType, encodingInfoModel.compressionType);
+    EncodingInfo encodingInfo = (EncodingInfo) o;
+    return Objects.equals(this.schemaInfo, encodingInfo.schemaInfo) &&
+        Objects.equals(this.versionInfo, encodingInfo.versionInfo) &&
+        Objects.equals(this.compressionType, encodingInfo.compressionType);
   }
 
   @Override
@@ -118,7 +118,7 @@ public class EncodingInfoModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class EncodingInfoModel {\n");
+    sb.append("class EncodingInfo {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");

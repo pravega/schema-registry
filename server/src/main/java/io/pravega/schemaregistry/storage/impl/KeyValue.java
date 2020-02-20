@@ -14,22 +14,23 @@ import lombok.Data;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
 public interface KeyValue {
-    Collection<IndexRecord.IndexKey> getAllKeys();
+    CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys();
 
-    List<Entry> getAllEntries();
+    CompletableFuture<List<Entry>> getAllEntries();
 
-    List<Entry> getAllEntries(Predicate<IndexRecord.IndexKey> filterKeys);
+    CompletableFuture<List<Entry>> getAllEntries(Predicate<IndexRecord.IndexKey> filterKeys);
 
-    void addEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value);
+    CompletableFuture<Void> addEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value);
 
-    void updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, int version);
+    CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, int version);
 
-    <T extends IndexRecord.IndexValue> T getRecord(IndexRecord.IndexKey key, Class<T> tClass);
+    <T extends IndexRecord.IndexValue> CompletableFuture<T> getRecord(IndexRecord.IndexKey key, Class<T> tClass);
 
-    <T extends IndexRecord.IndexValue> Value<T> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass);
+    <T extends IndexRecord.IndexValue> CompletableFuture<Value<T>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass);
 
     @Data
     class Value<T extends IndexRecord.IndexValue> {

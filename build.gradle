@@ -243,6 +243,7 @@ project('server') {
         compile project(':common')
         compile project(':contract')
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-controller', version: pravegaVersion
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
         compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion

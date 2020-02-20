@@ -11,12 +11,14 @@ package io.pravega.schemaregistry.storage.impl;
 
 import io.pravega.schemaregistry.ListWithToken;
 
-public interface Scopes {
-    ListWithToken<String> getScopes();
+import java.util.concurrent.CompletableFuture;
 
-    void addNewScope(String scope);
+public interface Namespaces {
+    CompletableFuture<ListWithToken<String>> getNamespaces();
 
-    void removeScope(String scope);
+    CompletableFuture<Void> addNewNamespace(String namespace);
 
-    Scope getScope(String scope);
+    CompletableFuture<Void> removeNamespace(String namespace);
+
+    CompletableFuture<Namespace> getNamespace(String namespace);
 }

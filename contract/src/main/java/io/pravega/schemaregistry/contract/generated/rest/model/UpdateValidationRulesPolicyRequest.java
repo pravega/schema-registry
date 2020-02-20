@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -27,9 +27,9 @@ import javax.validation.constraints.*;
 
 public class UpdateValidationRulesPolicyRequest   {
   @JsonProperty("validationRules")
-  private SchemaValidationRulesModel validationRules = null;
+  private SchemaValidationRules validationRules = null;
 
-  public UpdateValidationRulesPolicyRequest validationRules(SchemaValidationRulesModel validationRules) {
+  public UpdateValidationRulesPolicyRequest validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -40,11 +40,11 @@ public class UpdateValidationRulesPolicyRequest   {
    **/
   @JsonProperty("validationRules")
   @ApiModelProperty(value = "")
-  public SchemaValidationRulesModel getValidationRules() {
+  public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
 
-  public void setValidationRules(SchemaValidationRulesModel validationRules) {
+  public void setValidationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
   }
 

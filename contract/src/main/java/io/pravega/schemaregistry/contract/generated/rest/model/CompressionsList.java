@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -24,38 +24,38 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaEvolutionListModel
+ * CompressionsList
  */
 
-public class SchemaEvolutionListModel   {
-  @JsonProperty("schemas")
-  private List<SchemaEvolutionModel> schemas = null;
+public class CompressionsList   {
+  @JsonProperty("compressionTypes")
+  private List<CompressionType> compressionTypes = null;
 
-  public SchemaEvolutionListModel schemas(List<SchemaEvolutionModel> schemas) {
-    this.schemas = schemas;
+  public CompressionsList compressionTypes(List<CompressionType> compressionTypes) {
+    this.compressionTypes = compressionTypes;
     return this;
   }
 
-  public SchemaEvolutionListModel addSchemasItem(SchemaEvolutionModel schemasItem) {
-    if (this.schemas == null) {
-      this.schemas = new ArrayList<SchemaEvolutionModel>();
+  public CompressionsList addCompressionTypesItem(CompressionType compressionTypesItem) {
+    if (this.compressionTypes == null) {
+      this.compressionTypes = new ArrayList<CompressionType>();
     }
-    this.schemas.add(schemasItem);
+    this.compressionTypes.add(compressionTypesItem);
     return this;
   }
 
   /**
-   * Get schemas
-   * @return schemas
+   * Get compressionTypes
+   * @return compressionTypes
    **/
-  @JsonProperty("schemas")
+  @JsonProperty("compressionTypes")
   @ApiModelProperty(value = "")
-  public List<SchemaEvolutionModel> getSchemas() {
-    return schemas;
+  public List<CompressionType> getCompressionTypes() {
+    return compressionTypes;
   }
 
-  public void setSchemas(List<SchemaEvolutionModel> schemas) {
-    this.schemas = schemas;
+  public void setCompressionTypes(List<CompressionType> compressionTypes) {
+    this.compressionTypes = compressionTypes;
   }
 
 
@@ -67,22 +67,22 @@ public class SchemaEvolutionListModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaEvolutionListModel schemaEvolutionListModel = (SchemaEvolutionListModel) o;
-    return Objects.equals(this.schemas, schemaEvolutionListModel.schemas);
+    CompressionsList compressionsList = (CompressionsList) o;
+    return Objects.equals(this.compressionTypes, compressionsList.compressionTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemas);
+    return Objects.hash(compressionTypes);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaEvolutionListModel {\n");
+    sb.append("class CompressionsList {\n");
     
-    sb.append("    schemas: ").append(toIndentedString(schemas)).append("\n");
+    sb.append("    compressionTypes: ").append(toIndentedString(compressionTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }

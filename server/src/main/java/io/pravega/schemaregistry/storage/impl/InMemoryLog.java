@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl;
 
+import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.storage.Position;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.records.InMemoryPosition;
@@ -20,6 +21,7 @@ import javax.annotation.concurrent.GuardedBy;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public class InMemoryLog implements Log {
     private static final InMemoryPosition HEAD_POSITION = new InMemoryPosition(0);
@@ -29,13 +31,13 @@ public class InMemoryLog implements Log {
     
     @Override
     @Synchronized
-    public InMemoryPosition getCurrentEtag() {
-        return new InMemoryPosition(log.size());
+    public CompletableFuture<Position> getCurrentEtag() {
+        return CompletableFuture.completedFuture(new InMemoryPosition(log.size()));
     }
 
     @Override
     @Synchronized
-    public InMemoryPosition writeToLog(Record record, Position position) {
+    public CompletableFuture<Position> writeToLog(Record record, Position position) {
         Position pos = position == null ? HEAD_POSITION : position;
 
         if (pos.getPosition() != log.size()) {
@@ -49,28 +51,28 @@ public class InMemoryLog implements Log {
     @Override
     @SuppressWarnings("unchecked")
     @Synchronized
-    public <T extends Record> T readAt(Position position, Class<T> tClass) {
+    public <T extends Record> CompletableFuture<T> readAt(Position position, Class<T> tClass) {
         Position pos = position == null ? HEAD_POSITION : position;
         Record record = log.get((int) pos.getPosition());
         if (record.getClass().isAssignableFrom(tClass)) {
-            return (T) record;
+            return CompletableFuture.completedFuture((T) record);
         } else {
-            throw new IllegalArgumentException();
+            return Futures.failedFuture(new IllegalArgumentException());
         }
     }
 
     @Override
     @Synchronized
-    public List<RecordWithPosition> readFrom(Position position) {
+    public CompletableFuture<List<RecordWithPosition>> readFrom(Position position) {
         Position pos = position == null ? HEAD_POSITION : position;
 
         int startingPos = (int) pos.getPosition();
         List<RecordWithPosition> recordWithPositions = new ArrayList<>(log.size() - startingPos);
         for (int i = startingPos; i < log.size(); i++) {
             InMemoryPosition inMemoryPosition = new InMemoryPosition(i);
-            recordWithPositions.add(new RecordWithPosition(inMemoryPosition, readAt(inMemoryPosition, Record.class)));
+            recordWithPositions.add(new RecordWithPosition(inMemoryPosition, readAt(inMemoryPosition, Record.class).join()));
         }
-        return recordWithPositions;
+        return CompletableFuture.completedFuture(recordWithPositions);
     }
 }
 

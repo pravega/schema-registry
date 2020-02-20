@@ -16,46 +16,57 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.GroupPropertiesModel;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * GroupsListModel
+ * VersionInfo
  */
 
-public class GroupsListModel   {
-  @JsonProperty("groups")
-  private List<GroupPropertiesModel> groups = null;
+public class VersionInfo   {
+  @JsonProperty("schemaName")
+  private String schemaName = null;
 
-  public GroupsListModel groups(List<GroupPropertiesModel> groups) {
-    this.groups = groups;
-    return this;
-  }
+  @JsonProperty("version")
+  private Integer version = null;
 
-  public GroupsListModel addGroupsItem(GroupPropertiesModel groupsItem) {
-    if (this.groups == null) {
-      this.groups = new ArrayList<GroupPropertiesModel>();
-    }
-    this.groups.add(groupsItem);
+  public VersionInfo schemaName(String schemaName) {
+    this.schemaName = schemaName;
     return this;
   }
 
   /**
-   * Get groups
-   * @return groups
+   * Get schemaName
+   * @return schemaName
    **/
-  @JsonProperty("groups")
+  @JsonProperty("schemaName")
   @ApiModelProperty(value = "")
-  public List<GroupPropertiesModel> getGroups() {
-    return groups;
+  public String getSchemaName() {
+    return schemaName;
   }
 
-  public void setGroups(List<GroupPropertiesModel> groups) {
-    this.groups = groups;
+  public void setSchemaName(String schemaName) {
+    this.schemaName = schemaName;
+  }
+
+  public VersionInfo version(Integer version) {
+    this.version = version;
+    return this;
+  }
+
+  /**
+   * Get version
+   * @return version
+   **/
+  @JsonProperty("version")
+  @ApiModelProperty(value = "")
+  public Integer getVersion() {
+    return version;
+  }
+
+  public void setVersion(Integer version) {
+    this.version = version;
   }
 
 
@@ -67,22 +78,24 @@ public class GroupsListModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GroupsListModel groupsListModel = (GroupsListModel) o;
-    return Objects.equals(this.groups, groupsListModel.groups);
+    VersionInfo versionInfo = (VersionInfo) o;
+    return Objects.equals(this.schemaName, versionInfo.schemaName) &&
+        Objects.equals(this.version, versionInfo.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(schemaName, version);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class GroupsListModel {\n");
+    sb.append("class VersionInfo {\n");
     
-    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
+    sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("}");
     return sb.toString();
   }

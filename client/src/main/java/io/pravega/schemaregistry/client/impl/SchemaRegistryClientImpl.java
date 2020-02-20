@@ -20,9 +20,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CreateScopeRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import org.glassfish.jersey.client.ClientConfig;
 
@@ -46,34 +44,34 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
     
     @Override
-    public void createScope(String scope) {
-        WebTarget webTarget = client.target(uri).path("scopes");
+    public void createNamespace(String namespace) {
+        WebTarget webTarget = client.target(uri).path("namespaces");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-        CreateScopeRequest request = new CreateScopeRequest().scopeName(scope);
+        CreateNamespaceRequest request = new CreateNamespaceRequest().namespaceName(namespace);
         invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
     }
 
     @Override
-    public void deleteScope(String scope) {
-        WebTarget webTarget = client.target(uri).path("scopes").path(scope);
+    public void deleteNamespace(String namespace) {
+        WebTarget webTarget = client.target(uri).path("namespaces").path(namespace);
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-        CreateScopeRequest request = new CreateScopeRequest().scopeName(scope);
+        CreateNamespaceRequest request = new CreateNamespaceRequest().namespaceName(namespace);
         invocationBuilder.delete();
     }
 
     @Override
-    public boolean addGroup(String scope, String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean subgroupBySchemaName, boolean enableEncoding) {
-        WebTarget webTarget = client.target(uri).path("scopes").path(scope).path("groups");
+    public boolean addGroup(String namespace, String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean subgroupBySchemaName, boolean enableEncoding) {
+        WebTarget webTarget = client.target(uri).path("namespaces").path(namespace).path("groups");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-        SchemaTypeModel schemaTypeModel = ModelHelper.encode(schemaType);
+        io.pravega.schemaregistry.contract.generated.rest.model.SchemaType schemaTypeModel = ModelHelper.encode(schemaType);
 
-        SchemaValidationRulesModel compatibility = ModelHelper.encode(validationRules);
+        io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
                                                              .enableEncoding(enableEncoding).groupByEventType(subgroupBySchemaName)
                                                              .groupName(group)
@@ -89,67 +87,67 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void removeGroup(String scope, String group) {
+    public void removeGroup(String namespace, String group) {
 
     }
 
     @Override
-    public GroupProperties getGroupProperties(String scope, String group) {
+    public GroupProperties getGroupProperties(String namespace, String group) {
         return null;
     }
 
     @Override
-    public void updateSchemaValidationRules(String scope, String group, SchemaValidationRules validationRules) {
+    public void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules) {
 
     }
 
     @Override
-    public List<String> getSubgroups(String scope, String group) {
+    public List<String> getSubgroups(String namespace, String group) {
         return null;
     }
 
     @Override
-    public VersionInfo addSchemaIfAbsent(String scope, String group, SchemaInfo schema, SchemaValidationRules rules) {
+    public VersionInfo addSchemaIfAbsent(String namespace, String group, SchemaInfo schema, SchemaValidationRules rules) {
         return null;
     }
 
     @Override
-    public SchemaInfo getSchema(String scope, String group, VersionInfo version) {
+    public SchemaInfo getSchema(String namespace, String group, VersionInfo version) {
         return null;
     }
 
     @Override
-    public EncodingInfo getEncodingInfo(String scope, String group, EncodingId encodingId) {
+    public EncodingInfo getEncodingInfo(String namespace, String group, EncodingId encodingId) {
         return null;
     }
 
     @Override
-    public EncodingId getEncodingId(String scope, String group, VersionInfo version, CompressionType compressionType) {
+    public EncodingId getEncodingId(String namespace, String group, VersionInfo version, CompressionType compressionType) {
         return null;
     }
 
     @Override
-    public SchemaWithVersion getLatestSchema(String scope, String group, @Nullable String subgroup) {
+    public SchemaWithVersion getLatestSchema(String namespace, String group, @Nullable String subgroup) {
         return null;
     }
 
     @Override
-    public List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup) {
+    public List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup) {
         return null;
     }
 
     @Override
-    public VersionInfo getSchemaVersion(String scope, String group, SchemaInfo schema) {
+    public VersionInfo getSchemaVersion(String namespace, String group, SchemaInfo schema) {
         return null;
     }
 
     @Override
-    public boolean validateSchema(String scope, String group, SchemaInfo schema, SchemaValidationRules validationRules) {
+    public boolean validateSchema(String namespace, String group, SchemaInfo schema, SchemaValidationRules validationRules) {
         return false;
     }
 
     @Override
-    public List<CompressionType> getCompressions(String scope, String group) {
+    public List<CompressionType> getCompressions(String namespace, String group) {
         return null;
     }
 }

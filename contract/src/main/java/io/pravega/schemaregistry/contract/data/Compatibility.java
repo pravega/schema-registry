@@ -75,5 +75,4 @@ public class Compatibility {
     public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
         return new Compatibility(Type.ForwardTill, backwardTill, forwardTill);
     }
-
 }

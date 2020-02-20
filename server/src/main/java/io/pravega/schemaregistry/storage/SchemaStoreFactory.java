@@ -9,18 +9,20 @@
  */
 package io.pravega.schemaregistry.storage;
 
-import io.pravega.schemaregistry.storage.impl.InMemoryScopes;
+import io.pravega.schemaregistry.storage.impl.InMemoryNamespaces;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import org.apache.commons.lang3.NotImplementedException;
 
+import java.util.concurrent.ScheduledExecutorService;
+
 public class SchemaStoreFactory {
-    public static SchemaStore createStore(StoreType type) {
+    public static SchemaStore createStore(StoreType type, ScheduledExecutorService executor) {
         switch (type) {
             case InMemory:
-                return new SchemaStoreImpl(new InMemoryScopes());
+                return new SchemaStoreImpl(new InMemoryNamespaces(executor));
             case Pravega:
             default:
-                throw new NotImplementedException("pravega store not implemented yet");
+                throw new NotImplementedException("Pravega tables based store coming soon");
         }
     }
 }

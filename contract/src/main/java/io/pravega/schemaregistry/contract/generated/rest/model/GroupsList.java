@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionTypeModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -24,38 +24,38 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * CompressionsListModel
+ * GroupsList
  */
 
-public class CompressionsListModel   {
-  @JsonProperty("compressionTypes")
-  private List<CompressionTypeModel> compressionTypes = null;
+public class GroupsList   {
+  @JsonProperty("groups")
+  private List<GroupProperties> groups = null;
 
-  public CompressionsListModel compressionTypes(List<CompressionTypeModel> compressionTypes) {
-    this.compressionTypes = compressionTypes;
+  public GroupsList groups(List<GroupProperties> groups) {
+    this.groups = groups;
     return this;
   }
 
-  public CompressionsListModel addCompressionTypesItem(CompressionTypeModel compressionTypesItem) {
-    if (this.compressionTypes == null) {
-      this.compressionTypes = new ArrayList<CompressionTypeModel>();
+  public GroupsList addGroupsItem(GroupProperties groupsItem) {
+    if (this.groups == null) {
+      this.groups = new ArrayList<GroupProperties>();
     }
-    this.compressionTypes.add(compressionTypesItem);
+    this.groups.add(groupsItem);
     return this;
   }
 
   /**
-   * Get compressionTypes
-   * @return compressionTypes
+   * Get groups
+   * @return groups
    **/
-  @JsonProperty("compressionTypes")
+  @JsonProperty("groups")
   @ApiModelProperty(value = "")
-  public List<CompressionTypeModel> getCompressionTypes() {
-    return compressionTypes;
+  public List<GroupProperties> getGroups() {
+    return groups;
   }
 
-  public void setCompressionTypes(List<CompressionTypeModel> compressionTypes) {
-    this.compressionTypes = compressionTypes;
+  public void setGroups(List<GroupProperties> groups) {
+    this.groups = groups;
   }
 
 
@@ -67,22 +67,22 @@ public class CompressionsListModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CompressionsListModel compressionsListModel = (CompressionsListModel) o;
-    return Objects.equals(this.compressionTypes, compressionsListModel.compressionTypes);
+    GroupsList groupsList = (GroupsList) o;
+    return Objects.equals(this.groups, groupsList.groups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compressionTypes);
+    return Objects.hash(groups);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CompressionsListModel {\n");
+    sb.append("class GroupsList {\n");
     
-    sb.append("    compressionTypes: ").append(toIndentedString(compressionTypes)).append("\n");
+    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
     sb.append("}");
     return sb.toString();
   }

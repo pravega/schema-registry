@@ -9,16 +9,17 @@
  */
 package io.pravega.schemaregistry.storage.impl;
 
+import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 
-import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 
-public interface Scope {
-    Group getGroup(String groupName);
+public interface Namespace {
+    CompletableFuture<Group> getGroup(String groupName);
 
-    boolean addNewGroup(String group, GroupProperties groupProperties);
+    CompletableFuture<Boolean> addNewGroup(String group, GroupProperties groupProperties);
 
-    Map<String, Group> getGroups();
+    CompletableFuture<ListWithToken<String>> getGroups();
 
-    void deleteGroup(String group);
+    CompletableFuture<Void> deleteGroup(String group);
 }

@@ -16,8 +16,8 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfoModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -28,12 +28,12 @@ import javax.validation.constraints.*;
 
 public class ValidateRequest   {
   @JsonProperty("schemaInfo")
-  private SchemaInfoModel schemaInfo = null;
+  private SchemaInfo schemaInfo = null;
 
   @JsonProperty("validationRules")
-  private SchemaValidationRulesModel validationRules = null;
+  private SchemaValidationRules validationRules = null;
 
-  public ValidateRequest schemaInfo(SchemaInfoModel schemaInfo) {
+  public ValidateRequest schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -44,15 +44,15 @@ public class ValidateRequest   {
    **/
   @JsonProperty("schemaInfo")
   @ApiModelProperty(value = "")
-  public SchemaInfoModel getSchemaInfo() {
+  public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
 
-  public void setSchemaInfo(SchemaInfoModel schemaInfo) {
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
   }
 
-  public ValidateRequest validationRules(SchemaValidationRulesModel validationRules) {
+  public ValidateRequest validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -63,11 +63,11 @@ public class ValidateRequest   {
    **/
   @JsonProperty("validationRules")
   @ApiModelProperty(value = "")
-  public SchemaValidationRulesModel getValidationRules() {
+  public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
 
-  public void setValidationRules(SchemaValidationRulesModel validationRules) {
+  public void setValidationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
   }
 

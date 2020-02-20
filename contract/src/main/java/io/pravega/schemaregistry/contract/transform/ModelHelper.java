@@ -11,150 +11,141 @@ package io.pravega.schemaregistry.contract.transform;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.CompressionType;
-import io.pravega.schemaregistry.contract.data.EncodingId;
-import io.pravega.schemaregistry.contract.data.EncodingInfo;
-import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
-import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
-import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompatibilityModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.EncodingIdModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfoModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.GroupPropertiesModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfoModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersionModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
+import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
+import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolution;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
 public class ModelHelper {
 
     // region decode
-    public static SchemaInfo decode(SchemaInfoModel schemaInfo) {
-        SchemaType schemaType = decode(schemaInfo.getSchemaType());
-        return new SchemaInfo(schemaInfo.getSchemaName(), schemaType, schemaInfo.getSchemaData(),
+    public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
+        io.pravega.schemaregistry.contract.data.SchemaType schemaType = decode(schemaInfo.getSchemaType());
+        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), schemaType, schemaInfo.getSchemaData(),
                 ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
-    public static SchemaType decode(SchemaTypeModel schemaType) {
+    public static io.pravega.schemaregistry.contract.data.SchemaType decode(SchemaType schemaType) {
         switch (schemaType.getSchemaType()) {
             case CUSTOM:
-                return SchemaType.custom(schemaType.getCustomTypeName());
+                return io.pravega.schemaregistry.contract.data.SchemaType.custom(schemaType.getCustomTypeName());
             default:
-                return SchemaType.of(searchEnum(SchemaType.Type.class, schemaType.getSchemaType().name()));
+                return io.pravega.schemaregistry.contract.data.SchemaType.of(
+                        searchEnum(io.pravega.schemaregistry.contract.data.SchemaType.Type.class, schemaType.getSchemaType().name()));
         }
     }
 
-    public static SchemaValidationRules decode(SchemaValidationRulesModel rules) {
-        Compatibility compatibilityRule = decode(rules.getCompatibility());
-        return new SchemaValidationRules(ImmutableList.of(), compatibilityRule);
+    public static io.pravega.schemaregistry.contract.data.SchemaValidationRules decode(SchemaValidationRules rules) {
+        io.pravega.schemaregistry.contract.data.Compatibility compatibilityRule = decode(rules.getCompatibility());
+        return new io.pravega.schemaregistry.contract.data.SchemaValidationRules(ImmutableList.of(), compatibilityRule);
     }
 
-    public static Compatibility decode(CompatibilityModel compatibility) {
-        VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
-        VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
-        return new Compatibility(
-                searchEnum(Compatibility.Type.class, compatibility.getPolicy().name()),
+    public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
+        io.pravega.schemaregistry.contract.data.VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
+        io.pravega.schemaregistry.contract.data.VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
+        return new io.pravega.schemaregistry.contract.data.Compatibility(
+                searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()),
                 backwardTill, forwardTill);
     }
 
-    public static CompressionType decode(CompressionTypeModel compressionType) {
+    public static io.pravega.schemaregistry.contract.data.CompressionType decode(CompressionType compressionType) {
         switch (compressionType.getCompressionType()) {
             case CUSTOM:
-                return CompressionType.custom(compressionType.getCustomTypeName());
+                return io.pravega.schemaregistry.contract.data.CompressionType.custom(compressionType.getCustomTypeName());
             default:
-                return CompressionType.of(searchEnum(CompressionType.Type.class, compressionType.getCompressionType().name()));
+                return io.pravega.schemaregistry.contract.data.CompressionType.of(searchEnum(
+                        io.pravega.schemaregistry.contract.data.CompressionType.Type.class, compressionType.getCompressionType().name()));
         }
     }
 
-    public static VersionInfo decode(VersionInfoModel versionInfo) {
-        return new VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion());
+    public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
+        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion());
     }
     // endregion
 
     // region encode
-    public static SchemaEvolutionModel encode(SchemaEvolutionEpoch schemaEvolution) {
-        SchemaInfoModel encode = encode(schemaEvolution.getSchema());
-        return new SchemaEvolutionModel().schemaInfo(encode)
+    public static SchemaEvolution encode(io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch schemaEvolution) {
+        SchemaInfo encode = encode(schemaEvolution.getSchema());
+        return new SchemaEvolution().schemaInfo(encode)
                                          .version(encode(schemaEvolution.getVersion())).validationRules(encode(schemaEvolution.getRules()));
     }
 
-    public static SchemaValidationRulesModel encode(SchemaValidationRules rules) {
-        return new SchemaValidationRulesModel().compatibility(encode(rules.getCompatibility()));
+    public static SchemaValidationRules encode(io.pravega.schemaregistry.contract.data.SchemaValidationRules rules) {
+        return new SchemaValidationRules().compatibility(encode(rules.getCompatibility()));
     }
 
-    public static CompatibilityModel encode(Compatibility compatibility) {
-        CompatibilityModel policy = new CompatibilityModel().policy(
-                searchEnum(CompatibilityModel.PolicyEnum.class, compatibility.getCompatibility().name()));
+    public static Compatibility encode(io.pravega.schemaregistry.contract.data.Compatibility compatibility) {
+        Compatibility policy = new Compatibility().policy(
+                searchEnum(Compatibility.PolicyEnum.class, compatibility.getCompatibility().name()));
         if (compatibility.getBackwardTill() != null) {
-            VersionInfoModel backwardTill = encode(compatibility.getBackwardTill());
+            VersionInfo backwardTill = encode(compatibility.getBackwardTill());
             policy = policy.backwardTill(backwardTill);
         }
         if (compatibility.getForwardTill() != null) {
-            VersionInfoModel forwardTill = encode(compatibility.getForwardTill());
+            VersionInfo forwardTill = encode(compatibility.getForwardTill());
             policy = policy.forwardTill(forwardTill);
         }
         return policy;
     }
 
-    public static SchemaWithVersionModel encode(SchemaWithVersion schemaWithVersion) {
-        return new SchemaWithVersionModel().schemaInfo(encode(schemaWithVersion.getSchema()))
+    public static SchemaWithVersion encode(io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion) {
+        return new SchemaWithVersion().schemaInfo(encode(schemaWithVersion.getSchema()))
                                            .version(encode(schemaWithVersion.getVersion()));
     }
 
-    public static GroupPropertiesModel encode(GroupProperties groupProperties) {
-        return new GroupPropertiesModel()
+    public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
+        return new GroupProperties()
                 .enableEncoding(groupProperties.isEnableEncoding())
                 .subgroupBySchemaName(groupProperties.isSubgroupBySchemaName())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
 
-    public static GroupPropertiesModel encode(String groupName, GroupProperties groupProperties) {
-        return ModelHelper.encode(groupProperties).groupName(groupName);
+    public static GroupProperties encode(String groupName, io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
+        return encode(groupProperties).groupName(groupName);
     }
 
-    public static VersionInfoModel encode(VersionInfo versionInfo) {
-        return new VersionInfoModel().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion());
+    public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
+        return new VersionInfo().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion());
     }
 
-    public static SchemaInfoModel encode(SchemaInfo schemaInfo) {
-        return new SchemaInfoModel().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData())
+    public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {
+        return new SchemaInfo().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData())
                                     .schemaName(schemaInfo.getName()).schemaType(encode(schemaInfo.getSchemaType()));
     }
 
-    public static SchemaTypeModel encode(SchemaType schemaType) {
-        if (schemaType.getSchemaType().equals(SchemaType.Type.Custom)) {
-            SchemaTypeModel schemaTypeModel = new SchemaTypeModel().schemaType(SchemaTypeModel.SchemaTypeEnum.CUSTOM);
+    public static SchemaType encode(io.pravega.schemaregistry.contract.data.SchemaType schemaType) {
+        if (schemaType.getSchemaType().equals(io.pravega.schemaregistry.contract.data.SchemaType.Type.Custom)) {
+            SchemaType schemaTypeModel = new SchemaType().schemaType(SchemaType.SchemaTypeEnum.CUSTOM);
             return schemaTypeModel.customTypeName(schemaType.getCustomTypeName());
         } else {
-            return new SchemaTypeModel().schemaType(
-                    searchEnum(SchemaTypeModel.SchemaTypeEnum.class, schemaType.getSchemaType().name()));
+            return new SchemaType().schemaType(
+                    searchEnum(SchemaType.SchemaTypeEnum.class, schemaType.getSchemaType().name()));
         }
     }
 
-    public static EncodingIdModel encode(EncodingId encodingId) {
-        return new EncodingIdModel().encodingId(encodingId.getId());
+    public static EncodingId encode(io.pravega.schemaregistry.contract.data.EncodingId encodingId) {
+        return new EncodingId().encodingId(encodingId.getId());
     }
 
-    public static CompressionTypeModel encode(CompressionType compression) {
-        if (compression.getCompressionType().equals(CompressionType.Type.Custom)) {
-            return new CompressionTypeModel().compressionType(CompressionTypeModel.CompressionTypeEnum.CUSTOM)
+    public static CompressionType encode(io.pravega.schemaregistry.contract.data.CompressionType compression) {
+        if (compression.getCompressionType().equals(io.pravega.schemaregistry.contract.data.CompressionType.Type.Custom)) {
+            return new CompressionType().compressionType(CompressionType.CompressionTypeEnum.CUSTOM)
                                              .customTypeName(compression.getCustomTypeName());
         } else {
-            return new CompressionTypeModel().compressionType(
-                    searchEnum(CompressionTypeModel.CompressionTypeEnum.class, compression.getCompressionType().name()));
+            return new CompressionType().compressionType(
+                    searchEnum(CompressionType.CompressionTypeEnum.class, compression.getCompressionType().name()));
         }
     }
 
-    public static EncodingInfoModel encode(EncodingInfo encodingInfo) {
-        return new EncodingInfoModel().compressionType(encode(encodingInfo.getCompression()))
+    public static EncodingInfo encode(io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo) {
+        return new EncodingInfo().compressionType(encode(encodingInfo.getCompression()))
                                       .versionInfo(encode(encodingInfo.getVersionInfo()))
                                       .schemaInfo(encode(encodingInfo.getSchemaInfo()));
     }

@@ -14,13 +14,14 @@ import io.pravega.schemaregistry.storage.records.Record;
 import io.pravega.schemaregistry.storage.records.RecordWithPosition;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 public interface Log {
-    Position getCurrentEtag();
+    CompletableFuture<Position> getCurrentEtag();
 
-    Position writeToLog(Record record, Position etag);
+    CompletableFuture<Position> writeToLog(Record record, Position etag);
 
-    <T extends Record> T readAt(Position position, Class<T> tClass);
+    <T extends Record> CompletableFuture<T> readAt(Position position, Class<T> tClass);
 
-    List<RecordWithPosition> readFrom(Position position);
+    CompletableFuture<List<RecordWithPosition>> readFrom(Position position);
 }

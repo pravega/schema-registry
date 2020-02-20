@@ -13,7 +13,8 @@ import lombok.Data;
 
 @Data
 public class VersionInfo {
-    static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
+    private static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
+    
     private final String schemaName;
     private final int version;
 }

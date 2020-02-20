@@ -22,10 +22,10 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaTypeModel
+ * SchemaType
  */
 
-public class SchemaTypeModel   {
+public class SchemaType   {
   /**
    * Gets or Sets schemaType
    */
@@ -69,7 +69,7 @@ public class SchemaTypeModel   {
   @JsonProperty("customTypeName")
   private String customTypeName = null;
 
-  public SchemaTypeModel schemaType(SchemaTypeEnum schemaType) {
+  public SchemaType schemaType(SchemaTypeEnum schemaType) {
     this.schemaType = schemaType;
     return this;
   }
@@ -88,7 +88,7 @@ public class SchemaTypeModel   {
     this.schemaType = schemaType;
   }
 
-  public SchemaTypeModel customTypeName(String customTypeName) {
+  public SchemaType customTypeName(String customTypeName) {
     this.customTypeName = customTypeName;
     return this;
   }
@@ -116,9 +116,9 @@ public class SchemaTypeModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaTypeModel schemaTypeModel = (SchemaTypeModel) o;
-    return Objects.equals(this.schemaType, schemaTypeModel.schemaType) &&
-        Objects.equals(this.customTypeName, schemaTypeModel.customTypeName);
+    SchemaType schemaType = (SchemaType) o;
+    return Objects.equals(this.schemaType, schemaType.schemaType) &&
+        Objects.equals(this.customTypeName, schemaType.customTypeName);
   }
 
   @Override
@@ -130,7 +130,7 @@ public class SchemaTypeModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaTypeModel {\n");
+    sb.append("class SchemaType {\n");
     
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    customTypeName: ").append(toIndentedString(customTypeName)).append("\n");

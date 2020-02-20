@@ -16,36 +16,46 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompatibilityModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.NamespaceProperty;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaValidationRulesModel
+ * NamespacesList
  */
 
-public class SchemaValidationRulesModel   {
-  @JsonProperty("compatibility")
-  private CompatibilityModel compatibility = null;
+public class NamespacesList   {
+  @JsonProperty("namespaces")
+  private List<NamespaceProperty> namespaces = null;
 
-  public SchemaValidationRulesModel compatibility(CompatibilityModel compatibility) {
-    this.compatibility = compatibility;
+  public NamespacesList namespaces(List<NamespaceProperty> namespaces) {
+    this.namespaces = namespaces;
+    return this;
+  }
+
+  public NamespacesList addNamespacesItem(NamespaceProperty namespacesItem) {
+    if (this.namespaces == null) {
+      this.namespaces = new ArrayList<NamespaceProperty>();
+    }
+    this.namespaces.add(namespacesItem);
     return this;
   }
 
   /**
-   * Get compatibility
-   * @return compatibility
+   * Get namespaces
+   * @return namespaces
    **/
-  @JsonProperty("compatibility")
+  @JsonProperty("namespaces")
   @ApiModelProperty(value = "")
-  public CompatibilityModel getCompatibility() {
-    return compatibility;
+  public List<NamespaceProperty> getNamespaces() {
+    return namespaces;
   }
 
-  public void setCompatibility(CompatibilityModel compatibility) {
-    this.compatibility = compatibility;
+  public void setNamespaces(List<NamespaceProperty> namespaces) {
+    this.namespaces = namespaces;
   }
 
 
@@ -57,22 +67,22 @@ public class SchemaValidationRulesModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaValidationRulesModel schemaValidationRulesModel = (SchemaValidationRulesModel) o;
-    return Objects.equals(this.compatibility, schemaValidationRulesModel.compatibility);
+    NamespacesList namespacesList = (NamespacesList) o;
+    return Objects.equals(this.namespaces, namespacesList.namespaces);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compatibility);
+    return Objects.hash(namespaces);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaValidationRulesModel {\n");
+    sb.append("class NamespacesList {\n");
     
-    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
+    sb.append("    namespaces: ").append(toIndentedString(namespaces)).append("\n");
     sb.append("}");
     return sb.toString();
   }

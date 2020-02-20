@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl;
 
+import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
 import lombok.AccessLevel;
@@ -20,6 +21,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -30,69 +32,72 @@ public class InMemoryKeyValue implements KeyValue {
 
     @Override
     @Synchronized
-    public Collection<IndexRecord.IndexKey> getAllKeys() {
-        return index.keySet();
+    public CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys() {
+        return CompletableFuture.completedFuture(index.keySet());
     }
 
     @Override
     @Synchronized
-    public List<Entry> getAllEntries() {
-        return index.entrySet().stream().map(x -> new Entry(x.getKey(), x.getValue().getValue())).collect(Collectors.toList());
+    public CompletableFuture<List<Entry>> getAllEntries() {
+        return CompletableFuture.completedFuture(
+                index.entrySet().stream().map(x -> new Entry(x.getKey(), x.getValue().getValue())).collect(Collectors.toList()));
     }
 
     @Override
     @Synchronized
-    public List<Entry> getAllEntries(Predicate<IndexRecord.IndexKey> filterKeys) {
-        return index.entrySet().stream().filter(x -> filterKeys.test(x.getKey()))
-                    .map(x -> new Entry(x.getKey(), x.getValue().getValue())).collect(Collectors.toList());
+    public CompletableFuture<List<Entry>> getAllEntries(Predicate<IndexRecord.IndexKey> filterKeys) {
+        return CompletableFuture.completedFuture(index.entrySet().stream().filter(x -> filterKeys.test(x.getKey()))
+                    .map(x -> new Entry(x.getKey(), x.getValue().getValue())).collect(Collectors.toList()));
     }
 
     @Override
     @Synchronized
-    public void addEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value) {
+    public CompletableFuture<Void> addEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value) {
         index.putIfAbsent(key, new Value<>(value, 0));
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     @Synchronized
-    public void updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, int version) {
+    public CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, int version) {
         int currentVersion = index.containsKey(key) ? index.get(key).getVersion() : 0;
         if (currentVersion != version) {
             throw new StoreExceptions.WriteConflictException();
         } else {
             index.put(key, new Value<>(value, version + 1));
         }
+        return CompletableFuture.completedFuture(null);
     }
 
     @Override
     @SuppressWarnings("unchecked")
     @Synchronized
-    public <T extends IndexRecord.IndexValue> T getRecord(IndexRecord.IndexKey key, Class<T> tClass) {
+    public <T extends IndexRecord.IndexValue> CompletableFuture<T> getRecord(IndexRecord.IndexKey key, Class<T> tClass) {
         if (!index.containsKey(key)) {
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
 
         Value<IndexRecord.IndexValue> value = index.get(key);
         if (value.getValue().getClass().isAssignableFrom(tClass)) {
-            return (T) value.getValue();
+            return CompletableFuture.completedFuture((T) value.getValue());
         } else {
-            throw new IllegalArgumentException();
+            return Futures.failedFuture(new IllegalArgumentException());
         }
     }
 
     @Override
     @SuppressWarnings("unchecked")
     @Synchronized
-    public <T extends IndexRecord.IndexValue> Value<T> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass) {
+    public <T extends IndexRecord.IndexValue> CompletableFuture<Value<T>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass) {
         if (!index.containsKey(key)) {
-            return null;
+            return CompletableFuture.completedFuture(null);
         }
 
         Value value = index.get(key);
         if (value.getValue().getClass().isAssignableFrom(tClass)) {
-            return new Value<>((T) value.getValue(), value.getVersion());
+            return CompletableFuture.completedFuture(new Value<>((T) value.getValue(), value.getVersion()));
         } else {
-            throw new IllegalArgumentException();
+            return Futures.failedFuture(new IllegalArgumentException());
         }
     }
 }

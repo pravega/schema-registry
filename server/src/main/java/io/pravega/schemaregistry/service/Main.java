@@ -16,12 +16,16 @@ import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.schemaregistry.storage.StoreType;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+
 @Slf4j
 public class Main {
     public static void main(String[] args) {
         // TODO: read config host and port from service configuration
         ServiceConfig config = ServiceConfig.builder().host("localhost").port(1234).build();
-        SchemaStore schemaStore = SchemaStoreFactory.createStore(StoreType.InMemory);
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(50);
+        SchemaStore schemaStore = SchemaStoreFactory.createStore(StoreType.InMemory, executor);
         SchemaRegistryService service = new SchemaRegistryService(schemaStore);
         RestServer restServer = new RestServer(service, config);
         restServer.startAsync();

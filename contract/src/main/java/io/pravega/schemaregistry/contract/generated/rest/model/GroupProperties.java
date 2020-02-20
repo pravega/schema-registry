@@ -16,25 +16,25 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * GroupPropertiesModel
+ * GroupProperties
  */
 
-public class GroupPropertiesModel   {
+public class GroupProperties   {
   @JsonProperty("groupName")
   private String groupName = null;
 
   @JsonProperty("schemaValidationRules")
-  private SchemaValidationRulesModel schemaValidationRules = null;
+  private SchemaValidationRules schemaValidationRules = null;
 
   @JsonProperty("schemaType")
-  private SchemaTypeModel schemaType = null;
+  private SchemaType schemaType = null;
 
   @JsonProperty("subgroupBySchemaName")
   private Boolean subgroupBySchemaName = null;
@@ -42,7 +42,7 @@ public class GroupPropertiesModel   {
   @JsonProperty("enableEncoding")
   private Boolean enableEncoding = null;
 
-  public GroupPropertiesModel groupName(String groupName) {
+  public GroupProperties groupName(String groupName) {
     this.groupName = groupName;
     return this;
   }
@@ -61,7 +61,7 @@ public class GroupPropertiesModel   {
     this.groupName = groupName;
   }
 
-  public GroupPropertiesModel schemaValidationRules(SchemaValidationRulesModel schemaValidationRules) {
+  public GroupProperties schemaValidationRules(SchemaValidationRules schemaValidationRules) {
     this.schemaValidationRules = schemaValidationRules;
     return this;
   }
@@ -72,15 +72,15 @@ public class GroupPropertiesModel   {
    **/
   @JsonProperty("schemaValidationRules")
   @ApiModelProperty(value = "")
-  public SchemaValidationRulesModel getSchemaValidationRules() {
+  public SchemaValidationRules getSchemaValidationRules() {
     return schemaValidationRules;
   }
 
-  public void setSchemaValidationRules(SchemaValidationRulesModel schemaValidationRules) {
+  public void setSchemaValidationRules(SchemaValidationRules schemaValidationRules) {
     this.schemaValidationRules = schemaValidationRules;
   }
 
-  public GroupPropertiesModel schemaType(SchemaTypeModel schemaType) {
+  public GroupProperties schemaType(SchemaType schemaType) {
     this.schemaType = schemaType;
     return this;
   }
@@ -91,15 +91,15 @@ public class GroupPropertiesModel   {
    **/
   @JsonProperty("schemaType")
   @ApiModelProperty(value = "")
-  public SchemaTypeModel getSchemaType() {
+  public SchemaType getSchemaType() {
     return schemaType;
   }
 
-  public void setSchemaType(SchemaTypeModel schemaType) {
+  public void setSchemaType(SchemaType schemaType) {
     this.schemaType = schemaType;
   }
 
-  public GroupPropertiesModel subgroupBySchemaName(Boolean subgroupBySchemaName) {
+  public GroupProperties subgroupBySchemaName(Boolean subgroupBySchemaName) {
     this.subgroupBySchemaName = subgroupBySchemaName;
     return this;
   }
@@ -118,7 +118,7 @@ public class GroupPropertiesModel   {
     this.subgroupBySchemaName = subgroupBySchemaName;
   }
 
-  public GroupPropertiesModel enableEncoding(Boolean enableEncoding) {
+  public GroupProperties enableEncoding(Boolean enableEncoding) {
     this.enableEncoding = enableEncoding;
     return this;
   }
@@ -146,12 +146,12 @@ public class GroupPropertiesModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GroupPropertiesModel groupPropertiesModel = (GroupPropertiesModel) o;
-    return Objects.equals(this.groupName, groupPropertiesModel.groupName) &&
-        Objects.equals(this.schemaValidationRules, groupPropertiesModel.schemaValidationRules) &&
-        Objects.equals(this.schemaType, groupPropertiesModel.schemaType) &&
-        Objects.equals(this.subgroupBySchemaName, groupPropertiesModel.subgroupBySchemaName) &&
-        Objects.equals(this.enableEncoding, groupPropertiesModel.enableEncoding);
+    GroupProperties groupProperties = (GroupProperties) o;
+    return Objects.equals(this.groupName, groupProperties.groupName) &&
+        Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
+        Objects.equals(this.schemaType, groupProperties.schemaType) &&
+        Objects.equals(this.subgroupBySchemaName, groupProperties.subgroupBySchemaName) &&
+        Objects.equals(this.enableEncoding, groupProperties.enableEncoding);
   }
 
   @Override
@@ -163,7 +163,7 @@ public class GroupPropertiesModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class GroupPropertiesModel {\n");
+    sb.append("class GroupProperties {\n");
     
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");

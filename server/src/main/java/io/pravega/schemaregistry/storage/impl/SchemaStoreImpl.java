@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.storage.impl;
 
-import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -27,164 +26,162 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 
 import javax.annotation.Nullable;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
-import java.util.stream.Collectors;
 
 public class SchemaStoreImpl implements SchemaStore {
-    private final Scopes scopes;
+    private final Namespaces namespaces;
 
-    public SchemaStoreImpl(Scopes scopes) {
-        this.scopes = scopes;
+    public SchemaStoreImpl(Namespaces namespaces) {
+        this.namespaces = namespaces;
     }
     
     // region schema store
     @Override
-    public CompletableFuture<ListWithToken<String>> listScopes(ContinuationToken parse) {
-        return CompletableFuture.completedFuture(scopes.getScopes());
+    public CompletableFuture<ListWithToken<String>> listNamespaces(ContinuationToken parse) {
+        return namespaces.getNamespaces();
     }
 
     @Override
-    public CompletableFuture<Void> createScope(String scope) {
-        scopes.addNewScope(scope);
-        return CompletableFuture.completedFuture(null);
+    public CompletableFuture<Void> createNamespace(String namespace) {
+        return namespaces.addNewNamespace(namespace);
     }
 
     @Override
-    public CompletableFuture<Void> deleteScope(String scope) {
-        scopes.removeScope(scope);
-        return CompletableFuture.completedFuture(null);
+    public CompletableFuture<Void> deleteNamespace(String namespace) {
+        return namespaces.removeNamespace(namespace);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String scope, @Nullable ContinuationToken token) {
-        return getScope(scope).thenApply(scp -> {
-            List<String> list = scp.getGroups().entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
-            return new ListWithToken<>(list, null);
-        });
+    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token) {
+        return getNamespace(namespace).thenCompose(Namespace::getGroups);
     }
 
     @Override
-    public CompletableFuture<Boolean> createGroupInScope(String scope, String group, GroupProperties groupProperties) {
-        return getScope(scope).thenApply(scp -> scp.addNewGroup(group, groupProperties));
+    public CompletableFuture<Boolean> createGroupInNamespace(String namespace, String group, GroupProperties groupProperties) {
+        return getNamespace(namespace).thenCompose(scp -> scp.addNewGroup(group, groupProperties));
     }
 
     @Override
-    public CompletableFuture<Void> deleteGroup(String scope, String group) {
-        return getScope(scope).thenAccept(scp -> scp.deleteGroup(group));
+    public CompletableFuture<Void> deleteGroup(String namespace, String group) {
+        return getNamespace(namespace).thenCompose(scp -> scp.deleteGroup(group));
     }
 
     @Override
-    public CompletableFuture<Position> getGroupEtag(String scope, String group) {
-        return getGroup(scope, group).thenApply(Group::getCurrentEtag);
+    public CompletableFuture<Position> getGroupEtag(String namespace, String group) {
+        return getGroup(namespace, group).thenCompose(Group::getCurrentEtag);
     }
 
     @Override
-    public CompletableFuture<GroupProperties> getGroupProperties(String scope, String group) {
-        return getGroup(scope, group).thenApply(grp -> new GroupProperties(grp.getSchemaType(),
-                grp.getCurrentValidationRules(), grp.isSubgroupByEventType(), grp.isEnableEncoding()));
+    public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
+        return getGroup(namespace, group).thenCompose(grp ->
+                grp.getCurrentValidationRules().thenApply(rules -> 
+                new GroupProperties(grp.getSchemaType(), rules, grp.isSubgroupByEventType(), grp.isEnableEncoding())));
     }
 
     @Override
-    public CompletableFuture<Position> updateValidationPolicy(String scope, String group, Position etag, SchemaValidationRules policy) {
-        return getGroup(scope, group).thenApply(grp -> {
-            if (!etag.equals(grp.getCurrentEtag())) {
-                throw new StoreExceptions.WriteConflictException();
-            } else {
-                return grp.updateValidationPolicy(policy, etag);
-            }
-        });
+    public CompletableFuture<Position> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy) {
+        return getGroup(namespace, group)
+                .thenCompose(grp -> grp.getCurrentEtag().thenCompose(currentEtag -> {
+                    if (!etag.equals(currentEtag)) {
+                        throw new StoreExceptions.WriteConflictException();
+                    } else {
+                        return grp.updateValidationPolicy(policy, etag);
+                    }
+                }));
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String scope, String group, ContinuationToken token) {
-        return getGroup(scope, group).thenApply(Group::getSubgroups);
+    public CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group, ContinuationToken token) {
+        return getGroup(namespace, group).thenCompose(Group::getSubgroups);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String scope, String group, ContinuationToken token) {
-        return getGroup(scope, group).thenApply(Group::getSchemas);
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, ContinuationToken token) {
+        return getGroup(namespace, group).thenCompose(Group::getSchemas);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String scope, String group, String subgroup, ContinuationToken token) {
-        return getGroup(scope, group).thenApply(grp -> grp.getSchemas(subgroup));
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup, ContinuationToken token) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.getSchemas(subgroup));
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String scope, String group, VersionInfo versionInfo) {
-        return getGroup(scope, group).thenApply(grp -> grp.getSchema(versionInfo));
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, VersionInfo versionInfo) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.getSchema(versionInfo));
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group) {
-        return getGroup(scope, group).thenApply(Group::getLatestSchema);
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group) {
+        return getGroup(namespace, group).thenCompose(Group::getLatestSchema);
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group, String subgroup) {
-        return getGroup(scope, group).thenApply(grp -> grp.getLatestSchema(subgroup));
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group, String subgroup) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.getLatestSchema(subgroup));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String scope, String group, Position etag, SchemaInfo schemaInfo) {
-        return getGroup(scope, group).thenApply(grp -> grp.addSchemaToGroup(schemaInfo, etag));
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String namespace, String group, Position etag, SchemaInfo schemaInfo) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, etag));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String scope, String group, String subgroup, Position etag, SchemaInfo schemaInfo) {
-        return getGroup(scope, group).thenApply(grp -> grp.addSchemaToSubGroup(subgroup, schemaInfo, etag));
+    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String namespace, String group, String subgroup, Position etag, SchemaInfo schemaInfo) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.addSchemaToSubGroup(subgroup, schemaInfo, etag));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, SchemaInfo schemaInfo) {
-        return getGroup(scope, group).thenApply(grp -> grp.getVersion(schemaInfo));
+    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.getVersion(schemaInfo));
     }
 
     @Override
-    public CompletableFuture<EncodingId> createOrGetEncodingId(String scope, String group, VersionInfo versionInfo,
+    public CompletableFuture<EncodingId> createOrGetEncodingId(String namespace, String group, VersionInfo versionInfo,
                                                                CompressionType compressionType) {
-        return getGroup(scope, group).thenApply(grp -> grp.getOrCreateEncodingId(versionInfo, compressionType));
+        return getGroup(namespace, group).thenCompose(grp -> grp.getOrCreateEncodingId(versionInfo, compressionType));
     }
 
     @Override
-    public CompletableFuture<EncodingInfo> getEncodingInfo(String scope, String group, EncodingId encodingId) {
-        return getGroup(scope, group).thenApply(grp -> grp.getEncodingInfo(encodingId));
+    public CompletableFuture<EncodingInfo> getEncodingInfo(String namespace, String group, EncodingId encodingId) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.getEncodingInfo(encodingId));
     }
 
     @Override
-    public CompletableFuture<List<CompressionType>> getCompressions(String scope, String group) {
-        return getGroup(scope, group).thenApply(Group::getCompressions);
+    public CompletableFuture<List<CompressionType>> getCompressions(String namespace, String group) {
+        return getGroup(namespace, group).thenCompose(Group::getCompressions);
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String scope, String group) {
-        return getGroup(scope, group).thenApply(Group::getHistory);
+    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String namespace, String group) {
+        return getGroup(namespace, group).thenCompose(Group::getHistory);
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String scope, String group, String subgroup) {
-        return getGroup(scope, group).thenApply(grp -> grp.getHistory(subgroup));
+    public CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String namespace, String group, String subgroup) {
+        return getGroup(namespace, group).thenCompose(grp -> grp.getHistory(subgroup));
     }
     // endregion
 
-    private CompletableFuture<Group> getGroup(String scope, String group) {
-        return getScope(scope).thenApply(scp -> {
-            Group grp = scp.getGroup(group);
-            if (group == null) {
-                throw new StoreExceptions.DataNotFoundException();
-            }
+    private CompletableFuture<Group> getGroup(String namespace, String group) {
+        return getNamespace(namespace)
+                .thenCompose(scp -> scp.getGroup(group)
+                                       .thenApply(grp -> {
+                                           if (group == null) {
+                                               throw new StoreExceptions.DataNotFoundException();
+                                           }
 
-            return grp;
-        });
+                                           return grp;
+                                       }));
     }
 
-    private CompletableFuture<Scope> getScope(String scope) {
-        Scope scp = scopes.getScope(scope);
-        if (scp == null) {
-            return Futures.failedFuture(new StoreExceptions.DataNotFoundException());
-        }
+    private CompletableFuture<Namespace> getNamespace(String namespace) {
+        return namespaces.getNamespace(namespace)
+                         .thenApply(scp -> {
+                             if (scp == null) {
+                                 throw new StoreExceptions.DataNotFoundException();
+                             }
 
-        return CompletableFuture.completedFuture(scp);
+                             return scp;
+                         });
     }
 }

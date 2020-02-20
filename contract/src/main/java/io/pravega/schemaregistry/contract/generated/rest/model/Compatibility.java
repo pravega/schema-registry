@@ -17,16 +17,16 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * CompatibilityModel
+ * Compatibility
  */
 
-public class CompatibilityModel   {
+public class Compatibility   {
   /**
    * Gets or Sets policy
    */
@@ -80,12 +80,12 @@ public class CompatibilityModel   {
   private PolicyEnum policy = null;
 
   @JsonProperty("backwardTill")
-  private VersionInfoModel backwardTill = null;
+  private VersionInfo backwardTill = null;
 
   @JsonProperty("forwardTill")
-  private VersionInfoModel forwardTill = null;
+  private VersionInfo forwardTill = null;
 
-  public CompatibilityModel policy(PolicyEnum policy) {
+  public Compatibility policy(PolicyEnum policy) {
     this.policy = policy;
     return this;
   }
@@ -104,7 +104,7 @@ public class CompatibilityModel   {
     this.policy = policy;
   }
 
-  public CompatibilityModel backwardTill(VersionInfoModel backwardTill) {
+  public Compatibility backwardTill(VersionInfo backwardTill) {
     this.backwardTill = backwardTill;
     return this;
   }
@@ -115,15 +115,15 @@ public class CompatibilityModel   {
    **/
   @JsonProperty("backwardTill")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getBackwardTill() {
+  public VersionInfo getBackwardTill() {
     return backwardTill;
   }
 
-  public void setBackwardTill(VersionInfoModel backwardTill) {
+  public void setBackwardTill(VersionInfo backwardTill) {
     this.backwardTill = backwardTill;
   }
 
-  public CompatibilityModel forwardTill(VersionInfoModel forwardTill) {
+  public Compatibility forwardTill(VersionInfo forwardTill) {
     this.forwardTill = forwardTill;
     return this;
   }
@@ -134,11 +134,11 @@ public class CompatibilityModel   {
    **/
   @JsonProperty("forwardTill")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getForwardTill() {
+  public VersionInfo getForwardTill() {
     return forwardTill;
   }
 
-  public void setForwardTill(VersionInfoModel forwardTill) {
+  public void setForwardTill(VersionInfo forwardTill) {
     this.forwardTill = forwardTill;
   }
 
@@ -151,10 +151,10 @@ public class CompatibilityModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CompatibilityModel compatibilityModel = (CompatibilityModel) o;
-    return Objects.equals(this.policy, compatibilityModel.policy) &&
-        Objects.equals(this.backwardTill, compatibilityModel.backwardTill) &&
-        Objects.equals(this.forwardTill, compatibilityModel.forwardTill);
+    Compatibility compatibility = (Compatibility) o;
+    return Objects.equals(this.policy, compatibility.policy) &&
+        Objects.equals(this.backwardTill, compatibility.backwardTill) &&
+        Objects.equals(this.forwardTill, compatibility.forwardTill);
   }
 
   @Override
@@ -166,7 +166,7 @@ public class CompatibilityModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CompatibilityModel {\n");
+    sb.append("class Compatibility {\n");
     
     sb.append("    policy: ").append(toIndentedString(policy)).append("\n");
     sb.append("    backwardTill: ").append(toIndentedString(backwardTill)).append("\n");
