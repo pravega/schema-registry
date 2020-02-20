@@ -16,24 +16,24 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfoModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaWithVersionModel
+ * SchemaWithVersion
  */
 
-public class SchemaWithVersionModel   {
+public class SchemaWithVersion   {
   @JsonProperty("schemaInfo")
-  private SchemaInfoModel schemaInfo = null;
+  private SchemaInfo schemaInfo = null;
 
   @JsonProperty("version")
-  private VersionInfoModel version = null;
+  private VersionInfo version = null;
 
-  public SchemaWithVersionModel schemaInfo(SchemaInfoModel schemaInfo) {
+  public SchemaWithVersion schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -44,15 +44,15 @@ public class SchemaWithVersionModel   {
    **/
   @JsonProperty("schemaInfo")
   @ApiModelProperty(value = "")
-  public SchemaInfoModel getSchemaInfo() {
+  public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
 
-  public void setSchemaInfo(SchemaInfoModel schemaInfo) {
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
   }
 
-  public SchemaWithVersionModel version(VersionInfoModel version) {
+  public SchemaWithVersion version(VersionInfo version) {
     this.version = version;
     return this;
   }
@@ -63,11 +63,11 @@ public class SchemaWithVersionModel   {
    **/
   @JsonProperty("version")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getVersion() {
+  public VersionInfo getVersion() {
     return version;
   }
 
-  public void setVersion(VersionInfoModel version) {
+  public void setVersion(VersionInfo version) {
     this.version = version;
   }
 
@@ -80,9 +80,9 @@ public class SchemaWithVersionModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaWithVersionModel schemaWithVersionModel = (SchemaWithVersionModel) o;
-    return Objects.equals(this.schemaInfo, schemaWithVersionModel.schemaInfo) &&
-        Objects.equals(this.version, schemaWithVersionModel.version);
+    SchemaWithVersion schemaWithVersion = (SchemaWithVersion) o;
+    return Objects.equals(this.schemaInfo, schemaWithVersion.schemaInfo) &&
+        Objects.equals(this.version, schemaWithVersion.version);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class SchemaWithVersionModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaWithVersionModel {\n");
+    sb.append("class SchemaWithVersion {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");

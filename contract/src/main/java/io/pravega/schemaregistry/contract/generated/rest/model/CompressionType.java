@@ -22,10 +22,10 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * CompressionTypeModel
+ * CompressionType
  */
 
-public class CompressionTypeModel   {
+public class CompressionType   {
   /**
    * Gets or Sets compressionType
    */
@@ -67,7 +67,7 @@ public class CompressionTypeModel   {
   @JsonProperty("customTypeName")
   private String customTypeName = null;
 
-  public CompressionTypeModel compressionType(CompressionTypeEnum compressionType) {
+  public CompressionType compressionType(CompressionTypeEnum compressionType) {
     this.compressionType = compressionType;
     return this;
   }
@@ -86,7 +86,7 @@ public class CompressionTypeModel   {
     this.compressionType = compressionType;
   }
 
-  public CompressionTypeModel customTypeName(String customTypeName) {
+  public CompressionType customTypeName(String customTypeName) {
     this.customTypeName = customTypeName;
     return this;
   }
@@ -114,9 +114,9 @@ public class CompressionTypeModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CompressionTypeModel compressionTypeModel = (CompressionTypeModel) o;
-    return Objects.equals(this.compressionType, compressionTypeModel.compressionType) &&
-        Objects.equals(this.customTypeName, compressionTypeModel.customTypeName);
+    CompressionType compressionType = (CompressionType) o;
+    return Objects.equals(this.compressionType, compressionType.compressionType) &&
+        Objects.equals(this.customTypeName, compressionType.customTypeName);
   }
 
   @Override
@@ -128,7 +128,7 @@ public class CompressionTypeModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CompressionTypeModel {\n");
+    sb.append("class CompressionType {\n");
     
     sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
     sb.append("    customTypeName: ").append(toIndentedString(customTypeName)).append("\n");

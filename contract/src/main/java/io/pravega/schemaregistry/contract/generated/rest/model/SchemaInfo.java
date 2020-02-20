@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaTypeModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
@@ -26,15 +26,15 @@ import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * SchemaInfoModel
+ * SchemaInfo
  */
 
-public class SchemaInfoModel   {
+public class SchemaInfo   {
   @JsonProperty("schemaName")
   private String schemaName = null;
 
   @JsonProperty("schemaType")
-  private SchemaTypeModel schemaType = null;
+  private SchemaType schemaType = null;
 
   @JsonProperty("schemaData")
   private byte[] schemaData = null;
@@ -42,7 +42,7 @@ public class SchemaInfoModel   {
   @JsonProperty("properties")
   private Map<String, String> properties = null;
 
-  public SchemaInfoModel schemaName(String schemaName) {
+  public SchemaInfo schemaName(String schemaName) {
     this.schemaName = schemaName;
     return this;
   }
@@ -61,7 +61,7 @@ public class SchemaInfoModel   {
     this.schemaName = schemaName;
   }
 
-  public SchemaInfoModel schemaType(SchemaTypeModel schemaType) {
+  public SchemaInfo schemaType(SchemaType schemaType) {
     this.schemaType = schemaType;
     return this;
   }
@@ -72,15 +72,15 @@ public class SchemaInfoModel   {
    **/
   @JsonProperty("schemaType")
   @ApiModelProperty(value = "")
-  public SchemaTypeModel getSchemaType() {
+  public SchemaType getSchemaType() {
     return schemaType;
   }
 
-  public void setSchemaType(SchemaTypeModel schemaType) {
+  public void setSchemaType(SchemaType schemaType) {
     this.schemaType = schemaType;
   }
 
-  public SchemaInfoModel schemaData(byte[] schemaData) {
+  public SchemaInfo schemaData(byte[] schemaData) {
     this.schemaData = schemaData;
     return this;
   }
@@ -99,12 +99,12 @@ public class SchemaInfoModel   {
     this.schemaData = schemaData;
   }
 
-  public SchemaInfoModel properties(Map<String, String> properties) {
+  public SchemaInfo properties(Map<String, String> properties) {
     this.properties = properties;
     return this;
   }
 
-  public SchemaInfoModel putPropertiesItem(String key, String propertiesItem) {
+  public SchemaInfo putPropertiesItem(String key, String propertiesItem) {
     if (this.properties == null) {
       this.properties = new HashMap<String, String>();
     }
@@ -135,11 +135,11 @@ public class SchemaInfoModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaInfoModel schemaInfoModel = (SchemaInfoModel) o;
-    return Objects.equals(this.schemaName, schemaInfoModel.schemaName) &&
-        Objects.equals(this.schemaType, schemaInfoModel.schemaType) &&
-        Arrays.equals(this.schemaData, schemaInfoModel.schemaData) &&
-        Objects.equals(this.properties, schemaInfoModel.properties);
+    SchemaInfo schemaInfo = (SchemaInfo) o;
+    return Objects.equals(this.schemaName, schemaInfo.schemaName) &&
+        Objects.equals(this.schemaType, schemaInfo.schemaType) && 
+        Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
+        Objects.equals(this.properties, schemaInfo.properties);
   }
 
   @Override
@@ -151,7 +151,7 @@ public class SchemaInfoModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaInfoModel {\n");
+    sb.append("class SchemaInfo {\n");
     
     sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");

@@ -16,28 +16,28 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfoModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaEvolutionModel
+ * SchemaEvolution
  */
 
-public class SchemaEvolutionModel   {
+public class SchemaEvolution   {
   @JsonProperty("schemaInfo")
-  private SchemaInfoModel schemaInfo = null;
+  private SchemaInfo schemaInfo = null;
 
   @JsonProperty("version")
-  private VersionInfoModel version = null;
+  private VersionInfo version = null;
 
   @JsonProperty("validationRules")
-  private SchemaValidationRulesModel validationRules = null;
+  private SchemaValidationRules validationRules = null;
 
-  public SchemaEvolutionModel schemaInfo(SchemaInfoModel schemaInfo) {
+  public SchemaEvolution schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -48,15 +48,15 @@ public class SchemaEvolutionModel   {
    **/
   @JsonProperty("schemaInfo")
   @ApiModelProperty(value = "")
-  public SchemaInfoModel getSchemaInfo() {
+  public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
 
-  public void setSchemaInfo(SchemaInfoModel schemaInfo) {
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
   }
 
-  public SchemaEvolutionModel version(VersionInfoModel version) {
+  public SchemaEvolution version(VersionInfo version) {
     this.version = version;
     return this;
   }
@@ -67,15 +67,15 @@ public class SchemaEvolutionModel   {
    **/
   @JsonProperty("version")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getVersion() {
+  public VersionInfo getVersion() {
     return version;
   }
 
-  public void setVersion(VersionInfoModel version) {
+  public void setVersion(VersionInfo version) {
     this.version = version;
   }
 
-  public SchemaEvolutionModel validationRules(SchemaValidationRulesModel validationRules) {
+  public SchemaEvolution validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -86,11 +86,11 @@ public class SchemaEvolutionModel   {
    **/
   @JsonProperty("validationRules")
   @ApiModelProperty(value = "")
-  public SchemaValidationRulesModel getValidationRules() {
+  public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
 
-  public void setValidationRules(SchemaValidationRulesModel validationRules) {
+  public void setValidationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
   }
 
@@ -103,10 +103,10 @@ public class SchemaEvolutionModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaEvolutionModel schemaEvolutionModel = (SchemaEvolutionModel) o;
-    return Objects.equals(this.schemaInfo, schemaEvolutionModel.schemaInfo) &&
-        Objects.equals(this.version, schemaEvolutionModel.version) &&
-        Objects.equals(this.validationRules, schemaEvolutionModel.validationRules);
+    SchemaEvolution schemaEvolution = (SchemaEvolution) o;
+    return Objects.equals(this.schemaInfo, schemaEvolution.schemaInfo) &&
+        Objects.equals(this.version, schemaEvolution.version) &&
+        Objects.equals(this.validationRules, schemaEvolution.validationRules);
   }
 
   @Override
@@ -118,7 +118,7 @@ public class SchemaEvolutionModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaEvolutionModel {\n");
+    sb.append("class SchemaEvolution {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");

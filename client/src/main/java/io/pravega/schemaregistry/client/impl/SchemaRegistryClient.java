@@ -28,24 +28,24 @@ import java.util.List;
  */
 public interface SchemaRegistryClient {
     /**
-     * Creates new scope with specified name if absent. This api is idempotent. 
+     * Creates new namespace with specified name if absent. This api is idempotent. 
      * 
-     * @param scope Name of scope.
+     * @param namespace Name of namespace.
      */
-    void createScope(String scope);
+    void createNamespace(String namespace);
 
     /**
-     * Deletes a scope with specified name.
+     * Deletes a namespace with specified name.
      * 
-     * @param scope Name of scope.
+     * @param namespace Name of namespace.
      */
-    void deleteScope(String scope);
+    void deleteNamespace(String namespace);
 
     /**
-     * Adds a new group to the specified scope. Refer to {@link GroupProperties} for details about each property. 
+     * Adds a new group to the specified namespace. Refer to {@link GroupProperties} for details about each property. 
      * 
-     * @param scope Name of the scope to add the group to. 
-     * @param group Name of group that uniquely identifies the group within a scope. 
+     * @param namespace Name of the namespace to add the group to. 
+     * @param group Name of group that uniquely identifies the group within a namespace. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
      * @param subgroupBySchemaName Property to describe whether group should be subdivided into sub groups by event types. 
@@ -55,16 +55,16 @@ public interface SchemaRegistryClient {
      *                       the group. 
      * @return True indicates if the group was added successfully, false if it exists. 
      */
-    boolean addGroup(String scope, String group, SchemaType schemaType, SchemaValidationRules validationRules,
+    boolean addGroup(String namespace, String group, SchemaType schemaType, SchemaValidationRules validationRules,
                      boolean subgroupBySchemaName, boolean enableEncoding);
     
     /**
-     * Remove group from the specified scope. 
+     * Remove group from the specified namespace. 
      * 
-     * @param scope Name of the scope to add the group to. 
-     * @param group Name of group that uniquely identifies the group within a scope. 
+     * @param namespace Name of the namespace to add the group to. 
+     * @param group Name of group that uniquely identifies the group within a namespace. 
      */
-    void removeGroup(String scope, String group);
+    void removeGroup(String namespace, String group);
 
     /**
      * Gets group's properties. 
@@ -75,30 +75,30 @@ public interface SchemaRegistryClient {
      * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify 
      * encoding properties in {@link EncodingInfo}.
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group.
      * @return Group properties which includes property like Schema Type and compatibility policy. 
      */
-    GroupProperties getGroupProperties(String scope, String group);
+    GroupProperties getGroupProperties(String namespace, String group);
 
     /**
      * Update group's schema validation policy. 
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param validationRules New compatibility setting for the group.
      */
-    void updateSchemaValidationRules(String scope, String group, SchemaValidationRules validationRules);
+    void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules);
 
     /**
      * Gets list of subgroups registered under the group. Subgroups are identified by {@link SchemaInfo#name}
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @return List of subgroups within the group. If group is configured to store schemas in subgroups then 
      *      * subgroups are returned. Otherwise an empty list is returned.  
      */
-    List<String> getSubgroups(String scope, String group);
+    List<String> getSubgroups(String namespace, String group);
 
     /**
      * Adds schema to the group. If group is configured to include schemas by event type in subgroups, then 
@@ -106,59 +106,59 @@ public interface SchemaRegistryClient {
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in 
      * {@link GroupProperties#schemaValidationRules}
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param schema Schema to add. 
      * @param rules Schema validation rules to apply. 
      *              
      * @return versionInfo which uniquely identifies where the schema is added in the group.   
      */
-    VersionInfo addSchemaIfAbsent(String scope, String group, SchemaInfo schema, SchemaValidationRules rules);
+    VersionInfo addSchemaIfAbsent(String namespace, String group, SchemaInfo schema, SchemaValidationRules rules);
 
     /**
      * Gets schema corresponding to the version. 
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param version Version which uniquely identifies schema within a group. 
      * @return Schema info corresponding to the version info. 
      */
-    SchemaInfo getSchema(String scope, String group, VersionInfo version);
+    SchemaInfo getSchema(String namespace, String group, VersionInfo version);
 
     /**
      * Gets encoding info against the requested encoding Id. 
      * Encoding Info uniquely identifies a combination of a schemaInfo and compressionType. 
      * 
-     * @param scope Name of scope.
+     * @param namespace Name of namespace.
      * @param group Name of group. 
      * @param encodingId Encoding id that uniquely identifies a schema within a group. 
      * @return Encoding info corresponding to the encoding id. 
      */
-    EncodingInfo getEncodingInfo(String scope, String group, EncodingId encodingId);
+    EncodingInfo getEncodingInfo(String namespace, String group, EncodingId encodingId);
 
     /**
      * Gets an encoding id that uniquely identifies a combination of Schema version and compression type. 
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param version version of schema 
      * @param compressionType compression type
      * @return Encoding id for the pair of version and compression type.
      */
-    EncodingId getEncodingId(String scope, String group, VersionInfo version, CompressionType compressionType);
+    EncodingId getEncodingId(String namespace, String group, VersionInfo version, CompressionType compressionType);
 
     /**
      * Gets latest schema and version for the group (or subgroup, if specified). 
      * For groups configured with {@link GroupProperties#subgroupBySchemaName}, the subgroup name needs to be supplied to 
      * get the latest schema for the subgroup. 
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param subgroup Name of subgroup. 
      *                 
      * @return Schema with version for the last schema that was added to the group (or subgroup).
      */
-    SchemaWithVersion getLatestSchema(String scope, String group, @Nullable String subgroup);
+    SchemaWithVersion getLatestSchema(String namespace, String group, @Nullable String subgroup);
 
     /**
      * Gets all schemas with corresponding versions for the group (or subgroup, if specified). 
@@ -166,44 +166,44 @@ public interface SchemaRegistryClient {
      * get the latest schema for the subgroup. {@link SchemaInfo#name} is used as the subgroup name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group.
      * @param subgroup Name of subgroup. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup);
+    List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}
      * the subgroup name is taken from the SchemaInfo. 
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param schema SchemaInfo that captures schema name and schema data. 
      * @return VersionInfo corresponding to schema. 
      */
-    VersionInfo getSchemaVersion(String scope, String group, SchemaInfo schema);
+    VersionInfo getSchemaVersion(String namespace, String group, SchemaInfo schema);
     
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group (/subgroup) 
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
      * 
-     * @param scope Name of scope. 
+     * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param schema Schema to check for validity. 
      * @param validationRules validation rules to apply.
      * @return True if it satisfies validation checks, false otherwise. 
      */
-    boolean validateSchema(String scope, String group, SchemaInfo schema, SchemaValidationRules validationRules);
+    boolean validateSchema(String namespace, String group, SchemaInfo schema, SchemaValidationRules validationRules);
 
     /**
      * List of compressions used for encoding in the group. This will be returned only if {@link GroupProperties#enableEncoding}
      * is set to true. 
      * 
-     * @param scope Name of scope.
+     * @param namespace Name of namespace.
      * @param group Name of group. 
      * @return List of compressions used for encoding in the group. 
      */
-    List<CompressionType> getCompressions(String scope, String group);
+    List<CompressionType> getCompressions(String namespace, String group);
 }

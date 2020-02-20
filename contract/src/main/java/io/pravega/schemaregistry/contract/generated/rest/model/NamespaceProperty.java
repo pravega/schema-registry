@@ -21,30 +21,30 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * CreateScopeRequest
+ * NamespaceProperty
  */
 
-public class CreateScopeRequest   {
-  @JsonProperty("scopeName")
-  private String scopeName = null;
+public class NamespaceProperty   {
+  @JsonProperty("namespaceName")
+  private String namespaceName = null;
 
-  public CreateScopeRequest scopeName(String scopeName) {
-    this.scopeName = scopeName;
+  public NamespaceProperty namespaceName(String namespaceName) {
+    this.namespaceName = namespaceName;
     return this;
   }
 
   /**
-   * Get scopeName
-   * @return scopeName
+   * Get namespaceName
+   * @return namespaceName
    **/
-  @JsonProperty("scopeName")
+  @JsonProperty("namespaceName")
   @ApiModelProperty(value = "")
-  public String getScopeName() {
-    return scopeName;
+  public String getNamespaceName() {
+    return namespaceName;
   }
 
-  public void setScopeName(String scopeName) {
-    this.scopeName = scopeName;
+  public void setNamespaceName(String namespaceName) {
+    this.namespaceName = namespaceName;
   }
 
 
@@ -56,22 +56,22 @@ public class CreateScopeRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CreateScopeRequest createScopeRequest = (CreateScopeRequest) o;
-    return Objects.equals(this.scopeName, createScopeRequest.scopeName);
+    NamespaceProperty namespaceProperty = (NamespaceProperty) o;
+    return Objects.equals(this.namespaceName, namespaceProperty.namespaceName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(scopeName);
+    return Objects.hash(namespaceName);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CreateScopeRequest {\n");
+    sb.append("class NamespaceProperty {\n");
     
-    sb.append("    scopeName: ").append(toIndentedString(scopeName)).append("\n");
+    sb.append("    namespaceName: ").append(toIndentedString(namespaceName)).append("\n");
     sb.append("}");
     return sb.toString();
   }

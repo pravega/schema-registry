@@ -44,8 +44,8 @@ public class SchemaRegistryService {
      * @param continuationToken Continuation Token. 
      * @return CompletableFuture which holds list of scope names upon completion. 
      */
-    public CompletableFuture<ListWithToken<String>> listScopes(String continuationToken) {
-        return store.listScopes(ContinuationToken.parse(continuationToken));
+    public CompletableFuture<ListWithToken<String>> listNamespaces(String continuationToken) {
+        return store.listNamespaces(ContinuationToken.parse(continuationToken));
     }
 
     /**
@@ -53,8 +53,8 @@ public class SchemaRegistryService {
      * @param scope Name of scope.
      * @return CompletableFuture which is completed when create scope completes.
      */
-    public CompletableFuture<Void> createScope(String scope) {
-        return store.createScope(scope);
+    public CompletableFuture<Void> createNamespace(String scope) {
+        return store.createNamespace(scope);
     }
 
     /**
@@ -62,8 +62,8 @@ public class SchemaRegistryService {
      * @param scope Name of scope.
      * @return CompletableFuture which is completed when delete scope completes.
      */
-    public CompletableFuture<Void> deleteScope(String scope) {
-        return store.deleteScope(scope);
+    public CompletableFuture<Void> deleteNamespace(String scope) {
+        return store.deleteNamespace(scope);
     }
 
     /**
@@ -73,7 +73,7 @@ public class SchemaRegistryService {
      * @param continuationToken continuation token
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
-    public CompletableFuture<MapWithToken<String, GroupProperties>> listGroupsInScope(String scope, String continuationToken) {
+    public CompletableFuture<MapWithToken<String, GroupProperties>> listGroupsInNamespace(String scope, String continuationToken) {
         return store.listGroups(scope, ContinuationToken.parse(continuationToken))
                 .thenCompose(reply -> {
                     ContinuationToken token = reply.getToken();
@@ -93,7 +93,7 @@ public class SchemaRegistryService {
      * new group, false indicates it was an existing group. 
      */
     public CompletableFuture<Boolean> createGroup(String scope, String group, GroupProperties groupProperties) {
-        return store.createGroupInScope(scope, group, groupProperties);
+        return store.createGroupInNamespace(scope, group, groupProperties);
     }
 
     /**

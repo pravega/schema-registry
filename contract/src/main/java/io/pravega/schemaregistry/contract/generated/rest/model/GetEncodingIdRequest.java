@@ -16,8 +16,8 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -31,10 +31,10 @@ public class GetEncodingIdRequest   {
   private String subgroupName = null;
 
   @JsonProperty("versionInfo")
-  private VersionInfoModel versionInfo = null;
+  private VersionInfo versionInfo = null;
 
   @JsonProperty("compressionType")
-  private CompressionTypeModel compressionType = null;
+  private CompressionType compressionType = null;
 
   public GetEncodingIdRequest subgroupName(String subgroupName) {
     this.subgroupName = subgroupName;
@@ -55,7 +55,7 @@ public class GetEncodingIdRequest   {
     this.subgroupName = subgroupName;
   }
 
-  public GetEncodingIdRequest versionInfo(VersionInfoModel versionInfo) {
+  public GetEncodingIdRequest versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
     return this;
   }
@@ -66,15 +66,15 @@ public class GetEncodingIdRequest   {
    **/
   @JsonProperty("versionInfo")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getVersionInfo() {
+  public VersionInfo getVersionInfo() {
     return versionInfo;
   }
 
-  public void setVersionInfo(VersionInfoModel versionInfo) {
+  public void setVersionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
   }
 
-  public GetEncodingIdRequest compressionType(CompressionTypeModel compressionType) {
+  public GetEncodingIdRequest compressionType(CompressionType compressionType) {
     this.compressionType = compressionType;
     return this;
   }
@@ -85,11 +85,11 @@ public class GetEncodingIdRequest   {
    **/
   @JsonProperty("compressionType")
   @ApiModelProperty(value = "")
-  public CompressionTypeModel getCompressionType() {
+  public CompressionType getCompressionType() {
     return compressionType;
   }
 
-  public void setCompressionType(CompressionTypeModel compressionType) {
+  public void setCompressionType(CompressionType compressionType) {
     this.compressionType = compressionType;
   }
 

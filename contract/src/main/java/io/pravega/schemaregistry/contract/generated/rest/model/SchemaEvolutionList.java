@@ -16,35 +16,46 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolution;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * ScopePropertyModel
+ * SchemaEvolutionList
  */
 
-public class ScopePropertyModel   {
-  @JsonProperty("scopeName")
-  private String scopeName = null;
+public class SchemaEvolutionList   {
+  @JsonProperty("schemas")
+  private List<SchemaEvolution> schemas = null;
 
-  public ScopePropertyModel scopeName(String scopeName) {
-    this.scopeName = scopeName;
+  public SchemaEvolutionList schemas(List<SchemaEvolution> schemas) {
+    this.schemas = schemas;
+    return this;
+  }
+
+  public SchemaEvolutionList addSchemasItem(SchemaEvolution schemasItem) {
+    if (this.schemas == null) {
+      this.schemas = new ArrayList<SchemaEvolution>();
+    }
+    this.schemas.add(schemasItem);
     return this;
   }
 
   /**
-   * Get scopeName
-   * @return scopeName
+   * Get schemas
+   * @return schemas
    **/
-  @JsonProperty("scopeName")
+  @JsonProperty("schemas")
   @ApiModelProperty(value = "")
-  public String getScopeName() {
-    return scopeName;
+  public List<SchemaEvolution> getSchemas() {
+    return schemas;
   }
 
-  public void setScopeName(String scopeName) {
-    this.scopeName = scopeName;
+  public void setSchemas(List<SchemaEvolution> schemas) {
+    this.schemas = schemas;
   }
 
 
@@ -56,22 +67,22 @@ public class ScopePropertyModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ScopePropertyModel scopePropertyModel = (ScopePropertyModel) o;
-    return Objects.equals(this.scopeName, scopePropertyModel.scopeName);
+    SchemaEvolutionList schemaEvolutionList = (SchemaEvolutionList) o;
+    return Objects.equals(this.schemas, schemaEvolutionList.schemas);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(scopeName);
+    return Objects.hash(schemas);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ScopePropertyModel {\n");
+    sb.append("class SchemaEvolutionList {\n");
     
-    sb.append("    scopeName: ").append(toIndentedString(scopeName)).append("\n");
+    sb.append("    schemas: ").append(toIndentedString(schemas)).append("\n");
     sb.append("}");
     return sb.toString();
   }

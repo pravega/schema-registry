@@ -16,8 +16,8 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaTypeModel;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRulesModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -31,10 +31,10 @@ public class CreateGroupRequest   {
   private String groupName = null;
 
   @JsonProperty("schemaType")
-  private SchemaTypeModel schemaType = null;
+  private SchemaType schemaType = null;
 
   @JsonProperty("validationRules")
-  private SchemaValidationRulesModel validationRules = null;
+  private SchemaValidationRules validationRules = null;
 
   @JsonProperty("enableEncoding")
   private Boolean enableEncoding = null;
@@ -61,7 +61,7 @@ public class CreateGroupRequest   {
     this.groupName = groupName;
   }
 
-  public CreateGroupRequest schemaType(SchemaTypeModel schemaType) {
+  public CreateGroupRequest schemaType(SchemaType schemaType) {
     this.schemaType = schemaType;
     return this;
   }
@@ -72,15 +72,15 @@ public class CreateGroupRequest   {
    **/
   @JsonProperty("schemaType")
   @ApiModelProperty(value = "")
-  public SchemaTypeModel getSchemaType() {
+  public SchemaType getSchemaType() {
     return schemaType;
   }
 
-  public void setSchemaType(SchemaTypeModel schemaType) {
+  public void setSchemaType(SchemaType schemaType) {
     this.schemaType = schemaType;
   }
 
-  public CreateGroupRequest validationRules(SchemaValidationRulesModel validationRules) {
+  public CreateGroupRequest validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -91,11 +91,11 @@ public class CreateGroupRequest   {
    **/
   @JsonProperty("validationRules")
   @ApiModelProperty(value = "")
-  public SchemaValidationRulesModel getValidationRules() {
+  public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
 
-  public void setValidationRules(SchemaValidationRulesModel validationRules) {
+  public void setValidationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
   }
 

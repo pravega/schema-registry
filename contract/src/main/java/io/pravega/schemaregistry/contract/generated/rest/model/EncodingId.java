@@ -21,14 +21,14 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * EncodingIdModel
+ * EncodingId
  */
 
-public class EncodingIdModel   {
+public class EncodingId   {
   @JsonProperty("encodingId")
   private Integer encodingId = null;
 
-  public EncodingIdModel encodingId(Integer encodingId) {
+  public EncodingId encodingId(Integer encodingId) {
     this.encodingId = encodingId;
     return this;
   }
@@ -56,8 +56,8 @@ public class EncodingIdModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EncodingIdModel encodingIdModel = (EncodingIdModel) o;
-    return Objects.equals(this.encodingId, encodingIdModel.encodingId);
+    EncodingId encodingId = (EncodingId) o;
+    return Objects.equals(this.encodingId, encodingId.encodingId);
   }
 
   @Override
@@ -69,7 +69,7 @@ public class EncodingIdModel   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class EncodingIdModel {\n");
+    sb.append("class EncodingId {\n");
     
     sb.append("    encodingId: ").append(toIndentedString(encodingId)).append("\n");
     sb.append("}");

@@ -25,15 +25,15 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface SchemaStore {
-    CompletableFuture<ListWithToken<String>> listScopes(ContinuationToken parse);
+    CompletableFuture<ListWithToken<String>> listNamespaces(ContinuationToken parse);
     
-    CompletableFuture<Void> createScope(String scope);
+    CompletableFuture<Void> createNamespace(String scope);
     
-    CompletableFuture<Void> deleteScope(String scope);
+    CompletableFuture<Void> deleteNamespace(String scope);
     
     CompletableFuture<ListWithToken<String>> listGroups(String scope, @Nullable ContinuationToken token);
 
-    CompletableFuture<Boolean> createGroupInScope(String scope, String group, GroupProperties groupProperties);
+    CompletableFuture<Boolean> createGroupInNamespace(String scope, String group, GroupProperties groupProperties);
 
     CompletableFuture<Void> deleteGroup(String scope, String group);
 

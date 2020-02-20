@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfoModel;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -27,9 +27,9 @@ import javax.validation.constraints.*;
 
 public class GetSchemaFromVersionRequest   {
   @JsonProperty("versionInfo")
-  private VersionInfoModel versionInfo = null;
+  private VersionInfo versionInfo = null;
 
-  public GetSchemaFromVersionRequest versionInfo(VersionInfoModel versionInfo) {
+  public GetSchemaFromVersionRequest versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
     return this;
   }
@@ -40,11 +40,11 @@ public class GetSchemaFromVersionRequest   {
    **/
   @JsonProperty("versionInfo")
   @ApiModelProperty(value = "")
-  public VersionInfoModel getVersionInfo() {
+  public VersionInfo getVersionInfo() {
     return versionInfo;
   }
 
-  public void setVersionInfo(VersionInfoModel versionInfo) {
+  public void setVersionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
   }
 

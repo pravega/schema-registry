@@ -26,117 +26,117 @@ import java.util.concurrent.CompletableFuture;
 
 public class InMemorySchemaStore implements SchemaStore {
     @Override
-    public CompletableFuture<ListWithToken<String>> listScopes(ContinuationToken parse) {
+    public CompletableFuture<ListWithToken<String>> listNamespaces(ContinuationToken parse) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Void> createScope(String scope) {
+    public CompletableFuture<Void> createNamespace(String namespace) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Void> deleteScope(String scope) {
+    public CompletableFuture<Void> deleteNamespace(String namespace) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String scope, @Nullable ContinuationToken token) {
+    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Boolean> createGroupInScope(String scope, String group, GroupProperties groupProperties) {
+    public CompletableFuture<Boolean> createGroupInNamespace(String namespace, String group, GroupProperties groupProperties) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Void> deleteGroup(String scope, String group) {
+    public CompletableFuture<Void> deleteGroup(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Etag> getGroupEtag(String scope, String group) {
+    public CompletableFuture<Etag> getGroupEtag(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<GroupProperties> getGroupProperties(String scope, String group) {
+    public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Etag> updateCompatibilityPolicy(String scope, String group, Etag etag, SchemaValidationRules policy) {
+    public CompletableFuture<Etag> updateCompatibilityPolicy(String namespace, String group, Etag etag, SchemaValidationRules policy) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String scope, String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String scope, String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String scope, String group, String subgroup, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String scope, String group, VersionInfo versionInfo) {
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, VersionInfo versionInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String scope, String group, String subgroup) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group, String subgroup) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String scope, String group, Etag etag, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String namespace, String group, Etag etag, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String scope, String group, String subgroup, Etag etag, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String namespace, String group, String subgroup, Etag etag, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getSchemaVersion(String scope, String group, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<EncodingId> createOrGetEncodingId(String scope, String group, VersionInfo versionInfo, CompressionType compressionType) {
+    public CompletableFuture<EncodingId> createOrGetEncodingId(String namespace, String group, VersionInfo versionInfo, CompressionType compressionType) {
         return null;
     }
 
     @Override
-    public CompletableFuture<EncodingInfo> getEncodingInfo(String scope, String group, EncodingId encodingId) {
+    public CompletableFuture<EncodingInfo> getEncodingInfo(String namespace, String group, EncodingId encodingId) {
         return null;
     }
 
     @Override
-    public CompletableFuture<List<CompressionType>> getCompressions(String scope, String group) {
+    public CompletableFuture<List<CompressionType>> getCompressions(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String scope, String group) {
+    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String scope, String group, String subgroup) {
+    public CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String namespace, String group, String subgroup) {
         return null;
     }
 }

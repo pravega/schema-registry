@@ -19,8 +19,8 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0"
 basePath: "/v1"
 tags:
-- name: "Scope"
-  description: "Scope related APIs"
+- name: "Namespace"
+  description: "Namespace related APIs"
 - name: "Group"
   description: "Group related APIs"
 - name: "Schema"
@@ -30,91 +30,91 @@ tags:
 schemes:
   - http
 paths:
-  /scopes:
+  /namespaces:
     get:
       tags:
-      - "Scope"
-      operationId: listScopes
-      description: List all available Scopes in schema registry
+      - "Namespace"
+      operationId: listNamespaces
+      description: List all available Namespaces in schema registry
       produces:
         - application/json
       responses:
         200:
-          description: List of currently available Scopes
+          description: List of currently available Namespaces
           schema:
-            $ref: "#/definitions/ScopesListModel"
+            $ref: "#/definitions/NamespacesList"
         500:
-          description: Internal server error while fetching list of scopes
+          description: Internal server error while fetching list of namespaces
     post:
       tags:
-      - "Scope"
-      operationId: createScope
-      description: Create a new Scope
+      - "Namespace"
+      operationId: createNamespace
+      description: Create a new Namespace
       consumes:
         - application/json
       parameters:
         - in: body
-          name: CreateScopeRequest
-          description: Create scope
+          name: CreateNamespaceRequest
+          description: Create namespace
           required: true
           schema:
             type: object
             properties:
-              scopeName:
+              namespaceName:
                 type: string
       produces:
         - application/json
       responses:
         201:
-          description: Successfully created the Scope
+          description: Successfully created the Namespace
         409:
-          description: Scope with the given name already exists
+          description: Namespace with the given name already exists
         500:
-          description: Internal server error while creating a scope
-  /scopes/{scopeName}:
+          description: Internal server error while creating a namespace
+  /namespaces/{namespaceName}:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
     delete:
       tags:
-      - "Scope"
-      operationId: deleteScope
-      description: Delete a scope
+      - "Namespace"
+      operationId: deleteNamespace
+      description: Delete a namespace
       responses:
         204:
-          description: Successfully deleted the scope
+          description: Successfully deleted the namespace
         404:
-          description: Scope not found
+          description: Namespace not found
         412:
-          description: Cannot delete scope since it has non-empty list of Groups
+          description: Cannot delete namespace since it has non-empty list of Groups
         500:
-          description: Internal server error while deleting a scope
-  /scopes/{scopeName}/groups:
+          description: Internal server error while deleting a namespace
+  /namespaces/{namespaceName}/groups:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
     get:
       tags:
       - "Group"
       operationId: listGroups
-      description: List groups within the given scope
+      description: List groups within the given namespace
       produces:
         - application/json
       responses:
         200:
-          description: List of all groups under the given scope namespace
+          description: List of all groups under the given namespace namespace
           schema:
-            $ref: "#/definitions/GroupsListModel"
+            $ref: "#/definitions/GroupsList"
         404:
-          description: Scope not found
+          description: Namespace not found
         500:
-          description: Internal server error while fetching the list of Groups for the given scope
+          description: Internal server error while fetching the list of Groups for the given namespace
     post:
       tags:
       - "Group"
@@ -133,9 +133,9 @@ paths:
               groupName:
                 type: string
               schemaType:
-                  $ref: "#/definitions/SchemaTypeModel"
+                  $ref: "#/definitions/SchemaType"
               validationRules:
-                  $ref: "#/definitions/SchemaValidationRulesModel"
+                  $ref: "#/definitions/SchemaValidationRules"
               enableEncoding:
                 type: boolean
               groupByEventType:
@@ -144,16 +144,16 @@ paths:
         201:
           description: Successfully added group to the namespace
         404:
-          description: Scope not found
+          description: Namespace not found
         409:
           description: Group with given name already exists
         500:
           description: Internal server error while creating a Group
-  /scopes/{scopeName}/groups/{groupName}:
+  /namespaces/{namespaceName}/groups/{groupName}:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -172,9 +172,9 @@ paths:
         200:
           description: Found Group properties
           schema:
-            $ref: "#/definitions/GroupPropertiesModel"
+            $ref: "#/definitions/GroupProperties"
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
     put:
@@ -193,12 +193,12 @@ paths:
             type: object
             properties:
               validationRules:
-                  $ref: "#/definitions/SchemaValidationRulesModel"
+                  $ref: "#/definitions/SchemaValidationRules"
       responses:
         200:
           description: Updated schema validation policy
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         409:
           description: Conflict while attempting to update policy. 
         500:
@@ -215,11 +215,11 @@ paths:
           description: Group not found
         500:
           description: Internal server error while deleting the Group
-  /scopes/{scopeName}/groups/{groupName}/schemas:
+  /namespaces/{namespaceName}/groups/{groupName}/schemas:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -238,9 +238,9 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaEvolutionListModel"
+            $ref: "#/definitions/SchemaEvolutionList"
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
     post:
@@ -259,25 +259,25 @@ paths:
             type: object
             properties:
               schemaInfo:
-                  $ref: "#/definitions/SchemaInfoModel"
+                  $ref: "#/definitions/SchemaInfo"
               rules:
-                  $ref: "#/definitions/SchemaValidationRulesModel"
+                  $ref: "#/definitions/SchemaValidationRules"
       produces:
         - application/json
       responses:
         201:
           description: Successfully added schema to the group
           schema:
-            $ref: "#/definitions/VersionInfoModel"
+            $ref: "#/definitions/VersionInfo"
         404:
-          description: Scope not found
+          description: Namespace not found
         500:
           description: Internal server error while creating a Group
-  /scopes/{scopeName}/groups/{groupName}/schemas/latest:
+  /namespaces/{namespaceName}/groups/{groupName}/schemas/latest:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -296,16 +296,16 @@ paths:
         200:
           description: Found Group properties
           schema:
-            $ref: "#/definitions/SchemaWithVersionModel"
+            $ref: "#/definitions/SchemaWithVersion"
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/schemas/validate:
+  /namespaces/{namespaceName}/groups/{groupName}/schemas/validate:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -329,23 +329,23 @@ paths:
             type: object
             properties:
               schemaInfo:
-                  $ref: "#/definitions/SchemaInfoModel"
+                  $ref: "#/definitions/SchemaInfo"
               validationRules:
-                  $ref: "#/definitions/SchemaValidationRulesModel"
+                  $ref: "#/definitions/SchemaValidationRules"
       produces:
         - application/json
       responses:
         200:
           description: Schema is valid
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/schemas/version:
+  /namespaces/{namespaceName}/groups/{groupName}/schemas/version:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -369,23 +369,23 @@ paths:
             type: object
             properties:
               versionInfo:
-                  $ref: "#/definitions/VersionInfoModel"
+                  $ref: "#/definitions/VersionInfo"
       produces:
         - application/json
       responses:
         200:
           description: Schema corresponding to the version
           schema:
-            $ref: "#/definitions/SchemaInfoModel"
+            $ref: "#/definitions/SchemaInfo"
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/subgroups/{subgroupName}/schemas:
+  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -409,16 +409,16 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaEvolutionListModel"
+            $ref: "#/definitions/SchemaEvolutionList"
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/subgroups/{subgroupName}/schemas/latest:
+  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/latest:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -442,16 +442,16 @@ paths:
         200:
           description: Found latest schema in subgroup
           schema:
-            $ref: "#/definitions/SchemaWithVersionModel"
+            $ref: "#/definitions/SchemaWithVersion"
         404:
-          description: Scope or Group with given name not found
+          description: Namespace or Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/encodings:
+  /namespaces/{namespaceName}/groups/{groupName}/encodings:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -477,25 +477,25 @@ paths:
               subgroupName: 
                 type: string
               versionInfo:
-                  $ref: "#/definitions/VersionInfoModel"
+                  $ref: "#/definitions/VersionInfo"
               compressionType:
-                  $ref: "#/definitions/CompressionTypeModel"
+                  $ref: "#/definitions/CompressionType"
       produces:
         - application/json
       responses:
         200:
           description: Found Encoding
           schema:
-            $ref: "#/definitions/EncodingIdModel"
+            $ref: "#/definitions/EncodingId"
         404:
-          description: Scope or Group or encoding id with given name not found
+          description: Namespace or Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/encodings/{encodingId}:
+  /namespaces/{namespaceName}/groups/{groupName}/encodings/{encodingId}:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -520,16 +520,16 @@ paths:
         200:
           description: Found Encoding
           schema:
-            $ref: "#/definitions/EncodingInfoModel"
+            $ref: "#/definitions/EncodingInfo"
         404:
-          description: Scope or Group or encoding id with given name not found
+          description: Namespace or Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /scopes/{scopeName}/groups/{groupName}/compressions:
+  /namespaces/{namespaceName}/groups/{groupName}/compressions:
     parameters:
       - in: path
-        name: scopeName
-        description: Scope name
+        name: namespaceName
+        description: Namespace name
         required: true
         type: string
       - in: path
@@ -548,45 +548,45 @@ paths:
         200:
           description: Found Compressions
           schema:
-            $ref: "#/definitions/CompressionsListModel"
+            $ref: "#/definitions/CompressionsList"
         404:
-          description: Scope or Group or encoding id with given name not found
+          description: Namespace or Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
 definitions:
-  ScopePropertyModel:
+  NamespaceProperty:
     type: object
     properties:
-      scopeName:
+      namespaceName:
         type: string
-  ScopesListModel:
+  NamespacesList:
     type: object
     properties:
-      scopes:
+      namespaces:
         type: array
         items:
-          $ref: "#/definitions/ScopePropertyModel"
-  GroupsListModel:
+          $ref: "#/definitions/NamespaceProperty"
+  GroupsList:
     type: object
     properties:
       groups:
         type: array
         items:
-          $ref: "#/definitions/GroupPropertiesModel"
-  GroupPropertiesModel:
+          $ref: "#/definitions/GroupProperties"
+  GroupProperties:
     type: object
     properties:
       groupName:
         type: string
       schemaValidationRules:
-          $ref: "#/definitions/SchemaValidationRulesModel"
+          $ref: "#/definitions/SchemaValidationRules"
       schemaType:
-          $ref: "#/definitions/SchemaTypeModel"
+          $ref: "#/definitions/SchemaType"
       subgroupBySchemaName:
           type: boolean
       enableEncoding:
           type: boolean
-  SchemaTypeModel:
+  SchemaType:
     type: object
     properties:
       schemaType:
@@ -599,13 +599,13 @@ definitions:
           - Custom
       customTypeName:
         type: string  
-  SchemaInfoModel:
+  SchemaInfo:
     type: object
     properties:
       schemaName:
         type: string
       schemaType:
-          $ref: "#/definitions/SchemaTypeModel"
+          $ref: "#/definitions/SchemaType"
       schemaData:
         type: string
         format: binary
@@ -615,7 +615,7 @@ definitions:
           type: string
           minLength: 0
           maxLength: 40
-  VersionInfoModel:
+  VersionInfo:
     type: object
     properties:
       schemaName:
@@ -623,30 +623,30 @@ definitions:
       version:
         type: integer
         format: int32
-  SchemaWithVersionModel:
+  SchemaWithVersion:
     type: object
     properties:
       schemaInfo:
-        $ref: "#/definitions/SchemaInfoModel"
+        $ref: "#/definitions/SchemaInfo"
       version:
-        $ref: "#/definitions/VersionInfoModel"
-  SchemaEvolutionModel:
+        $ref: "#/definitions/VersionInfo"
+  SchemaEvolution:
     type: object
     properties:
       schemaInfo:
-        $ref: "#/definitions/SchemaInfoModel"
+        $ref: "#/definitions/SchemaInfo"
       version:
-        $ref: "#/definitions/VersionInfoModel"
+        $ref: "#/definitions/VersionInfo"
       validationRules:
-        $ref: "#/definitions/SchemaValidationRulesModel"
-  SchemaEvolutionListModel:
+        $ref: "#/definitions/SchemaValidationRules"
+  SchemaEvolutionList:
     type: object
     properties:
       schemas:
         type: array
         items:
-          $ref: "#/definitions/SchemaEvolutionModel"        
-  CompressionTypeModel:
+          $ref: "#/definitions/SchemaEvolution"        
+  CompressionType:
     type: object
     properties:
       compressionType:
@@ -658,22 +658,22 @@ definitions:
           - Custom
       customTypeName:
         type: string
-  EncodingIdModel:
+  EncodingId:
     type: object
     properties:
       encodingId:
         type: integer
         format: int32
-  EncodingInfoModel:
+  EncodingInfo:
     type: object
     properties:
       schemaInfo:
-          $ref: "#/definitions/SchemaInfoModel"        
+          $ref: "#/definitions/SchemaInfo"        
       versionInfo:
-          $ref: "#/definitions/VersionInfoModel"        
+          $ref: "#/definitions/VersionInfo"        
       compressionType:
-          $ref: "#/definitions/CompressionTypeModel"
-  CompatibilityModel:
+          $ref: "#/definitions/CompressionType"
+  Compatibility:
     type: object
     properties:
       policy:
@@ -691,18 +691,18 @@ definitions:
           - Full
           - FullTransitive
       backwardTill:
-        $ref: "#/definitions/VersionInfoModel"        
+        $ref: "#/definitions/VersionInfo"        
       forwardTill:
-        $ref: "#/definitions/VersionInfoModel"        
-  SchemaValidationRulesModel:
+        $ref: "#/definitions/VersionInfo"        
+  SchemaValidationRules:
     type: object
     properties:
        compatibility:
-        $ref: "#/definitions/CompatibilityModel"        
-  CompressionsListModel:
+        $ref: "#/definitions/Compatibility"        
+  CompressionsList:
     type: object
     properties:
        compressionTypes:
         type: array
         items:
-          $ref: "#/definitions/CompressionTypeModel"
+          $ref: "#/definitions/CompressionType"

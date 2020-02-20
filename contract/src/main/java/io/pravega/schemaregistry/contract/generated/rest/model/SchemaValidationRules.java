@@ -16,57 +16,36 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * VersionInfoModel
+ * SchemaValidationRules
  */
 
-public class VersionInfoModel   {
-  @JsonProperty("schemaName")
-  private String schemaName = null;
+public class SchemaValidationRules   {
+  @JsonProperty("compatibility")
+  private Compatibility compatibility = null;
 
-  @JsonProperty("version")
-  private Integer version = null;
-
-  public VersionInfoModel schemaName(String schemaName) {
-    this.schemaName = schemaName;
+  public SchemaValidationRules compatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
     return this;
   }
 
   /**
-   * Get schemaName
-   * @return schemaName
+   * Get compatibility
+   * @return compatibility
    **/
-  @JsonProperty("schemaName")
+  @JsonProperty("compatibility")
   @ApiModelProperty(value = "")
-  public String getSchemaName() {
-    return schemaName;
+  public Compatibility getCompatibility() {
+    return compatibility;
   }
 
-  public void setSchemaName(String schemaName) {
-    this.schemaName = schemaName;
-  }
-
-  public VersionInfoModel version(Integer version) {
-    this.version = version;
-    return this;
-  }
-
-  /**
-   * Get version
-   * @return version
-   **/
-  @JsonProperty("version")
-  @ApiModelProperty(value = "")
-  public Integer getVersion() {
-    return version;
-  }
-
-  public void setVersion(Integer version) {
-    this.version = version;
+  public void setCompatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
   }
 
 
@@ -78,24 +57,22 @@ public class VersionInfoModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    VersionInfoModel versionInfoModel = (VersionInfoModel) o;
-    return Objects.equals(this.schemaName, versionInfoModel.schemaName) &&
-        Objects.equals(this.version, versionInfoModel.version);
+    SchemaValidationRules schemaValidationRules = (SchemaValidationRules) o;
+    return Objects.equals(this.compatibility, schemaValidationRules.compatibility);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaName, version);
+    return Objects.hash(compatibility);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class VersionInfoModel {\n");
+    sb.append("class SchemaValidationRules {\n");
     
-    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
-    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("}");
     return sb.toString();
   }

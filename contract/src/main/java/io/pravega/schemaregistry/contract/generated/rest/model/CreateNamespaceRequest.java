@@ -16,46 +16,35 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.ScopePropertyModel;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * ScopesListModel
+ * CreateNamespaceRequest
  */
 
-public class ScopesListModel   {
-  @JsonProperty("scopes")
-  private List<ScopePropertyModel> scopes = null;
+public class CreateNamespaceRequest   {
+  @JsonProperty("namespaceName")
+  private String namespaceName = null;
 
-  public ScopesListModel scopes(List<ScopePropertyModel> scopes) {
-    this.scopes = scopes;
-    return this;
-  }
-
-  public ScopesListModel addScopesItem(ScopePropertyModel scopesItem) {
-    if (this.scopes == null) {
-      this.scopes = new ArrayList<ScopePropertyModel>();
-    }
-    this.scopes.add(scopesItem);
+  public CreateNamespaceRequest namespaceName(String namespaceName) {
+    this.namespaceName = namespaceName;
     return this;
   }
 
   /**
-   * Get scopes
-   * @return scopes
+   * Get namespaceName
+   * @return namespaceName
    **/
-  @JsonProperty("scopes")
+  @JsonProperty("namespaceName")
   @ApiModelProperty(value = "")
-  public List<ScopePropertyModel> getScopes() {
-    return scopes;
+  public String getNamespaceName() {
+    return namespaceName;
   }
 
-  public void setScopes(List<ScopePropertyModel> scopes) {
-    this.scopes = scopes;
+  public void setNamespaceName(String namespaceName) {
+    this.namespaceName = namespaceName;
   }
 
 
@@ -67,22 +56,22 @@ public class ScopesListModel   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ScopesListModel scopesListModel = (ScopesListModel) o;
-    return Objects.equals(this.scopes, scopesListModel.scopes);
+    CreateNamespaceRequest createNamespaceRequest = (CreateNamespaceRequest) o;
+    return Objects.equals(this.namespaceName, createNamespaceRequest.namespaceName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(scopes);
+    return Objects.hash(namespaceName);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ScopesListModel {\n");
+    sb.append("class CreateNamespaceRequest {\n");
     
-    sb.append("    scopes: ").append(toIndentedString(scopes)).append("\n");
+    sb.append("    namespaceName: ").append(toIndentedString(namespaceName)).append("\n");
     sb.append("}");
     return sb.toString();
   }
