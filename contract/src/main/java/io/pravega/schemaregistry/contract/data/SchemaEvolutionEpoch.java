@@ -9,7 +9,15 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+
+import java.io.IOException;
 
 /**
  * Describes changes to the group (or subgroup) and the validation rules {@link SchemaEvolutionEpoch#rules} that were 
@@ -17,9 +25,37 @@ import lombok.Data;
  * that was assigned to it. 
  */
 @Data
+@Builder
+@AllArgsConstructor
 public class SchemaEvolutionEpoch {
     private final SchemaInfo schema;
     private final VersionInfo version;
     private final SchemaValidationRules rules;
+    
+    private static class SchemaEvolutionEpochBuilder implements ObjectBuilder<SchemaEvolutionEpoch> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<SchemaEvolutionEpoch, SchemaEvolutionEpoch.SchemaEvolutionEpochBuilder> {
+        @Override
+        protected SchemaEvolutionEpoch.SchemaEvolutionEpochBuilder newBuilder() {
+            return SchemaEvolutionEpoch.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(SchemaEvolutionEpoch e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, SchemaEvolutionEpoch.SchemaEvolutionEpochBuilder b) throws IOException {
+        }
+    }
 }
 

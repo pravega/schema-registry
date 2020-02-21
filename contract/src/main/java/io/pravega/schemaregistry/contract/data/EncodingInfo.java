@@ -9,7 +9,15 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+
+import java.io.IOException;
 
 /**
  * Encoding Info describes the details of encoding for each event payload. Each combination of schema version and compression type
@@ -17,8 +25,36 @@ import lombok.Data;
  * The registry service exposes APIs to generate or resolve {@link EncodingId} to {@link EncodingInfo}.
  */
 @Data
+@Builder
+@AllArgsConstructor
 public class EncodingInfo {
     private final VersionInfo versionInfo;
     private final SchemaInfo schemaInfo;
     private final CompressionType compression;
+
+    private static class EncodingInfoBuilder implements ObjectBuilder<EncodingInfo> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<EncodingInfo, EncodingInfo.EncodingInfoBuilder> {
+        @Override
+        protected EncodingInfo.EncodingInfoBuilder newBuilder() {
+            return EncodingInfo.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(EncodingInfo e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, EncodingInfo.EncodingInfoBuilder b) throws IOException {
+        }
+    }
 }

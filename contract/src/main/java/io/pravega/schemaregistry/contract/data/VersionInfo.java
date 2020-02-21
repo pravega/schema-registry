@@ -9,12 +9,48 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
+import java.io.IOException;
+
 @Data
+@Builder
+@AllArgsConstructor
 public class VersionInfo {
     private static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
     
     private final String schemaName;
     private final int version;
+
+    private static class VersionInfoBuilder implements ObjectBuilder<VersionInfo> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<VersionInfo, VersionInfo.VersionInfoBuilder> {
+        @Override
+        protected VersionInfo.VersionInfoBuilder newBuilder() {
+            return VersionInfo.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(VersionInfo e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, VersionInfo.VersionInfoBuilder b) throws IOException {
+        }
+    }
 }

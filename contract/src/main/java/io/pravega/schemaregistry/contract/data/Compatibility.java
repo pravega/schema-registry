@@ -9,7 +9,14 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.Builder;
 import lombok.Data;
+
+import java.io.IOException;
 
 /**
  * Defines different Compatibility policy options for schema evolution for schemas within a group (or subgroup).
@@ -31,6 +38,7 @@ import lombok.Data;
  * identified by version {@link Compatibility#backwardTill}. 
  */
 @Data
+@Builder
 public class Compatibility {
     private final Type compatibility;
     private final VersionInfo backwardTill;
@@ -74,5 +82,31 @@ public class Compatibility {
 
     public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
         return new Compatibility(Type.ForwardTill, backwardTill, forwardTill);
+    }
+
+    private static class CompatibilityBuilder implements ObjectBuilder<Compatibility> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<Compatibility, Compatibility.CompatibilityBuilder> {
+        @Override
+        protected Compatibility.CompatibilityBuilder newBuilder() {
+            return Compatibility.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(Compatibility e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, Compatibility.CompatibilityBuilder b) throws IOException {
+        }
     }
 }

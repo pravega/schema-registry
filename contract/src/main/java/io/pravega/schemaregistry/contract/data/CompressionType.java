@@ -9,7 +9,14 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.Builder;
 import lombok.Data;
+
+import java.io.IOException;
 
 /**
  * Different types of compressions used for compressing data while writing it to the stream. 
@@ -18,6 +25,7 @@ import lombok.Data;
  * {@link Type#custom} with {@link CompressionType#customTypeName}.  
  */
 @Data
+@Builder
 public class CompressionType {
     public enum Type {
         None,
@@ -40,5 +48,31 @@ public class CompressionType {
 
     public static CompressionType custom(String customTypeName) {
         return new CompressionType(Type.Custom, customTypeName);
+    }
+
+    private static class CompressionTypeBuilder implements ObjectBuilder<CompressionType> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<CompressionType, CompressionType.CompressionTypeBuilder> {
+        @Override
+        protected CompressionType.CompressionTypeBuilder newBuilder() {
+            return CompressionType.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(CompressionType e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, CompressionType.CompressionTypeBuilder b) throws IOException {
+        }
     }
 }

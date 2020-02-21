@@ -38,7 +38,7 @@ public class InMemoryLog implements Log {
     @Override
     @Synchronized
     public CompletableFuture<Position> writeToLog(Record record, Position position) {
-        Position pos = position == null ? HEAD_POSITION : position;
+        InMemoryPosition pos = position == null ? HEAD_POSITION : (InMemoryPosition) position;
 
         if (pos.getPosition() != log.size()) {
             throw new StoreExceptions.WriteConflictException();

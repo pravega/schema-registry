@@ -9,7 +9,15 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+
+import java.io.IOException;
 
 /**
  * Different configuration choices for a group. 
@@ -32,9 +40,37 @@ import lombok.Data;
  * of schemas in conformance with schema validation rules. 
  */
 @Data
+@Builder
+@AllArgsConstructor
 public class GroupProperties {
     private final SchemaType schemaType;
     private final SchemaValidationRules schemaValidationRules;
     private final boolean subgroupBySchemaName;
     private final boolean enableEncoding;
+
+    private static class GroupPropertiesBuilder implements ObjectBuilder<GroupProperties> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<GroupProperties, GroupProperties.GroupPropertiesBuilder> {
+        @Override
+        protected GroupProperties.GroupPropertiesBuilder newBuilder() {
+            return GroupProperties.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(GroupProperties e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, GroupProperties.GroupPropertiesBuilder b) throws IOException {
+        }
+    }
 }

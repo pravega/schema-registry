@@ -9,7 +9,14 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.serialization.RevisionDataInput;
+import io.pravega.common.io.serialization.RevisionDataOutput;
+import io.pravega.common.io.serialization.VersionedSerializer;
+import lombok.Builder;
 import lombok.Data;
+
+import java.io.IOException;
 
 /**
  * Different types of serialization formats used for serializing data. 
@@ -21,6 +28,7 @@ import lombok.Data;
  */
 
 @Data
+@Builder
 public class SchemaType {
     public enum Type {
         None,
@@ -44,5 +52,31 @@ public class SchemaType {
 
     public static SchemaType custom(String customTypeName) {
         return new SchemaType(Type.Custom, customTypeName);
+    }
+
+    private static class SchemaTypeBuilder implements ObjectBuilder<SchemaType> {
+    }
+
+    static class Serializer extends VersionedSerializer.WithBuilder<SchemaType, SchemaType.SchemaTypeBuilder> {
+        @Override
+        protected SchemaType.SchemaTypeBuilder newBuilder() {
+            return SchemaType.builder();
+        }
+
+        @Override
+        protected byte getWriteVersion() {
+            return 0;
+        }
+
+        @Override
+        protected void declareVersions() {
+            version(0).revision(0, this::write00, this::read00);
+        }
+
+        private void write00(SchemaType e, RevisionDataOutput target) throws IOException {
+        }
+
+        private void read00(RevisionDataInput source, SchemaType.SchemaTypeBuilder b) throws IOException {
+        }
     }
 }

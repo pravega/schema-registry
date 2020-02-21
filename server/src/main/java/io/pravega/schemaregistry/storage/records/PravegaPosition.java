@@ -9,15 +9,16 @@
  */
 package io.pravega.schemaregistry.storage.records;
 
+import io.pravega.client.state.Revision;
 import io.pravega.schemaregistry.storage.Position;
 import lombok.Data;
 
 @Data
-public class InMemoryPosition implements Position<Long> {
-    private final long position;
-
+public class PravegaPosition implements Position<Revision> {
+    private final Revision revision;
+    
     @Override
-    public Long getPosition() {
-        return position;
+    public Revision getPosition() {
+        return revision;
     }
 }

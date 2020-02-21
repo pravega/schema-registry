@@ -82,8 +82,6 @@ public class Group {
     }
     
     public CompletableFuture<Void> create(SchemaValidationRules schemaValidationRules) {
-        // TODO: create wal and create index
-        
         return wal.writeToLog(new Record.ValidationRecord(schemaValidationRules), null)
                 .thenCompose(etag -> {
                     IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(etag);
@@ -93,6 +91,7 @@ public class Group {
                 });
     }
 
+    @SuppressWarnings("unchecked")
     public CompletableFuture<Position> sync() {
         return index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
              .thenCompose(value -> {
@@ -119,7 +118,7 @@ public class Group {
                                  } else if (x.getRecord() instanceof Record.ValidationRecord) {
                                      Operation.GetAndSet getAndSet = new Operation.GetAndSet(new IndexRecord.ValidationPolicyKey(),
                                              new IndexRecord.WALPositionValue(x.getPosition()),
-                                             m -> ((IndexRecord.WALPositionValue) m).getPosition().getPosition() < x.getPosition().getPosition());
+                                             m -> ((IndexRecord.WALPositionValue) m).getPosition().getPosition().compareTo(x.getPosition().getPosition()) < 0);
                                      operations.add(getAndSet);
                                  }
                              });
@@ -399,11 +398,12 @@ public class Group {
         return addSchema(schemaInfo, etag, versionForSubgroup);
     }
 
+    @SuppressWarnings("unchecked")
     public CompletableFuture<Position> updateValidationPolicy(SchemaValidationRules policy, Position etag) {
         return writeToLog(new Record.ValidationRecord(policy), etag)
                 .thenCompose(logPos -> {
                     Operation.GetAndSet getAndSet = new Operation.GetAndSet(new IndexRecord.ValidationPolicyKey(), new IndexRecord.WALPositionValue(logPos),
-                            x -> logPos.getPosition() > ((IndexRecord.WALPositionValue) x).getPosition().getPosition());
+                            x -> logPos.getPosition().compareTo(((IndexRecord.WALPositionValue) x).getPosition().getPosition()) > 0);
                     return updateIndex(Collections.singletonList(getAndSet)).thenApply(v -> logPos);
                 });
     }

@@ -9,6 +9,6 @@
  */
 package io.pravega.schemaregistry.storage;
 
-public interface Position {
-    long getPosition();
+public interface Position<T extends Comparable<T>> {
+    T getPosition();
 }
