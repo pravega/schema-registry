@@ -33,9 +33,6 @@ import org.glassfish.jersey.server.ServerProperties;
  */
 @Slf4j
 public class RestServer extends AbstractIdleService {
-
-    private static final long MAX_PASSWORD_LENGTH = 4 * 1024 * 1024;
-
     private final String objectId;
     private final ServiceConfig restServerConfig;
     private final URI baseUri;
