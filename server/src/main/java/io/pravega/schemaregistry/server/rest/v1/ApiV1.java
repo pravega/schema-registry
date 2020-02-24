@@ -324,7 +324,6 @@ public final class ApiV1 {
         @io.swagger.annotations.ApiOperation(value = "", notes = "List all available Namespaces in schema registry", response = NamespacesList.class, tags = {"Namespace", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "List of currently available Namespaces", response = NamespacesList.class),
-
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching list of namespaces", response = Void.class)})
         public void listNamespaces(@Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
