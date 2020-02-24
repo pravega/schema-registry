@@ -30,6 +30,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionLi
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.SubgroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
@@ -423,7 +424,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     public void getSubGroups(String namespaceName, String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
         registryService.getSubgroups(namespaceName, groupName, null)
                        .thenApply(subgroups -> {
-                           return Response.status(Status.OK).entity(subgroups.getList()).build(); })
+                           SubgroupsList subgroupsList = new SubgroupsList().groups(subgroups.getList());
+                           return Response.status(Status.OK).entity(subgroupsList).build(); })
                        .exceptionally(exception -> {
                            log.warn("getSubGroups failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
