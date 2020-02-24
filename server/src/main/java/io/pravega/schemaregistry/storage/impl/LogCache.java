@@ -39,19 +39,19 @@ public class LogCache {
     
     public LogCache(ClientConfig clientConfig) {
         this.clientCache =
-        CacheBuilder.newBuilder()
-                    .maximumSize(MAX_CACHE_SIZE)
-                    .build(new CacheLoader<ClientCacheKey, RevisionedStreamClient<Record>>() {
-                        @ParametersAreNonnullByDefault
-                        @Override
-                        public RevisionedStreamClient<Record> load(final ClientCacheKey key) {
-                            SynchronizerClientFactory clientFactory = SynchronizerClientFactory.withScope(key.namespace, clientConfig);
-                            String logName = "_log" + key.group;
+                CacheBuilder.newBuilder()
+                            .maximumSize(MAX_CACHE_SIZE)
+                            .build(new CacheLoader<ClientCacheKey, RevisionedStreamClient<Record>>() {
+                                @ParametersAreNonnullByDefault
+                                @Override
+                                public RevisionedStreamClient<Record> load(final ClientCacheKey key) {
+                                    SynchronizerClientFactory clientFactory = SynchronizerClientFactory.withScope(key.namespace, clientConfig);
+                                    String logName = "_log" + key.group;
 
-                            return clientFactory.createRevisionedStreamClient(logName, new RecordsSerializer<>(),
-                                    SynchronizerConfig.builder().build());
-                        }
-                    });
+                                    return clientFactory.createRevisionedStreamClient(logName, new RecordsSerializer<>(),
+                                            SynchronizerConfig.builder().build());
+                                }
+                            });
         
         this.recordCache =
                 CacheBuilder.newBuilder()
