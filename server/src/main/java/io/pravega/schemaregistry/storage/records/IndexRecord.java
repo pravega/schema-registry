@@ -18,6 +18,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.storage.Position;
+import io.pravega.schemaregistry.storage.impl.namespace.GroupValue;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -31,6 +32,7 @@ public interface IndexRecord {
             ImmutableMap.<Class<? extends IndexKey>, Class<? extends IndexValue>>builder()
                     .put(VersionInfoKey.class, WALPositionValue.class)
                     .put(SchemaInfoKey.class, SchemaVersionValue.class)
+                    .put(GroupPropertyKey.class, WALPositionValue.class)
                     .put(ValidationPolicyKey.class, WALPositionValue.class)
                     .put(SyncdTillKey.class, WALPositionValue.class)
                     .put(EncodingIdIndex.class, EncodingInfoIndex.class)
@@ -49,6 +51,8 @@ public interface IndexRecord {
     @Builder
     @AllArgsConstructor
     class WALPositionValue implements IndexValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
         private final Position position;
         private static class WALPositionValueBuilder implements ObjectBuilder<WALPositionValue> {
         }
@@ -187,6 +191,10 @@ public interface IndexRecord {
         }
     }
 
+    @Data
+    class GroupPropertyKey implements IndexKey {
+    }
+    
     @Data
     class ValidationPolicyKey implements IndexKey {
     }

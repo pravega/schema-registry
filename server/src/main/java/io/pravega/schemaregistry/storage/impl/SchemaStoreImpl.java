@@ -23,6 +23,9 @@ import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.Position;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
+import io.pravega.schemaregistry.storage.impl.group.Group;
+import io.pravega.schemaregistry.storage.impl.namespace.Namespace;
+import io.pravega.schemaregistry.storage.impl.namespace.Namespaces;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -74,8 +77,7 @@ public class SchemaStoreImpl implements SchemaStore {
     @Override
     public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
         return getGroup(namespace, group).thenCompose(grp ->
-                grp.getCurrentValidationRules().thenApply(rules -> 
-                new GroupProperties(grp.getSchemaType(), rules, grp.isSubgroupByEventType(), grp.isEnableEncoding())));
+                grp.getGroupProperties());
     }
 
     @Override

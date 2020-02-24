@@ -7,10 +7,11 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.impl;
+package io.pravega.schemaregistry.storage.impl.namespace;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.storage.impl.group.Group;
 
 import java.util.concurrent.CompletableFuture;
 

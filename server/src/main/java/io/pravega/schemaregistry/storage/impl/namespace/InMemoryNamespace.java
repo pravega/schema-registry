@@ -7,10 +7,15 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.impl;
+package io.pravega.schemaregistry.storage.impl.namespace;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.storage.impl.group.Group;
+import io.pravega.schemaregistry.storage.impl.group.InMemoryKeyValue;
+import io.pravega.schemaregistry.storage.impl.group.InMemoryLog;
+import io.pravega.schemaregistry.storage.impl.group.KeyValue;
+import io.pravega.schemaregistry.storage.impl.group.Log;
 import lombok.Synchronized;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -47,9 +52,9 @@ public class InMemoryNamespace implements Namespace {
             return CompletableFuture.completedFuture(false);
         }
         Group grp = groups.computeIfAbsent(group, 
-                x -> new Group(groupProperties.getSchemaType(), groupProperties.isSubgroupBySchemaName(),
-                groupProperties.isEnableEncoding(), walFactory.get(), kvFactory.get(), executor));
-        return grp.create(groupProperties.getSchemaValidationRules()).thenApply(v -> true);
+                x -> new Group(walFactory.get(), kvFactory.get(), executor));
+        return grp.create(groupProperties.getSchemaType(), groupProperties.isSubgroupBySchemaName(),
+                groupProperties.isEnableEncoding(), groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }
 
     @Synchronized

@@ -16,6 +16,7 @@ import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.AllArgsConstructor;
@@ -122,6 +123,40 @@ public interface Record {
             }
 
             private void read00(RevisionDataInput source, ValidationRecord.ValidationRecordBuilder b) throws IOException {
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
+    public class GroupPropertiesRecord implements Record {
+        private final SchemaType schemaType;
+        private final boolean enableEncoding;
+        private final boolean subgroupBySchemaName;
+        private static class GroupPropertiesRecordBuilder implements ObjectBuilder<GroupPropertiesRecord> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<GroupPropertiesRecord, GroupPropertiesRecord.GroupPropertiesRecordBuilder> {
+            @Override
+            protected GroupPropertiesRecord.GroupPropertiesRecordBuilder newBuilder() {
+                return GroupPropertiesRecord.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(GroupPropertiesRecord e, RevisionDataOutput target) throws IOException {
+            }
+
+            private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
             }
         }
     }
