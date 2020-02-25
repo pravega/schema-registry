@@ -37,7 +37,6 @@ buildscript {
         classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
         classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
         classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
-        classpath group: 'ru.vyarus', name: 'gradle-mkdocs-plugin', version: gradleMkdocsPluginVersion
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
         classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
@@ -114,7 +113,6 @@ allprojects {
         resolutionStrategy {
             force "com.google.guava:guava:" + guavaVersion
             force "com.google.protobuf:protobuf-java:" + protobufProtocVersion
-            force "io.grpc:grpc-context:" + grpcVersion
             force "commons-beanutils:commons-beanutils:" + commonsBeanutilsVersion
             force "org.apache.commons:commons-compress:" + apacheCommonsCompressVersion
             force "org.apache.commons:commons-lang3:" + commonsLang3Version
