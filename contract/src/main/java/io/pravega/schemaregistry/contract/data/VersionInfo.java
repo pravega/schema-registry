@@ -24,10 +24,20 @@ import java.io.IOException;
 @AllArgsConstructor
 public class VersionInfo {
     private static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
-    
+
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final String schemaName;
     private final int version;
 
+    public static VersionInfo fromBytes(byte[] bytes) throws IOException {
+        return SERIALIZER.deserialize(bytes);
+    }
+    
+    public byte[] toBytes() throws IOException {
+        return SERIALIZER.serialize(this).getCopy();
+    }
+    
     private static class VersionInfoBuilder implements ObjectBuilder<VersionInfo> {
     }
 

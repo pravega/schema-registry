@@ -12,9 +12,9 @@ package io.pravega.schemaregistry.storage.impl.namespace;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.impl.group.Group;
-import io.pravega.schemaregistry.storage.impl.group.InMemoryKeyValue;
+import io.pravega.schemaregistry.storage.impl.group.InMemoryIndex;
 import io.pravega.schemaregistry.storage.impl.group.InMemoryLog;
-import io.pravega.schemaregistry.storage.impl.group.KeyValue;
+import io.pravega.schemaregistry.storage.impl.group.Index;
 import io.pravega.schemaregistry.storage.impl.group.Log;
 import lombok.Synchronized;
 
@@ -30,13 +30,13 @@ public class InMemoryNamespace implements Namespace {
     @GuardedBy("$lock")
     private final Map<String, Group> groups = new HashMap<>();
     private final Supplier<Log> walFactory;
-    private final Supplier<KeyValue> kvFactory;
+    private final Supplier<Index> kvFactory;
     private final ScheduledExecutorService executor;
 
     public InMemoryNamespace(ScheduledExecutorService executor) {
         this.executor = executor;
         this.walFactory = InMemoryLog::new;
-        this.kvFactory = InMemoryKeyValue::new;
+        this.kvFactory = InMemoryIndex::new;
     }
 
     @Synchronized

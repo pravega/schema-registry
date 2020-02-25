@@ -15,6 +15,7 @@ import io.pravega.schemaregistry.storage.records.IndexRecord;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Synchronized;
+import sun.misc.Version;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.util.Collection;
@@ -25,10 +26,10 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class InMemoryKeyValue implements KeyValue {
+public class InMemoryIndex implements Index<Integer> {
     @GuardedBy("$lock")
     @Getter(AccessLevel.NONE)
-    private final Map<IndexRecord.IndexKey, Value<IndexRecord.IndexValue>> index = new HashMap<>();
+    private final Map<IndexRecord.IndexKey, Value<IndexRecord.IndexValue, Integer>> index = new HashMap<>();
 
     @Override
     @Synchronized
@@ -59,7 +60,7 @@ public class InMemoryKeyValue implements KeyValue {
 
     @Override
     @Synchronized
-    public CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, int version) {
+    public CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, Integer version) {
         int currentVersion = index.containsKey(key) ? index.get(key).getVersion() : 0;
         if (currentVersion != version) {
             throw new StoreExceptions.WriteConflictException();
@@ -77,7 +78,7 @@ public class InMemoryKeyValue implements KeyValue {
             return CompletableFuture.completedFuture(null);
         }
 
-        Value<IndexRecord.IndexValue> value = index.get(key);
+        Value<IndexRecord.IndexValue, Integer> value = index.get(key);
         if (value.getValue().getClass().isAssignableFrom(tClass)) {
             return CompletableFuture.completedFuture((T) value.getValue());
         } else {
@@ -88,12 +89,12 @@ public class InMemoryKeyValue implements KeyValue {
     @Override
     @SuppressWarnings("unchecked")
     @Synchronized
-    public <T extends IndexRecord.IndexValue> CompletableFuture<Value<T>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass) {
+    public <T extends IndexRecord.IndexValue> CompletableFuture<Value<T, Integer>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass) {
         if (!index.containsKey(key)) {
             return CompletableFuture.completedFuture(null);
         }
 
-        Value value = index.get(key);
+        Value<? extends IndexRecord.IndexValue, Integer> value = index.get(key);
         if (value.getValue().getClass().isAssignableFrom(tClass)) {
             return CompletableFuture.completedFuture(new Value<>((T) value.getValue(), value.getVersion()));
         } else {

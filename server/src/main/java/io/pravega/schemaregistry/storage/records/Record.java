@@ -134,6 +134,8 @@ public interface Record {
         private final SchemaType schemaType;
         private final boolean enableEncoding;
         private final boolean subgroupBySchemaName;
+        private final SchemaValidationRules validationRules;
+
         private static class GroupPropertiesRecordBuilder implements ObjectBuilder<GroupPropertiesRecord> {
         }
 

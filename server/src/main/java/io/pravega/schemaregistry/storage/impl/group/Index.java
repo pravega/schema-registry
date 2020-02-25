@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
-public interface KeyValue {
+public interface Index<Version> {
     CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys();
 
     CompletableFuture<List<Entry>> getAllEntries();
@@ -26,16 +26,16 @@ public interface KeyValue {
 
     CompletableFuture<Void> addEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value);
 
-    CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, int version);
+    CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, Version version);
 
     <T extends IndexRecord.IndexValue> CompletableFuture<T> getRecord(IndexRecord.IndexKey key, Class<T> tClass);
 
-    <T extends IndexRecord.IndexValue> CompletableFuture<Value<T>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass);
+    <T extends IndexRecord.IndexValue> CompletableFuture<Value<T, Version>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass);
 
     @Data
-    class Value<T extends IndexRecord.IndexValue> {
+    class Value<T extends IndexRecord.IndexValue, Version> {
         private final T value;
-        private final int version;
+        private final Version version;
     }
 
     @Data

@@ -20,6 +20,7 @@ import io.pravega.client.state.RevisionedStreamClient;
 import io.pravega.client.state.SynchronizerConfig;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.storage.StoreExceptions;
+import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespace;
 import io.pravega.schemaregistry.storage.records.Record;
 import io.pravega.schemaregistry.storage.records.RecordSerializer;
 import lombok.Data;
@@ -32,12 +33,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
-public class LogCache {
+public class PravegaLogCache {
     private static final int MAX_CACHE_SIZE = 10000;
     private final LoadingCache<RecordCacheKey, CompletableFuture<Record>> recordCache;
     private final LoadingCache<ClientCacheKey, RevisionedStreamClient<Record>> clientCache;
     
-    public LogCache(ClientConfig clientConfig) {
+    public PravegaLogCache(ClientConfig clientConfig) {
         this.clientCache =
                 CacheBuilder.newBuilder()
                             .maximumSize(MAX_CACHE_SIZE)
@@ -45,8 +46,9 @@ public class LogCache {
                                 @ParametersAreNonnullByDefault
                                 @Override
                                 public RevisionedStreamClient<Record> load(final ClientCacheKey key) {
-                                    SynchronizerClientFactory clientFactory = SynchronizerClientFactory.withScope(key.namespace, clientConfig);
-                                    String logName = "_log" + key.group;
+                                    SynchronizerClientFactory clientFactory = SynchronizerClientFactory.withScope(
+                                            PravegaLog.SCHEMA_REGISTRY_SCOPE, clientConfig);
+                                    String logName = PravegaLog.getLogName(key.namespace, key.group, key.id);
 
                                     return clientFactory.createRevisionedStreamClient(logName, new RecordsSerializer<>(),
                                             SynchronizerConfig.builder().build());
@@ -104,6 +106,7 @@ public class LogCache {
     static class ClientCacheKey {
         private final String namespace;
         private final String group;
+        private final String id;
     }
 
     static class RecordsSerializer<T extends Record> implements Serializer<T> {

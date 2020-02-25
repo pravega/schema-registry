@@ -51,12 +51,12 @@ public class Group {
     private static final IndexRecord.ValidationPolicyKey VALIDATION_POLICY_INDEX_KEY = new IndexRecord.ValidationPolicyKey();
     private static final IndexRecord.GroupPropertyKey GROUP_PROPERTY_INDEX_KEY = new IndexRecord.GroupPropertyKey();
     
-    private static final Comparator<KeyValue.Entry> VERSION_COMPARATOR = (v1, v2) -> {
+    private static final Comparator<Index.Entry> VERSION_COMPARATOR = (v1, v2) -> {
         IndexRecord.VersionInfoKey version1 = (IndexRecord.VersionInfoKey) v1.getKey();
         IndexRecord.VersionInfoKey version2 = (IndexRecord.VersionInfoKey) v2.getKey();
         return Integer.compare(version1.getVersionInfo().getVersion(), version2.getVersionInfo().getVersion());
     };
-    private static final Comparator<KeyValue.Entry> ENCODING_ID_COMPARATOR = (v1, v2) -> {
+    private static final Comparator<Index.Entry> ENCODING_ID_COMPARATOR = (v1, v2) -> {
         IndexRecord.EncodingIdIndex id1 = (IndexRecord.EncodingIdIndex) v1.getKey();
         IndexRecord.EncodingIdIndex id2 = (IndexRecord.EncodingIdIndex) v2.getKey();
         return Integer.compare(id1.getEncodingId().getId(), id2.getEncodingId().getId());
@@ -65,29 +65,26 @@ public class Group {
 
     private final Log wal;
 
-    private final KeyValue index;
+    private final Index index;
     
     private final ScheduledExecutorService executor;
 
-    public Group(Log wal, KeyValue index, ScheduledExecutorService executor) {
+    public Group(Log wal, Index index, ScheduledExecutorService executor) {
         this.wal = wal;
         this.index = index;
         this.executor = executor;
     }
     
     public CompletableFuture<Void> create(SchemaType schemaType, boolean enableEncoding, boolean subgroupByEventType, SchemaValidationRules schemaValidationRules) {
-        return wal.writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, subgroupByEventType), null)
-                  .thenCompose(pos1 -> wal.writeToLog(new Record.ValidationRecord(schemaValidationRules), pos1)
-                                          .thenCompose(pos2 -> {
-                                              IndexRecord.WALPositionValue walPosition1 = new IndexRecord.WALPositionValue(pos1);
-                                              IndexRecord.WALPositionValue walPosition2 = new IndexRecord.WALPositionValue(pos2);
-                                              Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition1);
-                                              Operation.Add addPolicy = new Operation.Add(VALIDATION_POLICY_INDEX_KEY, walPosition2);
-                                              Operation.Add addSyncTill = new Operation.Add(SYNCD_TILL, walPosition2);
-                                              return updateIndex(Lists.newArrayList(addGroupProp, addPolicy, addSyncTill));
-                                          }));
+        return wal.writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, subgroupByEventType, schemaValidationRules), null)
+                  .thenCompose(pos -> {
+                      IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
+                      Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
+                      Operation.Add addSyncTill = new Operation.Add(SYNCD_TILL, walPosition);
+                      return updateIndex(Lists.newArrayList(addGroupProp, addSyncTill));
+                  });
     }
-
+    
     @SuppressWarnings("unchecked")
     public CompletableFuture<Position> sync() {
         return index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
@@ -493,7 +490,7 @@ public class Group {
         return HASH.hashBytes(schemaInfo.getSchemaData()).asLong();
     }
 
-    private CompletableFuture<KeyValue.Entry> getLatestEntryFor(Predicate<IndexRecord.IndexKey> predicate, Comparator<KeyValue.Entry> entryComparator) {
+    private CompletableFuture<Index.Entry> getLatestEntryFor(Predicate<IndexRecord.IndexKey> predicate, Comparator<Index.Entry> entryComparator) {
         return sync()
                 .thenCompose(v -> index.getAllEntries(predicate)
                                        .thenApply(entries -> entries.stream().max(entryComparator).orElse(null)));

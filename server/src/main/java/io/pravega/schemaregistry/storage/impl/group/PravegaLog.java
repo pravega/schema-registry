@@ -11,8 +11,13 @@ package io.pravega.schemaregistry.storage.impl.group;
 
 import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
+import io.pravega.client.ClientConfig;
+import io.pravega.client.admin.StreamManager;
+import io.pravega.client.admin.impl.StreamManagerImpl;
 import io.pravega.client.state.Revision;
 import io.pravega.client.state.RevisionedStreamClient;
+import io.pravega.client.stream.ScalingPolicy;
+import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.storage.Position;
 import io.pravega.schemaregistry.storage.records.PravegaPosition;
 import io.pravega.schemaregistry.storage.records.Record;
@@ -28,17 +33,45 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class PravegaLog implements Log {
-    private final LogCache logCache;
-    private final Function<Revision, LogCache.RecordCacheKey> cacheKeySupplier;
+    public static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
+    public static final String LOG_NAME_FORMAT = "log-%s-%s-%s";
+    
+    private final PravegaLogCache logCache;
+    private final ClientConfig clientConfig;
+    private final PravegaLogCache.ClientCacheKey clientCacheKey;
+    private final Function<Revision, PravegaLogCache.RecordCacheKey> cacheKeySupplier;
     private final ScheduledExecutorService executorService;
-    private final LogCache.ClientCacheKey clientCacheKey;
-    public PravegaLog(String namespace, String group, LogCache logCache, ScheduledExecutorService executorService) {
+    private final String logName;
+    
+    public PravegaLog(String namespace, String group, String id, ClientConfig clientConfig,
+                      PravegaLogCache logCache, ScheduledExecutorService executorService) {
         this.logCache = logCache;
+        this.clientConfig = clientConfig;
         this.executorService = executorService;
-        this.clientCacheKey = new LogCache.ClientCacheKey(namespace, group);
-        this.cacheKeySupplier = revision -> new LogCache.RecordCacheKey(clientCacheKey, revision);
+        this.clientCacheKey = new PravegaLogCache.ClientCacheKey(namespace, group, id);
+        this.cacheKeySupplier = revision -> new PravegaLogCache.RecordCacheKey(clientCacheKey, revision);
+        this.logName = getLogName(namespace, group, id);
+    }
+
+    static String getLogName(String namespace, String group, String groupId) {
+        return String.format(LOG_NAME_FORMAT, namespace, group, groupId);
     }
     
+    public CompletableFuture<Void> create() {
+        return CompletableFuture.runAsync(() -> {
+            StreamManager manager = new StreamManagerImpl(clientConfig);
+            manager.createScope(SCHEMA_REGISTRY_SCOPE);
+            manager.createStream(SCHEMA_REGISTRY_SCOPE, logName, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+        }, executorService);
+    }
+
+    public CompletableFuture<Void> delete() {
+        return CompletableFuture.runAsync(() -> {
+            StreamManager manager = new StreamManagerImpl(clientConfig);
+            manager.deleteStream(SCHEMA_REGISTRY_SCOPE, logName);
+        }, executorService);
+    }
+
     @Override
     @Synchronized
     public CompletableFuture<Position> getCurrentEtag() {

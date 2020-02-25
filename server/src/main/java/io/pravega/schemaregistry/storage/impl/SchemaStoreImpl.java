@@ -76,8 +76,7 @@ public class SchemaStoreImpl implements SchemaStore {
 
     @Override
     public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(grp ->
-                grp.getGroupProperties());
+        return getGroup(namespace, group).thenCompose(Group::getGroupProperties);
     }
 
     @Override

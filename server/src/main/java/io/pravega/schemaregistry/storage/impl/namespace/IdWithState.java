@@ -7,39 +7,36 @@ import io.pravega.common.io.serialization.VersionedSerializer;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.SneakyThrows;
 
 import java.io.IOException;
 
 @Data
 @Builder
 @AllArgsConstructor
-public class GroupValue {
+public class IdWithState {
     public static final Serializer SERIALIZER = new Serializer();
 
     private final String id;
     private final State state;
     
-    enum State {
-        Creating,
-        Active,
-        Deleting
-    }
-
-    public byte[] toBytes() throws IOException {
+    @SneakyThrows
+    public byte[] toBytes() {
         return SERIALIZER.serialize(this).getCopy();
     }
     
-    public static GroupValue fromBytes(byte[] bytes) throws IOException {
+    @SneakyThrows
+    public static IdWithState fromBytes(byte[] bytes) {
         return SERIALIZER.deserialize(bytes);
     }
     
-    private static class GroupValueBuilder implements ObjectBuilder<GroupValue> {
+    private static class IdWithStateBuilder implements ObjectBuilder<IdWithState> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<GroupValue, GroupValue.GroupValueBuilder> {
+    static class Serializer extends VersionedSerializer.WithBuilder<IdWithState, IdWithState.IdWithStateBuilder> {
         @Override
-        protected GroupValue.GroupValueBuilder newBuilder() {
-            return GroupValue.builder();
+        protected IdWithState.IdWithStateBuilder newBuilder() {
+            return IdWithState.builder();
         }
 
         @Override
@@ -52,10 +49,16 @@ public class GroupValue {
             version(0).revision(0, this::write00, this::read00);
         }
 
-        private void write00(GroupValue e, RevisionDataOutput target) throws IOException {
+        private void write00(IdWithState e, RevisionDataOutput target) throws IOException {
         }
 
-        private void read00(RevisionDataInput source, GroupValue.GroupValueBuilder b) throws IOException {
+        private void read00(RevisionDataInput source, IdWithState.IdWithStateBuilder b) throws IOException {
         }
+    }
+
+    public enum State {
+        Creating,
+        Active,
+        Deleting
     }
 }
