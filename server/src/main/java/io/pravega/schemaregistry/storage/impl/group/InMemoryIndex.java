@@ -15,7 +15,6 @@ import io.pravega.schemaregistry.storage.records.IndexRecord;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.Synchronized;
-import sun.misc.Version;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.util.Collection;

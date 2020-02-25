@@ -31,10 +31,10 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-public class SchemaStoreImpl implements SchemaStore {
-    private final Namespaces namespaces;
+public class SchemaStoreImpl<T> implements SchemaStore {
+    private final Namespaces<T> namespaces;
 
-    public SchemaStoreImpl(Namespaces namespaces) {
+    public SchemaStoreImpl(Namespaces<T> namespaces) {
         this.namespaces = namespaces;
     }
     
@@ -163,7 +163,7 @@ public class SchemaStoreImpl implements SchemaStore {
     }
     // endregion
 
-    private CompletableFuture<Group> getGroup(String namespace, String group) {
+    private CompletableFuture<Group<T>> getGroup(String namespace, String group) {
         return getNamespace(namespace)
                 .thenCompose(scp -> scp.getGroup(group)
                                        .thenApply(grp -> {
@@ -175,7 +175,7 @@ public class SchemaStoreImpl implements SchemaStore {
                                        }));
     }
 
-    private CompletableFuture<Namespace> getNamespace(String namespace) {
+    private CompletableFuture<Namespace<T>> getNamespace(String namespace) {
         return namespaces.getNamespace(namespace)
                          .thenApply(scp -> {
                              if (scp == null) {

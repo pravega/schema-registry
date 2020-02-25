@@ -20,9 +20,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
-public class InMemoryNamespaces implements Namespaces {
+public class InMemoryNamespaces implements Namespaces<Integer> {
     @GuardedBy("$lock")
-    private final Map<String, Namespace> scopes = new HashMap<>();
+    private final Map<String, InMemoryNamespace> namespaces = new HashMap<>();
     private final ScheduledExecutorService executor;
 
     public InMemoryNamespaces(ScheduledExecutorService executor) {
@@ -32,27 +32,27 @@ public class InMemoryNamespaces implements Namespaces {
     @Synchronized
     @Override
     public CompletableFuture<ListWithToken<String>> getNamespaces() {
-        List<String> list = scopes.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
+        List<String> list = namespaces.entrySet().stream().map(Map.Entry::getKey).collect(Collectors.toList());
         return CompletableFuture.completedFuture(new ListWithToken<>(list, null));
     }
 
     @Synchronized
     @Override
     public CompletableFuture<Void> addNewNamespace(String scope) {
-        scopes.putIfAbsent(scope, new InMemoryNamespace(executor));
+        namespaces.putIfAbsent(scope, new InMemoryNamespace(executor));
         return CompletableFuture.completedFuture(null);
     }
 
     @Synchronized
     @Override
     public CompletableFuture<Void> removeNamespace(String scope) {
-        scopes.remove(scope);
+        namespaces.remove(scope);
         return CompletableFuture.completedFuture(null);
     }
 
     @Synchronized
     @Override
-    public CompletableFuture<Namespace> getNamespace(String scope) {
-        return CompletableFuture.completedFuture(scopes.get(scope));
+    public CompletableFuture<Namespace<Integer>> getNamespace(String scope) {
+        return CompletableFuture.completedFuture(namespaces.get(scope));
     }
 }

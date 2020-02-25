@@ -13,6 +13,7 @@ import io.pravega.client.ClientConfig;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.controller.store.stream.StoreException;
+import io.pravega.controller.store.stream.Version;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.group.PravegaLogCache;
@@ -30,7 +31,7 @@ import java.util.function.Supplier;
  * {@link PravegaTableNamespaces#NAMESPACES_TABLE}. 
  * Each entry represents a namespace. Once a namespace 
  */
-public class PravegaTableNamespaces implements Namespaces {
+public class PravegaTableNamespaces implements Namespaces<Version> {
     public static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
     public static final String NAMESPACES_TABLE = SCHEMA_REGISTRY_SCOPE + "/namespaces/0";
     
@@ -92,7 +93,7 @@ public class PravegaTableNamespaces implements Namespaces {
 
     @Synchronized
     @Override
-    public CompletableFuture<Namespace> getNamespace(String namespace) {
+    public CompletableFuture<Namespace<Version>> getNamespace(String namespace) {
         return tableStore.getEntry(NAMESPACES_TABLE, namespace, IdWithState::fromBytes)
                          .thenCompose(entry -> {
                              CompletableFuture<Void> future;

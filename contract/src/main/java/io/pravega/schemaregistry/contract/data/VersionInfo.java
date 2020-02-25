@@ -24,8 +24,7 @@ import java.io.IOException;
 @AllArgsConstructor
 public class VersionInfo {
     private static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
-
-    public static final Serializer SERIALIZER = new Serializer();
+    private static final Serializer SERIALIZER = new Serializer();
 
     private final String schemaName;
     private final int version;

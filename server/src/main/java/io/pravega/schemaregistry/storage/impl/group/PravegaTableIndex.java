@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.schemaregistry.storage.impl.group;
 
 import io.pravega.common.concurrent.Futures;
@@ -11,7 +20,6 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Predicate;
 
 public class PravegaTableIndex implements Index<Version> {
@@ -19,12 +27,10 @@ public class PravegaTableIndex implements Index<Version> {
     private static final IndexKeySerializer INDEX_KEY_SERIALIZER = new IndexKeySerializer();
     
     private final TableStore tablesStore;
-    private final ScheduledExecutorService executor;
     private final String tableName;
 
-    public PravegaTableIndex(String namespace, String groupName, String id, TableStore tablesStore, ScheduledExecutorService executor) {
+    public PravegaTableIndex(String namespace, String groupName, String id, TableStore tablesStore) {
         this.tablesStore = tablesStore;
-        this.executor = executor;
         this.tableName = getIndexName(namespace, groupName, id); 
     }
 

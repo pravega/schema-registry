@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.storage.records;
 
-import io.netty.handler.codec.base64.Base64Encoder;
 import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.common.util.ByteArraySegment;
 import lombok.SneakyThrows;

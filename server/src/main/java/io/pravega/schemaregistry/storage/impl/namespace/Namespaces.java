@@ -13,12 +13,12 @@ import io.pravega.schemaregistry.ListWithToken;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface Namespaces {
+public interface Namespaces<T> {
     CompletableFuture<ListWithToken<String>> getNamespaces();
 
     CompletableFuture<Void> addNewNamespace(String namespace);
 
     CompletableFuture<Void> removeNamespace(String namespace);
 
-    CompletableFuture<Namespace> getNamespace(String namespace);
+    CompletableFuture<Namespace<T>> getNamespace(String namespace);
 }

@@ -46,7 +46,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class Group {
+public class Group<T> {
     private static final IndexRecord.SyncdTillKey SYNCD_TILL = new IndexRecord.SyncdTillKey();
     private static final IndexRecord.ValidationPolicyKey VALIDATION_POLICY_INDEX_KEY = new IndexRecord.ValidationPolicyKey();
     private static final IndexRecord.GroupPropertyKey GROUP_PROPERTY_INDEX_KEY = new IndexRecord.GroupPropertyKey();
@@ -65,11 +65,11 @@ public class Group {
 
     private final Log wal;
 
-    private final Index index;
+    private final Index<T> index;
     
     private final ScheduledExecutorService executor;
 
-    public Group(Log wal, Index index, ScheduledExecutorService executor) {
+    public Group(Log wal, Index<T> index, ScheduledExecutorService executor) {
         this.wal = wal;
         this.index = index;
         this.executor = executor;
@@ -429,8 +429,10 @@ public class Group {
                      .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException)
                      .runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
                                       .thenCompose(existing -> {
-                                 if (existing == null || op.getCondition().test(existing.getValue())) {
-                                     return index.updateEntry(op.getKey(), op.getValue(), existing == null ? 0 : existing.getVersion());
+                                 if (existing == null) {
+                                     return index.addEntry(op.getKey(), op.getValue());
+                                 } else if (op.getCondition().test(existing.getValue())) {
+                                     return index.updateEntry(op.getKey(), op.getValue(), existing.getVersion());
                                  } else {
                                      return CompletableFuture.completedFuture(null);
                                  }
@@ -442,7 +444,7 @@ public class Group {
                      .runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
                                       .thenCompose(existing -> {
                               if (existing == null) {
-                                  return index.updateEntry(op.getKey(), op.getValue(), 0);
+                                  return index.addEntry(op.getKey(), op.getValue());
                               } else if (op.getValue() instanceof IndexRecord.SchemaVersionValue) {
                                       IndexRecord.SchemaVersionValue existingList = (IndexRecord.SchemaVersionValue) existing.getValue();
                                       IndexRecord.SchemaVersionValue toAdd = (IndexRecord.SchemaVersionValue) op.getValue();

@@ -9,6 +9,8 @@
  */
 package io.pravega.schemaregistry.storage;
 
+import io.pravega.client.ClientConfig;
+import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.namespace.InMemoryNamespaces;
 import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespaces;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
@@ -16,13 +18,11 @@ import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import java.util.concurrent.ScheduledExecutorService;
 
 public class SchemaStoreFactory {
-    public static SchemaStore createStore(StoreType type, ScheduledExecutorService executor) {
-        switch (type) {
-            case InMemory:
-                return new SchemaStoreImpl(new InMemoryNamespaces(executor));
-            case Pravega:
-            default:
-                throw new SchemaStoreImpl(new PravegaTableNamespaces(tableStore, executor));
-        }
+    public static SchemaStore createInMemoryStore(ScheduledExecutorService executor) {
+        return new SchemaStoreImpl<>(new InMemoryNamespaces(executor));
+    }
+    
+    public static SchemaStore createPravegaStore(ClientConfig clientConfig, TableStore tableStore, ScheduledExecutorService executor) {
+        return new SchemaStoreImpl<>(new PravegaTableNamespaces(clientConfig, tableStore, executor));
     }
 }

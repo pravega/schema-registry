@@ -26,11 +26,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
-public class InMemoryNamespace implements Namespace {
+public class InMemoryNamespace implements Namespace<Integer> {
     @GuardedBy("$lock")
-    private final Map<String, Group> groups = new HashMap<>();
+    private final Map<String, Group<Integer>> groups = new HashMap<>();
     private final Supplier<Log> walFactory;
-    private final Supplier<Index> kvFactory;
+    private final Supplier<Index<Integer>> kvFactory;
     private final ScheduledExecutorService executor;
 
     public InMemoryNamespace(ScheduledExecutorService executor) {
@@ -41,7 +41,7 @@ public class InMemoryNamespace implements Namespace {
 
     @Synchronized
     @Override
-    public CompletableFuture<Group> getGroup(String groupName) {
+    public CompletableFuture<Group<Integer>> getGroup(String groupName) {
         return CompletableFuture.completedFuture(groups.get(groupName));
     }
 
@@ -51,8 +51,8 @@ public class InMemoryNamespace implements Namespace {
         if (groups.containsKey(group)) {
             return CompletableFuture.completedFuture(false);
         }
-        Group grp = groups.computeIfAbsent(group, 
-                x -> new Group(walFactory.get(), kvFactory.get(), executor));
+        Group<Integer> grp = groups.computeIfAbsent(group, 
+                x -> new Group<>(walFactory.get(), kvFactory.get(), executor));
         return grp.create(groupProperties.getSchemaType(), groupProperties.isSubgroupBySchemaName(),
                 groupProperties.isEnableEncoding(), groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }

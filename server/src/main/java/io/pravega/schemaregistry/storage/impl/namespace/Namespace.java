@@ -15,8 +15,8 @@ import io.pravega.schemaregistry.storage.impl.group.Group;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface Namespace {
-    CompletableFuture<Group> getGroup(String groupName);
+public interface Namespace<T> {
+    CompletableFuture<Group<T>> getGroup(String groupName);
 
     CompletableFuture<Boolean> addNewGroup(String group, GroupProperties groupProperties);
 

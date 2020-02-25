@@ -9,13 +9,16 @@
  */
 package io.pravega.schemaregistry.storage.client;
 
+import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.impl.ControllerImpl;
+import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.common.cluster.Host;
 import io.pravega.controller.store.host.HostControllerStore;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 
 /**
  * This is a temporary implementation to directly query controller for table segment's location. 
@@ -24,8 +27,8 @@ import java.util.Set;
 public class HostStoreImpl implements HostControllerStore {
     private final ControllerImpl controller;
 
-    public HostStoreImpl(ControllerImpl controller) {
-        this.controller = controller;
+    public HostStoreImpl(ClientConfig clientConfig, ScheduledExecutorService executor) {
+        controller = new ControllerImpl(ControllerImplConfig.builder().clientConfig(clientConfig).build(), executor);
     }
 
     @Override

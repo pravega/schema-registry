@@ -1,6 +1,16 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.schemaregistry.storage.impl.namespace;
 
 import io.pravega.client.ClientConfig;
+import io.pravega.controller.store.stream.Version;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.client.TableStore;
@@ -16,7 +26,7 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 
-public class PravegaTableNamespace implements Namespace {
+public class PravegaTableNamespace implements Namespace<Version> {
     static final String GROUPS_IN_NAMESPACE = PravegaTableNamespaces.SCHEMA_REGISTRY_SCOPE + "/GroupsInNamespace-%s-%s/0";
     private final TableStore tablesStore;
     private final ScheduledExecutorService executor;
@@ -36,7 +46,7 @@ public class PravegaTableNamespace implements Namespace {
     }
     
     @Override
-    public CompletableFuture<Group> getGroup(String groupName) {
+    public CompletableFuture<Group<Version>> getGroup(String groupName) {
         return tablesStore.getEntry(tableName, groupName, IdWithState::fromBytes)
                    .thenApply(entry -> {
                        if (!entry.getObject().getState().equals(IdWithState.State.Active)) {
@@ -60,7 +70,7 @@ public class PravegaTableNamespace implements Namespace {
                    .thenCompose(entry -> {
                        if (entry.getObject().getState().equals(IdWithState.State.Creating)) {
                            GroupObj groupObject = getGroupObject(group, entry.getObject());
-                           Group grp = groupObject.getGroup();
+                           Group<Version> grp = groupObject.getGroup();
                            PravegaLog log = groupObject.getLog();
                            PravegaTableIndex index = groupObject.getIndex();
                            
@@ -108,14 +118,14 @@ public class PravegaTableNamespace implements Namespace {
 
     private GroupObj getGroupObject(String groupName, IdWithState value) {
         PravegaLog log = new PravegaLog(namespace, groupName, value.getId(), clientConfig, logCache, executor);
-        PravegaTableIndex index = new PravegaTableIndex(namespace, groupName, value.getId(), tablesStore, executor);
-        Group group = new Group(log, index, executor);
+        PravegaTableIndex index = new PravegaTableIndex(namespace, groupName, value.getId(), tablesStore);
+        Group<Version> group = new Group<>(log, index, executor);
         return new GroupObj(group, log, index);
     }
 
     @Data
-    private class GroupObj {
-        private final Group group;
+    private static class GroupObj {
+        private final Group<Version> group;
         private final PravegaLog log;
         private final PravegaTableIndex index;
     } 
