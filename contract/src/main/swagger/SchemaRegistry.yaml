@@ -460,7 +460,7 @@ paths:
         200:
           description: List of subgroups under the group
           schema:
-            $ref: "#/definitions/SchemaEvolutionList"
+            $ref: "#/definitions/SubgroupsList"
         404:
           description: Namespace or Group with given name not found
         500:

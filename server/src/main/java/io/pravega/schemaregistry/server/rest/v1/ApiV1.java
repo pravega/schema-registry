@@ -296,9 +296,7 @@ public final class ApiV1 {
         @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all subgroups under a Group. Schemas under a group can be subgrouped based on event type. A subgroup denotes a set of schemas that are evolved separately.", response = SchemaEvolutionList.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "List of subgroups under the group", response = SchemaEvolutionList.class),
-
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
-
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         public void getSubGroups(@ApiParam(value = "Namespace name", required = true) @PathParam("namespaceName") String namespaceName,
                                  @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
@@ -354,9 +352,7 @@ public final class ApiV1 {
         @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = Void.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema is valid", response = Void.class),
-
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
-
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         public void validate(@ApiParam(value = "Namespace name", required = true) @PathParam("namespaceName") String namespaceName,
                              @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,

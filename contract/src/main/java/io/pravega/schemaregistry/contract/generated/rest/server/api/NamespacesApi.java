@@ -23,6 +23,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.generated.rest.model.SubgroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
@@ -361,9 +362,9 @@ public class NamespacesApi  {
     @Path("/{namespaceName}/groups/{groupName}/subgroups")
     
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all subgroups under a Group. Schemas under a group can be subgrouped based on event type. A subgroup denotes a set of schemas that are evolved separately.", response = SchemaEvolutionList.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all subgroups under a Group. Schemas under a group can be subgrouped based on event type. A subgroup denotes a set of schemas that are evolved separately.", response = SubgroupsList.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "List of subgroups under the group", response = SchemaEvolutionList.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "List of subgroups under the group", response = SubgroupsList.class),
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
         
