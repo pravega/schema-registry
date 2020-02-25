@@ -120,10 +120,6 @@ allprojects {
             force "org.glassfish.jersey.core:jersey-server:" + jerseyVersion
             force "com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
-
-            dependencySubstitution {
-                substitute module("javax.ws.rs:jsr311-api") with module("javax.ws.rs:javax.ws.rs-api:" + javaxwsrsApiVersion)
-            }
         }
     }
 }
