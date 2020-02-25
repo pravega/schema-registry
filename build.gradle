@@ -1,0 +1,136 @@
+import com.github.spotbugs.SpotBugsTask
+import org.gradle.internal.jvm.Jvm
+
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ */
+
+apply plugin: 'org.ajoberstar.grgit'
+
+// Apply the java plugin to add support for Java
+buildscript {
+
+    // log the current JVM version.
+    println "Build JVM Version is : " + Jvm.current()
+    repositories {
+        mavenLocal()
+        jcenter()
+        mavenCentral()
+        maven {
+            url "https://repository.apache.org/snapshots"
+        }
+        maven {
+            url "https://oss.jfrog.org/jfrog-dependencies"
+        }
+        maven {
+            url "https://plugins.gradle.org/m2/"
+        }
+    }
+    dependencies {
+        classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
+        classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
+        classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
+        classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
+        classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
+        classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
+    }
+}
+
+allprojects {
+    apply plugin: 'idea'
+    apply plugin: 'eclipse'
+    if (file("src/main/java").isDirectory()) {
+        apply plugin: 'java'
+        apply plugin: 'io.franzbecker.gradle-lombok'
+        lombok {
+            version = lombokVersion
+        }
+        dependencies {
+            //These are compile time only dependencies needed accross all targets. Lombok uses them and may generate strange errors if they are missing.
+            compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
+            testCompile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
+            compileOnly group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
+            testCompile group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
+            compileOnly 'org.projectlombok:lombok:' + lombokVersion
+            
+            testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
+            annotationProcessor 'org.projectlombok:lombok:' + lombokVersion
+            testAnnotationProcessor 'org.projectlombok:lombok:' + lombokVersion
+        }
+        // Delombok sources.
+        task delombok(type: io.franzbecker.gradle.lombok.task.DelombokTask, dependsOn: compileJava) {
+            ext.outputDir = file("$buildDir/delombok")
+            outputs.dir(outputDir)
+            sourceSets.main.java.srcDirs.each {
+                inputs.dir(it)
+                args(it, "-d", outputDir)
+            }
+        }
+    }
+    // Plugin configurations
+    apply from: "$rootDir/gradle/application.gradle"
+    apply from: "$rootDir/gradle/checkstyle.gradle"
+    apply from: "$rootDir/gradle/eclipse.gradle"
+    apply from: "$rootDir/gradle/spotbugs.gradle"
+    apply from: "$rootDir/gradle/idea.gradle"
+    apply from: "$rootDir/gradle/jacoco.gradle"
+    apply from: "$rootDir/gradle/java.gradle"
+    apply from: "$rootDir/gradle/maven.gradle"
+    apply from: "$rootDir/gradle/protobuf.gradle"
+    apply from: "$rootDir/gradle/rat.gradle"
+
+    repositories {
+        jcenter()
+        mavenCentral()
+        mavenLocal()
+    }
+
+    gradle.projectsEvaluated {
+        tasks.withType(JavaCompile) {
+            sourceCompatibility = JavaVersion.VERSION_1_8
+            targetCompatibility = JavaVersion.VERSION_1_8
+            options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
+        }
+    }
+    tasks.withType(SpotBugsTask) {
+        classpath += sourceSets."${(it.name - ~/^spotbugs/).uncapitalize()}".compileClasspath
+        reports {
+            xml.enabled = false
+            html.enabled = true
+        }
+    }
+    version = getProjectVersion()
+    group = "io.pravega"
+
+    configurations.all {
+        resolutionStrategy {
+            force "com.google.guava:guava:" + guavaVersion
+            force "com.google.protobuf:protobuf-java:" + protobufProtocVersion
+            force "commons-beanutils:commons-beanutils:" + commonsBeanutilsVersion
+            force "org.apache.commons:commons-compress:" + apacheCommonsCompressVersion
+            force "org.apache.commons:commons-lang3:" + commonsLang3Version
+            force "org.glassfish.jersey.core:jersey-common:" + jerseyVersion
+            force "org.glassfish.jersey.core:jersey-server:" + jerseyVersion
+            force "com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion
+            force "org.slf4j:slf4j-api:" + slf4jApiVersion
+        }
+    }
+}
+
+def getProjectVersion() {
+    String ver = schemaregistryVersion
+    if (grgit && ver.contains("-SNAPSHOT")) {
+        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
+        def count = grgit.log(includes:['HEAD']).size()
+        def commitId = "${grgit.head().abbreviatedId}"
+        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
+    }
+    return ver
+}
