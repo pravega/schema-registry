@@ -110,6 +110,56 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         assertEquals(response.getStatus(), 200);
         GroupsList list = response.readEntity(GroupsList.class);
         assertEquals(list.getGroups().size(), 2);
-        assertEquals(list.getGroups().size(), 2);
+
+        // region create group
+        // endregion
+
+        // region delete group
+        // endregion
     } 
+    
+    @Test
+    public void groupProperties() throws ExecutionException, InterruptedException {
+        // region group properties
+        // endregion 
+        
+        // region update validation rules
+        // endregion
+    } 
+
+    @Test
+    public void groupSchemas() throws ExecutionException, InterruptedException {
+        // region get all schemas
+        // endregion
+
+        // region get latest schema
+        // endregion
+        
+        // region add new schema
+        // endregion
+    }
+    
+    @Test
+    public void schemaVersion() throws ExecutionException, InterruptedException {
+
+        // region get schema from version 
+        // endregion
+
+        // region validate schema
+        // endregion
+        
+        // region get schema version
+        // endregion
+    }
+
+    @Test
+    public void encoding() throws ExecutionException, InterruptedException {
+        // region get encoding id
+        // endregion
+
+        // region get encoding info
+        // endregion
+    }
+    
+    
 }
