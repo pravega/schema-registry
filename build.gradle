@@ -37,7 +37,6 @@ buildscript {
         classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
         classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
         classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
-        classpath group: 'ru.vyarus', name: 'gradle-mkdocs-plugin', version: gradleMkdocsPluginVersion
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
         classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
@@ -57,8 +56,6 @@ allprojects {
             //These are compile time only dependencies needed accross all targets. Lombok uses them and may generate strange errors if they are missing.
             compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
             testCompile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
-            compileOnly group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
-            testCompile group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
             compileOnly 'org.projectlombok:lombok:' + lombokVersion
             
             testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
@@ -114,7 +111,6 @@ allprojects {
         resolutionStrategy {
             force "com.google.guava:guava:" + guavaVersion
             force "com.google.protobuf:protobuf-java:" + protobufProtocVersion
-            force "io.grpc:grpc-context:" + grpcVersion
             force "commons-beanutils:commons-beanutils:" + commonsBeanutilsVersion
             force "org.apache.commons:commons-compress:" + apacheCommonsCompressVersion
             force "org.apache.commons:commons-lang3:" + commonsLang3Version
@@ -122,10 +118,6 @@ allprojects {
             force "org.glassfish.jersey.core:jersey-server:" + jerseyVersion
             force "com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
-
-            dependencySubstitution {
-                substitute module("javax.ws.rs:jsr311-api") with module("javax.ws.rs:javax.ws.rs-api:" + javaxwsrsApiVersion)
-            }
         }
     }
 }
@@ -152,6 +144,16 @@ project('contract') {
         compile project(':common')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        compile group: 'javax.servlet', name: 'javax.servlet-api', version: javaxServletApiVersion
+        compile(group: 'io.swagger', name : 'swagger-jersey2-jaxrs', version :swaggerJersey2JaxrsVersion) {
+            exclude group: 'com.google.guava', module: 'guava'
+        }
+        compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
+        compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
+        compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+
     }
 
     javadoc {
@@ -200,7 +202,7 @@ project('server') {
 
     apply plugin: 'application'
     applicationName = "schema-registry"
-    mainClassName = "io.pravega.schemaregistry.io.pravega.service.Main"
+    mainClassName = "io.pravega.schemaregistry.service.Main"
     applicationDefaultJvmArgs = ["-server", "-Xms128m", "-XX:+HeapDumpOnOutOfMemoryError",
                                  "-Dconfig.file=PRAVEGA_APP_HOME/conf/schemaregistry.config.properties",
                                  "-Dlogback.configurationFile=PRAVEGA_APP_HOME/conf/logback.xml",
@@ -233,6 +235,7 @@ project('server') {
         compile project(':common')
         compile project(':contract')
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-controller', version: pravegaVersion
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
         compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
@@ -247,6 +250,8 @@ project('server') {
         compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
         compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+//        testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-inmemory', version: jerseyVersion
+        testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
     }
 
     javadoc {

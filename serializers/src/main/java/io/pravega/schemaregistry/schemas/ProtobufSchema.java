@@ -27,7 +27,7 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
     private final DescriptorProtos.DescriptorProto descriptorProto;
     private final SchemaRegistryContract.SchemaInfo schemaInfo;
 
-    public ProtobufSchema(String name, @Nullable Parser<T> parser, DescriptorProtos.DescriptorProto descriptorProto) {
+    private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.DescriptorProto descriptorProto) {
         this.parser = parser;
         this.descriptorProto = descriptorProto;
         this.schemaInfo = new SchemaRegistryContract.SchemaInfo(

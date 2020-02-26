@@ -9,6 +9,15 @@
  */
 package io.pravega.schemaregistry.storage;
 
-public interface ContinuationToken {
-    
+public class ContinuationToken {
+    public static ContinuationToken parse(String token) {
+        // TODO: parse string to token
+        return null;
+    }
+
+    @Override
+    public String toString() {
+        // TODO: parse to string
+        return "ContinuationToken{}";
+    }
 }
