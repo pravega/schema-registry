@@ -18,8 +18,14 @@ import java.net.URI;
  */
 @Data
 public class RegistryClientConfig {
+    private final URI schemaRegistryUri;
+
     /**
      * URI for connecting with registry client.
+     * 
+     * @return return schema registry uri. 
      */
-    private final URI schemaRegistryUri;
+    public URI getSchemaRegistryUri() {
+        return schemaRegistryUri;
+    }
 }
