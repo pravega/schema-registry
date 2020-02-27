@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.server.rest.resources;
 
 import io.pravega.common.Exceptions;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaValidationRuleRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromSubgroupVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.NamespaceProperty;
@@ -34,14 +35,15 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SubgroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
+import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.exceptions.EntityExistsException;
 import io.pravega.schemaregistry.server.rest.v1.ApiV1;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.NotImplementedException;
 
-import javax.ws.rs.NotFoundException;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
@@ -199,6 +201,26 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     }
 
     @Override
+    public void getSchemaValidationRules(String namespaceName, String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        throw new NotImplementedException("get schema validation rules");
+    }
+
+    @Override
+    public void getSchemaValidationRule(String namespaceName, String groupName, String rule, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        throw new NotImplementedException("get schema validation rule");
+    }
+
+    @Override
+    public void deleteSchemaValidationRule(String namespaceName, String groupName, String rule, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        throw new NotImplementedException("delete schema validation rule");
+    }
+
+    @Override
+    public void addSchemaValidationRule(String namespaceName, String groupName, AddSchemaValidationRuleRequest addSchemaValidationRuleRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        throw new NotImplementedException("add schema validation rule");
+    }
+
+    @Override
     public void deleteGroup(String namespaceName, String groupName, SecurityContext securityContext,
                             AsyncResponse asyncResponse) throws NotFoundException {
         registryService.deleteGroup(namespaceName, groupName)
@@ -280,7 +302,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
                            return response;
                        });
     }
-
+    
     @Override
     public void getSchemaFromVersion(String namespaceName, String groupName, String versionId, GetSchemaFromVersionRequest getSchemaFromVersionRequest,
                                      SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
@@ -317,7 +339,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     }
 
     @Override
-    public void getSchemaVersion(String namespaceName, String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
+    public void getSchemaVersion(String namespaceName, String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(getSchemaVersion.getSchemaInfo());
 
         registryService.getSchemaVersion(namespaceName, groupName, schemaInfo)
@@ -337,7 +359,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     public void getSchemaFromSubgroupVersion(String namespaceName, String groupName, String subgroupName, String versionId,
                                              GetSchemaFromSubgroupVersionRequest getSchemaFromSubgroupVersionRequest, 
                                              SecurityContext securityContext, AsyncResponse asyncResponse) 
-            throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
+            throws NotFoundException {
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(
                 getSchemaFromSubgroupVersionRequest.getVersionInfo());
         registryService.getSchema(namespaceName, groupName, versionInfo)
@@ -421,7 +443,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
     }
 
     @Override
-    public void getSubGroups(String namespaceName, String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException {
+    public void getSubGroups(String namespaceName, String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         registryService.getSubgroups(namespaceName, groupName, null)
                        .thenApply(subgroups -> {
                            SubgroupsList subgroupsList = new SubgroupsList().groups(subgroups.getList());
