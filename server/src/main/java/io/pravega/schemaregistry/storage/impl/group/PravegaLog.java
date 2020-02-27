@@ -103,7 +103,7 @@ public class PravegaLog implements Log {
         // check in the cache if the record exists
         return logCache.getRecord(cacheKeySupplier.apply(pos.getRevision()))
                 .thenApply(record -> {
-                    if (record.getClass().isAssignableFrom(tClass)) {
+                    if (tClass.isAssignableFrom(record.getClass())) {
                         return (T) record;
                     } else {
                         throw new IllegalArgumentException();

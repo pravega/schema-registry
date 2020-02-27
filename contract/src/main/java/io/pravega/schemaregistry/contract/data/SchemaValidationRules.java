@@ -27,6 +27,10 @@ public class SchemaValidationRules {
     private final ImmutableList<SchemaValidationRule> rules;
     private final Compatibility compatibility;
 
+    public static SchemaValidationRules of() {
+        return new SchemaValidationRules(null, null);    
+    }
+    
     private static class SchemaValidationRulesBuilder implements ObjectBuilder<SchemaValidationRules> {
     }
 

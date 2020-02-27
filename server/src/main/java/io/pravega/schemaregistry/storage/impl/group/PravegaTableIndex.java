@@ -94,7 +94,7 @@ public class PravegaTableIndex implements Index<Version> {
 
     @SuppressWarnings("unchecked")
     private <T extends IndexRecord.IndexValue> T getTypedRecord(Class<T> tClass, IndexRecord.IndexValue value) {
-        if (value.getClass().isAssignableFrom(tClass)) {
+        if (tClass.isAssignableFrom(value.getClass())) {
             return (T) value;
         } else {
             throw new IllegalArgumentException();

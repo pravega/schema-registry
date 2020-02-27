@@ -78,7 +78,7 @@ public class InMemoryIndex implements Index<Integer> {
         }
 
         Value<IndexRecord.IndexValue, Integer> value = index.get(key);
-        if (value.getValue().getClass().isAssignableFrom(tClass)) {
+        if (tClass.isAssignableFrom(value.getValue().getClass())) {
             return CompletableFuture.completedFuture((T) value.getValue());
         } else {
             return Futures.failedFuture(new IllegalArgumentException());
@@ -94,7 +94,7 @@ public class InMemoryIndex implements Index<Integer> {
         }
 
         Value<? extends IndexRecord.IndexValue, Integer> value = index.get(key);
-        if (value.getValue().getClass().isAssignableFrom(tClass)) {
+        if (tClass.isAssignableFrom(value.getValue().getClass())) {
             return CompletableFuture.completedFuture(new Value<>((T) value.getValue(), value.getVersion()));
         } else {
             return Futures.failedFuture(new IllegalArgumentException());

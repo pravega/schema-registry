@@ -127,10 +127,19 @@ public class Group<T> {
     public CompletableFuture<SchemaValidationRules> getCurrentValidationRules() {
         return sync()
                 .thenCompose(v -> index.getRecord(VALIDATION_POLICY_INDEX_KEY, IndexRecord.WALPositionValue.class)
-                                   .thenCompose(validationRecordPosition -> {
-                            return wal.readAt(validationRecordPosition.getPosition(), Record.ValidationRecord.class)
-                                      .thenApply(Record.ValidationRecord::getValidationRules);
-                        }));
+                                       .thenCompose(validationRecordPosition -> {
+                                           if (validationRecordPosition == null) {
+                                               return index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class)
+                                                           .thenCompose(groupPropPos -> {
+                                                              return wal.readAt(groupPropPos.getPosition(), Record.GroupPropertiesRecord.class)
+                                                              .thenApply(Record.GroupPropertiesRecord::getValidationRules);        
+                                                           });
+                                               
+                                           } else {
+                                               return wal.readAt(validationRecordPosition.getPosition(), Record.ValidationRecord.class)
+                                                                                         .thenApply(Record.ValidationRecord::getValidationRules);
+                                           }
+                                       }));
     }
 
     public CompletableFuture<Position> getCurrentEtag() {
@@ -370,6 +379,8 @@ public class Group<T> {
                               epochs.add(epoch);
                           } else if (x.getRecord() instanceof Record.ValidationRecord) {
                               rulesRef.set(((Record.ValidationRecord) x.getRecord()).getValidationRules());
+                          } else if (x.getRecord() instanceof Record.GroupPropertiesRecord) {
+                              rulesRef.set(((Record.GroupPropertiesRecord) x.getRecord()).getValidationRules());
                           }
                       });
                       return epochs;

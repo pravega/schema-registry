@@ -288,6 +288,28 @@ project('serializers') {
     }
 }
 
+project('test') {
+    dependencies {
+        compile project(':common')
+        compile project(':contract')
+        compile project(':client')
+        compile project(':server')
+        compile project(':serializers')
+
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+    }
+
+    javadoc {
+        title = "Serializers"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+}
+
 def getProjectVersion() {
     String ver = schemaregistryVersion
     if (grgit && ver.contains("-SNAPSHOT")) {
