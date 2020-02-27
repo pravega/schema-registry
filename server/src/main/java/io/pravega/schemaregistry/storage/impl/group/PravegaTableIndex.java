@@ -9,8 +9,11 @@
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
+import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
+import io.pravega.controller.store.stream.StoreException;
 import io.pravega.controller.store.stream.Version;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespaces;
 import io.pravega.schemaregistry.storage.records.IndexKeySerializer;
@@ -20,6 +23,7 @@ import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.function.Predicate;
 
 public class PravegaTableIndex implements Index<Version> {
@@ -88,8 +92,11 @@ public class PravegaTableIndex implements Index<Version> {
 
     @Override
     public <T extends IndexRecord.IndexValue> CompletableFuture<T> getRecord(IndexRecord.IndexKey key, Class<T> tClass) {
-        return tablesStore.getEntry(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), x -> IndexRecord.fromBytes(key.getClass(), x))
-                          .thenApply(entry -> getTypedRecord(tClass, entry.getObject()));
+        return Futures.exceptionallyExpecting(
+                tablesStore.getEntry(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), x -> IndexRecord.fromBytes(key.getClass(), x))
+                          .thenApply(entry -> getTypedRecord(tClass, entry.getObject())), 
+                e -> Exceptions.unwrap(e) instanceof StoreException.DataNotFoundException, 
+                null);
     }
 
     @SuppressWarnings("unchecked")
@@ -103,10 +110,12 @@ public class PravegaTableIndex implements Index<Version> {
 
     @Override
     public <T extends IndexRecord.IndexValue> CompletableFuture<Value<T, Version>> getRecordWithVersion(IndexRecord.IndexKey key, Class<T> tClass) {
-        return tablesStore.getEntry(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), x -> IndexRecord.fromBytes(key.getClass(), x))
+        return Futures.exceptionallyExpecting(tablesStore.getEntry(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), x -> IndexRecord.fromBytes(key.getClass(), x))
                    .thenApply(entry -> {
                        T t = getTypedRecord(tClass, entry.getObject());
                        return new Value<>(t, entry.getVersion());
-                   });
+                   }), 
+                e -> Exceptions.unwrap(e) instanceof StoreException.DataNotFoundException, 
+                null);
     }
 }

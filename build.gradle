@@ -295,6 +295,7 @@ project('test') {
         compile project(':client')
         compile project(':server')
         compile project(':serializers')
+        compile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
 
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion

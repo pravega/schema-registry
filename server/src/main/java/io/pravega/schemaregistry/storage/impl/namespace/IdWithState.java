@@ -59,9 +59,14 @@ public class IdWithState {
         }
 
         private void write00(IdWithState e, RevisionDataOutput target) throws IOException {
+            target.writeUTF(e.id);
+            target.writeCompactInt(e.state.ordinal());
         }
 
         private void read00(RevisionDataInput source, IdWithState.IdWithStateBuilder b) throws IOException {
+            b.id(source.readUTF());
+            int ordinal = source.readCompactInt();
+            b.state(State.values()[ordinal]);
         }
     }
 

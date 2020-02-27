@@ -18,6 +18,8 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Objects;
@@ -37,6 +39,8 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 public class SchemaInfo {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final String name;
     private final SchemaType schemaType;
     private final byte[] schemaData;
@@ -68,7 +72,7 @@ public class SchemaInfo {
     private static class SchemaInfoBuilder implements ObjectBuilder<SchemaInfo> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<SchemaInfo, SchemaInfo.SchemaInfoBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<SchemaInfo, SchemaInfo.SchemaInfoBuilder> {
         @Override
         protected SchemaInfo.SchemaInfoBuilder newBuilder() {
             return SchemaInfo.builder();
@@ -85,9 +89,19 @@ public class SchemaInfo {
         }
 
         private void write00(SchemaInfo e, RevisionDataOutput target) throws IOException {
+            target.writeUTF(e.name);
+            SchemaType.SERIALIZER.serialize(target, e.schemaType);
+            target.write(e.schemaData);
+            target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
         }
 
         private void read00(RevisionDataInput source, SchemaInfo.SchemaInfoBuilder b) throws IOException {
+            b.name(source.readUTF())
+                .schemaType(SchemaType.SERIALIZER.deserialize(source))
+                .schemaData(source.readArray());
+            ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+            source.readMap(DataInput::readUTF, DataInput::readUTF, builder);
+            b.properties(builder.build());            
         }
     }
 }

@@ -28,6 +28,8 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class SchemaEvolutionEpoch {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final SchemaInfo schema;
     private final VersionInfo version;
     private final SchemaValidationRules rules;
@@ -52,9 +54,15 @@ public class SchemaEvolutionEpoch {
         }
 
         private void write00(SchemaEvolutionEpoch e, RevisionDataOutput target) throws IOException {
+            SchemaInfo.SERIALIZER.serialize(target, e.schema);
+            VersionInfo.SERIALIZER.serialize(target, e.version);
+            SchemaValidationRules.SERIALIZER.serialize(target, e.rules);
         }
 
         private void read00(RevisionDataInput source, SchemaEvolutionEpoch.SchemaEvolutionEpochBuilder b) throws IOException {
+            b.schema(SchemaInfo.SERIALIZER.deserialize(source))
+             .version(VersionInfo.SERIALIZER.deserialize(source))
+             .rules(SchemaValidationRules.SERIALIZER.deserialize(source));
         }
     }
 }

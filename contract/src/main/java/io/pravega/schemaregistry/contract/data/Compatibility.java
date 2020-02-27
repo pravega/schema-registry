@@ -40,6 +40,8 @@ import java.io.IOException;
 @Data
 @Builder
 public class Compatibility {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final Type compatibility;
     private final VersionInfo backwardTill;
     private final VersionInfo forwardTill;
@@ -50,8 +52,8 @@ public class Compatibility {
 
     public Compatibility(Type compatibility, VersionInfo backwardTill, VersionInfo forwardTill) {
         this.compatibility = compatibility;
-        this.backwardTill = backwardTill;
-        this.forwardTill = forwardTill;
+        this.backwardTill = backwardTill == null ? VersionInfo.NON_EXISTENT : backwardTill;
+        this.forwardTill = forwardTill == null ? VersionInfo.NON_EXISTENT : forwardTill;
     }
     
     public enum Type {
@@ -104,9 +106,16 @@ public class Compatibility {
         }
 
         private void write00(Compatibility e, RevisionDataOutput target) throws IOException {
+            target.writeCompactInt(e.getCompatibility().ordinal());
+            VersionInfo.SERIALIZER.serialize(target, e.backwardTill);
+            VersionInfo.SERIALIZER.serialize(target, e.forwardTill);
         }
 
         private void read00(RevisionDataInput source, Compatibility.CompatibilityBuilder b) throws IOException {
+            int ordinal = source.readCompactInt();
+            b.compatibility(Type.values()[ordinal]);
+            b.backwardTill(VersionInfo.SERIALIZER.deserialize(source));
+            b.forwardTill(VersionInfo.SERIALIZER.deserialize(source));
         }
     }
 }

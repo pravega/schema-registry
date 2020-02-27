@@ -89,6 +89,7 @@ public class Group<T> {
     public CompletableFuture<Position> sync() {
         return index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
              .thenCompose(value -> {
+                 // TODO: handle if syncd till is not set
                  IndexRecord.WALPositionValue syncdTill = value.getValue();
                  return wal.readFrom(syncdTill.getPosition())
                          .thenCompose(list -> {
@@ -118,7 +119,11 @@ public class Group<T> {
                              });
                              return updateIndex(operations)
                                      .thenApply(v -> {
-                                         return (Position) list.get(list.size() - 1).getPosition();
+                                         if (list.isEmpty()) {
+                                             return syncdTill.getPosition();
+                                         } else {
+                                             return list.get(list.size() - 1).getPosition();
+                                         }
                                      });
                          });
              });

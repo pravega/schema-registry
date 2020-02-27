@@ -23,8 +23,8 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class VersionInfo {
-    private static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
-    private static final Serializer SERIALIZER = new Serializer();
+    public static final Serializer SERIALIZER = new Serializer();
+    public static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
 
     private final String schemaName;
     private final int version;
@@ -40,7 +40,7 @@ public class VersionInfo {
     private static class VersionInfoBuilder implements ObjectBuilder<VersionInfo> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<VersionInfo, VersionInfo.VersionInfoBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<VersionInfo, VersionInfo.VersionInfoBuilder> {
         @Override
         protected VersionInfo.VersionInfoBuilder newBuilder() {
             return VersionInfo.builder();
@@ -57,9 +57,13 @@ public class VersionInfo {
         }
 
         private void write00(VersionInfo e, RevisionDataOutput target) throws IOException {
+            target.writeUTF(e.schemaName);
+            target.writeInt(e.version);
         }
 
         private void read00(RevisionDataInput source, VersionInfo.VersionInfoBuilder b) throws IOException {
+            b.schemaName(source.readUTF())
+             .version(source.readInt());
         }
     }
 }

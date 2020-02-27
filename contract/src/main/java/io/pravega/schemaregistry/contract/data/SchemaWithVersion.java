@@ -26,6 +26,8 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class SchemaWithVersion {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final SchemaInfo schema;
     private final VersionInfo version;
 
@@ -49,9 +51,13 @@ public class SchemaWithVersion {
         }
 
         private void write00(SchemaWithVersion e, RevisionDataOutput target) throws IOException {
+            SchemaInfo.SERIALIZER.serialize(target, e.schema);
+            VersionInfo.SERIALIZER.serialize(target, e.version);
         }
 
         private void read00(RevisionDataInput source, SchemaWithVersion.SchemaWithVersionBuilder b) throws IOException {
+            b.schema(SchemaInfo.SERIALIZER.deserialize(source))
+             .version(VersionInfo.SERIALIZER.deserialize(source));
         }
     }
 }

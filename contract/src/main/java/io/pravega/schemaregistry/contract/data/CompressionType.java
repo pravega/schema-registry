@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import com.google.common.base.Preconditions;
 import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
@@ -27,6 +28,8 @@ import java.io.IOException;
 @Data
 @Builder
 public class CompressionType {
+    public static final Serializer SERIALIZER = new Serializer();
+
     public enum Type {
         None,
         Snappy,
@@ -39,7 +42,7 @@ public class CompressionType {
 
     private CompressionType(Type compressionType, String customTypeName) {
         this.compressionType = compressionType;
-        this.customTypeName = customTypeName;
+        this.customTypeName = customTypeName == null ? "" : customTypeName;
     }
 
     public static CompressionType of(Type type) {
@@ -47,13 +50,14 @@ public class CompressionType {
     }
 
     public static CompressionType custom(String customTypeName) {
+        Preconditions.checkNotNull(customTypeName);
         return new CompressionType(Type.Custom, customTypeName);
     }
 
     private static class CompressionTypeBuilder implements ObjectBuilder<CompressionType> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<CompressionType, CompressionType.CompressionTypeBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<CompressionType, CompressionType.CompressionTypeBuilder> {
         @Override
         protected CompressionType.CompressionTypeBuilder newBuilder() {
             return CompressionType.builder();
@@ -70,9 +74,14 @@ public class CompressionType {
         }
 
         private void write00(CompressionType e, RevisionDataOutput target) throws IOException {
+            target.writeCompactInt(e.compressionType.ordinal());
+            target.writeUTF(e.customTypeName);
         }
 
         private void read00(RevisionDataInput source, CompressionType.CompressionTypeBuilder b) throws IOException {
+            int ordinal = source.readCompactInt();
+            b.compressionType(Type.values()[ordinal]);
+            b.customTypeName(source.readUTF());
         }
     }
 }

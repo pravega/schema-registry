@@ -41,7 +41,7 @@ public class IndexKeySerializer extends VersionedSerializer.MultiType<IndexRecor
     @SneakyThrows(IOException.class)
     public String toKeyString(IndexRecord.IndexKey value) {
         ByteArraySegment s = serialize(value);
-        return Base64.getEncoder().encodeToString(s.getCopy());
+        return value.getClass().getSimpleName() + "_" + Base64.getEncoder().encodeToString(s.getCopy());
     }
     
     /**
@@ -52,7 +52,9 @@ public class IndexKeySerializer extends VersionedSerializer.MultiType<IndexRecor
      */
     @SneakyThrows(IOException.class)
     public IndexRecord.IndexKey fromString(String string) {
-        byte[] buffer = Base64.getDecoder().decode(string);
+        String[] tokens = string.split("_");
+        
+        byte[] buffer = Base64.getDecoder().decode(tokens[1]);
         return deserialize(new ByteArraySegment(buffer));
     }
 }

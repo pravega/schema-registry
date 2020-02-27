@@ -18,7 +18,6 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
-import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import lombok.Data;
 import org.apache.avro.Schema;
 import org.apache.avro.reflect.ReflectData;
@@ -29,9 +28,9 @@ import org.junit.Test;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-public class TestEndToEnd {
+public abstract class TestEndToEnd {
 
-    ScheduledExecutorService executor;
+    protected ScheduledExecutorService executor;
     
     @Before
     public void setUp() {
@@ -45,7 +44,7 @@ public class TestEndToEnd {
     
     @Test
     public void testEndToEnd() {
-        SchemaStore store = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaStore store = getStore();
         SchemaRegistryService service = new SchemaRegistryService(store);
         SchemaRegistryClient client = new TestRegistryClient(service);
 
@@ -59,6 +58,8 @@ public class TestEndToEnd {
         Schema schema = ReflectData.get().getSchema(TestClass.class); 
         SchemaInfo schemaInfo = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro), 
                 schema.toString().getBytes(), ImmutableMap.of());
+        client.addSchemaIfAbsent(namespace, group, schemaInfo, SchemaValidationRules.of());
+        // attempt to add an existing schema
         client.addSchemaIfAbsent(namespace, group, schemaInfo, SchemaValidationRules.of());
 
         Schema schema2 = ReflectData.get().getSchema(TestClass2.class);
@@ -77,7 +78,9 @@ public class TestEndToEnd {
 
         System.err.println(client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
     }
-    
+
+    abstract SchemaStore getStore();
+
     @Data
     public static class TestClass {
         private final String test;

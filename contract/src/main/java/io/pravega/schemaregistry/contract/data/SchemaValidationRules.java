@@ -24,6 +24,8 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class SchemaValidationRules {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final ImmutableList<SchemaValidationRule> rules;
     private final Compatibility compatibility;
 
@@ -34,7 +36,7 @@ public class SchemaValidationRules {
     private static class SchemaValidationRulesBuilder implements ObjectBuilder<SchemaValidationRules> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<SchemaValidationRules, SchemaValidationRules.SchemaValidationRulesBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<SchemaValidationRules, SchemaValidationRules.SchemaValidationRulesBuilder> {
         @Override
         protected SchemaValidationRules.SchemaValidationRulesBuilder newBuilder() {
             return SchemaValidationRules.builder();
@@ -51,9 +53,12 @@ public class SchemaValidationRules {
         }
 
         private void write00(SchemaValidationRules e, RevisionDataOutput target) throws IOException {
+            Compatibility.SERIALIZER.serialize(target, e.compatibility);
         }
 
         private void read00(RevisionDataInput source, SchemaValidationRules.SchemaValidationRulesBuilder b) throws IOException {
+            b.rules(ImmutableList.of())
+             .compatibility(Compatibility.SERIALIZER.deserialize(source));
         }
     }
 }
