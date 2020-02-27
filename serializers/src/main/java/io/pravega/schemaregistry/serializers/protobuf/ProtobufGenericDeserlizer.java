@@ -13,26 +13,25 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
+import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.AbstractPravegaDeserializer;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
 import lombok.SneakyThrows;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.util.function.BiFunction;
+import java.util.Map;
 
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.CompressionType;
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaInfo;
-
-public class PravegaProtobufGenericDeserlizer extends AbstractPravegaDeserializer<DynamicMessage> {
+public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<DynamicMessage> {
     ProtobufSchema<DynamicMessage> protobufSchema;
-    public PravegaProtobufGenericDeserlizer(String scope, String groupId, SchemaRegistryClient client,
-                                            @Nullable ProtobufSchema<DynamicMessage> schema,
-                                            SerializerConfig config,
-                                            BiFunction<ByteBuffer, CompressionType, ByteBuffer> uncompress) {
-        super(scope, groupId, client, schema, config, false, uncompress);
+    public ProtobufGenericDeserlizer(String scope, String groupId, SchemaRegistryClient client,
+                                     @Nullable ProtobufSchema<DynamicMessage> schema,
+                                     Map<CompressionType, Compressor> compressorMap, EncodingCache encodingCache) {
+        super(scope, groupId, client, schema, false, compressorMap, encodingCache);
         this.protobufSchema = schema;
     }
 

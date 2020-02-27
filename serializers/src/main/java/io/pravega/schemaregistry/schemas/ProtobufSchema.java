@@ -11,13 +11,14 @@ package io.pravega.schemaregistry.schemas;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import lombok.Data;
 import lombok.Getter;
-
-import javax.annotation.Nullable;
+import lombok.SneakyThrows;
 
 @Data
 public class ProtobufSchema<T extends Message> implements SchemaData<T> {
@@ -25,24 +26,33 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
     private final Parser<T> parser;
     @Getter
     private final DescriptorProtos.DescriptorProto descriptorProto;
-    private final SchemaRegistryContract.SchemaInfo schemaInfo;
+    
+    private final SchemaInfo schemaInfo;
 
     private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.DescriptorProto descriptorProto) {
         this.parser = parser;
         this.descriptorProto = descriptorProto;
-        this.schemaInfo = new SchemaRegistryContract.SchemaInfo(
-                name,
-                SchemaRegistryContract.SchemaType.Protobuf, getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(name, SchemaType.of(SchemaType.Type.Protobuf), 
+                getSchemaBytes(), ImmutableMap.of());
     }
-
+    
     @Override
     public byte[] getSchemaBytes() {
         return descriptorProto.toByteArray();
     }
 
     @Override
-    public SchemaRegistryContract.SchemaInfo getSchemaInfo() {
+    public SchemaInfo getSchemaInfo() {
         return schemaInfo;
+    }
+    
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass) {
+        T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
+        Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
+        DescriptorProtos.DescriptorProto descriptorProto = defaultInstance.getDescriptorForType().toProto();
+        return new ProtobufSchema<>(tClass.getSimpleName(), tParser, descriptorProto);
     }
 }
 

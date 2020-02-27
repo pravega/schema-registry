@@ -10,8 +10,11 @@
 package io.pravega.schemaregistry.serializers.avro;
 
 import com.google.common.base.Preconditions;
+import io.pravega.schemaregistry.cache.EncodingCache;
+import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.serializers.AbstractPravegaDeserializer;
 import lombok.SneakyThrows;
@@ -22,18 +25,14 @@ import org.apache.avro.io.DecoderFactory;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.util.function.BiFunction;
+import java.util.Map;
 
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaInfo;
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.CompressionType;
-
-public class PravegaAvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
+public class AvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
     AvroSchema<T> avroSchema;
-    public PravegaAvroDeserlizer(String scope, String groupId, SchemaRegistryClient client,
-                                    @Nullable AvroSchema<T> schema,
-                                    SerializerConfig config,
-                                    BiFunction<ByteBuffer, CompressionType, ByteBuffer> uncompress) {
-        super(scope, groupId, client, schema, config, false, uncompress);
+    public AvroDeserlizer(String scope, String groupId, SchemaRegistryClient client,
+                          @Nullable AvroSchema<T> schema,
+                          Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
+        super(scope, groupId, client, schema, false, compressors, encodingCache);
         this.avroSchema = schema;
     }
 

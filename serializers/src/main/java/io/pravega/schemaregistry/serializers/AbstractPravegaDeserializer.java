@@ -10,85 +10,75 @@
 package io.pravega.schemaregistry.serializers;
 
 import io.pravega.common.util.BitConverter;
+import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.EncodingId;
+import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.SchemaData;
-import lombok.Getter;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
-
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.CompressionType;
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.EncodingId;
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.EncodingInfo;
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaInfo;
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.SchemaWithVersion;
 
 @Slf4j
-public abstract class AbstractPravegaDeserializer<T> {
+public abstract class AbstractPravegaDeserializer<T> implements PravegaDeserializer<T> {
     private static final byte PROTOCOL = 0x0;
     
     private final String scope;
-    private final String groupId;
+    private final String stream;
     private final SchemaRegistryClient client;
-    private final SerializerConfig config;
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
-    // Or the derived class will multiplex based on subgroup.  
     private final AtomicReference<SchemaInfo> schemaInfo;
-    @Getter
+    private final AtomicBoolean encodeHeader;
+    private final Map<CompressionType, Compressor> compressors;
     private final boolean skipHeaders;
-    @Getter
-    private final boolean automaticallyRegisterSchema;
-    private boolean encodedHeader;
-    private final BiFunction<ByteBuffer, CompressionType, ByteBuffer> uncompress;
+    private final EncodingCache encodingCache;
     
     protected AbstractPravegaDeserializer(String scope,
-                                          String groupId,
+                                          String stream,
                                           SchemaRegistryClient client,
                                           @Nullable SchemaData<T> schema,
-                                          SerializerConfig config,
                                           boolean skipHeaders,
-                                          BiFunction<ByteBuffer, CompressionType, ByteBuffer> uncompress) {
+                                          Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
         this.scope = scope;
-        this.groupId = groupId;
+        this.stream = stream;
         this.client = client;
+        this.encodingCache = encodingCache;
         this.schemaInfo = new AtomicReference<>();
         if (schema != null) {
             schemaInfo.set(schema.getSchemaInfo());
         }
-        this.config = config;
-        this.automaticallyRegisterSchema = config.isAutomaticallyRegisterSchema();
+        this.encodeHeader = new AtomicBoolean();
         this.skipHeaders = skipHeaders;
-        this.uncompress = uncompress;
+        this.compressors = compressors;
+            
+        initialize();
     }
 
     @Synchronized
     private void initialize() {
-        if (schemaInfo.get() != null) {
-            if (automaticallyRegisterSchema) {
-                // register schema 
-                client.addSchemaIfAbsent(scope, groupId, schemaInfo.get(), config.getValidationRules());
-            } 
-        } else {
-            if (!config.isDeserializeIntoWriterSchema()) {
-                // get the latest schema from the registry
-                SchemaWithVersion latestSchema = client.getLatestSchema(scope, groupId, null);
-                if (latestSchema == null) {
-                    log.warn("No schema to read into");
-                } else {
-                    this.schemaInfo.compareAndSet(null, latestSchema.getSchema());
-                }
-            }
-        }
+        GroupProperties groupProperties = client.getGroupProperties(scope, stream);
+        SchemaValidationRules schemaValidationRules = groupProperties.getSchemaValidationRules();
+
+        this.encodeHeader.set(groupProperties.isEnableEncoding());
+
+        client.validateSchema(scope, stream, schemaInfo.get(), schemaValidationRules);
     }
     
+    @Override
     public T deserialize(ByteBuffer data) {
-        CompressionType compressionType = config.getCompressionType();
-        if (encodedHeader) {
+        if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
+            CompressionType compressionType = CompressionType.of(CompressionType.Type.None);
             if (skipHeaders) {
                 int currentPos = data.position();
                 data.position(currentPos + 1 + Integer.BYTES);
@@ -96,20 +86,22 @@ public abstract class AbstractPravegaDeserializer<T> {
                 byte[] bytes = new byte[Integer.BYTES];
                 data.get(bytes, 1, Integer.BYTES);
                 EncodingId encodingId = new EncodingId(BitConverter.readInt(bytes, 0));
-                EncodingInfo encodingInfo = client.getEncodingInfo(scope, groupId, encodingId);
-                compressionType = encodingInfo.getCompressionType();
+                EncodingInfo encodingInfo = encodingCache.getEncodingInfo(encodingId);
+                compressionType = encodingInfo.getCompression();
                 writerSchema = encodingInfo.getSchemaInfo();
             }
-            ByteBuffer uncompressed = uncompress.apply(data, compressionType);
+            
+            ByteBuffer uncompressed = compressors.get(compressionType).uncompress(data);
+            
             if (schemaInfo.get() == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into
-                return deserialize(uncompressed, writerSchema, null);
+                return deserialize(uncompressed, writerSchema, writerSchema);
             } else {
-                // pass schema on read to the underlying implementation
+                // pass reader schema for schema on read to the underlying implementation
                 return deserialize(uncompressed, writerSchema, schemaInfo.get());
             }
         } else {
-            // pass schema on read to the underlying implementation
+            // pass reader schema for schema on read to the underlying implementation
             return deserialize(data, null, schemaInfo.get());
         }
     }

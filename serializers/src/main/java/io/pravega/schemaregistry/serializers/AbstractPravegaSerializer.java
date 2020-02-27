@@ -10,95 +10,87 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
+import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.contract.data.EncodingId;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.schemas.SchemaData;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-import javax.annotation.Nullable;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.*;
-
-public abstract class AbstractPravegaSerializer<T> {
+public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<T> {
     private static final byte PROTOCOL = 0x0;
     
     private final String scope;
-    private final String groupId;
-    private final String subGroupId;
-    private final AtomicReference<SchemaInfo> schema;
+    private final String stream;
+    private final SchemaInfo schemaInfo;
     private final AtomicReference<VersionInfo> version;
-    
+    private final AtomicBoolean encodeHeader;
     private final SchemaRegistryClient client;
-    
-    private final SerializerConfig config;
-    
     @Getter
     private final Compressor compressor;
-    @Getter
     private final boolean registerSchema;
-    
-    private boolean encodeHeader;
-    
+    private final EncodingCache encodingCache;
+
     protected AbstractPravegaSerializer(String scope,
-                                        String groupId,
-                                        String subGroupId,
+                                        String stream,
                                         SchemaRegistryClient client,
-                                        @Nullable SchemaData<T> schema,
-                                        SerializerConfig config,
-                                        Compressor compressor) {
+                                        SchemaData<T> schema,
+                                        Compressor compressor, 
+                                        boolean registerSchema,
+                                        EncodingCache encodingCache) {
         this.scope = scope;
-        this.groupId = groupId;
-        this.subGroupId = subGroupId;
+        this.stream = stream;
         this.client = client;
-        this.schema = new AtomicReference<>();
+        this.schemaInfo = schema.getSchemaInfo();
+        this.encodingCache = encodingCache;
+        this.registerSchema = registerSchema;
         this.version = new AtomicReference<>();
-        if (schema != null) {
-            this.schema.set(schema.getSchemaInfo());
-        }
-        this.config = config;
         this.compressor = compressor;
-        this.registerSchema = config.isAutomaticallyRegisterSchema();
-        this.encodeHeader = config.isEncodeHeader();
+        this.encodeHeader = new AtomicBoolean();
         initialize();
     }
     
     private void initialize() {
-        if (schema.get() == null) {
-            SchemaWithVersion latestSchema = client.getLatestSchema(scope, groupId, subGroupId);
-            this.schema.compareAndSet(null, latestSchema.getSchema());
-            this.version.compareAndSet(null, latestSchema.getVersion());
+        GroupProperties groupProperties = client.getGroupProperties(scope, stream);
+        SchemaValidationRules schemaValidationRules = groupProperties.getSchemaValidationRules();
+        
+        this.encodeHeader.set(groupProperties.isEnableEncoding());
+        if (registerSchema) {
+            // register schema
+            this.version.compareAndSet(null, 
+                    client.addSchemaIfAbsent(scope, stream, schemaInfo, schemaValidationRules));
         } else {
-            if (registerSchema) {
-                // register schema
-                this.version.compareAndSet(null, 
-                        client.addSchemaIfAbsent(scope, groupId, schema.get(), config.getValidationRules()));
-            } else {
-                // get already registered schema version. If schema is not registered, this will throw an exception. 
-                this.version.compareAndSet(null, client.getSchemaVersion(scope, groupId, schema.get()));
-            }
+            // get already registered schema version. If schema is not registered, this will throw an exception. 
+            this.version.compareAndSet(null, encodingCache.getVersionFromSchema(schemaInfo));
         }
     }
 
     @SneakyThrows
-    ByteBuffer serialize(T obj) {
+    public ByteBuffer serialize(T obj) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         
-        if (this.encodeHeader) {
-            Preconditions.checkNotNull(schema);
-            EncodingId encodingId = client.getEncodingId(scope, groupId, version.get(), compressor.getCompressionType());
+        if (this.encodeHeader.get()) {
+            Preconditions.checkNotNull(schemaInfo);
+            EncodingId encodingId = encodingCache.getEncodingId(schemaInfo, compressor.getCompressionType());
 
             outputStream.write(PROTOCOL);
             outputStream.write(encodingId.getId());
         }
         
         // if schema is not null, pass the schema to the serializer implementation
-        if (schema.get() != null) {
-            serialize(obj, schema.get(), outputStream);
+        if (schemaInfo != null) {
+            serialize(obj, schemaInfo, outputStream);
         } else {
             serialize(obj, null, outputStream);
         }

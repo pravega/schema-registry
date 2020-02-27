@@ -9,41 +9,33 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
 import lombok.SneakyThrows;
 
 import java.nio.ByteBuffer;
 
 public class PravegaSerDe<T> implements Serializer<T> {
-    private final AbstractPravegaSerializer<T> abstractPravegaSerializer;
-    private final AbstractPravegaDeserializer<T> abstractPravegaDeserializer;
-    private final SchemaRegistryClient registryClient;
+    private final PravegaSerializer<T> serializer;
+    private final PravegaDeserializer<T> deserializer;
 
-    protected PravegaSerDe(AbstractPravegaSerializer<T> abstractPravegaSerializer,
-                           AbstractPravegaDeserializer<T> abstractPravegaDeserializer, SchemaRegistryClient registryClient) {
-        this.abstractPravegaSerializer = abstractPravegaSerializer;
-        this.abstractPravegaDeserializer = abstractPravegaDeserializer;
-        this.registryClient = registryClient;
+    PravegaSerDe(PravegaSerializer<T> serializer,
+                 PravegaDeserializer<T> deserializer) {
+        this.serializer = serializer;
+        this.deserializer = deserializer;
     }
     
     @SneakyThrows
     @Override
     public ByteBuffer serialize(T obj) {
-        return abstractPravegaSerializer.serialize(obj);
+        Preconditions.checkNotNull(serializer);
+        return serializer.serialize(obj);
     }
 
     @SneakyThrows
     @Override
     public T deserialize(ByteBuffer data) {
-        return abstractPravegaDeserializer.deserialize(data);
+        Preconditions.checkNotNull(deserializer);
+        return deserializer.deserialize(data);
     }
-
-    public void addGroup(String scope, String groupId, SchemaRegistryContract.SchemaType schemaType, 
-                         SchemaRegistryContract.SchemaValidationRules compatibility, boolean subgroupByEventType, 
-                         boolean enablingEncoding) {
-        registryClient.addGroup(scope, groupId, schemaType, compatibility, subgroupByEventType, enablingEncoding);
-    }
-
 }

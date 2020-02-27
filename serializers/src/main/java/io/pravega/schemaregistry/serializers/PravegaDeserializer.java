@@ -7,12 +7,10 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.schemas;
+package io.pravega.schemaregistry.serializers;
 
-import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import java.nio.ByteBuffer;
 
-public interface SchemaData<T> {
-    byte[] getSchemaBytes();
-    
-    SchemaInfo getSchemaInfo();
+public interface PravegaDeserializer<T> {
+    T deserialize(ByteBuffer data);
 }

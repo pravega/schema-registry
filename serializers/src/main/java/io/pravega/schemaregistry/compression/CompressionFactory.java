@@ -9,11 +9,11 @@
  */
 package io.pravega.schemaregistry.compression;
 
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.contract.data.CompressionType;
 
 public class CompressionFactory {
-    public static Compressor getCompressor(SchemaRegistryContract.CompressionType compressionType) {
-        switch (compressionType) {
+    public static Compressor getCompressor(CompressionType compressionType) {
+        switch (compressionType.getCompressionType()) {
             case None:
                 return new Compressor.Noop();
             case Snappy: 

@@ -10,7 +10,8 @@
 package io.pravega.schemaregistry.schemas;
 
 import com.google.common.collect.ImmutableMap;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import lombok.Getter;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -20,16 +21,16 @@ import org.apache.avro.specific.SpecificData;
 public class AvroSchema<T> implements SchemaData<T> {
     @Getter
     private final Schema schema;
-    private final SchemaRegistryContract.SchemaInfo schemaInfo;
+    private final SchemaInfo schemaInfo;
 
     private AvroSchema(Schema schema) {
         this.schema = schema;
-        this.schemaInfo = new SchemaRegistryContract.SchemaInfo(
+        this.schemaInfo = new SchemaInfo(
                 schema.getName(),
-                SchemaRegistryContract.SchemaType.Avro, getSchemaBytes(), ImmutableMap.of());
+                SchemaType.of(SchemaType.Type.Avro), getSchemaBytes(), ImmutableMap.of());
     }
 
-    static <T> AvroSchema<T> of(Class<T> tClass) {
+    public static <T> AvroSchema<T> of(Class<T> tClass) {
         Schema schema;
         if (tClass.isAssignableFrom(GenericRecord.class)) {
             schema = SpecificData.get().getSchema(tClass);
@@ -39,17 +40,18 @@ public class AvroSchema<T> implements SchemaData<T> {
         return new AvroSchema<>(schema);
     }
     
-    static <T> AvroSchema<T> of(Schema schema) {
+    public static <T> AvroSchema<T> of(Schema schema) {
         return new AvroSchema<>(schema);
     }
     
     @Override
     public byte[] getSchemaBytes() {
+        // TODO: charset utf 8
         return schema.toString().getBytes();
     }
 
     @Override
-    public SchemaRegistryContract.SchemaInfo getSchemaInfo() {
+    public SchemaInfo getSchemaInfo() {
         return schemaInfo;
     }
 }

@@ -10,25 +10,24 @@
 package io.pravega.schemaregistry.serializers.protobuf;
 
 import com.google.protobuf.Message;
+import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.AbstractPravegaSerializer;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
 import lombok.SneakyThrows;
 import java.io.OutputStream;
 
-public class PravegaProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
-    public PravegaProtobufSerializer(String scope, String groupId, String subGroupId,
-                                     SchemaRegistryClient client, ProtobufSchema<T> schema,
-                                     SerializerConfig config, Compressor compressor) {
-        super(scope, groupId, subGroupId, client, schema, config, compressor);
+public class ProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
+    public ProtobufSerializer(String scope, String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
+                              Compressor compressor, boolean registerSchema, EncodingCache encodingCache) {
+        super(scope, groupId, client, schema, compressor, registerSchema, encodingCache);
     }
 
     @SneakyThrows
     @Override
-    protected void serialize(T var, SchemaRegistryContract.SchemaInfo schemaInfo, OutputStream outputStream) {
+    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
         var.writeTo(outputStream);
     }
 }

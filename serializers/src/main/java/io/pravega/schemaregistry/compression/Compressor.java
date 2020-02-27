@@ -9,12 +9,11 @@
  */
 package io.pravega.schemaregistry.compression;
 
+import io.pravega.schemaregistry.contract.data.CompressionType;
+
 import java.nio.ByteBuffer;
 
-import static io.pravega.schemaregistry.contract.SchemaRegistryContract.*;
-
 public interface Compressor {
-
     CompressionType getCompressionType();
 
     ByteBuffer compress(ByteBuffer data);
@@ -22,10 +21,9 @@ public interface Compressor {
     ByteBuffer uncompress(ByteBuffer data);
     
     class Noop implements Compressor {
-
         @Override
         public CompressionType getCompressionType() {
-            return CompressionType.None;
+            return CompressionType.of(CompressionType.Type.None);
         }
 
         @Override

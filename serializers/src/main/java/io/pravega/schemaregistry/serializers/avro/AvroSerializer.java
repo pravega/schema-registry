@@ -9,9 +9,9 @@
  */
 package io.pravega.schemaregistry.serializers.avro;
 
-import io.pravega.schemaregistry.contract.SchemaRegistryContract;
+import io.pravega.schemaregistry.cache.EncodingCache;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializers.AbstractPravegaSerializer;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -28,18 +28,17 @@ import org.apache.avro.specific.SpecificRecord;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-public class PravegaAvroSerializer<T> extends AbstractPravegaSerializer<T> {
+public class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
     AvroSchema<T> avroSchema;
-    public PravegaAvroSerializer(String scope, String groupId, String subGroupId,
-                                 SchemaRegistryClient client, AvroSchema<T> schema,
-                                 SerializerConfig config, Compressor compressor) {
-        super(scope, groupId, subGroupId, client, schema, config, compressor);
+    public AvroSerializer(String scope, String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
+                          Compressor compressor, boolean registerSchema, EncodingCache encodingCache) {
+        super(scope, groupId, client, schema, compressor, registerSchema, encodingCache);
         this.avroSchema = schema;
     }
 
     @SneakyThrows
     @Override
-    protected void serialize(T var, SchemaRegistryContract.SchemaInfo schemaInfo, OutputStream outputStream) {
+    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
         Schema schema;
         Schema.Parser parser = new Schema.Parser();
         if (avroSchema == null) {
