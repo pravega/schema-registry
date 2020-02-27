@@ -8,6 +8,7 @@ import io.swagger.annotations.ApiParam;
 import io.swagger.jaxrs.*;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaValidationRuleRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRequest;
@@ -22,6 +23,8 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.SubgroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
@@ -92,6 +95,26 @@ public class NamespacesApi  {
         return delegate.addSchemaToGroupIfAbsent(namespaceName,groupName,addSchemaToGroupRequest,securityContext);
     }
     @POST
+    @Path("/{namespaceName}/groups/{groupName}/rules")
+    @Consumes({ "application/json" })
+    
+    @io.swagger.annotations.ApiOperation(value = "", notes = "add new schema validation rule to Group", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Added new rule to schema validation policy", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Conflict while attempting to add rule.", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response addSchemaValidationRule(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "add new rule to group policy" ,required=true) AddSchemaValidationRuleRequest addSchemaValidationRuleRequest
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.addSchemaValidationRule(namespaceName,groupName,addSchemaValidationRuleRequest,securityContext);
+    }
+    @POST
     @Path("/{namespaceName}/groups")
     @Consumes({ "application/json" })
     
@@ -160,6 +183,24 @@ public class NamespacesApi  {
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.deleteNamespace(namespaceName,securityContext);
+    }
+    @DELETE
+    @Path("/{namespaceName}/groups/{groupName}/rules/{rule}")
+    
+    
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Delete a Schema Validation Rule", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 204, message = "Successfully deleted the Rule", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class) })
+    public Response deleteSchemaValidationRule(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Rule name",required=true) @PathParam("rule") String rule
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.deleteSchemaValidationRule(namespaceName,groupName,rule,securityContext);
     }
     @GET
     @Path("/{namespaceName}/groups/{groupName}/compressions")
@@ -323,6 +364,41 @@ public class NamespacesApi  {
         return delegate.getSchemaFromVersion(namespaceName,groupName,versionId,getSchemaFromVersionRequest,securityContext);
     }
     @GET
+    @Path("/{namespaceName}/groups/{groupName}/rules/{rule}")
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaValidationRule.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Found schema validation rule", response = SchemaValidationRule.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response getSchemaValidationRule(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Rule name",required=true) @PathParam("rule") String rule
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSchemaValidationRule(namespaceName,groupName,rule,securityContext);
+    }
+    @GET
+    @Path("/{namespaceName}/groups/{groupName}/rules")
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaValidationRules.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group schema validation rules", response = SchemaValidationRules.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Namespace or Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response getSchemaValidationRules(@ApiParam(value = "Namespace name",required=true) @PathParam("namespaceName") String namespaceName
+,@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSchemaValidationRules(namespaceName,groupName,securityContext);
+    }
+    @GET
     @Path("/{namespaceName}/groups/{groupName}/schemas")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
@@ -405,7 +481,7 @@ public class NamespacesApi  {
         return delegate.listNamespaces(securityContext);
     }
     @PUT
-    @Path("/{namespaceName}/groups/{groupName}")
+    @Path("/{namespaceName}/groups/{groupName}/rules")
     @Consumes({ "application/json" })
     
     @io.swagger.annotations.ApiOperation(value = "", notes = "update schema validation rules of an existing Group", response = Void.class, tags={ "Group", })
