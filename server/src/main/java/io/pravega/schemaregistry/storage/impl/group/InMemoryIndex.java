@@ -62,7 +62,7 @@ public class InMemoryIndex implements Index<Integer> {
     public CompletableFuture<Void> updateEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value, Integer version) {
         int currentVersion = index.containsKey(key) ? index.get(key).getVersion() : 0;
         if (currentVersion != version) {
-            throw new StoreExceptions.WriteConflictException();
+            throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, key.getClass().toString());
         } else {
             index.put(key, new Value<>(value, version + 1));
         }

@@ -42,7 +42,7 @@ public class InMemoryLog implements Log {
         InMemoryPosition pos = position == null ? NULL_POSITION : (InMemoryPosition) position;
 
         if (pos.getPosition() != log.size() - 1) {
-            throw new StoreExceptions.WriteConflictException();
+            throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, record.getClass().toString());
         }
 
         log.add(record);

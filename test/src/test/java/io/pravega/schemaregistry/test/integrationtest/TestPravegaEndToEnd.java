@@ -10,15 +10,9 @@
 package io.pravega.schemaregistry.test.integrationtest;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.client.netty.impl.ConnectionFactoryImpl;
-import io.pravega.controller.server.SegmentHelper;
-import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
-import io.pravega.controller.store.host.HostControllerStore;
 import io.pravega.local.LocalPravegaEmulator;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
-import io.pravega.schemaregistry.storage.client.HostStoreImpl;
-import io.pravega.schemaregistry.storage.client.TableStore;
 import org.junit.After;
 import org.junit.Before;
 
@@ -52,10 +46,6 @@ public class TestPravegaEndToEnd extends TestEndToEnd {
     }
     
     SchemaStore getStore() {
-        ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
-        HostControllerStore hostStore = new HostStoreImpl(clientConfig, executor);
-        SegmentHelper segmentHelper = new SegmentHelper(connectionFactory, hostStore);
-        TableStore tableStore = new TableStore(segmentHelper, GrpcAuthHelper.getDisabledAuthHelper(), executor);
-        return SchemaStoreFactory.createPravegaStore(clientConfig, tableStore, executor);
+        return SchemaStoreFactory.createPravegaStore(clientConfig, executor);
     }
 }

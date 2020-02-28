@@ -20,8 +20,6 @@ import io.pravega.schemaregistry.storage.impl.group.PravegaLog;
 import io.pravega.schemaregistry.storage.impl.group.PravegaTableIndex;
 import lombok.Data;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -92,9 +90,8 @@ public class PravegaTableNamespace implements Namespace<Version> {
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups() {
         // read from namespace's table
-        List<String> namespaces = new LinkedList<>();
-        return tablesStore.getAllKeys(tableName).collectRemaining(namespaces::add)
-                          .thenApply(v -> new ListWithToken<>(namespaces, null));
+        return tablesStore.getAllKeys(tableName)
+                          .thenApply(list -> new ListWithToken<>(list, null));
     }
 
     @Override

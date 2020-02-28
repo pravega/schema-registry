@@ -11,8 +11,8 @@ package io.pravega.schemaregistry.storage.impl.group;
 
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
-import io.pravega.controller.store.stream.StoreException;
 import io.pravega.controller.store.stream.Version;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespaces;
 import io.pravega.schemaregistry.storage.records.IndexKeySerializer;
@@ -23,6 +23,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 public class PravegaTableIndex implements Index<Version> {
     public static final String TABLE_NAME_FORMAT = PravegaTableNamespaces.SCHEMA_REGISTRY_SCOPE + "/table-%s-%s-%s/0";
@@ -52,9 +53,8 @@ public class PravegaTableIndex implements Index<Version> {
     
     @Override
     public CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys() {
-        List<IndexRecord.IndexKey> indexKeys = new LinkedList<>();
-        return tablesStore.getAllKeys(tableName).collectRemaining(x -> indexKeys.add(INDEX_KEY_SERIALIZER.fromString(x)))
-                .thenApply(v -> indexKeys);
+        return tablesStore.getAllKeys(tableName)
+                          .thenApply(list -> list.stream().map(INDEX_KEY_SERIALIZER::fromString).collect(Collectors.toList()));
     }
 
     @Override
@@ -93,7 +93,7 @@ public class PravegaTableIndex implements Index<Version> {
         return Futures.exceptionallyExpecting(
                 tablesStore.getEntry(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), x -> IndexRecord.fromBytes(key.getClass(), x))
                           .thenApply(entry -> getTypedRecord(tClass, entry.getObject())), 
-                e -> Exceptions.unwrap(e) instanceof StoreException.DataNotFoundException, 
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, 
                 null);
     }
 
@@ -113,7 +113,7 @@ public class PravegaTableIndex implements Index<Version> {
                        T t = getTypedRecord(tClass, entry.getObject());
                        return new Value<>(t, entry.getVersion());
                    }), 
-                e -> Exceptions.unwrap(e) instanceof StoreException.DataNotFoundException, 
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, 
                 null);
     }
 }

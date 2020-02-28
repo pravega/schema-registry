@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.storage;
 
 import io.pravega.client.ClientConfig;
+import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.namespace.InMemoryNamespaces;
 import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespaces;
@@ -22,7 +23,8 @@ public class SchemaStoreFactory {
         return new SchemaStoreImpl<>(new InMemoryNamespaces(executor));
     }
     
-    public static SchemaStore createPravegaStore(ClientConfig clientConfig, TableStore tableStore, ScheduledExecutorService executor) {
+    public static SchemaStore createPravegaStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
+        TableStore tableStore = new TableStore(clientConfig, GrpcAuthHelper.getDisabledAuthHelper(), executor);
         return new SchemaStoreImpl<>(new PravegaTableNamespaces(clientConfig, tableStore, executor));
     }
 }
