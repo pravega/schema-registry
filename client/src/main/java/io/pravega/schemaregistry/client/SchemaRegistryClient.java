@@ -16,6 +16,7 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -90,6 +91,24 @@ public interface SchemaRegistryClient {
      */
     void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules);
 
+    /**
+     * Add new rule to {@link SchemaValidationRules}. 
+     * 
+     * @param namespace Name of namespace.
+     * @param group Name of group. 
+     * @param rule Rule to add
+     */
+    void addSchemaValidationRule(String namespace, String group, SchemaValidationRule rule);
+
+    /**
+     * Remove rule from {@link SchemaValidationRules}.
+     * 
+     * @param namespace Name of namespace.
+     * @param group Name of group. 
+     * @param rule Rule to remove
+     */
+    void removeSchemaValidationRule(String namespace, String group, SchemaValidationRule rule);
+    
     /**
      * Gets list of subgroups registered under the group. Subgroups are identified by {@link SchemaInfo#name}
      * 
