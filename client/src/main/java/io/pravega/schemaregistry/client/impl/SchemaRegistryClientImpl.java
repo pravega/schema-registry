@@ -17,12 +17,14 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
+import org.apache.commons.lang3.NotImplementedException;
 import org.glassfish.jersey.client.ClientConfig;
 
 import javax.annotation.Nullable;
@@ -100,6 +102,16 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules) {
 
+    }
+
+    @Override
+    public void addSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+        throw new NotImplementedException("Rule not implemented");
+    }
+
+    @Override
+    public void removeSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+        throw new NotImplementedException("Rule not implemented");
     }
 
     @Override

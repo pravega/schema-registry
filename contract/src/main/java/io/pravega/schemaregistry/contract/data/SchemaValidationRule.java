@@ -14,4 +14,10 @@ package io.pravega.schemaregistry.contract.data;
  * and only schemas that satisfy validation rules are accepted by the registry into the group.  
  */
 public interface SchemaValidationRule {
+    /**
+     * Name of the rule to identify it with. 
+     * 
+     * @return name of the rule. 
+     */
+    String getName();
 }
