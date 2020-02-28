@@ -13,7 +13,6 @@ import io.netty.buffer.ByteBuf;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.netty.impl.ConnectionFactoryImpl;
 import io.pravega.common.Exceptions;
-import io.pravega.common.util.AsyncIterator;
 import io.pravega.controller.server.SegmentHelper;
 import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
 import io.pravega.controller.store.stream.PravegaTablesStoreHelper;
@@ -107,13 +106,16 @@ public class TableStore {
 
     public CompletableFuture<List<String>> getAllKeys(String tableName) {
         List<String> keys = new LinkedList<>();
-        return tableStoreHelper.getAllKeys(tableName)
+        return exceptionally(tableName, tableStoreHelper.getAllKeys(tableName)
                 .collectRemaining(keys::add)
-                .thenApply(v -> keys);
+                .thenApply(v -> keys));
     }
 
-    public <T> AsyncIterator<Map.Entry<String, VersionedMetadata<T>>> getAllEntries(String tableName, Function<byte[], T> fromBytes) {
-        return tableStoreHelper.getAllEntries(tableName, fromBytes);
+    public <T> CompletableFuture<List<Map.Entry<String, VersionedMetadata<T>>>> getAllEntries(String tableName, Function<byte[], T> fromBytes) {
+        List<Map.Entry<String, VersionedMetadata<T>>> entries = new LinkedList<>();
+        return tableStoreHelper.getAllEntries(tableName, fromBytes)
+                .collectRemaining(entries::add)
+                .thenApply(v -> entries);
     }
     
     private <T> CompletableFuture<T> exceptionally(String tableName, CompletableFuture<T> future) {
