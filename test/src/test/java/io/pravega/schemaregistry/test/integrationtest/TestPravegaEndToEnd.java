@@ -29,7 +29,7 @@ public class TestPravegaEndToEnd extends TestEndToEnd {
     ClientConfig clientConfig;
     
     @Before
-    public void setup() throws Exception {
+    public void startPravega() throws Exception {
         LocalPravegaEmulator.LocalPravegaEmulatorBuilder emulatorBuilder = LocalPravegaEmulator
                 .builder()
                 .controllerPort(9090)
@@ -47,7 +47,7 @@ public class TestPravegaEndToEnd extends TestEndToEnd {
     }
     
     @After
-    public void teardown() throws Exception {
+    public void stopPravega() throws Exception {
         localPravega.close();
     }
     

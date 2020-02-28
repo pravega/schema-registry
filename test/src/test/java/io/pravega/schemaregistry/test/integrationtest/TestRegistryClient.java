@@ -14,7 +14,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -94,7 +94,7 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup) {
+    public List<SchemaEvolution> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup) {
         return service.getGroupEvolutionHistory(namespace, group, subgroup).join();
     }
 

@@ -20,7 +20,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -371,15 +371,15 @@ public class Group<T> {
                 });
     }
 
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getHistory() {
+    public CompletableFuture<List<SchemaEvolution>> getHistory() {
         AtomicReference<SchemaValidationRules> rulesRef = new AtomicReference<>();
-        List<SchemaEvolutionEpoch> epochs = new LinkedList<>();
+        List<SchemaEvolution> epochs = new LinkedList<>();
         return wal.readFrom(null)
                   .thenApply(list -> {
                       list.forEach(x -> {
                           if (x.getRecord() instanceof Record.SchemaRecord) {
                               Record.SchemaRecord record = (Record.SchemaRecord) x.getRecord();
-                              SchemaEvolutionEpoch epoch = new SchemaEvolutionEpoch(record.getSchemaInfo(), record.getVersionInfo(),
+                              SchemaEvolution epoch = new SchemaEvolution(record.getSchemaInfo(), record.getVersionInfo(),
                                       rulesRef.get());
                               epochs.add(epoch);
                           } else if (x.getRecord() instanceof Record.ValidationRecord) {
@@ -392,7 +392,7 @@ public class Group<T> {
                   });
     }
 
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getHistory(String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getHistory(String subgroup) {
         return getHistory().thenApply(list -> 
                 list.stream().filter(x -> x.getSchema().getName().equals(subgroup)).collect(Collectors.toList()));
     }
