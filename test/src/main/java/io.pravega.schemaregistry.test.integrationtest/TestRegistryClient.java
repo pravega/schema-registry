@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.test.integrationtest;
 
-import io.pravega.schemaregistry.client.impl.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
