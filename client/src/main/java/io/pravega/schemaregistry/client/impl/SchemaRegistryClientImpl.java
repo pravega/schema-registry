@@ -23,6 +23,9 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.NamespaceProperty;
+import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import org.apache.commons.lang3.NotImplementedException;
 import org.glassfish.jersey.client.ClientConfig;
@@ -37,6 +40,8 @@ import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final Client client = ClientBuilder.newClient(new ClientConfig());
@@ -57,12 +62,22 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
+    public List<String> listNamespaces() {
+        WebTarget webTarget = client.target(uri).path("namespaces");
+
+        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+
+        Response response = invocationBuilder.get();
+        NamespacesList entity = response.readEntity(NamespacesList.class);
+        return entity.getNamespaces().stream().map(NamespaceProperty::getNamespaceName).collect(Collectors.toList());
+    }
+
+    @Override
     public void deleteNamespace(String namespace) {
         WebTarget webTarget = client.target(uri).path("namespaces").path(namespace);
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
-        CreateNamespaceRequest request = new CreateNamespaceRequest().namespaceName(namespace);
         invocationBuilder.delete();
     }
 
@@ -92,6 +107,22 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void removeGroup(String namespace, String group) {
 
+    }
+
+    @Override
+    public Map<String, GroupProperties> listGroups(String namespace) {
+        WebTarget webTarget = client.target(uri).path("namespaces").path(namespace).path("groups");
+
+        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
+
+        Response response = invocationBuilder.get();
+        GroupsList entity = response.readEntity(GroupsList.class);
+        return entity.getGroups().stream().collect(Collectors.toMap(x -> x.getGroupName(), 
+                x -> {
+                    SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
+                    SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
+                    return new GroupProperties(schemaType, rules, x.isSubgroupBySchemaName(), x.isEnableEncoding());
+                }));
     }
 
     @Override
