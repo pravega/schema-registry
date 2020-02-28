@@ -19,6 +19,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.reflect.ReflectData;
 import org.junit.After;
@@ -28,6 +29,7 @@ import org.junit.Test;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+@Slf4j
 public abstract class TestEndToEnd {
 
     protected ScheduledExecutorService executor;
@@ -67,8 +69,6 @@ public abstract class TestEndToEnd {
                 schema2.toString().getBytes(), ImmutableMap.of());
         client.addSchemaIfAbsent(namespace, group, schemaInfo2, SchemaValidationRules.of());
         
-        System.err.println(client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
-        
         client.updateSchemaValidationRules(namespace, group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)));
 
         Schema schema3 = ReflectData.get().getSchema(TestClass3.class);
@@ -76,7 +76,7 @@ public abstract class TestEndToEnd {
                 schema3.toString().getBytes(), ImmutableMap.of());
         client.addSchemaIfAbsent(namespace, group, schemaInfo3, SchemaValidationRules.of());
 
-        System.err.println(client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
+        log.info("Schema Evolution History:", client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
     }
 
     abstract SchemaStore getStore();

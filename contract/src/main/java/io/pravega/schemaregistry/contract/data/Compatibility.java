@@ -52,8 +52,8 @@ public class Compatibility {
 
     public Compatibility(Type compatibility, VersionInfo backwardTill, VersionInfo forwardTill) {
         this.compatibility = compatibility;
-        this.backwardTill = backwardTill == null ? VersionInfo.NON_EXISTENT : backwardTill;
-        this.forwardTill = forwardTill == null ? VersionInfo.NON_EXISTENT : forwardTill;
+        this.backwardTill = backwardTill;
+        this.forwardTill = forwardTill;
     }
     
     public enum Type {
@@ -107,15 +107,33 @@ public class Compatibility {
 
         private void write00(Compatibility e, RevisionDataOutput target) throws IOException {
             target.writeCompactInt(e.getCompatibility().ordinal());
-            VersionInfo.SERIALIZER.serialize(target, e.backwardTill);
-            VersionInfo.SERIALIZER.serialize(target, e.forwardTill);
+            if (e.getBackwardTill() != null) {
+                VersionInfo.SERIALIZER.serialize(target, e.backwardTill);
+            } else {
+                VersionInfo.SERIALIZER.serialize(target, VersionInfo.NON_EXISTENT);
+            }
+            if (e.getForwardTill() != null) {
+                VersionInfo.SERIALIZER.serialize(target, e.forwardTill);
+            } else {
+                VersionInfo.SERIALIZER.serialize(target, VersionInfo.NON_EXISTENT);
+            }
         }
 
         private void read00(RevisionDataInput source, Compatibility.CompatibilityBuilder b) throws IOException {
             int ordinal = source.readCompactInt();
             b.compatibility(Type.values()[ordinal]);
-            b.backwardTill(VersionInfo.SERIALIZER.deserialize(source));
-            b.forwardTill(VersionInfo.SERIALIZER.deserialize(source));
+            VersionInfo backwardTill = VersionInfo.SERIALIZER.deserialize(source);
+            if (backwardTill.equals(VersionInfo.NON_EXISTENT)) {
+                b.backwardTill(null);
+            } else {
+                b.backwardTill(backwardTill);
+            }
+            VersionInfo forwardTill = VersionInfo.SERIALIZER.deserialize(source);
+            if (forwardTill.equals(VersionInfo.NON_EXISTENT)) {
+                b.forwardTill(null);
+            } else {
+                b.forwardTill(forwardTill);
+            }
         }
     }
 }

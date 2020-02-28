@@ -53,14 +53,7 @@ public class HostStoreImpl implements HostControllerStore {
 
     @Override
     public Host getHostForTableSegment(String tableName) {
-        Host m = null;
-        try {
-            m = controller.getEndpointForSegment(tableName)
-                               .thenApply(nodeUri -> new Host(nodeUri.getEndpoint(), nodeUri.getPort(), "")).join();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-        System.err.println("host = " + m);
-        return m;
+        return controller.getEndpointForSegment(tableName)
+                         .thenApply(nodeUri -> new Host(nodeUri.getEndpoint(), nodeUri.getPort(), "")).join();
     }
 }
