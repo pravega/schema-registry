@@ -56,7 +56,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Etag> getGroupEtag(String namespace, String group) {
+    public CompletableFuture<Position> getGroupEtag(String namespace, String group) {
         return null;
     }
 
@@ -66,7 +66,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Etag> updateCompatibilityPolicy(String namespace, String group, Etag etag, SchemaValidationRules policy) {
+    public CompletableFuture<Position> updateCompatibilityPolicy(String namespace, String group, Position position, SchemaValidationRules policy) {
         return null;
     }
 
@@ -101,12 +101,12 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String namespace, String group, Etag etag, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String namespace, String group, Position position, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String namespace, String group, String subgroup, Etag etag, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String namespace, String group, String subgroup, Position position, SchemaInfo schemaInfo) {
         return null;
     }
 

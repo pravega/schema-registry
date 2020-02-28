@@ -9,5 +9,5 @@
  */
 package io.pravega.schemaregistry.storage;
 
-public class Etag {
+public class Position {
 }

@@ -37,11 +37,11 @@ public interface SchemaStore {
 
     CompletableFuture<Void> deleteGroup(String namespace, String group);
 
-    CompletableFuture<Etag> getGroupEtag(String namespace, String group);
+    CompletableFuture<Position> getGroupEtag(String namespace, String group);
     
     CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group);
     
-    CompletableFuture<Etag> updateCompatibilityPolicy(String namespace, String group, Etag etag, SchemaValidationRules policy);
+    CompletableFuture<Position> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy);
 
     CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group, ContinuationToken token);
     
@@ -58,9 +58,9 @@ public interface SchemaStore {
     
     CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group, String subgroup);
 
-    CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String namespace, String group, Etag etag, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> addSchemaToGroup(String namespace, String group, Position etag, SchemaInfo schemaInfo);
 
-    CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String namespace, String group, String subgroup, Etag etag, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> addSchemaToSubgroup(String namespace, String group, String subgroup, Position etag, SchemaInfo schemaInfo);
     
     CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo);
     
