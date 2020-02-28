@@ -10,17 +10,11 @@
 package io.pravega.schemaregistry.service;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.client.netty.impl.ConnectionFactoryImpl;
-import io.pravega.controller.server.SegmentHelper;
-import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
-import io.pravega.controller.store.host.HostControllerStore;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.RestServer;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.schemaregistry.storage.StoreType;
-import io.pravega.schemaregistry.storage.client.HostStoreImpl;
-import io.pravega.schemaregistry.storage.client.TableStore;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
@@ -37,12 +31,8 @@ public class Main {
 
         SchemaStore schemaStore;
         if (Config.STORE_TYPE.equals(StoreType.Pravega.name())) {
-            ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
-            HostControllerStore hostStore = new HostStoreImpl(clientConfig, executor);
-            SegmentHelper segmentHelper = new SegmentHelper(connectionFactory, hostStore);
-            TableStore tableStore = new TableStore(segmentHelper, GrpcAuthHelper.getDisabledAuthHelper(), executor);
-            schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, tableStore, executor);
-        } else if (Config.STORE_TYPE.equals(StoreType.InMemory.name())) {
+            schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
+        } else if (Config.STORE_TYPE.equals(StoreType.Pravega.name())) {
             schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
         } else {
             throw new IllegalArgumentException(String.format("Store Type %s not supported", Config.STORE_TYPE));

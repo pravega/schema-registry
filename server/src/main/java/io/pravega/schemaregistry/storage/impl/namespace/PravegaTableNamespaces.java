@@ -12,15 +12,13 @@ package io.pravega.schemaregistry.storage.impl.namespace;
 import io.pravega.client.ClientConfig;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
-import io.pravega.controller.store.stream.StoreException;
 import io.pravega.controller.store.stream.Version;
 import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.group.PravegaLogCache;
 import lombok.Synchronized;
 
-import java.util.LinkedList;
-import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -52,9 +50,8 @@ public class PravegaTableNamespaces implements Namespaces<Version> {
     public CompletableFuture<ListWithToken<String>> getNamespaces() {
         // read from namespaces table
         // if table does not exist create it. 
-        List<String> namespaces = new LinkedList<>();
-        return withCreateNamespacesTableIfNotExist(() -> tableStore.getAllKeys(NAMESPACES_TABLE).collectRemaining(namespaces::add))
-                      .thenApply(v -> new ListWithToken<>(namespaces, null));
+        return withCreateNamespacesTableIfNotExist(() -> tableStore.getAllKeys(NAMESPACES_TABLE)
+                      .thenApply(list -> new ListWithToken<>(list, null)));
     }
 
     @Synchronized
@@ -109,7 +106,7 @@ public class PravegaTableNamespaces implements Namespaces<Version> {
     
     private <T> CompletableFuture<T> withCreateNamespacesTableIfNotExist(Supplier<CompletableFuture<T>> supplier) {
         return Futures.exceptionallyComposeExpecting(supplier.get(),
-                e -> Exceptions.unwrap(e) instanceof StoreException.DataNotFoundException,
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                 () -> tableStore.createTable(NAMESPACES_TABLE).thenCompose(v -> supplier.get()));
     }
 }

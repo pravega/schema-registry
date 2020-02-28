@@ -30,7 +30,7 @@ java -jar swagger-codegen-cli.jar generate -i <schema registry root>/contract/sr
 All files that get generated outside of the server/src/main/java/io/pravega/server/io.pravega.rest/generated folder should be deleted and not committed to git.
 
 ## Update ApiV1.java
-The JAXRS API stubs decorated with swagger annotations are generated in .../server/io.pravega.rest/generated/api/ScopesApi.java class.
+The JAXRS API stubs decorated with swagger annotations are generated in .../server/io.pravega.rest/generated/api/NamespacesApi.java class.
 Copy these API descriptions into interfaces in .../server/io.pravega.rest/v1/ApiV1.java. Also ensure that the APIs in ApiV1.java are modified to use only jersey async interfaces.
 
 ## Update generated/model/RetentionConfig.java

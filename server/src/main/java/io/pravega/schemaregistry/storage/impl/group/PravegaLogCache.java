@@ -74,7 +74,8 @@ public class PravegaLogCache {
                                         recordCache.put(recordCacheKey, CompletableFuture.completedFuture(entry.getValue()));
                                     }
                                     if (!future.isDone()) {
-                                        future.completeExceptionally(new StoreExceptions.DataNotFoundException());
+                                        String error = String.format("namespace=%s,group=%s", key.clientCacheKey.getNamespace(), key.clientCacheKey.getGroup());
+                                        future.completeExceptionally(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, error));
                                     }
                                     return future;
                                 }

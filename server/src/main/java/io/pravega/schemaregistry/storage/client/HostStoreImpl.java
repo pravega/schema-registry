@@ -9,11 +9,15 @@
  */
 package io.pravega.schemaregistry.storage.client;
 
+import com.google.common.cache.CacheBuilder;
+import com.google.common.cache.CacheLoader;
+import com.google.common.cache.LoadingCache;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.impl.ControllerImpl;
 import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.common.cluster.Host;
 import io.pravega.controller.store.host.HostControllerStore;
+import lombok.SneakyThrows;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Map;
@@ -26,9 +30,17 @@ import java.util.concurrent.ScheduledExecutorService;
  */
 public class HostStoreImpl implements HostControllerStore {
     private final ControllerImpl controller;
+    private final LoadingCache<String, Host> cache;
 
     public HostStoreImpl(ClientConfig clientConfig, ScheduledExecutorService executor) {
         controller = new ControllerImpl(ControllerImplConfig.builder().clientConfig(clientConfig).build(), executor);
+        cache = CacheBuilder.newBuilder().build(new CacheLoader<String, Host>() {
+            @Override
+            public Host load(String tableName) throws Exception {
+                return controller.getEndpointForSegment(tableName)
+                          .thenApply(nodeUri -> new Host(nodeUri.getEndpoint(), nodeUri.getPort(), "")).join();
+            }
+        });
     }
 
     @Override
@@ -51,9 +63,13 @@ public class HostStoreImpl implements HostControllerStore {
         throw new NotImplementedException("Host store");
     }
 
+    @SneakyThrows
     @Override
     public Host getHostForTableSegment(String tableName) {
-        return controller.getEndpointForSegment(tableName)
-                         .thenApply(nodeUri -> new Host(nodeUri.getEndpoint(), nodeUri.getPort(), "")).join();
+        return cache.get(tableName);
+    }
+    
+    public void invalidateCache(String tableName) {
+        cache.invalidate(tableName);
     }
 }

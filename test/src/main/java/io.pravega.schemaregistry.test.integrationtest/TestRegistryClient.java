@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.test.integrationtest;
 
-import io.pravega.schemaregistry.client.impl.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -17,10 +17,12 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
+import org.apache.commons.lang3.NotImplementedException;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -61,6 +63,16 @@ public class TestRegistryClient implements SchemaRegistryClient {
     @Override
     public void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules) {
         service.updateSchemaValidationPolicy(namespace, group, validationRules).join();
+    }
+
+    @Override
+    public void addSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+        throw new NotImplementedException("add rule not implemented");
+    }
+
+    @Override
+    public void removeSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+        throw new NotImplementedException("add rule not implemented");
     }
 
     @Override

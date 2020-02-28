@@ -84,7 +84,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
         return getGroup(namespace, group)
                 .thenCompose(grp -> grp.getCurrentEtag().thenCompose(currentEtag -> {
                     if (!etag.equals(currentEtag)) {
-                        throw new StoreExceptions.WriteConflictException();
+                        throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, "Validation Policy Update");
                     } else {
                         return grp.updateValidationPolicy(policy, etag);
                     }
@@ -167,8 +167,9 @@ public class SchemaStoreImpl<T> implements SchemaStore {
         return getNamespace(namespace)
                 .thenCompose(scp -> scp.getGroup(group)
                                        .thenApply(grp -> {
-                                           if (group == null) {
-                                               throw new StoreExceptions.DataNotFoundException();
+                                           if (grp == null) {
+                                               String errorMessage = String.format("namespace=%s, group=%s", namespace, group);
+                                               throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, errorMessage);
                                            }
 
                                            return grp;
@@ -179,7 +180,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
         return namespaces.getNamespace(namespace)
                          .thenApply(scp -> {
                              if (scp == null) {
-                                 throw new StoreExceptions.DataNotFoundException();
+                                 String errorMessage = String.format("namespace=%s", namespace);
+                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, errorMessage);
                              }
 
                              return scp;

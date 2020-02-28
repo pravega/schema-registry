@@ -37,9 +37,9 @@ import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
-import io.pravega.schemaregistry.exceptions.EntityExistsException;
 import io.pravega.schemaregistry.server.rest.v1.ApiV1;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -102,7 +102,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
             log.info("Successfully created new namespace: {}", createNamespaceRequest.getNamespaceName());
             return status(Status.CREATED).entity(new NamespaceProperty().namespaceName(createNamespaceRequest.getNamespaceName())).build();
         }).exceptionally(e -> {
-            if (Exceptions.unwrap(e) instanceof EntityExistsException) {
+            if (Exceptions.unwrap(e) instanceof StoreExceptions.DataExistsException) {
                 log.warn("Namespace name: {} already exists", createNamespaceRequest.getNamespaceName());
                 return status(Status.CONFLICT).build();
             } else {

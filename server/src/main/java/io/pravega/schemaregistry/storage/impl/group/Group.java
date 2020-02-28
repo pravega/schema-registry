@@ -224,7 +224,7 @@ public class Group<T> {
                 })
                 .thenApply(version -> {
                     if (version == null) {
-                        throw new StoreExceptions.DataNotFoundException();
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("Schema=%s", fingerPrint));
                     } else {
                         return version;
                     }
@@ -314,7 +314,7 @@ public class Group<T> {
                              .thenCompose(v -> index.getRecord(encodingIdIndex, IndexRecord.EncodingInfoIndex.class)
                                                 .thenApply(info -> {
                                          if (info == null) {
-                                             throw new StoreExceptions.DataNotFoundException();
+                                             throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, encodingId.toString());
                                          } else {
                                              return info;
                                          }
