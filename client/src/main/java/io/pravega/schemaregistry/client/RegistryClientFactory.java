@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.client;
 
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.impl.SchemaRegistryClientImpl;
 
 public class RegistryClientFactory {
     public SchemaRegistryClient createRegistryClient(RegistryClientConfig config) {
