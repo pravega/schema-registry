@@ -14,7 +14,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
@@ -131,12 +131,12 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String namespace, String group) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupHistory(String namespace, String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String namespace, String group, String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup) {
         return null;
     }
 }
