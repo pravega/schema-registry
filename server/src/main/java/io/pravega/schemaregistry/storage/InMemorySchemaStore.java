@@ -66,7 +66,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Position> updateCompatibilityPolicy(String namespace, String group, Position position, SchemaValidationRules policy) {
+    public CompletableFuture<Position> updateValidationPolicy(String namespace, String group, Position position, SchemaValidationRules policy) {
         return null;
     }
 
@@ -101,12 +101,12 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<VersionInfo> conditionallyAddSchemaToGroup(String namespace, String group, Position position, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String namespace, String group, Position position, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> conditionallyAddSchemaToSubgroup(String namespace, String group, String subgroup, Position position, SchemaInfo schemaInfo) {
+    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String namespace, String group, String subgroup, Position position, SchemaInfo schemaInfo) {
         return null;
     }
 
