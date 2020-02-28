@@ -13,7 +13,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -171,7 +171,7 @@ public interface SchemaRegistryClient {
      * @param subgroup Name of subgroup. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaEvolutionEpoch> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup);
+    List<SchemaEvolution> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}

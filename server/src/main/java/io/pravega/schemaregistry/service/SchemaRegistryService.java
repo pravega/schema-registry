@@ -17,7 +17,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
@@ -248,7 +248,7 @@ public class SchemaRegistryService {
      * @param subgroup Name of subgroup. 
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup) {
         return store.getGroupProperties(scope, group)
                 .thenCompose(prop -> {
                     if (prop.isSubgroupBySchemaName()) {
