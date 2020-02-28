@@ -20,24 +20,27 @@ import lombok.Data;
 import java.io.IOException;
 
 /**
- * Object that encapsulates schemaInfo with its associated version. 
+ * Describes changes to the group (or subgroup) and the validation rules {@link SchemaEvolution#rules} that were 
+ * applied while registering {@link SchemaEvolution#schema} and the unique {@link SchemaEvolution#version} identifier 
+ * that was assigned to it. 
  */
 @Data
 @Builder
 @AllArgsConstructor
-public class SchemaWithVersion {
+public class SchemaEvolution {
     public static final Serializer SERIALIZER = new Serializer();
 
     private final SchemaInfo schema;
     private final VersionInfo version;
-
-    private static class SchemaWithVersionBuilder implements ObjectBuilder<SchemaWithVersion> {
+    private final SchemaValidationRules rules;
+    
+    private static class SchemaEvolutionBuilder implements ObjectBuilder<SchemaEvolution> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<SchemaWithVersion, SchemaWithVersion.SchemaWithVersionBuilder> {
+    static class Serializer extends VersionedSerializer.WithBuilder<SchemaEvolution, SchemaEvolution.SchemaEvolutionBuilder> {
         @Override
-        protected SchemaWithVersion.SchemaWithVersionBuilder newBuilder() {
-            return SchemaWithVersion.builder();
+        protected SchemaEvolution.SchemaEvolutionBuilder newBuilder() {
+            return SchemaEvolution.builder();
         }
 
         @Override
@@ -50,14 +53,18 @@ public class SchemaWithVersion {
             version(0).revision(0, this::write00, this::read00);
         }
 
-        private void write00(SchemaWithVersion e, RevisionDataOutput target) throws IOException {
+        private void write00(SchemaEvolution e, RevisionDataOutput target) throws IOException {
             SchemaInfo.SERIALIZER.serialize(target, e.schema);
             VersionInfo.SERIALIZER.serialize(target, e.version);
+            SchemaValidationRules.SERIALIZER.serialize(target, e.rules);
         }
 
-        private void read00(RevisionDataInput source, SchemaWithVersion.SchemaWithVersionBuilder b) throws IOException {
+        private void read00(RevisionDataInput source, SchemaEvolution.SchemaEvolutionBuilder b) throws IOException {
             b.schema(SchemaInfo.SERIALIZER.deserialize(source))
-             .version(VersionInfo.SERIALIZER.deserialize(source));
+             .version(VersionInfo.SERIALIZER.deserialize(source))
+             .rules(SchemaValidationRules.SERIALIZER.deserialize(source));
         }
     }
 }
+
+

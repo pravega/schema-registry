@@ -14,7 +14,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
@@ -70,7 +70,7 @@ public interface SchemaStore {
 
     CompletableFuture<List<CompressionType>> getCompressions(String scope, String group);
 
-    CompletableFuture<List<SchemaEvolutionEpoch>> getGroupHistory(String scope, String group);
+    CompletableFuture<List<SchemaEvolution>> getGroupHistory(String scope, String group);
     
-    CompletableFuture<List<SchemaEvolutionEpoch>> getSubGroupHistory(String scope, String group, String subgroup);
+    CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String scope, String group, String subgroup);
 }

@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import com.google.common.base.Preconditions;
 import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
@@ -30,6 +31,8 @@ import java.io.IOException;
 @Data
 @Builder
 public class SchemaType {
+    public static final Serializer SERIALIZER = new Serializer();
+
     public enum Type {
         None,
         Avro,
@@ -43,7 +46,7 @@ public class SchemaType {
 
     private SchemaType(Type schemaType, String customTypeName) {
         this.schemaType = schemaType;
-        this.customTypeName = customTypeName;
+        this.customTypeName = customTypeName == null ? "" : customTypeName;
     }
 
     public static SchemaType of(Type type) {
@@ -51,13 +54,14 @@ public class SchemaType {
     }
 
     public static SchemaType custom(String customTypeName) {
+        Preconditions.checkNotNull(customTypeName);
         return new SchemaType(Type.Custom, customTypeName);
     }
 
     private static class SchemaTypeBuilder implements ObjectBuilder<SchemaType> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<SchemaType, SchemaType.SchemaTypeBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<SchemaType, SchemaType.SchemaTypeBuilder> {
         @Override
         protected SchemaType.SchemaTypeBuilder newBuilder() {
             return SchemaType.builder();
@@ -74,9 +78,14 @@ public class SchemaType {
         }
 
         private void write00(SchemaType e, RevisionDataOutput target) throws IOException {
+            target.writeCompactInt(e.schemaType.ordinal());
+            target.writeUTF(e.customTypeName);
         }
 
         private void read00(RevisionDataInput source, SchemaType.SchemaTypeBuilder b) throws IOException {
+            int ordinal = source.readCompactInt();
+            b.schemaType(Type.values()[ordinal])
+             .customTypeName(source.readUTF());
         }
     }
 }

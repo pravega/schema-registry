@@ -29,12 +29,14 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class EncodingId {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final int id;
 
     private static class EncodingIdBuilder implements ObjectBuilder<EncodingId> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<EncodingId, EncodingId.EncodingIdBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<EncodingId, EncodingId.EncodingIdBuilder> {
         @Override
         protected EncodingId.EncodingIdBuilder newBuilder() {
             return EncodingId.builder();
@@ -51,9 +53,11 @@ public class EncodingId {
         }
 
         private void write00(EncodingId e, RevisionDataOutput target) throws IOException {
+            target.writeInt(e.id);
         }
 
         private void read00(RevisionDataInput source, EncodingId.EncodingIdBuilder b) throws IOException {
+            b.id(source.readInt());
         }
     }
 }

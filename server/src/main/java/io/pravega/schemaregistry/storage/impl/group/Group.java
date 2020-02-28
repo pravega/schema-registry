@@ -20,7 +20,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -89,6 +89,7 @@ public class Group<T> {
     public CompletableFuture<Position> sync() {
         return index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
              .thenCompose(value -> {
+                 // TODO: handle if syncd till is not set
                  IndexRecord.WALPositionValue syncdTill = value.getValue();
                  return wal.readFrom(syncdTill.getPosition())
                          .thenCompose(list -> {
@@ -118,7 +119,11 @@ public class Group<T> {
                              });
                              return updateIndex(operations)
                                      .thenApply(v -> {
-                                         return (Position) list.get(list.size() - 1).getPosition();
+                                         if (list.isEmpty()) {
+                                             return syncdTill.getPosition();
+                                         } else {
+                                             return list.get(list.size() - 1).getPosition();
+                                         }
                                      });
                          });
              });
@@ -127,10 +132,19 @@ public class Group<T> {
     public CompletableFuture<SchemaValidationRules> getCurrentValidationRules() {
         return sync()
                 .thenCompose(v -> index.getRecord(VALIDATION_POLICY_INDEX_KEY, IndexRecord.WALPositionValue.class)
-                                   .thenCompose(validationRecordPosition -> {
-                            return wal.readAt(validationRecordPosition.getPosition(), Record.ValidationRecord.class)
-                                      .thenApply(Record.ValidationRecord::getValidationRules);
-                        }));
+                                       .thenCompose(validationRecordPosition -> {
+                                           if (validationRecordPosition == null) {
+                                               return index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class)
+                                                           .thenCompose(groupPropPos -> {
+                                                              return wal.readAt(groupPropPos.getPosition(), Record.GroupPropertiesRecord.class)
+                                                              .thenApply(Record.GroupPropertiesRecord::getValidationRules);        
+                                                           });
+                                               
+                                           } else {
+                                               return wal.readAt(validationRecordPosition.getPosition(), Record.ValidationRecord.class)
+                                                                                         .thenApply(Record.ValidationRecord::getValidationRules);
+                                           }
+                                       }));
     }
 
     public CompletableFuture<Position> getCurrentEtag() {
@@ -357,26 +371,28 @@ public class Group<T> {
                 });
     }
 
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getHistory() {
+    public CompletableFuture<List<SchemaEvolution>> getHistory() {
         AtomicReference<SchemaValidationRules> rulesRef = new AtomicReference<>();
-        List<SchemaEvolutionEpoch> epochs = new LinkedList<>();
+        List<SchemaEvolution> epochs = new LinkedList<>();
         return wal.readFrom(null)
                   .thenApply(list -> {
                       list.forEach(x -> {
                           if (x.getRecord() instanceof Record.SchemaRecord) {
                               Record.SchemaRecord record = (Record.SchemaRecord) x.getRecord();
-                              SchemaEvolutionEpoch epoch = new SchemaEvolutionEpoch(record.getSchemaInfo(), record.getVersionInfo(),
+                              SchemaEvolution epoch = new SchemaEvolution(record.getSchemaInfo(), record.getVersionInfo(),
                                       rulesRef.get());
                               epochs.add(epoch);
                           } else if (x.getRecord() instanceof Record.ValidationRecord) {
                               rulesRef.set(((Record.ValidationRecord) x.getRecord()).getValidationRules());
+                          } else if (x.getRecord() instanceof Record.GroupPropertiesRecord) {
+                              rulesRef.set(((Record.GroupPropertiesRecord) x.getRecord()).getValidationRules());
                           }
                       });
                       return epochs;
                   });
     }
 
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getHistory(String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getHistory(String subgroup) {
         return getHistory().thenApply(list -> 
                 list.stream().filter(x -> x.getSchema().getName().equals(subgroup)).collect(Collectors.toList()));
     }

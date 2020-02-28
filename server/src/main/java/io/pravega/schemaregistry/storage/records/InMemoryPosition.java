@@ -14,6 +14,7 @@ import lombok.Data;
 
 @Data
 public class InMemoryPosition implements Position<Long> {
+
     private final long position;
 
     @Override

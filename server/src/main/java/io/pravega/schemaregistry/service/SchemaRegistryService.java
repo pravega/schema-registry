@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
@@ -16,7 +17,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
@@ -24,6 +25,7 @@ import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.SchemaStore;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 
 import javax.annotation.Nullable;
 import java.util.InputMismatchException;
@@ -161,17 +163,20 @@ public class SchemaRegistryService {
         return store.getGroupEtag(scope, group)
             .thenCompose(etag -> store.getGroupProperties(scope, group)
                          .thenCompose(prop -> {
-                             SchemaValidationRules policy = prop.getSchemaValidationRules();
-                             if (prop.isSubgroupBySchemaName()) {
-                                 String subgroup = schema.getName();
-                                 // todo: apply policy
-                                 // get schemas for subgroup for validation
-                                 return store.addSchemaToSubgroup(scope, group, subgroup, etag, schema);
-                             } else {
-                                 // todo: apply policy
-                                 // get schemas for group for validation
-                                 return store.addSchemaToGroup(scope, group, etag, schema);
-                             }
+                             return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(scope, group, schema),
+                             e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, () -> {
+                                         SchemaValidationRules policy = prop.getSchemaValidationRules();
+                                         if (prop.isSubgroupBySchemaName()) {
+                                             String subgroup = schema.getName();
+                                             // todo: apply policy
+                                             // get schemas for subgroup for validation
+                                             return store.addSchemaToSubgroup(scope, group, subgroup, etag, schema);
+                                         } else {
+                                             // todo: apply policy
+                                             // get schemas for group for validation
+                                             return store.addSchemaToGroup(scope, group, etag, schema);
+                                         }
+                                     });
                          }));
     }
 
@@ -243,7 +248,7 @@ public class SchemaRegistryService {
      * @param subgroup Name of subgroup. 
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    public CompletableFuture<List<SchemaEvolutionEpoch>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String scope, String group, @Nullable String subgroup) {
         return store.getGroupProperties(scope, group)
                 .thenCompose(prop -> {
                     if (prop.isSubgroupBySchemaName()) {

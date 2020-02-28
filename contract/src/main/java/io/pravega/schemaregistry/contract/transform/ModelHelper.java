@@ -71,7 +71,7 @@ public class ModelHelper {
     // endregion
 
     // region encode
-    public static SchemaEvolution encode(io.pravega.schemaregistry.contract.data.SchemaEvolutionEpoch schemaEvolution) {
+    public static SchemaEvolution encode(io.pravega.schemaregistry.contract.data.SchemaEvolution schemaEvolution) {
         SchemaInfo encode = encode(schemaEvolution.getSchema());
         return new SchemaEvolution().schemaInfo(encode)
                                          .version(encode(schemaEvolution.getVersion())).validationRules(encode(schemaEvolution.getRules()));

@@ -40,6 +40,8 @@ import java.io.IOException;
 @Data
 @Builder
 public class Compatibility {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final Type compatibility;
     private final VersionInfo backwardTill;
     private final VersionInfo forwardTill;
@@ -104,9 +106,34 @@ public class Compatibility {
         }
 
         private void write00(Compatibility e, RevisionDataOutput target) throws IOException {
+            target.writeCompactInt(e.getCompatibility().ordinal());
+            if (e.getBackwardTill() != null) {
+                VersionInfo.SERIALIZER.serialize(target, e.backwardTill);
+            } else {
+                VersionInfo.SERIALIZER.serialize(target, VersionInfo.NON_EXISTENT);
+            }
+            if (e.getForwardTill() != null) {
+                VersionInfo.SERIALIZER.serialize(target, e.forwardTill);
+            } else {
+                VersionInfo.SERIALIZER.serialize(target, VersionInfo.NON_EXISTENT);
+            }
         }
 
         private void read00(RevisionDataInput source, Compatibility.CompatibilityBuilder b) throws IOException {
+            int ordinal = source.readCompactInt();
+            b.compatibility(Type.values()[ordinal]);
+            VersionInfo backwardTill = VersionInfo.SERIALIZER.deserialize(source);
+            if (backwardTill.equals(VersionInfo.NON_EXISTENT)) {
+                b.backwardTill(null);
+            } else {
+                b.backwardTill(backwardTill);
+            }
+            VersionInfo forwardTill = VersionInfo.SERIALIZER.deserialize(source);
+            if (forwardTill.equals(VersionInfo.NON_EXISTENT)) {
+                b.forwardTill(null);
+            } else {
+                b.forwardTill(forwardTill);
+            }
         }
     }
 }

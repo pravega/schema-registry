@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
-import com.google.common.collect.ImmutableMap;
 import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
@@ -18,8 +17,11 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -37,10 +39,12 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 public class SchemaInfo {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final String name;
     private final SchemaType schemaType;
     private final byte[] schemaData;
-    private final ImmutableMap<String, String> properties;
+    private final Map<String, String> properties;
 
     @Override
     public boolean equals(Object o) {
@@ -68,7 +72,7 @@ public class SchemaInfo {
     private static class SchemaInfoBuilder implements ObjectBuilder<SchemaInfo> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<SchemaInfo, SchemaInfo.SchemaInfoBuilder> {
+    public static class Serializer extends VersionedSerializer.WithBuilder<SchemaInfo, SchemaInfo.SchemaInfoBuilder> {
         @Override
         protected SchemaInfo.SchemaInfoBuilder newBuilder() {
             return SchemaInfo.builder();
@@ -85,9 +89,18 @@ public class SchemaInfo {
         }
 
         private void write00(SchemaInfo e, RevisionDataOutput target) throws IOException {
+            target.writeUTF(e.name);
+            SchemaType.SERIALIZER.serialize(target, e.schemaType);
+            target.writeArray(e.schemaData);
+            target.writeCompactInt(e.properties.size());
+            target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
         }
 
         private void read00(RevisionDataInput source, SchemaInfo.SchemaInfoBuilder b) throws IOException {
+            b.name(source.readUTF())
+                .schemaType(SchemaType.SERIALIZER.deserialize(source))
+                .schemaData(source.readArray())
+                .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
         }
     }
 }

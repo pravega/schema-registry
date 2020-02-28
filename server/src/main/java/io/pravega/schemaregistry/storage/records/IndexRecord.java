@@ -24,6 +24,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -75,6 +76,7 @@ public interface IndexRecord {
             }
 
             private void read00(RevisionDataInput source, GroupPropertyKey.GroupPropertyKeyBuilder b) throws IOException {
+                
             }
         }
     }
@@ -173,9 +175,11 @@ public interface IndexRecord {
             }
 
             private void write00(SchemaInfoKey e, RevisionDataOutput target) throws IOException {
+                target.writeLong(e.fingerprint);
             }
 
             private void read00(RevisionDataInput source, SchemaInfoKey.SchemaInfoKeyBuilder b) throws IOException {
+                b.fingerprint(source.readLong());
             }
         }
     }
@@ -208,9 +212,11 @@ public interface IndexRecord {
             }
 
             private void write00(VersionInfoKey e, RevisionDataOutput target) throws IOException {
+                VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
             }
 
             private void read00(RevisionDataInput source, VersionInfoKey.VersionInfoKeyBuilder b) throws IOException {
+                b.versionInfo(VersionInfo.SERIALIZER.deserialize(source));
             }
         }
     }
@@ -249,9 +255,12 @@ public interface IndexRecord {
             }
 
             private void write00(WALPositionValue e, RevisionDataOutput target) throws IOException {
+                assert e.getPosition() instanceof PravegaPosition;
+                PravegaPosition.SERIALIZER.serialize(target, (PravegaPosition) e.getPosition());
             }
 
             private void read00(RevisionDataInput source, WALPositionValue.WALPositionValueBuilder b) throws IOException {
+                b.position(PravegaPosition.SERIALIZER.deserialize(source));                
             }
         }
     }
@@ -290,9 +299,11 @@ public interface IndexRecord {
             }
 
             private void write00(SchemaVersionValue e, RevisionDataOutput target) throws IOException {
+                target.writeCollection(e.versions, VersionInfo.SERIALIZER::serialize);
             }
 
             private void read00(RevisionDataInput source, SchemaVersionValue.SchemaVersionValueBuilder b) throws IOException {
+                b.versions(new ArrayList<>(source.readCollection(VersionInfo.SERIALIZER::deserialize)));
             }
         }
     }
@@ -332,9 +343,13 @@ public interface IndexRecord {
             }
 
             private void write00(EncodingInfoIndex e, RevisionDataOutput target) throws IOException {
+                VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
+                CompressionType.SERIALIZER.serialize(target, e.compressionType);
             }
 
             private void read00(RevisionDataInput source, EncodingInfoIndex.EncodingInfoIndexBuilder b) throws IOException {
+                b.versionInfo(VersionInfo.SERIALIZER.deserialize(source))
+                 .compressionType(CompressionType.SERIALIZER.deserialize(source));
             }
         }
     }
@@ -373,9 +388,11 @@ public interface IndexRecord {
             }
 
             private void write00(EncodingIdIndex e, RevisionDataOutput target) throws IOException {
+                EncodingId.SERIALIZER.serialize(target, e.encodingId);
             }
 
             private void read00(RevisionDataInput source, EncodingIdIndex.EncodingIdIndexBuilder b) throws IOException {
+                b.encodingId(EncodingId.SERIALIZER.deserialize(source));
             }
         }
     }

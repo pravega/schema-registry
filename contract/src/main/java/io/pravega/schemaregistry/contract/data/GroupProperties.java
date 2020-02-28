@@ -43,6 +43,8 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class GroupProperties {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final SchemaType schemaType;
     private final SchemaValidationRules schemaValidationRules;
     private final boolean subgroupBySchemaName;
@@ -68,9 +70,17 @@ public class GroupProperties {
         }
 
         private void write00(GroupProperties e, RevisionDataOutput target) throws IOException {
+            SchemaType.SERIALIZER.serialize(target, e.schemaType);
+            SchemaValidationRules.SERIALIZER.serialize(target, e.schemaValidationRules);
+            target.writeBoolean(e.subgroupBySchemaName);
+            target.writeBoolean(e.enableEncoding);
         }
 
         private void read00(RevisionDataInput source, GroupProperties.GroupPropertiesBuilder b) throws IOException {
+            b.schemaType(SchemaType.SERIALIZER.deserialize(source))
+             .schemaValidationRules(SchemaValidationRules.SERIALIZER.deserialize(source))
+             .subgroupBySchemaName(source.readBoolean())
+             .enableEncoding(source.readBoolean());
         }
     }
 }

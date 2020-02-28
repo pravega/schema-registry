@@ -28,6 +28,8 @@ import java.io.IOException;
 @Builder
 @AllArgsConstructor
 public class EncodingInfo {
+    public static final Serializer SERIALIZER = new Serializer();
+
     private final VersionInfo versionInfo;
     private final SchemaInfo schemaInfo;
     private final CompressionType compression;
@@ -52,9 +54,15 @@ public class EncodingInfo {
         }
 
         private void write00(EncodingInfo e, RevisionDataOutput target) throws IOException {
+            VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
+            SchemaInfo.SERIALIZER.serialize(target, e.schemaInfo);
+            CompressionType.SERIALIZER.serialize(target, e.compression);
         }
 
         private void read00(RevisionDataInput source, EncodingInfo.EncodingInfoBuilder b) throws IOException {
+            b.versionInfo(VersionInfo.SERIALIZER.deserialize(source))
+             .schemaInfo(SchemaInfo.SERIALIZER.deserialize(source))
+             .compression(CompressionType.SERIALIZER.deserialize(source));
         }
     }
 }

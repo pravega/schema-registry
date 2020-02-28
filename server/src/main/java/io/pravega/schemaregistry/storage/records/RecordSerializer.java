@@ -24,7 +24,8 @@ public class RecordSerializer extends VersionedSerializer.MultiType<Record> {
         // - 0: Unsupported Serializer.
         builder.serializer(Record.SchemaRecord.class, 1, new Record.SchemaRecord.Serializer())
                .serializer(Record.EncodingRecord.class, 2, new Record.EncodingRecord.Serializer())
-               .serializer(Record.ValidationRecord.class, 3, new Record.ValidationRecord.Serializer());
+               .serializer(Record.ValidationRecord.class, 3, new Record.ValidationRecord.Serializer())
+               .serializer(Record.GroupPropertiesRecord.class, 4, new Record.GroupPropertiesRecord.Serializer());
     }
 
     /**

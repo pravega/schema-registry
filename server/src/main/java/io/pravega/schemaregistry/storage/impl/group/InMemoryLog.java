@@ -24,6 +24,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class InMemoryLog implements Log {
+    private static final InMemoryPosition NULL_POSITION = new InMemoryPosition(-1);
     private static final InMemoryPosition HEAD_POSITION = new InMemoryPosition(0);
     
     @GuardedBy("$lock")
@@ -32,15 +33,15 @@ public class InMemoryLog implements Log {
     @Override
     @Synchronized
     public CompletableFuture<Position> getCurrentEtag() {
-        return CompletableFuture.completedFuture(new InMemoryPosition(log.size()));
+        return CompletableFuture.completedFuture(new InMemoryPosition(log.size() - 1));
     }
 
     @Override
     @Synchronized
     public CompletableFuture<Position> writeToLog(Record record, Position position) {
-        InMemoryPosition pos = position == null ? HEAD_POSITION : (InMemoryPosition) position;
+        InMemoryPosition pos = position == null ? NULL_POSITION : (InMemoryPosition) position;
 
-        if (pos.getPosition() != log.size()) {
+        if (pos.getPosition() != log.size() - 1) {
             throw new StoreExceptions.WriteConflictException();
         }
 
@@ -52,9 +53,9 @@ public class InMemoryLog implements Log {
     @SuppressWarnings("unchecked")
     @Synchronized
     public <T extends Record> CompletableFuture<T> readAt(Position position, Class<T> tClass) {
-        Position pos = position == null ? HEAD_POSITION : position;
-        Record record = log.get((int) pos.getPosition());
-        if (record.getClass().isAssignableFrom(tClass)) {
+        InMemoryPosition pos = position == null ? HEAD_POSITION : (InMemoryPosition) position;
+        Record record = log.get(pos.getPosition().intValue());
+        if (tClass.isAssignableFrom(record.getClass())) {
             return CompletableFuture.completedFuture((T) record);
         } else {
             return Futures.failedFuture(new IllegalArgumentException());
@@ -64,9 +65,9 @@ public class InMemoryLog implements Log {
     @Override
     @Synchronized
     public CompletableFuture<List<RecordWithPosition>> readFrom(Position position) {
-        Position pos = position == null ? HEAD_POSITION : position;
+        InMemoryPosition pos = position == null ? HEAD_POSITION : (InMemoryPosition) position;
 
-        int startingPos = (int) pos.getPosition();
+        int startingPos = pos.getPosition().intValue();
         List<RecordWithPosition> recordWithPositions = new ArrayList<>(log.size() - startingPos);
         for (int i = startingPos; i < log.size(); i++) {
             InMemoryPosition inMemoryPosition = new InMemoryPosition(i);
