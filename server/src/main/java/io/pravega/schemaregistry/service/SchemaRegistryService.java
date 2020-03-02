@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ListWithToken;
@@ -19,10 +20,12 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
+import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -95,7 +98,35 @@ public class SchemaRegistryService {
      * new group, false indicates it was an existing group. 
      */
     public CompletableFuture<Boolean> createGroup(String namespace, String group, GroupProperties groupProperties) {
+        Preconditions.checkArgument(validateProperties(groupProperties));
         return store.createGroupInNamespace(namespace, group, groupProperties);
+    }
+
+    private boolean validateProperties(GroupProperties groupProperties) {
+        Preconditions.checkNotNull(groupProperties);
+        Preconditions.checkNotNull(groupProperties.getSchemaType());
+        Preconditions.checkNotNull(groupProperties.getSchemaValidationRules());
+        SchemaType type = groupProperties.getSchemaType();
+        if (!type.getSchemaType().equals(SchemaType.Type.Avro)) {
+            // For non avro schema types, we do not support compatibility checks yet. 
+            switch (groupProperties.getSchemaValidationRules().getCompatibility().getCompatibility()) {
+                case BackwardTillAndForwardTill: 
+                case ForwardTill:
+                case BackwardTill:
+                case Backward:
+                case Forward:
+                case Full:
+                case ForwardTransitive:
+                case BackwardTransitive:
+                case FullTransitive:
+                    return false;
+                case AllowAny:
+                case DisallowAll: 
+                default:
+                    break;
+            }
+        } 
+        return true;
     }
 
     /**
@@ -133,12 +164,11 @@ public class SchemaRegistryService {
      *
      * @param namespace Name of namespace. 
      * @param group Name of group. 
-     * @param token Continuation token.
      * @return CompletableFuture which holds list of subgroups upon completion. 
      * If group is configured to store schemas in subgroups then subgroups are returned. Otherwise an empty list is returned.
      */
-    public CompletableFuture<ListWithToken<String>> getSubgroups(String namespace, String group, ContinuationToken token) {
-        return store.listSubGroups(namespace, group, token);
+    public CompletableFuture<ListWithToken<String>> getSubgroups(String namespace, String group) {
+        return store.listSubGroups(namespace, group);
     }
 
     /**
@@ -158,7 +188,7 @@ public class SchemaRegistryService {
         // 2. get checker for schema type.
         // validate schema against group policy + rules on schema
         // 3. conditionally update the schema
-        CompatibilityChecker checker;
+        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
         
         return store.getGroupEtag(namespace, group)
             .thenCompose(etag -> store.getGroupProperties(namespace, group)
@@ -168,7 +198,8 @@ public class SchemaRegistryService {
                                          SchemaValidationRules policy = prop.getSchemaValidationRules();
                                          if (prop.isSubgroupBySchemaName()) {
                                              String subgroup = schema.getName();
-                                             // todo: apply policy
+                                             
+                                             // subgroup policy cannot be backward till forward till etc. 
                                              // get schemas for subgroup for validation
                                              return store.addSchemaToSubgroup(namespace, group, subgroup, etag, schema);
                                          } else {
@@ -259,7 +290,7 @@ public class SchemaRegistryService {
                     } else {
                         return store.getGroupHistory(namespace, group);
                     }
-                });
+                }).thenApply(ListWithToken::getList);
     }
 
     /**
@@ -283,10 +314,10 @@ public class SchemaRegistryService {
      * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @param schema Schema to check for validity. 
-     * @param validationRules validation rules to apply.
+     * @param rules validation rules to apply.
      * @return True if it satisfies validation checks, false otherwise. 
      */
-    public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schema, SchemaValidationRules validationRules) {
+    public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schema, SchemaValidationRules rules) {
         // based on compatibility policy, fetch specific schemas for the group/subgroup and perform validations
         // TODO: validate schema
         

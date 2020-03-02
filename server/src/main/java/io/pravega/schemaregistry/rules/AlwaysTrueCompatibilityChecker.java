@@ -13,7 +13,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.util.List;
 
-public interface CompatibilityChecker {
+public class AlwaysTrueCompatibilityChecker implements CompatibilityChecker {
     /**
      * Checks if readerSchema can be used to read data written using schema 1.
      * 
@@ -21,7 +21,9 @@ public interface CompatibilityChecker {
      * @param readerSchema Reader schema.
      * @return True if readerSchema can be used to read data written using schema 1, false otherwise. 
      */
-    boolean canRead(List<SchemaInfo> writerSchemas, SchemaInfo readerSchema);
+    public boolean canRead(List<SchemaInfo> writerSchemas, SchemaInfo readerSchema) {
+        return true;
+    }
 
     /**
      * Checks if schema1 can be used to read data written using schema 2.
@@ -30,7 +32,10 @@ public interface CompatibilityChecker {
      * @param readerSchemas writer schema.
      * @return True if schema1 can be used to read data written using schema 2, false otherwise. 
      */
-    boolean canBeRead(SchemaInfo writerSchema, List<SchemaInfo> readerSchemas);
+    public boolean canBeRead(SchemaInfo writerSchema, List<SchemaInfo> readerSchemas) {
+        return true;
+        
+    }
 
     /**
      * Checks if both schema1 and schema2 can be used to read data written with either. 
@@ -40,5 +45,8 @@ public interface CompatibilityChecker {
      * @return True if schema2 can read data written using schema 1 and schema 1 can read data written using schema 2. 
      * False otherwise.  
      */
-    boolean canMutuallyRead(SchemaInfo schema1, SchemaInfo schema2);
+    public boolean canMutuallyRead(SchemaInfo schema1, SchemaInfo schema2) {
+        return true;
+        
+    }
 }

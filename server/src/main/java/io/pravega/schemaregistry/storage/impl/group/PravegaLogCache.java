@@ -30,11 +30,12 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PravegaLogCache {
     private static final int MAX_CACHE_SIZE = 10000;
-    private final LoadingCache<RecordCacheKey, CompletableFuture<Record>> recordCache;
+    private final LoadingCache<RecordCacheKey, RecordCacheValue> recordCache;
     private final LoadingCache<ClientCacheKey, RevisionedStreamClient<Record>> clientCache;
     
     public PravegaLogCache(ClientConfig clientConfig) {
@@ -57,41 +58,45 @@ public class PravegaLogCache {
         this.recordCache =
                 CacheBuilder.newBuilder()
                             .maximumSize(MAX_CACHE_SIZE)
-                            .build(new CacheLoader<RecordCacheKey, CompletableFuture<Record>>() {
+                            .build(new CacheLoader<RecordCacheKey, RecordCacheValue>() {
                                 @ParametersAreNonnullByDefault
                                 @Override
                                 @SneakyThrows
-                                public CompletableFuture<Record> load(final RecordCacheKey key) {
+                                public RecordCacheValue load(final RecordCacheKey key) {
                                     RevisionedStreamClient<Record> cl = clientCache.get(key.clientCacheKey);
+                                    
                                     Iterator<Map.Entry<Revision, Record>> records = cl.readFrom(key.revision);
-                                    CompletableFuture<Record> future = new CompletableFuture<>();
+                                    AtomicReference<RecordCacheValue> recordCacheValue = new AtomicReference<>();
+                                    Revision current = key.revision;
                                     while (records.hasNext()) {
                                         Map.Entry<Revision, Record> entry = records.next();
-                                        if (!future.isDone()) {
-                                            future.complete(entry.getValue());
-                                        }
-                                        RecordCacheKey recordCacheKey = new RecordCacheKey(key.clientCacheKey, entry.getKey());
-                                        recordCache.put(recordCacheKey, CompletableFuture.completedFuture(entry.getValue()));
+                                        Revision next = entry.getKey();
+                                        
+                                        RecordCacheValue value = new RecordCacheValue(entry.getValue(), next);
+                                        recordCacheValue.compareAndSet(null, value);
+                                        RecordCacheKey recordCacheKey = new RecordCacheKey(key.clientCacheKey, current);
+                                        recordCache.put(recordCacheKey, value);
+                                        current = next;
                                     }
-                                    if (!future.isDone()) {
-                                        String error = String.format("namespace=%s,group=%s", key.clientCacheKey.getNamespace(), key.clientCacheKey.getGroup());
-                                        future.completeExceptionally(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, error));
+                                    if (recordCacheValue.get() == null) {
+                                        String error = String.format("namespace=%s,group=%s,position=%s", key.clientCacheKey.getNamespace(), key.clientCacheKey.getGroup(), key.getRevision().toString());
+                                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, error);
                                     }
-                                    return future;
+                                    return recordCacheValue.get();
                                 }
                             });
     }
 
-    @SneakyThrows
-    public CompletableFuture<Record> getRecord(RecordCacheKey recordCacheKey) {
-        return recordCache.get(recordCacheKey);    
+    @SneakyThrows(ExecutionException.class)
+    public RecordCacheValue getRecord(RecordCacheKey recordCacheKey) {
+        return recordCache.get(recordCacheKey);
     }
     
-    public void putRecord(RecordCacheKey key, Record record) {
-        recordCache.put(key, CompletableFuture.completedFuture(record));    
+    public void putRecord(RecordCacheKey key, RecordCacheValue record) {
+        recordCache.put(key, record);    
     }
     
-    @SneakyThrows
+    @SneakyThrows(ExecutionException.class)
     public RevisionedStreamClient<Record> getClient(ClientCacheKey clientCacheKey) {
         return clientCache.get(clientCacheKey);
     }
@@ -101,7 +106,13 @@ public class PravegaLogCache {
         private final ClientCacheKey clientCacheKey;
         private final Revision revision;
     }
-
+    
+    @Data
+    static class RecordCacheValue {
+        private final Record record;
+        private final Revision nextRevision;
+    }
+    
     @Data
     static class ClientCacheKey {
         private final String namespace;

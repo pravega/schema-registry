@@ -90,7 +90,7 @@ public class TestRegistryClient implements SchemaRegistryClient {
 
     @Override
     public List<String> getSubgroups(String namespace, String group) {
-        return service.getSubgroups(namespace, group, null).join().getList();
+        return service.getSubgroups(namespace, group).join().getList();
     }
 
     @Override

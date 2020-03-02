@@ -80,7 +80,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Position> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy) {
+    public CompletableFuture<Void> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy) {
         return getGroup(namespace, group)
                 .thenCompose(grp -> grp.getCurrentEtag().thenCompose(currentEtag -> {
                     if (!etag.equals(currentEtag)) {
@@ -92,17 +92,22 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group) {
         return getGroup(namespace, group).thenCompose(Group::getSubgroups);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group) {
         return getGroup(namespace, group).thenCompose(Group::getSchemas);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, VersionInfo from) {
+        return getGroup(namespace, group).thenCompose(Group::getSchemas);
+    }
+
+    @Override
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup) {
         return getGroup(namespace, group).thenCompose(grp -> grp.getSchemas(subgroup));
     }
 
@@ -153,12 +158,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolution>> getGroupHistory(String namespace, String group) {
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String namespace, String group) {
         return getGroup(namespace, group).thenCompose(Group::getHistory);
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup) {
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup) {
         return getGroup(namespace, group).thenCompose(grp -> grp.getHistory(subgroup));
     }
     // endregion

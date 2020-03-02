@@ -444,7 +444,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.NamespacesApi {
 
     @Override
     public void getSubGroups(String namespaceName, String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getSubgroups(namespaceName, groupName, null)
+        registryService.getSubgroups(namespaceName, groupName)
                        .thenApply(subgroups -> {
                            SubgroupsList subgroupsList = new SubgroupsList().groups(subgroups.getList());
                            return Response.status(Status.OK).entity(subgroupsList).build(); })
