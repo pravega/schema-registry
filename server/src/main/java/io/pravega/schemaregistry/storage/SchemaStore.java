@@ -41,16 +41,15 @@ public interface SchemaStore {
     
     CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group);
     
-    CompletableFuture<Position> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy);
+    CompletableFuture<Void> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group, ContinuationToken token);
+    CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group);
     
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group,
-                                                                                           ContinuationToken token);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group,
-                                                                                           String subgroup, 
-                                                                                           ContinuationToken token);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, VersionInfo from);
+
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup); 
     
     CompletableFuture<SchemaInfo> getSchema(String namespace, String group, VersionInfo versionInfo);
     
@@ -70,7 +69,7 @@ public interface SchemaStore {
 
     CompletableFuture<List<CompressionType>> getCompressions(String namespace, String group);
 
-    CompletableFuture<List<SchemaEvolution>> getGroupHistory(String namespace, String group);
+    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String namespace, String group);
     
-    CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup);
+    CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup);
 }

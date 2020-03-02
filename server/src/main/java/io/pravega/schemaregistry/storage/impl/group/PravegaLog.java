@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
-import com.google.common.base.Function;
 import com.google.common.base.Preconditions;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.admin.StreamManager;
@@ -19,6 +18,7 @@ import io.pravega.client.state.RevisionedStreamClient;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.storage.Position;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.records.PravegaPosition;
 import io.pravega.schemaregistry.storage.records.Record;
 import io.pravega.schemaregistry.storage.records.RecordWithPosition;
@@ -26,15 +26,14 @@ import lombok.SneakyThrows;
 import lombok.Synchronized;
 
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
 public class PravegaLog implements Log {
-    public static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
-    public static final String LOG_NAME_FORMAT = "log-%s-%s-%s";
+    static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
+    private static final String LOG_NAME_FORMAT = "log-%s-%s-%s";
     
     private final PravegaLogCache logCache;
     private final ClientConfig clientConfig;
@@ -88,8 +87,11 @@ public class PravegaLog implements Log {
         
         return CompletableFuture.supplyAsync(() -> {
                     Revision rev = client.writeConditionally(pos.getRevision(), record);
-                    logCache.putRecord(cacheKeySupplier.apply(rev), record);
-                    return new PravegaPosition(rev);
+                    if (rev == null) {
+                        throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, pos.getRevision().toString());
+                    }
+                    logCache.putRecord(cacheKeySupplier.apply(pos.getRevision()), new PravegaLogCache.RecordCacheValue(record, rev));
+                    return new PravegaPosition(pos.getRevision());
                 }, executorService);
     }
 
@@ -101,14 +103,14 @@ public class PravegaLog implements Log {
         Preconditions.checkNotNull(position);
         PravegaPosition pos = (PravegaPosition) position;
         // check in the cache if the record exists
-        return logCache.getRecord(cacheKeySupplier.apply(pos.getRevision()))
-                .thenApply(record -> {
-                    if (tClass.isAssignableFrom(record.getClass())) {
-                        return (T) record;
-                    } else {
-                        throw new IllegalArgumentException();
-                    }
-                });
+        return CompletableFuture.supplyAsync(() -> {
+            PravegaLogCache.RecordCacheValue recordCacheValue = logCache.getRecord(cacheKeySupplier.apply(pos.getRevision()));
+            if (tClass.isAssignableFrom(recordCacheValue.getRecord().getClass())) {
+                return (T) recordCacheValue.getRecord();
+            } else {
+                throw new IllegalArgumentException();
+            }
+        }, executorService);
     }
 
     @Override
@@ -117,17 +119,21 @@ public class PravegaLog implements Log {
         RevisionedStreamClient<Record> client = logCache.getClient(clientCacheKey);
 
         PravegaPosition pos = position == null ? new PravegaPosition(client.fetchOldestRevision()) : (PravegaPosition) position;
-
+        Revision latest = client.fetchLatestRevision();
+        
         return CompletableFuture.supplyAsync(() -> {
-            Iterator<Map.Entry<Revision, Record>> records = client.readFrom(pos.getPosition());
+            Revision current = pos.getRevision();
             List<RecordWithPosition> recordWithPositions = new ArrayList<>();
-            while (records.hasNext()) {
-                Map.Entry<Revision, Record> entry = records.next();
-                logCache.putRecord(cacheKeySupplier.apply(entry.getKey()), entry.getValue());
-                recordWithPositions.add(new RecordWithPosition(new PravegaPosition(entry.getKey()), entry.getValue()));
+
+            PravegaLogCache.RecordCacheValue value = logCache.getRecord(cacheKeySupplier.apply(current));
+            while (value != null) {
+                recordWithPositions.add(new RecordWithPosition(new PravegaPosition(current), value.getRecord()));
+                current = value.getNextRevision();
+                value = current.equals(latest) ? null : logCache.getRecord(cacheKeySupplier.apply(current));
             }
+
             return recordWithPositions;
-        });
+        }, executorService);
     }
 }
 

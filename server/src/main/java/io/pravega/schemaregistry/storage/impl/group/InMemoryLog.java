@@ -24,7 +24,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class InMemoryLog implements Log {
-    private static final InMemoryPosition NULL_POSITION = new InMemoryPosition(-1);
     private static final InMemoryPosition HEAD_POSITION = new InMemoryPosition(0);
     
     @GuardedBy("$lock")
@@ -33,20 +32,20 @@ public class InMemoryLog implements Log {
     @Override
     @Synchronized
     public CompletableFuture<Position> getCurrentEtag() {
-        return CompletableFuture.completedFuture(new InMemoryPosition(log.size() - 1));
+        return CompletableFuture.completedFuture(new InMemoryPosition(log.size()));
     }
 
     @Override
     @Synchronized
     public CompletableFuture<Position> writeToLog(Record record, Position position) {
-        InMemoryPosition pos = position == null ? NULL_POSITION : (InMemoryPosition) position;
+        InMemoryPosition pos = position == null ? HEAD_POSITION : (InMemoryPosition) position;
 
-        if (pos.getPosition() != log.size() - 1) {
+        if (pos.getPosition() != log.size()) {
             throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, record.getClass().toString());
         }
 
         log.add(record);
-        return getCurrentEtag();
+        return CompletableFuture.completedFuture(pos);
     }
 
     @Override

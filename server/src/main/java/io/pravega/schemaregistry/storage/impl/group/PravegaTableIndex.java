@@ -19,7 +19,6 @@ import io.pravega.schemaregistry.storage.records.IndexKeySerializer;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
 
 import java.util.Collection;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -64,17 +63,14 @@ public class PravegaTableIndex implements Index<Version> {
 
     @Override
     public CompletableFuture<List<Entry>> getAllEntries(Predicate<IndexRecord.IndexKey> filterKeys) {
-        List<Entry> entries = new LinkedList<>();
 
         return tablesStore.getAllEntries(tableName, x -> x)
-                          .collectRemaining(x -> {
-                              IndexRecord.IndexKey indexKey = INDEX_KEY_SERIALIZER.fromString(x.getKey());
-                              IndexRecord.IndexValue indexValue = IndexRecord.fromBytes(indexKey.getClass(), x.getValue().getObject());
-                              if (filterKeys.test(indexKey)) {
-                                  entries.add(new Entry(indexKey, indexValue));
-                              } 
-                              return true;
-                          }).thenApply(v -> entries);
+                          .thenApply(entries -> entries.stream().map( 
+                                  x -> {
+                                      IndexRecord.IndexKey indexKey = INDEX_KEY_SERIALIZER.fromString(x.getKey());
+                                      IndexRecord.IndexValue indexValue = IndexRecord.fromBytes(indexKey.getClass(), x.getValue().getObject());
+                                      return new Entry(indexKey, indexValue);
+                                  }).filter(x -> filterKeys.test(x.getKey())).collect(Collectors.toList()));
     }
 
     @Override

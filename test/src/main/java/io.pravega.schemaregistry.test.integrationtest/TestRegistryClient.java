@@ -9,6 +9,8 @@
  */
 package io.pravega.schemaregistry.test.integrationtest;
 
+import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -26,6 +28,7 @@ import org.apache.commons.lang3.NotImplementedException;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 public class TestRegistryClient implements SchemaRegistryClient {
     private final SchemaRegistryService service;
@@ -37,6 +40,11 @@ public class TestRegistryClient implements SchemaRegistryClient {
     @Override
     public void createNamespace(String namespace) {
         service.createNamespace(namespace).join();
+    }
+
+    @Override
+    public List<String> listNamespaces() {
+        return service.listNamespaces(null).thenApply(ListWithToken::getList).join();
     }
 
     @Override
@@ -53,6 +61,11 @@ public class TestRegistryClient implements SchemaRegistryClient {
     @Override
     public void removeGroup(String namespace, String group) {
         service.deleteGroup(namespace, group).join();
+    }
+
+    @Override
+    public Map<String, GroupProperties> listGroups(String namespace) {
+        return service.listGroupsInNamespace(namespace, null).thenApply(MapWithToken::getMap).join();
     }
 
     @Override
@@ -77,7 +90,7 @@ public class TestRegistryClient implements SchemaRegistryClient {
 
     @Override
     public List<String> getSubgroups(String namespace, String group) {
-        return service.getSubgroups(namespace, group, null).join().getList();
+        return service.getSubgroups(namespace, group).join().getList();
     }
 
     @Override

@@ -23,6 +23,7 @@ import io.pravega.schemaregistry.contract.data.VersionInfo;
 
 import javax.annotation.Nullable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Defines a registry client for interacting with schema registry service. 
@@ -34,6 +35,13 @@ public interface SchemaRegistryClient {
      * @param namespace Name of namespace.
      */
     void createNamespace(String namespace);
+
+    /**
+     * List all namespaces.
+     * 
+     * @return list of namespaces. 
+     */
+    List<String> listNamespaces();
 
     /**
      * Deletes a namespace with specified name.
@@ -67,6 +75,14 @@ public interface SchemaRegistryClient {
      */
     void removeGroup(String namespace, String group);
 
+    /**
+     * List all groups in the namespace. 
+     * 
+     * @param namespace Name of namespace.
+     * @return map of names of groups with corresponding group properties for all groups in the given namespace. 
+     */
+    Map<String, GroupProperties> listGroups(String namespace);
+    
     /**
      * Gets group's properties. 
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
@@ -115,7 +131,7 @@ public interface SchemaRegistryClient {
      * @param namespace Name of namespace. 
      * @param group Name of group. 
      * @return List of subgroups within the group. If group is configured to store schemas in subgroups then 
-     *      * subgroups are returned. Otherwise an empty list is returned.  
+     *  subgroups are returned. Otherwise an empty list is returned.  
      */
     List<String> getSubgroups(String namespace, String group);
 

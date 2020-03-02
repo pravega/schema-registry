@@ -29,6 +29,8 @@ import org.junit.Test;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
+import static org.junit.Assert.assertEquals;
+
 @Slf4j
 public abstract class TestEndToEnd {
 
@@ -50,17 +52,26 @@ public abstract class TestEndToEnd {
         SchemaRegistryService service = new SchemaRegistryService(store);
         SchemaRegistryClient client = new TestRegistryClient(service);
 
+        assertEquals(client.listNamespaces().size(), 0);
+
         String namespace = "namespace";
         String group = "group";
         client.createNamespace(namespace);
+        assertEquals(client.listNamespaces().size(), 1);
+
+        assertEquals(client.listGroups(namespace).size(), 0);
+        
         client.addGroup(namespace, group, SchemaType.of(SchemaType.Type.Avro),  
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
-                false, true);
+                true, true);
+        assertEquals(client.listGroups(namespace).size(), 1);
 
         Schema schema = ReflectData.get().getSchema(TestClass.class); 
         SchemaInfo schemaInfo = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro), 
                 schema.toString().getBytes(), ImmutableMap.of());
+
         client.addSchemaIfAbsent(namespace, group, schemaInfo, SchemaValidationRules.of());
+
         // attempt to add an existing schema
         client.addSchemaIfAbsent(namespace, group, schemaInfo, SchemaValidationRules.of());
 
@@ -68,7 +79,7 @@ public abstract class TestEndToEnd {
         SchemaInfo schemaInfo2 = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
                 schema2.toString().getBytes(), ImmutableMap.of());
         client.addSchemaIfAbsent(namespace, group, schemaInfo2, SchemaValidationRules.of());
-        
+
         client.updateSchemaValidationRules(namespace, group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)));
 
         Schema schema3 = ReflectData.get().getSchema(TestClass3.class);
