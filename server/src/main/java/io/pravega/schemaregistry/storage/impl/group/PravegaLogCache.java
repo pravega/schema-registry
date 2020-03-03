@@ -48,7 +48,7 @@ public class PravegaLogCache {
                                 public RevisionedStreamClient<Record> load(final ClientCacheKey key) {
                                     SynchronizerClientFactory clientFactory = SynchronizerClientFactory.withScope(
                                             PravegaLog.SCHEMA_REGISTRY_SCOPE, clientConfig);
-                                    String logName = PravegaLog.getLogName(key.namespace, key.group, key.id);
+                                    String logName = PravegaLog.getLogName(key.group, key.id);
 
                                     return clientFactory.createRevisionedStreamClient(logName, new RecordsSerializer<>(),
                                             SynchronizerConfig.builder().build());
@@ -79,7 +79,7 @@ public class PravegaLogCache {
                                         current = next;
                                     }
                                     if (recordCacheValue.get() == null) {
-                                        String error = String.format("namespace=%s,group=%s,position=%s", key.clientCacheKey.getNamespace(), key.clientCacheKey.getGroup(), key.getRevision().toString());
+                                        String error = String.format("group=%s,position=%s", key.clientCacheKey.getGroup(), key.getRevision().toString());
                                         throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, error);
                                     }
                                     return recordCacheValue.get();
@@ -115,7 +115,6 @@ public class PravegaLogCache {
     
     @Data
     static class ClientCacheKey {
-        private final String namespace;
         private final String group;
         private final String id;
     }

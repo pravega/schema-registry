@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest;
 
-import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CompressionType;
@@ -36,105 +35,90 @@ public class TestRegistryClient implements SchemaRegistryClient {
     public TestRegistryClient(SchemaRegistryService service) {
         this.service = service;
     }
-
+    
     @Override
-    public void createNamespace(String namespace) {
-        service.createNamespace(namespace).join();
-    }
-
-    @Override
-    public List<String> listNamespaces() {
-        return service.listNamespaces(null).thenApply(ListWithToken::getList).join();
-    }
-
-    @Override
-    public void deleteNamespace(String namespace) {
-        service.deleteNamespace(namespace).join();
-    }
-
-    @Override
-    public boolean addGroup(String namespace, String group, SchemaType schemaType, SchemaValidationRules validationRules, 
+    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, 
                             boolean subgroupBySchemaName, boolean enableEncoding) {
-        return service.createGroup(namespace, group, new GroupProperties(schemaType, validationRules, subgroupBySchemaName, enableEncoding)).join();
+        return service.createGroup(group, new GroupProperties(schemaType, validationRules, subgroupBySchemaName, enableEncoding)).join();
     }
 
     @Override
-    public void removeGroup(String namespace, String group) {
-        service.deleteGroup(namespace, group).join();
+    public void removeGroup(String group) {
+        service.deleteGroup(group).join();
     }
 
     @Override
-    public Map<String, GroupProperties> listGroups(String namespace) {
-        return service.listGroupsInNamespace(namespace, null).thenApply(MapWithToken::getMap).join();
+    public Map<String, GroupProperties> listGroups() {
+        return service.listGroups(null).thenApply(MapWithToken::getMap).join();
     }
 
     @Override
-    public GroupProperties getGroupProperties(String namespace, String group) {
-        return service.getGroupProperties(namespace, group).join();
+    public GroupProperties getGroupProperties(String group) {
+        return service.getGroupProperties(group).join();
     }
 
     @Override
-    public void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules) {
-        service.updateSchemaValidationPolicy(namespace, group, validationRules).join();
+    public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
+        service.updateSchemaValidationPolicy(group, validationRules).join();
     }
 
     @Override
-    public void addSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+    public void addSchemaValidationRule(String group, SchemaValidationRule rule) {
         throw new NotImplementedException("add rule not implemented");
     }
 
     @Override
-    public void removeSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+    public void removeSchemaValidationRule(String group, SchemaValidationRule rule) {
         throw new NotImplementedException("add rule not implemented");
     }
 
     @Override
-    public List<String> getSubgroups(String namespace, String group) {
-        return service.getSubgroups(namespace, group).join().getList();
+    public List<String> getSubgroups(String group) {
+        return service.getSubgroups(group).join().getList();
     }
 
     @Override
-    public VersionInfo addSchemaIfAbsent(String namespace, String group, SchemaInfo schema, SchemaValidationRules rules) {
-        return service.addSchemaIfAbsent(namespace, group, schema, rules).join();
+    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema, SchemaValidationRules rules) {
+        return service.addSchemaIfAbsent(group, schema, rules).join();
     }
 
     @Override
-    public SchemaInfo getSchema(String namespace, String group, VersionInfo version) {
-        return service.getSchema(namespace, group, version).join();
+    public SchemaInfo getSchema(String group, VersionInfo version) {
+        return service.getSchema(group, version).join();
     }
 
     @Override
-    public EncodingInfo getEncodingInfo(String namespace, String group, EncodingId encodingId) {
-        return service.getEncodingInfo(namespace, group, encodingId).join();
+    public EncodingInfo getEncodingInfo(String group, EncodingId encodingId) {
+        return service.getEncodingInfo(group, encodingId).join();
     }
 
     @Override
-    public EncodingId getEncodingId(String namespace, String group, VersionInfo version, CompressionType compressionType) {
-        return service.getEncodingId(namespace, group, version, compressionType).join();
+    public EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
+        return service.getEncodingId(group, version, compressionType).join();
     }
 
     @Override
-    public SchemaWithVersion getLatestSchema(String namespace, String group, @Nullable String subgroup) {
-        return service.getLatestSchema(namespace, group, subgroup).join();
+    public SchemaWithVersion getLatestSchema(String group, @Nullable String subgroup) {
+        return service.getLatestSchema(group, subgroup).join();
     }
 
     @Override
-    public List<SchemaEvolution> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup) {
-        return service.getGroupEvolutionHistory(namespace, group, subgroup).join();
+    public List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String subgroup) {
+        return service.getGroupEvolutionHistory(group, subgroup).join();
     }
 
     @Override
-    public VersionInfo getSchemaVersion(String namespace, String group, SchemaInfo schema) {
-        return service.getSchemaVersion(namespace, group, schema).join();
+    public VersionInfo getSchemaVersion(String group, SchemaInfo schema) {
+        return service.getSchemaVersion(group, schema).join();
     }
 
     @Override
-    public boolean validateSchema(String namespace, String group, SchemaInfo schema, SchemaValidationRules validationRules) {
-        return service.validateSchema(namespace, group, schema, validationRules).join();
+    public boolean validateSchema(String group, SchemaInfo schema, SchemaValidationRules validationRules) {
+        return service.validateSchema(group, schema, validationRules).join();
     }
 
     @Override
-    public List<CompressionType> getCompressions(String namespace, String group) {
-        return service.getCompressions(namespace, group).join();
+    public List<CompressionType> getCompressions(String group) {
+        return service.getCompressions(group).join();
     }
 }

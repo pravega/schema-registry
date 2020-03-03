@@ -19,8 +19,6 @@ info:
     url: "http://www.apache.org/licenses/LICENSE-2.0"
 basePath: "/v1"
 tags:
-- name: "Namespace"
-  description: "Namespace related APIs"
 - name: "Group"
   description: "Group related APIs"
 - name: "Schema"
@@ -30,91 +28,21 @@ tags:
 schemes:
   - http
 paths:
-  /namespaces:
-    get:
-      tags:
-      - "Namespace"
-      operationId: listNamespaces
-      description: List all available Namespaces in schema registry
-      produces:
-        - application/json
-      responses:
-        200:
-          description: List of currently available Namespaces
-          schema:
-            $ref: "#/definitions/NamespacesList"
-        500:
-          description: Internal server error while fetching list of namespaces
-    post:
-      tags:
-      - "Namespace"
-      operationId: createNamespace
-      description: Create a new Namespace
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: CreateNamespaceRequest
-          description: Create namespace
-          required: true
-          schema:
-            type: object
-            properties:
-              namespaceName:
-                type: string
-      produces:
-        - application/json
-      responses:
-        201:
-          description: Successfully created the Namespace
-        409:
-          description: Namespace with the given name already exists
-        500:
-          description: Internal server error while creating a namespace
-  /namespaces/{namespaceName}:
-    parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
-    delete:
-      tags:
-      - "Namespace"
-      operationId: deleteNamespace
-      description: Delete a namespace
-      responses:
-        204:
-          description: Successfully deleted the namespace
-        404:
-          description: Namespace not found
-        412:
-          description: Cannot delete namespace since it has non-empty list of Groups
-        500:
-          description: Internal server error while deleting a namespace
-  /namespaces/{namespaceName}/groups:
-    parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
+  /groups:
     get:
       tags:
       - "Group"
       operationId: listGroups
-      description: List groups within the given namespace
+      description: List all groups
       produces:
         - application/json
       responses:
         200:
-          description: List of all groups under the given namespace namespace
+          description: List of all groups
           schema:
             $ref: "#/definitions/GroupsList"
-        404:
-          description: Namespace not found
         500:
-          description: Internal server error while fetching the list of Groups for the given namespace
+          description: Internal server error while fetching the list of Groups
     post:
       tags:
       - "Group"
@@ -142,20 +70,13 @@ paths:
                 type: boolean
       responses:
         201:
-          description: Successfully added group to the namespace
-        404:
-          description: Namespace not found
+          description: Successfully added group
         409:
           description: Group with given name already exists
         500:
           description: Internal server error while creating a Group
-  /namespaces/{namespaceName}/groups/{groupName}:
+  /groups/{groupName}:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -174,7 +95,7 @@ paths:
           schema:
             $ref: "#/definitions/GroupProperties"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
     delete:
@@ -189,13 +110,8 @@ paths:
           description: Group not found
         500:
           description: Internal server error while deleting the Group
-  /namespaces/{namespaceName}/groups/{groupName}/rules:
+  /groups/{groupName}/rules:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -214,7 +130,7 @@ paths:
           schema:
             $ref: "#/definitions/SchemaValidationRules"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
     put:
@@ -238,7 +154,7 @@ paths:
         200:
           description: Updated schema validation policy
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         409:
           description: Conflict while attempting to update policy. 
         500:
@@ -264,18 +180,13 @@ paths:
         200:
           description: Added new rule to schema validation policy
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         409:
           description: Conflict while attempting to add rule. 
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/rules/{rule}:
+  /groups/{groupName}/rules/{rule}:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -299,7 +210,7 @@ paths:
           schema:
             $ref: "#/definitions/SchemaValidationRule"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
     delete:
@@ -314,13 +225,8 @@ paths:
           description: Group not found
         500:
           description: Internal server error while deleting the Group
-  /namespaces/{namespaceName}/groups/{groupName}/schemas:
+  /groups/{groupName}/schemas:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -351,7 +257,7 @@ paths:
           schema:
             $ref: "#/definitions/VersionInfo"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
     post:
@@ -381,16 +287,11 @@ paths:
           schema:
             $ref: "#/definitions/VersionInfo"
         404:
-          description: Namespace not found
+          description: Group not found
         500:
           description: Internal server error while creating a Group
-  /namespaces/{namespaceName}/groups/{groupName}/schemas/validate:
+  /groups/{groupName}/schemas/validate:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -421,27 +322,11 @@ paths:
         200:
           description: Schema is valid
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/schemas/versions:
+  /groups/{groupName}/schemas/versions:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-    parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -460,16 +345,11 @@ paths:
           schema:
             $ref: "#/definitions/SchemaEvolutionList"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/schemas/versions/{versionId}:
+  /groups/{groupName}/schemas/versions/{versionId}:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -505,16 +385,11 @@ paths:
           schema:
             $ref: "#/definitions/SchemaInfo"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details  
-  /namespaces/{namespaceName}/groups/{groupName}/schemas/versions/latest:
+  /groups/{groupName}/schemas/versions/latest:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -533,16 +408,11 @@ paths:
           schema:
             $ref: "#/definitions/SchemaWithVersion"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/subgroups:
+  /groups/{groupName}/subgroups:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -561,16 +431,11 @@ paths:
           schema:
             $ref: "#/definitions/SubgroupsList"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions:
+  /groups/{groupName}/subgroups/{subgroupName}/schemas/versions:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -594,16 +459,11 @@ paths:
           schema:
             $ref: "#/definitions/SchemaEvolutionList"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions/{versionId}:
+  /groups/{groupName}/subgroups/{subgroupName}/schemas/versions/{versionId}:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -644,16 +504,11 @@ paths:
           schema:
             $ref: "#/definitions/SchemaInfo"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details  
-  /namespaces/{namespaceName}/groups/{groupName}/subgroups/{subgroupName}/schemas/versions/latest:
+  /groups/{groupName}/subgroups/{subgroupName}/schemas/versions/latest:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -677,16 +532,11 @@ paths:
           schema:
             $ref: "#/definitions/SchemaWithVersion"
         404:
-          description: Namespace or Group with given name not found
+          description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/encodings:
+  /groups/{groupName}/encodings:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -721,16 +571,11 @@ paths:
           schema:
             $ref: "#/definitions/EncodingId"
         404:
-          description: Namespace or Group or encoding id with given name not found
+          description: Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/encodings/{encodingId}:
+  /groups/{groupName}/encodings/{encodingId}:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -755,16 +600,11 @@ paths:
           schema:
             $ref: "#/definitions/EncodingInfo"
         404:
-          description: Namespace or Group or encoding id with given name not found
+          description: Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /namespaces/{namespaceName}/groups/{groupName}/compressions:
+  /groups/{groupName}/compressions:
     parameters:
-      - in: path
-        name: namespaceName
-        description: Namespace name
-        required: true
-        type: string
       - in: path
         name: groupName
         description: Group name
@@ -783,22 +623,10 @@ paths:
           schema:
             $ref: "#/definitions/CompressionsList"
         404:
-          description: Namespace or Group or encoding id with given name not found
+          description: Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
 definitions:
-  NamespaceProperty:
-    type: object
-    properties:
-      namespaceName:
-        type: string
-  NamespacesList:
-    type: object
-    properties:
-      namespaces:
-        type: array
-        items:
-          $ref: "#/definitions/NamespaceProperty"
   GroupsList:
     type: object
     properties:

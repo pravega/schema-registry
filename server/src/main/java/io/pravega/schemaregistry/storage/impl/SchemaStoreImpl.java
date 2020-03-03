@@ -24,64 +24,48 @@ import io.pravega.schemaregistry.storage.Position;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.Group;
-import io.pravega.schemaregistry.storage.impl.namespace.Namespace;
-import io.pravega.schemaregistry.storage.impl.namespace.Namespaces;
+import io.pravega.schemaregistry.storage.impl.groups.Groups;
 
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public class SchemaStoreImpl<T> implements SchemaStore {
-    private final Namespaces<T> namespaces;
+    private final Groups<T> groups;
 
-    public SchemaStoreImpl(Namespaces<T> namespaces) {
-        this.namespaces = namespaces;
+    public SchemaStoreImpl(Groups<T> groups) {
+        this.groups = groups;
     }
     
     // region schema store
     @Override
-    public CompletableFuture<ListWithToken<String>> listNamespaces(ContinuationToken parse) {
-        return namespaces.getNamespaces();
+    public CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token) {
+        return groups.getGroups();
     }
 
     @Override
-    public CompletableFuture<Void> createNamespace(String namespace) {
-        return namespaces.addNewNamespace(namespace);
+    public CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties) {
+        return groups.addNewGroup(group, groupProperties);
     }
 
     @Override
-    public CompletableFuture<Void> deleteNamespace(String namespace) {
-        return namespaces.removeNamespace(namespace);
+    public CompletableFuture<Void> deleteGroup(String group) {
+        return groups.deleteGroup(group);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token) {
-        return getNamespace(namespace).thenCompose(Namespace::getGroups);
+    public CompletableFuture<Position> getGroupEtag(String group) {
+        return getGroup(group).thenCompose(Group::getCurrentEtag);
     }
 
     @Override
-    public CompletableFuture<Boolean> createGroupInNamespace(String namespace, String group, GroupProperties groupProperties) {
-        return getNamespace(namespace).thenCompose(scp -> scp.addNewGroup(group, groupProperties));
+    public CompletableFuture<GroupProperties> getGroupProperties(String group) {
+        return getGroup(group).thenCompose(Group::getGroupProperties);
     }
 
     @Override
-    public CompletableFuture<Void> deleteGroup(String namespace, String group) {
-        return getNamespace(namespace).thenCompose(scp -> scp.deleteGroup(group));
-    }
-
-    @Override
-    public CompletableFuture<Position> getGroupEtag(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getCurrentEtag);
-    }
-
-    @Override
-    public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getGroupProperties);
-    }
-
-    @Override
-    public CompletableFuture<Void> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy) {
-        return getGroup(namespace, group)
+    public CompletableFuture<Void> updateValidationPolicy(String group, Position etag, SchemaValidationRules policy) {
+        return getGroup(group)
                 .thenCompose(grp -> grp.getCurrentEtag().thenCompose(currentEtag -> {
                     if (!etag.equals(currentEtag)) {
                         throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, "Validation Policy Update");
@@ -92,104 +76,90 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getSubgroups);
+    public CompletableFuture<ListWithToken<String>> listSubGroups(String group) {
+        return getGroup(group).thenCompose(Group::getSubgroups);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getSchemas);
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group) {
+        return getGroup(group).thenCompose(Group::getSchemas);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, VersionInfo from) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getSchemas(from));
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, VersionInfo from) {
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(from));
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getSchemas(subgroup));
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String group, String subgroup) {
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(subgroup));
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, VersionInfo versionInfo) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getSchema(versionInfo));
+    public CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo) {
+        return getGroup(group).thenCompose(grp -> grp.getSchema(versionInfo));
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getLatestSchema);
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group) {
+        return getGroup(group).thenCompose(Group::getLatestSchema);
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group, String subgroup) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getLatestSchema(subgroup));
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String subgroup) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(subgroup));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String namespace, String group, Position etag, SchemaInfo schemaInfo) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, etag));
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo) {
+        return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, etag));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String namespace, String group, String subgroup, Position etag, SchemaInfo schemaInfo) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.addSchemaToSubGroup(subgroup, schemaInfo, etag));
+    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String group, String subgroup, Position etag, SchemaInfo schemaInfo) {
+        return getGroup(group).thenCompose(grp -> grp.addSchemaToSubGroup(subgroup, schemaInfo, etag));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getVersion(schemaInfo));
+    public CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo) {
+        return getGroup(group).thenCompose(grp -> grp.getVersion(schemaInfo));
     }
 
     @Override
-    public CompletableFuture<EncodingId> createOrGetEncodingId(String namespace, String group, VersionInfo versionInfo,
+    public CompletableFuture<EncodingId> createOrGetEncodingId(String group, VersionInfo versionInfo,
                                                                CompressionType compressionType) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getOrCreateEncodingId(versionInfo, compressionType));
+        return getGroup(group).thenCompose(grp -> grp.getOrCreateEncodingId(versionInfo, compressionType));
     }
 
     @Override
-    public CompletableFuture<EncodingInfo> getEncodingInfo(String namespace, String group, EncodingId encodingId) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getEncodingInfo(encodingId));
+    public CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId) {
+        return getGroup(group).thenCompose(grp -> grp.getEncodingInfo(encodingId));
     }
 
     @Override
-    public CompletableFuture<List<CompressionType>> getCompressions(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getCompressions);
+    public CompletableFuture<List<CompressionType>> getCompressions(String group) {
+        return getGroup(group).thenCompose(Group::getCompressions);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String namespace, String group) {
-        return getGroup(namespace, group).thenCompose(Group::getHistory);
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group) {
+        return getGroup(group).thenCompose(Group::getHistory);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup) {
-        return getGroup(namespace, group).thenCompose(grp -> grp.getHistory(subgroup));
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String group, String subgroup) {
+        return getGroup(group).thenCompose(grp -> grp.getHistory(subgroup));
     }
     // endregion
 
-    private CompletableFuture<Group<T>> getGroup(String namespace, String group) {
-        return getNamespace(namespace)
-                .thenCompose(scp -> scp.getGroup(group)
-                                       .thenApply(grp -> {
+    private CompletableFuture<Group<T>> getGroup(String group) {
+        return groups.getGroup(group).thenApply(grp -> {
                                            if (grp == null) {
-                                               String errorMessage = String.format("namespace=%s, group=%s", namespace, group);
+                                               String errorMessage = String.format("groups=%s, group=%s", group);
                                                throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, errorMessage);
                                            }
 
                                            return grp;
-                                       }));
-    }
-
-    private CompletableFuture<Namespace<T>> getNamespace(String namespace) {
-        return namespaces.getNamespace(namespace)
-                         .thenApply(scp -> {
-                             if (scp == null) {
-                                 String errorMessage = String.format("namespace=%s", namespace);
-                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, errorMessage);
-                             }
-
-                             return scp;
-                         });
+                                       });
     }
 }

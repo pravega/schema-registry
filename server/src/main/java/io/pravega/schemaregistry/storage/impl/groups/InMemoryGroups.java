@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.impl.namespace;
+package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -26,14 +26,14 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
-public class InMemoryNamespace implements Namespace<Integer> {
+public class InMemoryGroups implements Groups<Integer> {
     @GuardedBy("$lock")
     private final Map<String, Group<Integer>> groups = new HashMap<>();
     private final Supplier<Log> walFactory;
     private final Supplier<Index<Integer>> kvFactory;
     private final ScheduledExecutorService executor;
 
-    public InMemoryNamespace(ScheduledExecutorService executor) {
+    public InMemoryGroups(ScheduledExecutorService executor) {
         this.executor = executor;
         this.walFactory = InMemoryLog::new;
         this.kvFactory = InMemoryIndex::new;

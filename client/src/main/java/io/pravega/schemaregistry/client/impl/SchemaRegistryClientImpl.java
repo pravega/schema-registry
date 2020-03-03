@@ -22,10 +22,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CreateNamespaceRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.NamespaceProperty;
-import io.pravega.schemaregistry.contract.generated.rest.model.NamespacesList;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import org.apache.commons.lang3.NotImplementedException;
 import org.glassfish.jersey.client.ClientConfig;
@@ -52,38 +49,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
     
     @Override
-    public void createNamespace(String namespace) {
-        WebTarget webTarget = client.target(uri).path("namespaces");
-
-        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-
-        CreateNamespaceRequest request = new CreateNamespaceRequest().namespaceName(namespace);
-        invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
-    }
-
-    @Override
-    public List<String> listNamespaces() {
-        WebTarget webTarget = client.target(uri).path("namespaces");
-
-        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-
-        Response response = invocationBuilder.get();
-        NamespacesList entity = response.readEntity(NamespacesList.class);
-        return entity.getNamespaces().stream().map(NamespaceProperty::getNamespaceName).collect(Collectors.toList());
-    }
-
-    @Override
-    public void deleteNamespace(String namespace) {
-        WebTarget webTarget = client.target(uri).path("namespaces").path(namespace);
-
-        Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-
-        invocationBuilder.delete();
-    }
-
-    @Override
-    public boolean addGroup(String namespace, String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean subgroupBySchemaName, boolean enableEncoding) {
-        WebTarget webTarget = client.target(uri).path("namespaces").path(namespace).path("groups");
+    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean subgroupBySchemaName, boolean enableEncoding) {
+        WebTarget webTarget = client.target(uri).path("groups");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
@@ -105,13 +72,13 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void removeGroup(String namespace, String group) {
+    public void removeGroup(String group) {
 
     }
 
     @Override
-    public Map<String, GroupProperties> listGroups(String namespace) {
-        WebTarget webTarget = client.target(uri).path("namespaces").path(namespace).path("groups");
+    public Map<String, GroupProperties> listGroups() {
+        WebTarget webTarget = client.target(uri).path("groups");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
@@ -126,72 +93,72 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public GroupProperties getGroupProperties(String namespace, String group) {
+    public GroupProperties getGroupProperties(String group) {
         return null;
     }
 
     @Override
-    public void updateSchemaValidationRules(String namespace, String group, SchemaValidationRules validationRules) {
+    public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
 
     }
 
     @Override
-    public void addSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+    public void addSchemaValidationRule(String group, SchemaValidationRule rule) {
         throw new NotImplementedException("Rule not implemented");
     }
 
     @Override
-    public void removeSchemaValidationRule(String namespace, String group, SchemaValidationRule rule) {
+    public void removeSchemaValidationRule(String group, SchemaValidationRule rule) {
         throw new NotImplementedException("Rule not implemented");
     }
 
     @Override
-    public List<String> getSubgroups(String namespace, String group) {
+    public List<String> getSubgroups(String group) {
         return null;
     }
 
     @Override
-    public VersionInfo addSchemaIfAbsent(String namespace, String group, SchemaInfo schema, SchemaValidationRules rules) {
+    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema, SchemaValidationRules rules) {
         return null;
     }
 
     @Override
-    public SchemaInfo getSchema(String namespace, String group, VersionInfo version) {
+    public SchemaInfo getSchema(String group, VersionInfo version) {
         return null;
     }
 
     @Override
-    public EncodingInfo getEncodingInfo(String namespace, String group, EncodingId encodingId) {
+    public EncodingInfo getEncodingInfo(String group, EncodingId encodingId) {
         return null;
     }
 
     @Override
-    public EncodingId getEncodingId(String namespace, String group, VersionInfo version, CompressionType compressionType) {
+    public EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
         return null;
     }
 
     @Override
-    public SchemaWithVersion getLatestSchema(String namespace, String group, @Nullable String subgroup) {
+    public SchemaWithVersion getLatestSchema(String group, @Nullable String subgroup) {
         return null;
     }
 
     @Override
-    public List<SchemaEvolution> getGroupEvolutionHistory(String namespace, String group, @Nullable String subgroup) {
+    public List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String subgroup) {
         return null;
     }
 
     @Override
-    public VersionInfo getSchemaVersion(String namespace, String group, SchemaInfo schema) {
+    public VersionInfo getSchemaVersion(String group, SchemaInfo schema) {
         return null;
     }
 
     @Override
-    public boolean validateSchema(String namespace, String group, SchemaInfo schema, SchemaValidationRules validationRules) {
+    public boolean validateSchema(String group, SchemaInfo schema, SchemaValidationRules validationRules) {
         return false;
     }
 
     @Override
-    public List<CompressionType> getCompressions(String namespace, String group) {
+    public List<CompressionType> getCompressions(String group) {
         return null;
     }
 }

@@ -54,7 +54,7 @@ public abstract class TestEndToEnd {
 
         assertEquals(client.listNamespaces().size(), 0);
 
-        String namespace = "namespace";
+        String namespace = "groups";
         String group = "group";
         client.createNamespace(namespace);
         assertEquals(client.listNamespaces().size(), 1);
