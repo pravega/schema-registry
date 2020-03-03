@@ -103,7 +103,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
 
     @Override
     public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, VersionInfo from) {
-        return getGroup(namespace, group).thenCompose(Group::getSchemas);
+        return getGroup(namespace, group).thenCompose(grp -> grp.getSchemas(from));
     }
 
     @Override

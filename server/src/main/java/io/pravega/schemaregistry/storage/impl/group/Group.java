@@ -162,7 +162,7 @@ public class Group<T> {
                         return Futures.failedFuture(new IllegalStateException());
                     }
                     // get all index keys
-                    return index.getAllKeys()
+                    return sync().thenCompose(v -> index.getAllKeys())
                                 .thenApply(list -> {
                                     List<String> subgroups = list
                                             .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)

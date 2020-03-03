@@ -119,9 +119,8 @@ public class PravegaLog implements Log {
         RevisionedStreamClient<Record> client = logCache.getClient(clientCacheKey);
 
         PravegaPosition pos = position == null ? new PravegaPosition(client.fetchOldestRevision()) : (PravegaPosition) position;
-        Revision latest = client.fetchLatestRevision();
         
-        return CompletableFuture.supplyAsync(() -> {
+        return getCurrentEtag().thenApplyAsync(latest -> {
             Revision current = pos.getRevision();
             List<RecordWithPosition> recordWithPositions = new ArrayList<>();
 
@@ -129,7 +128,7 @@ public class PravegaLog implements Log {
             while (value != null) {
                 recordWithPositions.add(new RecordWithPosition(new PravegaPosition(current), value.getRecord()));
                 current = value.getNextRevision();
-                value = current.equals(latest) ? null : logCache.getRecord(cacheKeySupplier.apply(current));
+                value = current.equals(latest.getPosition()) ? null : logCache.getRecord(cacheKeySupplier.apply(current));
             }
 
             return recordWithPositions;

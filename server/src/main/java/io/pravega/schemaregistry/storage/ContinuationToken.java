@@ -14,10 +14,4 @@ public class ContinuationToken {
         // TODO: parse string to token
         return null;
     }
-
-    @Override
-    public String toString() {
-        // TODO: parse to string
-        return "ContinuationToken{}";
-    }
 }

@@ -83,11 +83,13 @@ public abstract class TestEndToEnd {
         client.updateSchemaValidationRules(namespace, group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)));
 
         Schema schema3 = ReflectData.get().getSchema(TestClass3.class);
-        SchemaInfo schemaInfo3 = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
+        SchemaInfo schemaInfo3 = new SchemaInfo(TestClass3.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
                 schema3.toString().getBytes(), ImmutableMap.of());
         client.addSchemaIfAbsent(namespace, group, schemaInfo3, SchemaValidationRules.of());
 
-        log.info("Schema Evolution History:", client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
+        log.info("Schema Evolution History: {}", client.getSubgroups(namespace, group));
+        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
+        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(namespace, group, TestClass3.class.getSimpleName()));
     }
 
     abstract SchemaStore getStore();
