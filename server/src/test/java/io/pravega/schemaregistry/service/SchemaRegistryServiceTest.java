@@ -9,8 +9,14 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +26,7 @@ import java.util.concurrent.CompletableFuture;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
@@ -31,16 +38,20 @@ public class SchemaRegistryServiceTest {
     }
 
     @Test
-    public void testNamespaces() {
+    public void testGroups() {
         SchemaStore store = mock(SchemaStore.class);
         SchemaRegistryService service = new SchemaRegistryService(store);
 
-        ArrayList<String> namespaces = Lists.newArrayList("ns1", "ns2");
+        ArrayList<String> groups = Lists.newArrayList("grp1", "grp2");
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new ListWithToken<>(namespaces, null));
-        }).when(store).listNamespaces(any());
+            return CompletableFuture.completedFuture(new ListWithToken<>(groups, null));
+        }).when(store).listGroups(any());
+        doAnswer(x -> {
+            return CompletableFuture.completedFuture(new GroupProperties(SchemaType.of(SchemaType.Type.Avro), 
+                    new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), false, false));
+        }).when(store).getGroupProperties(anyString());
 
-        ListWithToken<String> result = service.listNamespaces(null).join();
-        assertEquals(result.getList(), namespaces);
+        MapWithToken<String, GroupProperties> result = service.listGroups(null).join();
+        assertEquals(result.getMap().size(), 2);
     }
 }

@@ -26,117 +26,102 @@ import java.util.concurrent.CompletableFuture;
 
 public class InMemorySchemaStore implements SchemaStore {
     @Override
-    public CompletableFuture<ListWithToken<String>> listNamespaces(ContinuationToken parse) {
+    public CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Void> createNamespace(String namespace) {
+    public CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Void> deleteNamespace(String namespace) {
+    public CompletableFuture<Void> deleteGroup(String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token) {
+    public CompletableFuture<Position> getGroupEtag(String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Boolean> createGroupInNamespace(String namespace, String group, GroupProperties groupProperties) {
+    public CompletableFuture<GroupProperties> getGroupProperties(String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Void> deleteGroup(String namespace, String group) {
+    public CompletableFuture<Position> updateValidationPolicy(String group, Position position, SchemaValidationRules policy) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Position> getGroupEtag(String namespace, String group) {
+    public CompletableFuture<ListWithToken<String>> listSubGroups(String group, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<Position> updateValidationPolicy(String namespace, String group, Position position, SchemaValidationRules policy) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String group, String subgroup, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group, ContinuationToken token) {
+    public CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, ContinuationToken token) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup, ContinuationToken token) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String subgroup) {
         return null;
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, VersionInfo versionInfo) {
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position position, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group) {
+    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String group, String subgroup, Position position, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group, String subgroup) {
+    public CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String namespace, String group, Position position, SchemaInfo schemaInfo) {
+    public CompletableFuture<EncodingId> createOrGetEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String namespace, String group, String subgroup, Position position, SchemaInfo schemaInfo) {
+    public CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId) {
         return null;
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo) {
+    public CompletableFuture<List<CompressionType>> getCompressions(String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<EncodingId> createOrGetEncodingId(String namespace, String group, VersionInfo versionInfo, CompressionType compressionType) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupHistory(String group) {
         return null;
     }
 
     @Override
-    public CompletableFuture<EncodingInfo> getEncodingInfo(String namespace, String group, EncodingId encodingId) {
-        return null;
-    }
-
-    @Override
-    public CompletableFuture<List<CompressionType>> getCompressions(String namespace, String group) {
-        return null;
-    }
-
-    @Override
-    public CompletableFuture<List<SchemaEvolution>> getGroupHistory(String namespace, String group) {
-        return null;
-    }
-
-    @Override
-    public CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String group, String subgroup) {
         return null;
     }
 }
