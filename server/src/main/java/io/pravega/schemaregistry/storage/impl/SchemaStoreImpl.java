@@ -87,7 +87,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, VersionInfo from) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, VersionInfo from, ContinuationToken token) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(from));
     }
 
@@ -95,6 +95,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
                                                                                       ContinuationToken token) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName));
+    }
+
+    @Override
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
+                                                                                      VersionInfo from, ContinuationToken token) {
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName, from));
     }
 
     @Override
@@ -163,7 +169,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     private CompletableFuture<Group<T>> getGroup(String group) {
         return groups.getGroup(group).thenApply(grp -> {
                                            if (grp == null) {
-                                               String errorMessage = String.format("groups=%s, group=%s", group);
+                                               String errorMessage = String.format("group=%s", group);
                                                throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, errorMessage);
                                            }
 

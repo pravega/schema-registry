@@ -10,9 +10,12 @@
 package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.pravega.client.ClientConfig;
+import io.pravega.common.Exceptions;
+import io.pravega.common.concurrent.Futures;
 import io.pravega.controller.store.stream.Version;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.group.Group;
 import io.pravega.schemaregistry.storage.impl.group.PravegaLogCache;
@@ -23,6 +26,7 @@ import lombok.Data;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Supplier;
 
 public class PravegaTableGroups implements Groups<Version> {
     public static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
@@ -30,12 +34,12 @@ public class PravegaTableGroups implements Groups<Version> {
 
     private final PravegaLogCache logCache;
     private final ClientConfig clientConfig;
-    private final TableStore tablesStore;
+    private final TableStore tableStore;
     private final ScheduledExecutorService executor;
     private final String tableName;
     
-    public PravegaTableGroups(ClientConfig clientConfig, TableStore tablesStore, ScheduledExecutorService executor) {
-        this.tablesStore = tablesStore;
+    public PravegaTableGroups(ClientConfig clientConfig, TableStore tableStore, ScheduledExecutorService executor) {
+        this.tableStore = tableStore;
         this.executor = executor;
         this.tableName = GROUPS;
         this.logCache = new PravegaLogCache(clientConfig);
@@ -44,8 +48,8 @@ public class PravegaTableGroups implements Groups<Version> {
     
     @Override
     public CompletableFuture<Group<Version>> getGroup(String groupName) {
-        return tablesStore.getEntry(tableName, groupName, IdWithState::fromBytes)
-                   .thenApply(entry -> {
+        return withCreateNamespacesTableIfNotExist(() -> tableStore.getEntry(tableName, groupName, IdWithState::fromBytes))
+                         .thenApply(entry -> {
                        if (!entry.getObject().getState().equals(IdWithState.State.Active)) {
                            throw new IllegalStateException();
                        } else {
@@ -62,9 +66,9 @@ public class PravegaTableGroups implements Groups<Version> {
         // 4. update groups entry to active
         String id = UUID.randomUUID().toString();
         IdWithState value = new IdWithState(id, IdWithState.State.Creating);
-        return tablesStore.addNewEntryIfAbsent(tableName, group, value.toBytes())
-                   .thenCompose(v -> tablesStore.getEntry(tableName, group, IdWithState::fromBytes))
-                   .thenCompose(entry -> {
+        return withCreateNamespacesTableIfNotExist(() -> tableStore.addNewEntryIfAbsent(tableName, group, value.toBytes()))
+                         .thenCompose(v -> tableStore.getEntry(tableName, group, IdWithState::fromBytes))
+                         .thenCompose(entry -> {
                        if (entry.getObject().getState().equals(IdWithState.State.Creating)) {
                            GroupObj groupObject = getGroupObject(group, entry.getObject());
                            Group<Version> grp = groupObject.getGroup();
@@ -77,7 +81,7 @@ public class PravegaTableGroups implements Groups<Version> {
                                              groupProperties.isValidateByObjectType(), groupProperties.getSchemaValidationRules()))
                                      .thenCompose(v -> {
                                          byte[] newValue = new IdWithState(entry.getObject().getId(), IdWithState.State.Active).toBytes();
-                                         return tablesStore.updateEntry(tableName, group, newValue, entry.getVersion());
+                                         return tableStore.updateEntry(tableName, group, newValue, entry.getVersion());
                                      })
                               .thenApply(v -> toReturn);
                        } else {
@@ -89,8 +93,8 @@ public class PravegaTableGroups implements Groups<Version> {
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups() {
         // read from groups's table
-        return tablesStore.getAllKeys(tableName)
-                          .thenApply(list -> new ListWithToken<>(list, null));
+        return withCreateNamespacesTableIfNotExist(() -> tableStore.getAllKeys(tableName))
+                         .thenApply(list -> new ListWithToken<>(list, null));
     }
 
     @Override
@@ -99,26 +103,33 @@ public class PravegaTableGroups implements Groups<Version> {
         // 2. call group.delete
         //  2.1 delete index
         //  2.2 delete log
-        //  2.3 delete the groups entry
-        return tablesStore.getEntry(tableName, group, IdWithState::fromBytes)
-                          .thenCompose(entry -> {
+        // 3. delete the groups entry
+        return Futures.exceptionallyExpecting(tableStore.getEntry(tableName, group, IdWithState::fromBytes)
+                         .thenCompose(entry -> {
                               IdWithState newValue = new IdWithState(entry.getObject().getId(), IdWithState.State.Deleting);
-                              return tablesStore.updateEntry(tableName, group, newValue.toBytes(), entry.getVersion())
-                                                .thenCompose(version -> {
+                              return tableStore.updateEntry(tableName, group, newValue.toBytes(), entry.getVersion())
+                                               .thenCompose(version -> {
                                                     GroupObj grpObj = getGroupObject(group, newValue);
                                                     return CompletableFuture.allOf(grpObj.getLog().delete(), grpObj.getIndex().delete());
                                                 });
                           })
-                .thenCompose(v -> tablesStore.removeEntry(tableName, group));
+                         .thenCompose(v -> tableStore.removeEntry(tableName, group)), 
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);
     }
 
     private GroupObj getGroupObject(String groupName, IdWithState value) {
         PravegaLog log = new PravegaLog(groupName, value.getId(), clientConfig, logCache, executor);
-        PravegaTableIndex index = new PravegaTableIndex(groupName, value.getId(), tablesStore);
+        PravegaTableIndex index = new PravegaTableIndex(groupName, value.getId(), tableStore);
         Group<Version> group = new Group<>(log, index, executor);
         return new GroupObj(group, log, index);
     }
 
+    private <T> CompletableFuture<T> withCreateNamespacesTableIfNotExist(Supplier<CompletableFuture<T>> supplier) {
+        return Futures.exceptionallyComposeExpecting(supplier.get(),
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                () -> tableStore.createTable(GROUPS).thenCompose(v -> supplier.get()));
+    }
+    
     @Data
     private static class GroupObj {
         private final Group<Version> group;

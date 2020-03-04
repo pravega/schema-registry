@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 public class PravegaLog implements Log {
     static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
-    private static final String LOG_NAME_FORMAT = "log-%s-%s-%s";
+    private static final String LOG_NAME_FORMAT = "log-%s-%s";
     
     private final PravegaLogCache logCache;
     private final ClientConfig clientConfig;
@@ -52,8 +52,8 @@ public class PravegaLog implements Log {
         this.logName = getLogName(group, id);
     }
 
-    static String getLogName(String group, String groupId) {
-        return String.format(LOG_NAME_FORMAT, group, groupId);
+    static String getLogName(String groupName, String uuid) {
+        return String.format(LOG_NAME_FORMAT, groupName, uuid);
     }
     
     public CompletableFuture<Void> create() {
@@ -124,11 +124,12 @@ public class PravegaLog implements Log {
             Revision current = pos.getRevision();
             List<RecordWithPosition> recordWithPositions = new ArrayList<>();
 
-            PravegaLogCache.RecordCacheValue value = logCache.getRecord(cacheKeySupplier.apply(current));
-            while (value != null) {
-                recordWithPositions.add(new RecordWithPosition(new PravegaPosition(current), value.getRecord()));
-                current = value.getNextRevision();
-                value = current.equals(latest.getPosition()) ? null : logCache.getRecord(cacheKeySupplier.apply(current));
+            while (!current.equals(latest.getPosition())) {
+                PravegaLogCache.RecordCacheValue value = logCache.getRecord(cacheKeySupplier.apply(current));
+                Revision next = value.getNextRevision();
+                recordWithPositions.add(new RecordWithPosition(new PravegaPosition(current), value.getRecord(), 
+                        new PravegaPosition(next)));
+                current = next;
             }
 
             return recordWithPositions;
