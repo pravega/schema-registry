@@ -35,24 +35,28 @@ public interface SchemaStore {
 
     CompletableFuture<GroupProperties> getGroupProperties(String group);
     
-    CompletableFuture<Void> updateValidationPolicy(String group, Position etag, SchemaValidationRules policy);
+    CompletableFuture<Void> updateValidationRules(String group, Position etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token);
+    CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token);
     
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
 
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, VersionInfo from);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName,
-                                                                               ContinuationToken token);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
+                                                                                ContinuationToken token);
     
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
 
     CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String eventTypeName);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName);
+    
+    CompletableFuture<VersionInfo> getLatestVersion(String group);
+    
+    CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName);
 
-    CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo, VersionInfo versionInfo);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 
@@ -64,5 +68,5 @@ public interface SchemaStore {
 
     CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group);
     
-    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName);
+    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);
 }

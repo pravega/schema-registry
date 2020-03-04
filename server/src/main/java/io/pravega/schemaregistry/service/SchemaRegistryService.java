@@ -32,7 +32,6 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
-import java.util.InputMismatchException;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -78,21 +77,21 @@ public class SchemaRegistryService {
     private boolean validateRules(GroupProperties groupProperties, SchemaValidationRules newRules) {
         Preconditions.checkNotNull(newRules);
         Compatibility.Type compatibility = newRules.getCompatibility().getCompatibility();
-        boolean subgroupCheck = !groupProperties.isValidateByEventType() ||
-                isValidSubgroupPolicy(compatibility);
+        boolean objectTypeCheck = !groupProperties.isValidateByObjectType() ||
+                isValidObjectTypePolicy(compatibility);
 
         switch (groupProperties.getSchemaType().getSchemaType()) {
             case Avro:
-                return subgroupCheck;
+                return objectTypeCheck;
             case Protobuf:
             case Json:
             case Custom:
-                return subgroupCheck && isValidNonAvroPolicy(compatibility);
+                return objectTypeCheck && isValidNonAvroPolicy(compatibility);
         }
         return true;
     }
 
-    private boolean isValidSubgroupPolicy(Compatibility.Type compatibility) {
+    private boolean isValidObjectTypePolicy(Compatibility.Type compatibility) {
         return !(compatibility.equals(Compatibility.Type.BackwardTill) ||
                 compatibility.equals(Compatibility.Type.ForwardTill) ||
                 compatibility.equals(Compatibility.Type.BackwardTillAndForwardTill));
@@ -107,8 +106,8 @@ public class SchemaRegistryService {
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#validateByEventType} that specifies if schemas are evolved by event type.
-     * Event Types are uniquely identified by {@link SchemaInfo#name}.
+     * {@link GroupProperties#validateByObjectType} that specifies if schemas are evolved by object type.
+     * Object types are uniquely identified by {@link SchemaInfo#name}.
      * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify
      * encoding properties in {@link EncodingInfo}.
      *
@@ -131,7 +130,7 @@ public class SchemaRegistryService {
                     .thenCompose(pos -> store.getGroupProperties(group)
                                              .thenCompose(groupProperties -> {
                                                  if (validateRules(groupProperties, validationRules)) {
-                                                     return store.updateValidationPolicy(group, pos, validationRules);
+                                                     return store.updateValidationRules(group, pos, validationRules);
                                                  } else {
                                                      throw new IllegalArgumentException();
                                                  }
@@ -139,20 +138,20 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets list of event types registered under the group. Event types are identified by {@link SchemaInfo#name}
+     * Gets list of object types registered under the group. Object types are identified by {@link SchemaInfo#name}
      *
      * @param group Name of group.
      * @param token Continuation token.
-     * @return CompletableFuture which holds list of event types upon completion.
+     * @return CompletableFuture which holds list of object types upon completion.
      */
-    public CompletableFuture<ListWithToken<String>> getEventTypes(String group, ContinuationToken token) {
-        return store.listEventTypes(group, token);
+    public CompletableFuture<ListWithToken<String>> getObjectTypes(String group, ContinuationToken token) {
+        return store.listObjectTypes(group, token);
     }
 
     /**
-     * Adds schema to the group. If group is configured with {@link GroupProperties#validateByEventType}, then
+     * Adds schema to the group. If group is configured with {@link GroupProperties#validateByObjectType}, then
      * the {@link SchemaInfo#name} is used to filter previous schemas and apply schema validation policy against schemas
-     * of event type.
+     * of object type.
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in
      * {@link GroupProperties#schemaValidationRules}
      *
@@ -171,17 +170,23 @@ public class SchemaRegistryService {
                                               .thenCompose(prop -> {
                                                   return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
                                                           e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, () -> {
-                                                              if (prop.isValidateByEventType()) {
-                                                                  String subgroup = schema.getName();
+                                                      CompletableFuture<VersionInfo> latest;
+                                                              if (prop.isValidateByObjectType()) {
+                                                                  String objectTypeName = schema.getName();
 
-                                                                  // subgroup policy cannot be backward till forward till etc. 
-                                                                  // get schemas for subgroup for validation
-                                                                  return store.addSchemaToGroup(group, etag, schema);
+                                                                  // policy cannot be backward till forward till etc. 
+                                                                  // get schemas for object type for validation
+                                                                  latest = store.getLatestVersion(group, objectTypeName);
                                                               } else {
                                                                   // todo: apply policy
                                                                   // get schemas for group for validation
-                                                                  return store.addSchemaToGroup(group, etag, schema);
+                                                                  latest = store.getLatestVersion(group);
                                                               }
+                                                              return latest.thenCompose(latestVersion -> {
+                                                                  int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
+                                                                  VersionInfo nextVersion = new VersionInfo(schema.getName(), next);
+                                                                  return store.addSchemaToGroup(group, etag, schema, nextVersion);
+                                                              });
                                                           });
                                               }));
     }
@@ -220,7 +225,7 @@ public class SchemaRegistryService {
     public CompletableFuture<EncodingId> getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
         return store.getGroupProperties(group)
                     .thenCompose(prop -> {
-                        if (prop.isValidateByEventType()) {
+                        if (prop.isValidateByObjectType()) {
                             return store.getLatestSchema(group, version.getSchemaName());
                         } else {
                             return store.getLatestSchema(group);
@@ -232,37 +237,37 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets latest schema and version for the group (or eventType, if specified).
-     * For groups configured with {@link GroupProperties#validateByEventType}, the eventType name needs to be supplied to
-     * get the latest schema for the event type.
+     * Gets latest schema and version for the group (or objectType, if specified).
+     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypename needs to be supplied to
+     * get the latest schema for the object type.
      *
      * @param group    Name of group.
-     * @param eventTypeName Event type.
+     * @param objectTypeName Object type.
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String eventTypeName) {
-        if (eventTypeName == null) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String objectTypeName) {
+        if (objectTypeName == null) {
             return store.getLatestSchema(group);
         } else {
-            return store.getLatestSchema(group, eventTypeName);
+            return store.getLatestSchema(group, objectTypeName);
         }
     }
 
     /**
-     * Gets all schemas with corresponding versions for the group (or eventTypeName, if specified).
-     * For groups configured with {@link GroupProperties#validateByEventType}, the eventTypeName name needs to be supplied to
-     * get the latest schema for the eventTypeName. {@link SchemaInfo#name} is used as the eventTypeName name.
+     * Gets all schemas with corresponding versions for the group (or objectTypeName, if specified).
+     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypeName name needs to be supplied to
+     * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name.
      * The order in the list matches the order in which schemas were evolved within the group.
      *
      * @param group    Name of group.
-     * @param eventTypeName Event Type.
+     * @param objectTypeName Object type.
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
-    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String eventTypeName) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
         return store.getGroupProperties(group)
                     .thenCompose(prop -> {
-                        if (prop.isValidateByEventType()) {
-                            return store.getGroupHistoryForEventType(group, eventTypeName);
+                        if (prop.isValidateByObjectType()) {
+                            return store.getGroupHistoryForObjectType(group, objectTypeName);
                         } else {
                             return store.getGroupHistory(group);
                         }
@@ -270,8 +275,8 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByEventType}
-     * the eventType name is taken from the {@link SchemaInfo#name}.
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByObjectType}
+     * the objectTypename is taken from the {@link SchemaInfo#name}.
      * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
      *
      * @param group  Name of group.
@@ -285,8 +290,8 @@ public class SchemaRegistryService {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * If {@link GroupProperties#validateByEventType} is set, the validation is performed against schemas with same 
-     * event type identified by {@link SchemaInfo#name}.
+     * If {@link GroupProperties#validateByObjectType} is set, the validation is performed against schemas with same 
+     * object type identified by {@link SchemaInfo#name}.
      *
      * @param group Name of group. 
      * @param schema Schema to check for validity. 
@@ -294,7 +299,7 @@ public class SchemaRegistryService {
      * @return True if it satisfies validation checks, false otherwise. 
      */
     public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema, SchemaValidationRules rules) {
-        // based on compatibility policy, fetch specific schemas for the group/subgroup and perform validations
+        // based on compatibility policy, fetch specific schemas for the group and perform validations
         // TODO: validate schema
 
         return store.getGroupProperties(group)
@@ -319,7 +324,7 @@ public class SchemaRegistryService {
             case Forward:
             case Full:
                 // get latest schema
-                if (groupProperties.isValidateByEventType()) {
+                if (groupProperties.isValidateByObjectType()) {
                     schemasFuture = store.getLatestSchema(group, schema.getName())
                                          .thenApply(Collections::singletonList);
                 } else {
@@ -331,8 +336,8 @@ public class SchemaRegistryService {
             case ForwardTransitive:
             case FullTransitive:
                 // get all schemas
-                if (groupProperties.isValidateByEventType()) {
-                    schemasFuture = store.listSchemasByEventType(group, schema.getName(), null)
+                if (groupProperties.isValidateByObjectType()) {
+                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), null)
                                          .thenApply(ListWithToken::getList);
                 } else {
                     schemasFuture = store.listSchemasInGroup(group, null)
@@ -341,7 +346,7 @@ public class SchemaRegistryService {
                 break;
             case BackwardTill:
                 // get schema till
-                assert !groupProperties.isValidateByEventType();
+                assert !groupProperties.isValidateByObjectType();
                 assert groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill() != null;
                 schemasFuture = store.listSchemasInGroup(group,
                         groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill())
@@ -349,14 +354,14 @@ public class SchemaRegistryService {
                 break;
             case ForwardTill:
                 // get schema till
-                assert !groupProperties.isValidateByEventType();
+                assert !groupProperties.isValidateByObjectType();
                 assert groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill() != null;
                 schemasFuture = store.listSchemasInGroup(group,
                         groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill())
                                      .thenApply(ListWithToken::getList);
                 break;
             case BackwardTillAndForwardTill:
-                assert !groupProperties.isValidateByEventType();
+                assert !groupProperties.isValidateByObjectType();
                 assert groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill() != null;
                 assert groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill() != null;
                 VersionInfo backwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill();

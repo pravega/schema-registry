@@ -35,15 +35,15 @@ public interface SchemaRegistryClient {
      * @param group Name of group that uniquely identifies the group. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
-     * @param validateByEventType Property to describe whether group should be subdivided into sub groups by event types. 
-     *                            Event Types are uniquely identified by {@link SchemaInfo#name}. 
+     * @param validateByObjectType Property to describe whether group should be subdivided into sub groups by object types. 
+     *                            Object Types are uniquely identified by {@link SchemaInfo#name}. 
      * @param enableEncoding Property that indicates whether registry service should generating an encoding id. If 
      *                       set to false, {@link EncodingInfo} and {@link EncodingId} are not generated for schemas in 
      *                       the group. 
      * @return True indicates if the group was added successfully, false if it exists. 
      */
     boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules,
-                     boolean validateByEventType, boolean enableEncoding);
+                     boolean validateByObjectType, boolean enableEncoding);
     
     /**
      * Api to remove group. 
@@ -63,7 +63,7 @@ public interface SchemaRegistryClient {
      * Gets group's properties. 
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#validateByEventType} that specifies if schemas should be exclusively validated against 
+     * {@link GroupProperties#validateByObjectType} that specifies if schemas should be exclusively validated against 
      * schemas that have the same {@link SchemaInfo#name}. 
      * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify 
      * encoding properties in {@link EncodingInfo}.
@@ -98,17 +98,16 @@ public interface SchemaRegistryClient {
     void removeSchemaValidationRule(String group, SchemaValidationRule rule);
     
     /**
-     * Gets list of subgroups registered under the group. Subgroups are identified by {@link SchemaInfo#name}
+     * Gets list of object types registered under the group. ObjectTypes are identified by {@link SchemaInfo#name}
      * 
      * @param group Name of group. 
-     * @return List of subgroups within the group. If group is configured to store schemas in subgroups then 
-     *  subgroups are returned. Otherwise an empty list is returned.  
+     * @return List of objectTypes within the group.   
      */
-    List<String> getEventTypes(String group);
+    List<String> getObjectTypes(String group);
 
     /**
-     * Adds schema to the group. If group is configured to include schemas by event type in subgroups, then 
-     * the {@link SchemaInfo#name} is used to store schema in the subgroup. 
+     * Adds schema to the group. If group is configured with {@link GroupProperties#validateByObjectType} then 
+     * the {@link SchemaInfo#name} is used for validating against existing group schemas that share the same name. 
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in 
      * {@link GroupProperties#schemaValidationRules}
      * 
@@ -150,31 +149,31 @@ public interface SchemaRegistryClient {
     EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType);
 
     /**
-     * Gets latest schema and version for the group (or eventTypeName, if specified). 
-     * For groups configured with {@link GroupProperties#validateByEventType}, the eventTypeName name needs to be supplied to 
-     * get the latest schema for the eventTypeName. 
+     * Gets latest schema and version for the group (or objectTypeName, if specified). 
+     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypeName name needs to be supplied to 
+     * get the latest schema for the objectTypeName. 
      * 
      * @param group Name of group. 
-     * @param eventTypeName Name of eventTypeName. 
+     * @param objectTypeName Name of objectTypeName. 
      *                 
-     * @return Schema with version for the last schema that was added to the group (or eventTypeName).
+     * @return Schema with version for the last schema that was added to the group (or objectTypeName).
      */
-    SchemaWithVersion getLatestSchema(String group, @Nullable String eventTypeName);
+    SchemaWithVersion getLatestSchema(String group, @Nullable String objectTypeName);
 
     /**
-     * Gets all schemas with corresponding versions for the group (or eventTypeName, if specified). 
-     * For groups configured with {@link GroupProperties#validateByEventType}, the eventTypeName name needs to be supplied to 
-     * get the latest schema for the eventTypeName. {@link SchemaInfo#name} is used as the eventTypeName name. 
+     * Gets all schemas with corresponding versions for the group (or objectTypeName, if specified). 
+     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypeName name needs to be supplied to 
+     * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
      * @param group Name of group.
-     * @param eventTypeName Name of eventTypeName. 
+     * @param objectTypeName Name of objectTypeName. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String eventTypeName);
+    List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String objectTypeName);
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByEventType}
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByObjectType}
      * the version will contain the schemaName taken from the {@link SchemaInfo#name}. 
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      * 
@@ -185,7 +184,7 @@ public interface SchemaRegistryClient {
     VersionInfo getSchemaVersion(String group, SchemaInfo schema);
     
     /**
-     * Checks whether given schema is valid by applying validation rules against previous schemas in the group (/subgroup) 
+     * Checks whether given schema is valid by applying validation rules against previous schemas in the group  
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
      * 
      * @param group Name of group. 

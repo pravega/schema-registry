@@ -12,8 +12,7 @@ package io.pravega.schemaregistry.server.rest.resources;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaValidationRuleRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.EventTypesList;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForEventTypeByVersionRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -27,6 +26,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.ObjectTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
@@ -49,7 +49,6 @@ import javax.ws.rs.core.SecurityContext;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status;
-import static javax.ws.rs.core.Response.status;
 
 /**
  * Schema Registry Resource implementation.
@@ -92,7 +91,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
         SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         GroupProperties properties = new GroupProperties(
-                schemaType, validationRules, createGroupRequest.isGroupByEventType(), createGroupRequest.isEnableEncoding());
+                schemaType, validationRules, createGroupRequest.isValidateByObjectType(), createGroupRequest.isEnableEncoding());
         registryService.createGroup(createGroupRequest.getGroupName(), properties)
                        .thenApply(createStatus -> {
                            if (!createStatus) {
@@ -308,14 +307,14 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getEventTypeSchemas(String groupName, String eventTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getGroupEvolutionHistory(groupName, eventTypeName)
+    public void getObjectTypeSchemas(String groupName, String objectTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        registryService.getGroupEvolutionHistory(groupName, objectTypeName)
                        .thenApply(schemaEpochs -> {
                            SchemaList list = new SchemaList()
                                    .schemas(schemaEpochs.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                            return Response.status(Status.OK).entity(list).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getEventTypeSchemas failed with exception: ", exception);
+                           log.warn("getObjectTypeSchemas failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -324,13 +323,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getEventTypes(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getEventTypes(groupName, null)
-                       .thenApply(eventTypes -> {
-                           EventTypesList eventTypesList = new EventTypesList().groups(eventTypes.getList());
-                           return Response.status(Status.OK).entity(eventTypesList).build(); })
+    public void getObjectTypes(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        registryService.getObjectTypes(groupName, null)
+                       .thenApply(objectTypes -> {
+                           ObjectTypesList objectTypesList = new ObjectTypesList().groups(objectTypes.getList());
+                           return Response.status(Status.OK).entity(objectTypesList).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getEventTypes failed with exception: ", exception);
+                           log.warn("getObjectTypes failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -340,13 +339,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getLatestSchemaForEventType(String groupName, String eventTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getLatestSchema(groupName, eventTypeName)
+    public void getLatestSchemaForObjectType(String groupName, String objectTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        registryService.getLatestSchema(groupName, objectTypeName)
                        .thenApply(schemaWithVersion -> {
                            SchemaWithVersion schema = ModelHelper.encode(schemaWithVersion);
                            return Response.status(Status.OK).entity(schema).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getLatestSchemaForEventType failed with exception: ", exception);
+                           log.warn("getLatestSchemaForObjectType failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
@@ -355,18 +354,18 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getSchemaFromVersionForEventType(String groupName, String eventType, Integer versionId,
-                                             GetSchemaForEventTypeByVersionRequest getSchemaForEventTypeByVersionRequest, 
-                                             SecurityContext securityContext, AsyncResponse asyncResponse) 
+    public void getSchemaFromVersionForObjectType(String groupName, String objectType, Integer versionId,
+                                                 GetSchemaForObjectTypeByVersionRequest getSchemaForObjectTypeByVersionRequest,
+                                                 SecurityContext securityContext, AsyncResponse asyncResponse) 
             throws NotFoundException {
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(
-                getSchemaForEventTypeByVersionRequest.getVersionInfo());
+                getSchemaForObjectTypeByVersionRequest.getVersionInfo());
         registryService.getSchema(groupName, versionInfo)
                        .thenApply(schemaWithVersion -> {
                            SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
                            return Response.status(Status.OK).entity(schema).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getSchemaFromVersionForEventType failed with exception: ", exception);
+                           log.warn("getSchemaFromVersionForObjectType failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);

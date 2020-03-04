@@ -36,8 +36,8 @@ public class GroupProperties   {
   @JsonProperty("schemaType")
   private SchemaType schemaType = null;
 
-  @JsonProperty("validateByEventType")
-  private Boolean validateByEventType = null;
+  @JsonProperty("validateByObjectType")
+  private Boolean validateByObjectType = null;
 
   @JsonProperty("enableEncoding")
   private Boolean enableEncoding = null;
@@ -99,23 +99,23 @@ public class GroupProperties   {
     this.schemaType = schemaType;
   }
 
-  public GroupProperties validateByEventType(Boolean validateByEventType) {
-    this.validateByEventType = validateByEventType;
+  public GroupProperties validateByObjectType(Boolean validateByObjectType) {
+    this.validateByObjectType = validateByObjectType;
     return this;
   }
 
   /**
-   * Get validateByEventType
-   * @return validateByEventType
+   * Get validateByObjectType
+   * @return validateByObjectType
    **/
-  @JsonProperty("validateByEventType")
+  @JsonProperty("validateByObjectType")
   @ApiModelProperty(value = "")
-  public Boolean isValidateByEventType() {
-    return validateByEventType;
+  public Boolean isValidateByObjectType() {
+    return validateByObjectType;
   }
 
-  public void setValidateByEventType(Boolean validateByEventType) {
-    this.validateByEventType = validateByEventType;
+  public void setValidateByObjectType(Boolean validateByObjectType) {
+    this.validateByObjectType = validateByObjectType;
   }
 
   public GroupProperties enableEncoding(Boolean enableEncoding) {
@@ -150,13 +150,13 @@ public class GroupProperties   {
     return Objects.equals(this.groupName, groupProperties.groupName) &&
         Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
         Objects.equals(this.schemaType, groupProperties.schemaType) &&
-        Objects.equals(this.validateByEventType, groupProperties.validateByEventType) &&
+        Objects.equals(this.validateByObjectType, groupProperties.validateByObjectType) &&
         Objects.equals(this.enableEncoding, groupProperties.enableEncoding);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaValidationRules, schemaType, validateByEventType, enableEncoding);
+    return Objects.hash(groupName, schemaValidationRules, schemaType, validateByObjectType, enableEncoding);
   }
 
 
@@ -168,7 +168,7 @@ public class GroupProperties   {
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
-    sb.append("    validateByEventType: ").append(toIndentedString(validateByEventType)).append("\n");
+    sb.append("    validateByObjectType: ").append(toIndentedString(validateByObjectType)).append("\n");
     sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
     sb.append("}");
     return sb.toString();

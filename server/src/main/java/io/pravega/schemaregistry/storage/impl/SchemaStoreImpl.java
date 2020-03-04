@@ -64,7 +64,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> updateValidationPolicy(String group, Position etag, SchemaValidationRules policy) {
+    public CompletableFuture<Void> updateValidationRules(String group, Position etag, SchemaValidationRules policy) {
         return getGroup(group)
                 .thenCompose(grp -> grp.getCurrentEtag().thenCompose(currentEtag -> {
                     if (!etag.equals(currentEtag)) {
@@ -76,8 +76,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token) {
-        return getGroup(group).thenCompose(Group::getEventTypes);
+    public CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token) {
+        return getGroup(group).thenCompose(Group::getObjectTypes);
     }
 
 
@@ -92,9 +92,9 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName,
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
                                                                                       ContinuationToken token) {
-        return getGroup(group).thenCompose(grp -> grp.getSchemas(eventTypeName));
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName));
     }
 
     @Override
@@ -108,13 +108,23 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String subgroup) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(subgroup));
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(objectTypeName));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo) {
-        return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, etag));
+    public CompletableFuture<VersionInfo> getLatestVersion(String group) {
+        return getGroup(group).thenCompose(Group::getLatestVersion);
+    }
+
+    @Override
+    public CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestVersion(objectTypeName));
+    }
+
+    @Override
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo, VersionInfo versionInfo) {
+        return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, versionInfo, etag));
     }
 
     @Override
@@ -144,8 +154,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName) {
-        return getGroup(group).thenCompose(grp -> grp.getHistory(eventTypeName));
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName) {
+        return getGroup(group).thenCompose(grp -> grp.getHistory(objectTypeName));
     }
 
     // endregion

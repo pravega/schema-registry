@@ -51,45 +51,39 @@ public abstract class TestEndToEnd {
         SchemaStore store = getStore();
         SchemaRegistryService service = new SchemaRegistryService(store);
         SchemaRegistryClient client = new TestRegistryClient(service);
-
-        assertEquals(client.listNamespaces().size(), 0);
-
-        String namespace = "groups";
-        String group = "group";
-        client.createNamespace(namespace);
-        assertEquals(client.listNamespaces().size(), 1);
-
-        assertEquals(client.listGroups(namespace).size(), 0);
         
-        client.addGroup(namespace, group, SchemaType.of(SchemaType.Type.Avro),  
+        String group = "group";
+        assertEquals(client.listGroups().size(), 0);
+        
+        client.addGroup(group, SchemaType.of(SchemaType.Type.Avro),  
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
                 true, true);
-        assertEquals(client.listGroups(namespace).size(), 1);
+        assertEquals(client.listGroups().size(), 1);
 
         Schema schema = ReflectData.get().getSchema(TestClass.class); 
         SchemaInfo schemaInfo = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro), 
                 schema.toString().getBytes(), ImmutableMap.of());
 
-        client.addSchemaIfAbsent(namespace, group, schemaInfo, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
 
         // attempt to add an existing schema
-        client.addSchemaIfAbsent(namespace, group, schemaInfo, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
 
         Schema schema2 = ReflectData.get().getSchema(TestClass2.class);
         SchemaInfo schemaInfo2 = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
                 schema2.toString().getBytes(), ImmutableMap.of());
-        client.addSchemaIfAbsent(namespace, group, schemaInfo2, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo2, SchemaValidationRules.of());
 
-        client.updateSchemaValidationRules(namespace, group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)));
+        client.updateSchemaValidationRules(group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)));
 
         Schema schema3 = ReflectData.get().getSchema(TestClass3.class);
         SchemaInfo schemaInfo3 = new SchemaInfo(TestClass3.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
                 schema3.toString().getBytes(), ImmutableMap.of());
-        client.addSchemaIfAbsent(namespace, group, schemaInfo3, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo3, SchemaValidationRules.of());
 
-        log.info("Schema Evolution History: {}", client.getSubgroups(namespace, group));
-        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(namespace, group, TestClass.class.getSimpleName()));
-        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(namespace, group, TestClass3.class.getSimpleName()));
+        log.info("Schema Evolution History: {}", client.getObjectTypes(group));
+        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(group, TestClass.class.getSimpleName()));
+        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(group, TestClass3.class.getSimpleName()));
     }
 
     abstract SchemaStore getStore();

@@ -38,8 +38,8 @@ public class TestRegistryClient implements SchemaRegistryClient {
     
     @Override
     public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, 
-                            boolean subgroupBySchemaName, boolean enableEncoding) {
-        return service.createGroup(group, new GroupProperties(schemaType, validationRules, subgroupBySchemaName, enableEncoding)).join();
+                            boolean validateByObjectType, boolean enableEncoding) {
+        return service.createGroup(group, new GroupProperties(schemaType, validationRules, validateByObjectType, enableEncoding)).join();
     }
 
     @Override
@@ -73,8 +73,8 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<String> getSubgroups(String group) {
-        return service.getSubgroups(group).join().getList();
+    public List<String> getObjectTypes(String group) {
+        return service.getObjectTypes(group, null).join().getList();
     }
 
     @Override

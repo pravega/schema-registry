@@ -22,14 +22,14 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * GetSchemaForEventTypeByVersionRequest
+ * GetSchemaForObjectTypeByVersionRequest
  */
 
-public class GetSchemaForEventTypeByVersionRequest   {
+public class GetSchemaForObjectTypeByVersionRequest   {
   @JsonProperty("versionInfo")
   private VersionInfo versionInfo = null;
 
-  public GetSchemaForEventTypeByVersionRequest versionInfo(VersionInfo versionInfo) {
+  public GetSchemaForObjectTypeByVersionRequest versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
     return this;
   }
@@ -57,8 +57,8 @@ public class GetSchemaForEventTypeByVersionRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GetSchemaForEventTypeByVersionRequest getSchemaForEventTypeByVersionRequest = (GetSchemaForEventTypeByVersionRequest) o;
-    return Objects.equals(this.versionInfo, getSchemaForEventTypeByVersionRequest.versionInfo);
+    GetSchemaForObjectTypeByVersionRequest getSchemaForObjectTypeByVersionRequest = (GetSchemaForObjectTypeByVersionRequest) o;
+    return Objects.equals(this.versionInfo, getSchemaForObjectTypeByVersionRequest.versionInfo);
   }
 
   @Override
@@ -70,7 +70,7 @@ public class GetSchemaForEventTypeByVersionRequest   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class GetSchemaForEventTypeByVersionRequest {\n");
+    sb.append("class GetSchemaForObjectTypeByVersionRequest {\n");
     
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("}");

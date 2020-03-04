@@ -153,7 +153,7 @@ public interface Record {
 
         private final SchemaType schemaType;
         private final boolean enableEncoding;
-        private final boolean subgroupBySchemaName;
+        private final boolean validateByObjectType;
         private final SchemaValidationRules validationRules;
 
         private static class GroupPropertiesRecordBuilder implements ObjectBuilder<GroupPropertiesRecord> {
@@ -178,14 +178,14 @@ public interface Record {
             private void write00(GroupPropertiesRecord e, RevisionDataOutput target) throws IOException {
                 SchemaType.SERIALIZER.serialize(target, e.schemaType);
                 target.writeBoolean(e.enableEncoding);
-                target.writeBoolean(e.subgroupBySchemaName);
+                target.writeBoolean(e.validateByObjectType);
                 SchemaValidationRules.SERIALIZER.serialize(target, e.validationRules);
             }
 
             private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
                 b.schemaType(SchemaType.SERIALIZER.deserialize(source))
                  .enableEncoding(source.readBoolean())
-                 .subgroupBySchemaName(source.readBoolean())
+                 .validateByObjectType(source.readBoolean())
                  .validationRules(SchemaValidationRules.SERIALIZER.deserialize(source));
             }
         }
