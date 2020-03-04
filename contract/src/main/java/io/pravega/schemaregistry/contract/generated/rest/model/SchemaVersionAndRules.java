@@ -24,10 +24,10 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaEvolution
+ * SchemaVersionAndRules
  */
 
-public class SchemaEvolution   {
+public class SchemaVersionAndRules   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
@@ -37,7 +37,7 @@ public class SchemaEvolution   {
   @JsonProperty("validationRules")
   private SchemaValidationRules validationRules = null;
 
-  public SchemaEvolution schemaInfo(SchemaInfo schemaInfo) {
+  public SchemaVersionAndRules schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -56,7 +56,7 @@ public class SchemaEvolution   {
     this.schemaInfo = schemaInfo;
   }
 
-  public SchemaEvolution version(VersionInfo version) {
+  public SchemaVersionAndRules version(VersionInfo version) {
     this.version = version;
     return this;
   }
@@ -75,7 +75,7 @@ public class SchemaEvolution   {
     this.version = version;
   }
 
-  public SchemaEvolution validationRules(SchemaValidationRules validationRules) {
+  public SchemaVersionAndRules validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -103,10 +103,10 @@ public class SchemaEvolution   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaEvolution schemaEvolution = (SchemaEvolution) o;
-    return Objects.equals(this.schemaInfo, schemaEvolution.schemaInfo) &&
-        Objects.equals(this.version, schemaEvolution.version) &&
-        Objects.equals(this.validationRules, schemaEvolution.validationRules);
+    SchemaVersionAndRules schemaVersionAndRules = (SchemaVersionAndRules) o;
+    return Objects.equals(this.schemaInfo, schemaVersionAndRules.schemaInfo) &&
+        Objects.equals(this.version, schemaVersionAndRules.version) &&
+        Objects.equals(this.validationRules, schemaVersionAndRules.validationRules);
   }
 
   @Override
@@ -118,7 +118,7 @@ public class SchemaEvolution   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaEvolution {\n");
+    sb.append("class SchemaVersionAndRules {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");

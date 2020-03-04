@@ -16,35 +16,36 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * CreateNamespaceRequest
+ * CanReadRequest
  */
 
-public class CreateNamespaceRequest   {
-  @JsonProperty("namespaceName")
-  private String namespaceName = null;
+public class CanReadRequest   {
+  @JsonProperty("schemaInfo")
+  private SchemaInfo schemaInfo = null;
 
-  public CreateNamespaceRequest namespaceName(String namespaceName) {
-    this.namespaceName = namespaceName;
+  public CanReadRequest schemaInfo(SchemaInfo schemaInfo) {
+    this.schemaInfo = schemaInfo;
     return this;
   }
 
   /**
-   * Get namespaceName
-   * @return namespaceName
+   * Get schemaInfo
+   * @return schemaInfo
    **/
-  @JsonProperty("namespaceName")
+  @JsonProperty("schemaInfo")
   @ApiModelProperty(value = "")
-  public String getNamespaceName() {
-    return namespaceName;
+  public SchemaInfo getSchemaInfo() {
+    return schemaInfo;
   }
 
-  public void setNamespaceName(String namespaceName) {
-    this.namespaceName = namespaceName;
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
+    this.schemaInfo = schemaInfo;
   }
 
 
@@ -56,22 +57,22 @@ public class CreateNamespaceRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CreateNamespaceRequest createNamespaceRequest = (CreateNamespaceRequest) o;
-    return Objects.equals(this.namespaceName, createNamespaceRequest.namespaceName);
+    CanReadRequest canReadRequest = (CanReadRequest) o;
+    return Objects.equals(this.schemaInfo, canReadRequest.schemaInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceName);
+    return Objects.hash(schemaInfo);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CreateNamespaceRequest {\n");
+    sb.append("class CanReadRequest {\n");
     
-    sb.append("    namespaceName: ").append(toIndentedString(namespaceName)).append("\n");
+    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }

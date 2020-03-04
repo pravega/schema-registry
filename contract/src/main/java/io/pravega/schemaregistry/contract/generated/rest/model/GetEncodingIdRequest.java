@@ -27,8 +27,8 @@ import javax.validation.constraints.*;
  */
 
 public class GetEncodingIdRequest   {
-  @JsonProperty("subgroupName")
-  private String subgroupName = null;
+  @JsonProperty("objectTypeName")
+  private String objectTypeName = null;
 
   @JsonProperty("versionInfo")
   private VersionInfo versionInfo = null;
@@ -36,23 +36,23 @@ public class GetEncodingIdRequest   {
   @JsonProperty("compressionType")
   private CompressionType compressionType = null;
 
-  public GetEncodingIdRequest subgroupName(String subgroupName) {
-    this.subgroupName = subgroupName;
+  public GetEncodingIdRequest objectTypeName(String objectTypeName) {
+    this.objectTypeName = objectTypeName;
     return this;
   }
 
   /**
-   * Get subgroupName
-   * @return subgroupName
+   * Get objectTypeName
+   * @return objectTypeName
    **/
-  @JsonProperty("subgroupName")
+  @JsonProperty("objectTypeName")
   @ApiModelProperty(value = "")
-  public String getSubgroupName() {
-    return subgroupName;
+  public String getObjectTypeName() {
+    return objectTypeName;
   }
 
-  public void setSubgroupName(String subgroupName) {
-    this.subgroupName = subgroupName;
+  public void setObjectTypeName(String objectTypeName) {
+    this.objectTypeName = objectTypeName;
   }
 
   public GetEncodingIdRequest versionInfo(VersionInfo versionInfo) {
@@ -103,14 +103,14 @@ public class GetEncodingIdRequest   {
       return false;
     }
     GetEncodingIdRequest getEncodingIdRequest = (GetEncodingIdRequest) o;
-    return Objects.equals(this.subgroupName, getEncodingIdRequest.subgroupName) &&
+    return Objects.equals(this.objectTypeName, getEncodingIdRequest.objectTypeName) &&
         Objects.equals(this.versionInfo, getEncodingIdRequest.versionInfo) &&
         Objects.equals(this.compressionType, getEncodingIdRequest.compressionType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(subgroupName, versionInfo, compressionType);
+    return Objects.hash(objectTypeName, versionInfo, compressionType);
   }
 
 
@@ -119,7 +119,7 @@ public class GetEncodingIdRequest   {
     StringBuilder sb = new StringBuilder();
     sb.append("class GetEncodingIdRequest {\n");
     
-    sb.append("    subgroupName: ").append(toIndentedString(subgroupName)).append("\n");
+    sb.append("    objectTypeName: ").append(toIndentedString(objectTypeName)).append("\n");
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
     sb.append("}");

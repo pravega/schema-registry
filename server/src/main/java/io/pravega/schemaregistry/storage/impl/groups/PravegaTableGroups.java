@@ -7,7 +7,7 @@
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.impl.namespace;
+package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.controller.store.stream.Version;
@@ -24,22 +24,21 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 
-public class PravegaTableNamespace implements Namespace<Version> {
-    static final String GROUPS_IN_NAMESPACE = PravegaTableNamespaces.SCHEMA_REGISTRY_SCOPE + "/GroupsInNamespace-%s-%s/0";
-    private final TableStore tablesStore;
-    private final ScheduledExecutorService executor;
-    private final String namespace;
-    private final String tableName;
+public class PravegaTableGroups implements Groups<Version> {
+    public static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
+    public static final String GROUPS = SCHEMA_REGISTRY_SCOPE + "/groups/0";
+
     private final PravegaLogCache logCache;
     private final ClientConfig clientConfig;
+    private final TableStore tablesStore;
+    private final ScheduledExecutorService executor;
+    private final String tableName;
     
-    public PravegaTableNamespace(String namespace, String id, ClientConfig clientConfig, PravegaLogCache logCache,  
-                                 TableStore tablesStore, ScheduledExecutorService executor) {
+    public PravegaTableGroups(ClientConfig clientConfig, TableStore tablesStore, ScheduledExecutorService executor) {
         this.tablesStore = tablesStore;
         this.executor = executor;
-        this.tableName = String.format(GROUPS_IN_NAMESPACE, namespace, id);
-        this.namespace = namespace;
-        this.logCache = logCache;
+        this.tableName = GROUPS;
+        this.logCache = new PravegaLogCache(clientConfig);
         this.clientConfig = clientConfig;
     }
     
@@ -57,10 +56,10 @@ public class PravegaTableNamespace implements Namespace<Version> {
     
     @Override
     public CompletableFuture<Boolean> addNewGroup(String group, GroupProperties groupProperties) {
-        // 1. add entry to namespace table
+        // 1. add entry to groups table
         // 2. if entry already exists - if its state is creating only then proceed, else if it is created return
         // 3. create group object and call create on it. 
-        // 4. update namespace entry to active
+        // 4. update groups entry to active
         String id = UUID.randomUUID().toString();
         IdWithState value = new IdWithState(id, IdWithState.State.Creating);
         return tablesStore.addNewEntryIfAbsent(tableName, group, value.toBytes())
@@ -75,7 +74,7 @@ public class PravegaTableNamespace implements Namespace<Version> {
                            boolean toReturn = entry.getObject().getId().equals(id);
                            return log.create().thenCompose(v -> index.create())
                                      .thenCompose(v -> grp.create(groupProperties.getSchemaType(), groupProperties.isEnableEncoding(),
-                                             groupProperties.isSubgroupBySchemaName(), groupProperties.getSchemaValidationRules()))
+                                             groupProperties.isValidateByObjectType(), groupProperties.getSchemaValidationRules()))
                                      .thenCompose(v -> {
                                          byte[] newValue = new IdWithState(entry.getObject().getId(), IdWithState.State.Active).toBytes();
                                          return tablesStore.updateEntry(tableName, group, newValue, entry.getVersion());
@@ -89,7 +88,7 @@ public class PravegaTableNamespace implements Namespace<Version> {
 
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups() {
-        // read from namespace's table
+        // read from groups's table
         return tablesStore.getAllKeys(tableName)
                           .thenApply(list -> new ListWithToken<>(list, null));
     }
@@ -100,7 +99,7 @@ public class PravegaTableNamespace implements Namespace<Version> {
         // 2. call group.delete
         //  2.1 delete index
         //  2.2 delete log
-        //  2.3 delete the namespace entry
+        //  2.3 delete the groups entry
         return tablesStore.getEntry(tableName, group, IdWithState::fromBytes)
                           .thenCompose(entry -> {
                               IdWithState newValue = new IdWithState(entry.getObject().getId(), IdWithState.State.Deleting);
@@ -114,8 +113,8 @@ public class PravegaTableNamespace implements Namespace<Version> {
     }
 
     private GroupObj getGroupObject(String groupName, IdWithState value) {
-        PravegaLog log = new PravegaLog(namespace, groupName, value.getId(), clientConfig, logCache, executor);
-        PravegaTableIndex index = new PravegaTableIndex(namespace, groupName, value.getId(), tablesStore);
+        PravegaLog log = new PravegaLog(groupName, value.getId(), clientConfig, logCache, executor);
+        PravegaTableIndex index = new PravegaTableIndex(groupName, value.getId(), tablesStore);
         Group<Version> group = new Group<>(log, index, executor);
         return new GroupObj(group, log, index);
     }

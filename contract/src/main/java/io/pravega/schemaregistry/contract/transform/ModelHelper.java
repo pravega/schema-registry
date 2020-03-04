@@ -16,10 +16,10 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolution;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
@@ -71,9 +71,9 @@ public class ModelHelper {
     // endregion
 
     // region encode
-    public static SchemaEvolution encode(io.pravega.schemaregistry.contract.data.SchemaEvolution schemaEvolution) {
+    public static SchemaVersionAndRules encode(io.pravega.schemaregistry.contract.data.SchemaEvolution schemaEvolution) {
         SchemaInfo encode = encode(schemaEvolution.getSchema());
-        return new SchemaEvolution().schemaInfo(encode)
+        return new SchemaVersionAndRules().schemaInfo(encode)
                                          .version(encode(schemaEvolution.getVersion())).validationRules(encode(schemaEvolution.getRules()));
     }
 
@@ -103,7 +103,7 @@ public class ModelHelper {
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
         return new GroupProperties()
                 .enableEncoding(groupProperties.isEnableEncoding())
-                .subgroupBySchemaName(groupProperties.isSubgroupBySchemaName())
+                .validateByObjectType(groupProperties.isValidateByObjectType())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
 

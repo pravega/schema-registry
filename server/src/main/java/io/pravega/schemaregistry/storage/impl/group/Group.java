@@ -76,8 +76,8 @@ public class Group<T> {
         this.executor = executor;
     }
     
-    public CompletableFuture<Void> create(SchemaType schemaType, boolean enableEncoding, boolean subgroupByEventType, SchemaValidationRules schemaValidationRules) {
-        return wal.writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, subgroupByEventType, schemaValidationRules), null)
+    public CompletableFuture<Void> create(SchemaType schemaType, boolean enableEncoding, boolean validateByObjectType, SchemaValidationRules schemaValidationRules) {
+        return wal.writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, validateByObjectType, schemaValidationRules), null)
                   .thenCompose(pos -> {
                       IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
                       Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
@@ -155,20 +155,20 @@ public class Group<T> {
         return Futures.toVoid(wal.writeToLog(record, etag));
     }
 
-    public CompletableFuture<ListWithToken<String>> getSubgroups() {
+    public CompletableFuture<ListWithToken<String>> getObjectTypes() {
         return getGroupProperties()
                 .thenCompose(groupProperties -> {
-                    if (!groupProperties.isSubgroupBySchemaName()) {
+                    if (!groupProperties.isValidateByObjectType()) {
                         return Futures.failedFuture(new IllegalStateException());
                     }
                     // get all index keys
-                    return index.getAllKeys()
+                    return sync().thenCompose(v -> index.getAllKeys())
                                 .thenApply(list -> {
-                                    List<String> subgroups = list
+                                    List<String> objectTypes = list
                                             .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)
                                             .map(x -> ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName())
                                             .distinct().collect(Collectors.toList());
-                                    return new ListWithToken<>(subgroups, null);
+                                    return new ListWithToken<>(objectTypes, null);
                                 });
                 });
     }
@@ -184,10 +184,10 @@ public class Group<T> {
                 x -> x.getRecord() instanceof Record.SchemaRecord));
     }
 
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String subgroup) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String objectTypeName) {
         return getSchemasInternal(null, 
                 x -> x.getRecord() instanceof Record.SchemaRecord && 
-                        ((Record.SchemaRecord) x.getRecord()).getSchemaInfo().getName().equals(subgroup));
+                        ((Record.SchemaRecord) x.getRecord()).getSchemaInfo().getName().equals(objectTypeName));
     }
 
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemasInternal(Position position, Predicate<RecordWithPosition> predicate) {
@@ -345,11 +345,11 @@ public class Group<T> {
                 });
     }
 
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String subgroup) {
-        Predicate<IndexRecord.IndexKey> versionForSubgroup = x -> x instanceof IndexRecord.VersionInfoKey &&
-                ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName().equals(subgroup);
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String objectTypeName) {
+        Predicate<IndexRecord.IndexKey> versionForObjectType = x -> x instanceof IndexRecord.VersionInfoKey &&
+                ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName().equals(objectTypeName);
 
-        return getLatestEntryFor(versionForSubgroup, VERSION_COMPARATOR)
+        return getLatestEntryFor(versionForObjectType, VERSION_COMPARATOR)
                 .thenCompose(entry -> {
                     if (entry == null) {
                         return null;
@@ -397,24 +397,15 @@ public class Group<T> {
                   });
     }
 
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getHistory(String subgroup) {
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getHistory(String objectTypeName) {
         return getHistory().thenApply(list -> 
-                new ListWithToken<>(list.getList().stream().filter(x -> x.getSchema().getName().equals(subgroup)).collect(Collectors.toList()), null));
+                new ListWithToken<>(list.getList().stream().filter(x -> x.getSchema().getName().equals(objectTypeName)).collect(Collectors.toList()), null));
     }
 
-    public CompletableFuture<VersionInfo> addSchemaToGroup(SchemaInfo schemaInfo, Position etag) {
-        Predicate<IndexRecord.IndexKey> versionPredicate = x -> x instanceof IndexRecord.VersionInfoKey;
-
-        return addSchema(schemaInfo, etag, versionPredicate);
+    public CompletableFuture<VersionInfo> addSchemaToGroup(SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag) {
+        return addSchema(schemaInfo, versionInfo, etag);
     }
-
-    public CompletableFuture<VersionInfo> addSchemaToSubGroup(String subgroup, SchemaInfo schemaInfo, Position etag) {
-        Predicate<IndexRecord.IndexKey> versionForSubgroup = x -> x instanceof IndexRecord.VersionInfoKey &&
-                ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName().equals(subgroup);
-
-        return addSchema(schemaInfo, etag, versionForSubgroup);
-    }
-
+    
     @SuppressWarnings("unchecked")
     public CompletableFuture<Void> updateValidationPolicy(SchemaValidationRules policy, Position etag) {
         return writeToLog(new Record.ValidationRecord(policy), etag)
@@ -435,7 +426,7 @@ public class Group<T> {
                                     Record.GroupPropertiesRecord properties = grpPropertiesFuture.join();
                                     SchemaValidationRules rules = rulesFuture.join();
                                     return new GroupProperties(properties.getSchemaType(), rules,
-                                            properties.isSubgroupBySchemaName(), properties.isEnableEncoding());
+                                            properties.isValidateByObjectType(), properties.isEnableEncoding());
                                 });
     }
 
@@ -484,27 +475,36 @@ public class Group<T> {
         return Futures.allOf(futures);
     }
 
-    private CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, Position etag, Predicate<IndexRecord.IndexKey> versionPredicate) {
-        return getNextVersion(versionPredicate)
-                .thenCompose(nextVersion -> {
-                    VersionInfo next = new VersionInfo(schemaInfo.getName(), nextVersion);
-                    return writeToLog(new Record.SchemaRecord(schemaInfo, next), etag)
+    private CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, VersionInfo next, Position etag) {
+        return writeToLog(new Record.SchemaRecord(schemaInfo, next), etag)
                             .thenCompose(v -> {
                                 Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(next), new IndexRecord.WALPositionValue(etag));
                                 Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(schemaInfo)),
                                         new IndexRecord.SchemaVersionValue(Collections.singletonList(next)));
                                 return updateIndex(Lists.newArrayList(add, addToList)).thenApply(x -> next);
                             });
-                });
     }
 
-    private CompletableFuture<Integer> getNextVersion(Predicate<IndexRecord.IndexKey> versionPredicate) {
+    public CompletableFuture<VersionInfo> getLatestVersion() {
+        Predicate<IndexRecord.IndexKey> predicate = x -> x instanceof IndexRecord.VersionInfoKey;
+
+        return getLatestVersion(predicate);
+    }
+    
+    public CompletableFuture<VersionInfo> getLatestVersion(String objectTypeName) {
+        Predicate<IndexRecord.IndexKey> predicate = x -> x instanceof IndexRecord.VersionInfoKey &&
+                ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName().equals(objectTypeName);
+
+        return getLatestVersion(predicate);
+    }
+
+    private CompletableFuture<VersionInfo> getLatestVersion(Predicate<IndexRecord.IndexKey> versionPredicate) {
         return getLatestEntryFor(versionPredicate, VERSION_COMPARATOR)
                 .thenApply(entry -> {
                     if (entry == null) {
-                        return 0;
+                        return null;
                     } else {
-                        return ((IndexRecord.VersionInfoKey) entry.getKey()).getVersionInfo().getVersion() + 1;                        
+                        return ((IndexRecord.VersionInfoKey) entry.getKey()).getVersionInfo();                        
                     }
                 });
     }

@@ -18,33 +18,43 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * NamespaceProperty
+ * ObjectTypesList
  */
 
-public class NamespaceProperty   {
-  @JsonProperty("namespaceName")
-  private String namespaceName = null;
+public class ObjectTypesList   {
+  @JsonProperty("groups")
+  private List<String> groups = null;
 
-  public NamespaceProperty namespaceName(String namespaceName) {
-    this.namespaceName = namespaceName;
+  public ObjectTypesList groups(List<String> groups) {
+    this.groups = groups;
+    return this;
+  }
+
+  public ObjectTypesList addGroupsItem(String groupsItem) {
+    if (this.groups == null) {
+      this.groups = new ArrayList<String>();
+    }
+    this.groups.add(groupsItem);
     return this;
   }
 
   /**
-   * Get namespaceName
-   * @return namespaceName
+   * Get groups
+   * @return groups
    **/
-  @JsonProperty("namespaceName")
+  @JsonProperty("groups")
   @ApiModelProperty(value = "")
-  public String getNamespaceName() {
-    return namespaceName;
+  public List<String> getGroups() {
+    return groups;
   }
 
-  public void setNamespaceName(String namespaceName) {
-    this.namespaceName = namespaceName;
+  public void setGroups(List<String> groups) {
+    this.groups = groups;
   }
 
 
@@ -56,22 +66,22 @@ public class NamespaceProperty   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    NamespaceProperty namespaceProperty = (NamespaceProperty) o;
-    return Objects.equals(this.namespaceName, namespaceProperty.namespaceName);
+    ObjectTypesList objectTypesList = (ObjectTypesList) o;
+    return Objects.equals(this.groups, objectTypesList.groups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(namespaceName);
+    return Objects.hash(groups);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class NamespaceProperty {\n");
+    sb.append("class ObjectTypesList {\n");
     
-    sb.append("    namespaceName: ").append(toIndentedString(namespaceName)).append("\n");
+    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
     sb.append("}");
     return sb.toString();
   }

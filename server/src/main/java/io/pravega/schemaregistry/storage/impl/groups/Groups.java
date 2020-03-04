@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.impl.namespace;
+package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -15,7 +15,7 @@ import io.pravega.schemaregistry.storage.impl.group.Group;
 
 import java.util.concurrent.CompletableFuture;
 
-public interface Namespace<T> {
+public interface Groups<T> {
     CompletableFuture<Group<T>> getGroup(String groupName);
 
     CompletableFuture<Boolean> addNewGroup(String group, GroupProperties groupProperties);

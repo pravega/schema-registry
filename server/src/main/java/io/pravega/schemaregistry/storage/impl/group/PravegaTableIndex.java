@@ -14,7 +14,7 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.controller.store.stream.Version;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
-import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespaces;
+import io.pravega.schemaregistry.storage.impl.groups.PravegaTableGroups;
 import io.pravega.schemaregistry.storage.records.IndexKeySerializer;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
 
@@ -25,19 +25,19 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PravegaTableIndex implements Index<Version> {
-    public static final String TABLE_NAME_FORMAT = PravegaTableNamespaces.SCHEMA_REGISTRY_SCOPE + "/table-%s-%s-%s/0";
+    public static final String TABLE_NAME_FORMAT = PravegaTableGroups.SCHEMA_REGISTRY_SCOPE + "/table-%s-%s-%s/0";
     private static final IndexKeySerializer INDEX_KEY_SERIALIZER = new IndexKeySerializer();
     
     private final TableStore tablesStore;
     private final String tableName;
 
-    public PravegaTableIndex(String namespace, String groupName, String id, TableStore tablesStore) {
+    public PravegaTableIndex(String groupName, String id, TableStore tablesStore) {
         this.tablesStore = tablesStore;
-        this.tableName = getIndexName(namespace, groupName, id); 
+        this.tableName = getIndexName(groupName, id); 
     }
 
-    static String getIndexName(String namespace, String groupName, String id) {
-        return String.format(TABLE_NAME_FORMAT, namespace, groupName, id);
+    static String getIndexName(String groupName, String id) {
+        return String.format(TABLE_NAME_FORMAT, groupName, id);
     }
     
     public CompletableFuture<Void> create() {

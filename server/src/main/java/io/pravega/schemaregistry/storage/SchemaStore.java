@@ -25,51 +25,48 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 public interface SchemaStore {
-    CompletableFuture<ListWithToken<String>> listNamespaces(ContinuationToken parse);
-    
-    CompletableFuture<Void> createNamespace(String namespace);
-    
-    CompletableFuture<Void> deleteNamespace(String namespace);
-    
-    CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token);
+    CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token);
 
-    CompletableFuture<Boolean> createGroupInNamespace(String namespace, String group, GroupProperties groupProperties);
+    CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties);
 
-    CompletableFuture<Void> deleteGroup(String namespace, String group);
+    CompletableFuture<Void> deleteGroup(String group);
 
-    CompletableFuture<Position> getGroupEtag(String namespace, String group);
-    
-    CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group);
-    
-    CompletableFuture<Void> updateValidationPolicy(String namespace, String group, Position etag, SchemaValidationRules policy);
+    CompletableFuture<Position> getGroupEtag(String group);
 
-    CompletableFuture<ListWithToken<String>> listSubGroups(String namespace, String group);
+    CompletableFuture<GroupProperties> getGroupProperties(String group);
     
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group);
+    CompletableFuture<Void> updateValidationRules(String group, Position etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String namespace, String group, VersionInfo from);
+    CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token);
+    
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String namespace, String group, String subgroup); 
-    
-    CompletableFuture<SchemaInfo> getSchema(String namespace, String group, VersionInfo versionInfo);
-    
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group);
-    
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String namespace, String group, String subgroup);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, VersionInfo from);
 
-    CompletableFuture<VersionInfo> addSchemaToGroup(String namespace, String group, Position etag, SchemaInfo schemaInfo);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
+                                                                                ContinuationToken token);
+    
+    CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
 
-    CompletableFuture<VersionInfo> addSchemaToSubgroup(String namespace, String group, String subgroup, Position etag, SchemaInfo schemaInfo);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
-    CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName);
     
-    CompletableFuture<EncodingId> createOrGetEncodingId(String namespace, String group, VersionInfo versionInfo, CompressionType compressionType);
+    CompletableFuture<VersionInfo> getLatestVersion(String group);
     
-    CompletableFuture<EncodingInfo> getEncodingInfo(String namespace, String group, EncodingId encodingId);
+    CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName);
 
-    CompletableFuture<List<CompressionType>> getCompressions(String namespace, String group);
+    CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo, VersionInfo versionInfo);
 
-    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String namespace, String group);
+    CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
+
+    CompletableFuture<EncodingId> createOrGetEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType);
+
+    CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId);
+
+    CompletableFuture<List<CompressionType>> getCompressions(String group);
+
+    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group);
     
-    CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String namespace, String group, String subgroup);
+    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);
 }

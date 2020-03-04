@@ -39,8 +39,8 @@ public class CreateGroupRequest   {
   @JsonProperty("enableEncoding")
   private Boolean enableEncoding = null;
 
-  @JsonProperty("groupByEventType")
-  private Boolean groupByEventType = null;
+  @JsonProperty("validateByObjectType")
+  private Boolean validateByObjectType = null;
 
   public CreateGroupRequest groupName(String groupName) {
     this.groupName = groupName;
@@ -118,23 +118,23 @@ public class CreateGroupRequest   {
     this.enableEncoding = enableEncoding;
   }
 
-  public CreateGroupRequest groupByEventType(Boolean groupByEventType) {
-    this.groupByEventType = groupByEventType;
+  public CreateGroupRequest validateByObjectType(Boolean validateByObjectType) {
+    this.validateByObjectType = validateByObjectType;
     return this;
   }
 
   /**
-   * Get groupByEventType
-   * @return groupByEventType
+   * Get validateByObjectType
+   * @return validateByObjectType
    **/
-  @JsonProperty("groupByEventType")
+  @JsonProperty("validateByObjectType")
   @ApiModelProperty(value = "")
-  public Boolean isGroupByEventType() {
-    return groupByEventType;
+  public Boolean isValidateByObjectType() {
+    return validateByObjectType;
   }
 
-  public void setGroupByEventType(Boolean groupByEventType) {
-    this.groupByEventType = groupByEventType;
+  public void setValidateByObjectType(Boolean validateByObjectType) {
+    this.validateByObjectType = validateByObjectType;
   }
 
 
@@ -151,12 +151,12 @@ public class CreateGroupRequest   {
         Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
         Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
         Objects.equals(this.enableEncoding, createGroupRequest.enableEncoding) &&
-        Objects.equals(this.groupByEventType, createGroupRequest.groupByEventType);
+        Objects.equals(this.validateByObjectType, createGroupRequest.validateByObjectType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, validationRules, enableEncoding, groupByEventType);
+    return Objects.hash(groupName, schemaType, validationRules, enableEncoding, validateByObjectType);
   }
 
 
@@ -169,7 +169,7 @@ public class CreateGroupRequest   {
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
-    sb.append("    groupByEventType: ").append(toIndentedString(groupByEventType)).append("\n");
+    sb.append("    validateByObjectType: ").append(toIndentedString(validateByObjectType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

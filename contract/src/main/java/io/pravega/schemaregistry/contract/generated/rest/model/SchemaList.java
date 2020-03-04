@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolution;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -24,21 +24,21 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaEvolutionList
+ * SchemaList
  */
 
-public class SchemaEvolutionList   {
+public class SchemaList   {
   @JsonProperty("schemas")
-  private List<SchemaEvolution> schemas = null;
+  private List<SchemaVersionAndRules> schemas = null;
 
-  public SchemaEvolutionList schemas(List<SchemaEvolution> schemas) {
+  public SchemaList schemas(List<SchemaVersionAndRules> schemas) {
     this.schemas = schemas;
     return this;
   }
 
-  public SchemaEvolutionList addSchemasItem(SchemaEvolution schemasItem) {
+  public SchemaList addSchemasItem(SchemaVersionAndRules schemasItem) {
     if (this.schemas == null) {
-      this.schemas = new ArrayList<SchemaEvolution>();
+      this.schemas = new ArrayList<SchemaVersionAndRules>();
     }
     this.schemas.add(schemasItem);
     return this;
@@ -50,11 +50,11 @@ public class SchemaEvolutionList   {
    **/
   @JsonProperty("schemas")
   @ApiModelProperty(value = "")
-  public List<SchemaEvolution> getSchemas() {
+  public List<SchemaVersionAndRules> getSchemas() {
     return schemas;
   }
 
-  public void setSchemas(List<SchemaEvolution> schemas) {
+  public void setSchemas(List<SchemaVersionAndRules> schemas) {
     this.schemas = schemas;
   }
 
@@ -67,8 +67,8 @@ public class SchemaEvolutionList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaEvolutionList schemaEvolutionList = (SchemaEvolutionList) o;
-    return Objects.equals(this.schemas, schemaEvolutionList.schemas);
+    SchemaList schemaList = (SchemaList) o;
+    return Objects.equals(this.schemas, schemaList.schemas);
   }
 
   @Override
@@ -80,7 +80,7 @@ public class SchemaEvolutionList   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaEvolutionList {\n");
+    sb.append("class SchemaList {\n");
     
     sb.append("    schemas: ").append(toIndentedString(schemas)).append("\n");
     sb.append("}");

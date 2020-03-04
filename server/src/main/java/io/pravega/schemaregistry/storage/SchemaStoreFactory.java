@@ -12,19 +12,19 @@ package io.pravega.schemaregistry.storage;
 import io.pravega.client.ClientConfig;
 import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
 import io.pravega.schemaregistry.storage.client.TableStore;
-import io.pravega.schemaregistry.storage.impl.namespace.InMemoryNamespaces;
-import io.pravega.schemaregistry.storage.impl.namespace.PravegaTableNamespaces;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
+import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
+import io.pravega.schemaregistry.storage.impl.groups.PravegaTableGroups;
 
 import java.util.concurrent.ScheduledExecutorService;
 
 public class SchemaStoreFactory {
     public static SchemaStore createInMemoryStore(ScheduledExecutorService executor) {
-        return new SchemaStoreImpl<>(new InMemoryNamespaces(executor));
+        return new SchemaStoreImpl<>(new InMemoryGroups(executor));
     }
     
     public static SchemaStore createPravegaStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
         TableStore tableStore = new TableStore(clientConfig, GrpcAuthHelper.getDisabledAuthHelper(), executor);
-        return new SchemaStoreImpl<>(new PravegaTableNamespaces(clientConfig, tableStore, executor));
+        return new SchemaStoreImpl<>(new PravegaTableGroups(clientConfig, tableStore, executor));
     }
 }

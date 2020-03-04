@@ -16,45 +16,36 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SubgroupsList
+ * GetSchemaForObjectTypeByVersionRequest
  */
 
-public class SubgroupsList   {
-  @JsonProperty("groups")
-  private List<String> groups = null;
+public class GetSchemaForObjectTypeByVersionRequest   {
+  @JsonProperty("versionInfo")
+  private VersionInfo versionInfo = null;
 
-  public SubgroupsList groups(List<String> groups) {
-    this.groups = groups;
-    return this;
-  }
-
-  public SubgroupsList addGroupsItem(String groupsItem) {
-    if (this.groups == null) {
-      this.groups = new ArrayList<String>();
-    }
-    this.groups.add(groupsItem);
+  public GetSchemaForObjectTypeByVersionRequest versionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
     return this;
   }
 
   /**
-   * Get groups
-   * @return groups
+   * Get versionInfo
+   * @return versionInfo
    **/
-  @JsonProperty("groups")
+  @JsonProperty("versionInfo")
   @ApiModelProperty(value = "")
-  public List<String> getGroups() {
-    return groups;
+  public VersionInfo getVersionInfo() {
+    return versionInfo;
   }
 
-  public void setGroups(List<String> groups) {
-    this.groups = groups;
+  public void setVersionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
   }
 
 
@@ -66,22 +57,22 @@ public class SubgroupsList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SubgroupsList subgroupsList = (SubgroupsList) o;
-    return Objects.equals(this.groups, subgroupsList.groups);
+    GetSchemaForObjectTypeByVersionRequest getSchemaForObjectTypeByVersionRequest = (GetSchemaForObjectTypeByVersionRequest) o;
+    return Objects.equals(this.versionInfo, getSchemaForObjectTypeByVersionRequest.versionInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(versionInfo);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SubgroupsList {\n");
+    sb.append("class GetSchemaForObjectTypeByVersionRequest {\n");
     
-    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }

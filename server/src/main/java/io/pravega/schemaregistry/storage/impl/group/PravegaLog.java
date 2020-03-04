@@ -42,18 +42,18 @@ public class PravegaLog implements Log {
     private final ScheduledExecutorService executorService;
     private final String logName;
     
-    public PravegaLog(String namespace, String group, String id, ClientConfig clientConfig,
+    public PravegaLog(String group, String id, ClientConfig clientConfig,
                       PravegaLogCache logCache, ScheduledExecutorService executorService) {
         this.logCache = logCache;
         this.clientConfig = clientConfig;
         this.executorService = executorService;
-        this.clientCacheKey = new PravegaLogCache.ClientCacheKey(namespace, group, id);
+        this.clientCacheKey = new PravegaLogCache.ClientCacheKey(group, id);
         this.cacheKeySupplier = revision -> new PravegaLogCache.RecordCacheKey(clientCacheKey, revision);
-        this.logName = getLogName(namespace, group, id);
+        this.logName = getLogName(group, id);
     }
 
-    static String getLogName(String namespace, String group, String groupId) {
-        return String.format(LOG_NAME_FORMAT, namespace, group, groupId);
+    static String getLogName(String group, String groupId) {
+        return String.format(LOG_NAME_FORMAT, group, groupId);
     }
     
     public CompletableFuture<Void> create() {
@@ -119,9 +119,8 @@ public class PravegaLog implements Log {
         RevisionedStreamClient<Record> client = logCache.getClient(clientCacheKey);
 
         PravegaPosition pos = position == null ? new PravegaPosition(client.fetchOldestRevision()) : (PravegaPosition) position;
-        Revision latest = client.fetchLatestRevision();
         
-        return CompletableFuture.supplyAsync(() -> {
+        return getCurrentEtag().thenApplyAsync(latest -> {
             Revision current = pos.getRevision();
             List<RecordWithPosition> recordWithPositions = new ArrayList<>();
 
@@ -129,7 +128,7 @@ public class PravegaLog implements Log {
             while (value != null) {
                 recordWithPositions.add(new RecordWithPosition(new PravegaPosition(current), value.getRecord()));
                 current = value.getNextRevision();
-                value = current.equals(latest) ? null : logCache.getRecord(cacheKeySupplier.apply(current));
+                value = current.equals(latest.getPosition()) ? null : logCache.getRecord(cacheKeySupplier.apply(current));
             }
 
             return recordWithPositions;
