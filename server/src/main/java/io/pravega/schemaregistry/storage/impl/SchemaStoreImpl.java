@@ -123,7 +123,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo, VersionInfo versionInfo) {
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag) {
         return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, versionInfo, etag));
     }
 

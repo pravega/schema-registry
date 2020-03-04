@@ -21,6 +21,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -70,38 +71,26 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties) {
         Preconditions.checkNotNull(groupProperties.getSchemaType());
         Preconditions.checkNotNull(groupProperties.getSchemaValidationRules());
-        Preconditions.checkArgument(validateRules(groupProperties, groupProperties.getSchemaValidationRules()));
+        Preconditions.checkArgument(validateRules(groupProperties.getSchemaType(), groupProperties.getSchemaValidationRules()));
         return store.createGroup(group, groupProperties);
     }
 
-    private boolean validateRules(GroupProperties groupProperties, SchemaValidationRules newRules) {
+    private boolean validateRules(SchemaType schemaType, SchemaValidationRules newRules) {
         Preconditions.checkNotNull(newRules);
         Compatibility.Type compatibility = newRules.getCompatibility().getCompatibility();
-        boolean objectTypeCheck = !groupProperties.isValidateByObjectType() ||
-                isValidObjectTypePolicy(compatibility);
 
-        switch (groupProperties.getSchemaType().getSchemaType()) {
+        switch (schemaType.getSchemaType()) {
             case Avro:
-                return objectTypeCheck;
+                return true;
             case Protobuf:
             case Json:
             case Custom:
-                return objectTypeCheck && isValidNonAvroPolicy(compatibility);
+                return compatibility.equals(Compatibility.Type.AllowAny) ||
+                        compatibility.equals(Compatibility.Type.DisallowAll);
         }
         return true;
     }
-
-    private boolean isValidObjectTypePolicy(Compatibility.Type compatibility) {
-        return !(compatibility.equals(Compatibility.Type.BackwardTill) ||
-                compatibility.equals(Compatibility.Type.ForwardTill) ||
-                compatibility.equals(Compatibility.Type.BackwardTillAndForwardTill));
-    }
-
-    private boolean isValidNonAvroPolicy(Compatibility.Type compatibility) {
-        return compatibility.equals(Compatibility.Type.AllowAny) ||
-                compatibility.equals(Compatibility.Type.DisallowAll);
-    }
-
+    
     /**
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
@@ -128,13 +117,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Void> updateSchemaValidationPolicy(String group, SchemaValidationRules validationRules) {
         return store.getGroupEtag(group)
                     .thenCompose(pos -> store.getGroupProperties(group)
-                                             .thenCompose(groupProperties -> {
-                                                 if (validateRules(groupProperties, validationRules)) {
-                                                     return store.updateValidationRules(group, pos, validationRules);
-                                                 } else {
-                                                     throw new IllegalArgumentException();
-                                                 }
-                                             }));
+                                             .thenCompose(groupProperties -> store.updateValidationRules(group, pos, validationRules)));
     }
 
     /**
@@ -167,28 +150,27 @@ public class SchemaRegistryService {
         // 3. conditionally update the schema
         return store.getGroupEtag(group)
                     .thenCompose(etag -> store.getGroupProperties(group)
-                                              .thenCompose(prop -> {
-                                                  return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
-                                                          e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, () -> {
-                                                      CompletableFuture<VersionInfo> latest;
-                                                              if (prop.isValidateByObjectType()) {
-                                                                  String objectTypeName = schema.getName();
+                                              .thenCompose(prop -> Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
+                                                      e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                                      () -> { // Schema doesnt exist. Validate and add it
+                                                          CompletableFuture<VersionInfo> latest;
+                                                          if (prop.isValidateByObjectType()) {
+                                                              String objectTypeName = schema.getName();
 
-                                                                  // policy cannot be backward till forward till etc. 
-                                                                  // get schemas for object type for validation
-                                                                  latest = store.getLatestVersion(group, objectTypeName);
-                                                              } else {
-                                                                  // todo: apply policy
-                                                                  // get schemas for group for validation
-                                                                  latest = store.getLatestVersion(group);
-                                                              }
-                                                              return latest.thenCompose(latestVersion -> {
-                                                                  int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
-                                                                  VersionInfo nextVersion = new VersionInfo(schema.getName(), next);
-                                                                  return store.addSchemaToGroup(group, etag, schema, nextVersion);
-                                                              });
+                                                              // policy cannot be backward till forward till or backwardTill and forwardTill. 
+                                                              // get schemas for object type for validation
+                                                              latest = store.getLatestVersion(group, objectTypeName);
+                                                          } else {
+                                                              // todo: apply policy
+                                                              // get schemas for group for validation
+                                                              latest = store.getLatestVersion(group);
+                                                          }
+                                                          return latest.thenCompose(latestVersion -> {
+                                                              int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
+                                                              VersionInfo nextVersion = new VersionInfo(schema.getName(), next);
+                                                              return store.addSchemaToGroup(group, schema, nextVersion, etag);
                                                           });
-                                              }));
+                                                      })));
     }
 
     /**

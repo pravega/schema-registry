@@ -56,7 +56,7 @@ public interface SchemaStore {
     
     CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName);
 
-    CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo, VersionInfo versionInfo);
+    CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 
