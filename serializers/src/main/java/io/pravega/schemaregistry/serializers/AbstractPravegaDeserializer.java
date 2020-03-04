@@ -32,9 +32,8 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 public abstract class AbstractPravegaDeserializer<T> implements PravegaDeserializer<T> {
     private static final byte PROTOCOL = 0x0;
-    
-    private final String scope;
-    private final String stream;
+
+    private final String groupId;
     private final SchemaRegistryClient client;
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
     private final AtomicReference<SchemaInfo> schemaInfo;
@@ -43,14 +42,12 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
     
-    protected AbstractPravegaDeserializer(String scope,
-                                          String stream,
+    protected AbstractPravegaDeserializer(String groupId,
                                           SchemaRegistryClient client,
                                           @Nullable SchemaData<T> schema,
                                           boolean skipHeaders,
                                           Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
-        this.scope = scope;
-        this.stream = stream;
+        this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
         this.schemaInfo = new AtomicReference<>();
@@ -66,12 +63,12 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
 
     @Synchronized
     private void initialize() {
-        GroupProperties groupProperties = client.getGroupProperties(scope, stream);
+        GroupProperties groupProperties = client.getGroupProperties(groupId);
         SchemaValidationRules schemaValidationRules = groupProperties.getSchemaValidationRules();
 
         this.encodeHeader.set(groupProperties.isEnableEncoding());
 
-        client.validateSchema(scope, stream, schemaInfo.get(), schemaValidationRules);
+        client.validateSchema(groupId, schemaInfo.get(), schemaValidationRules);
     }
     
     @Override

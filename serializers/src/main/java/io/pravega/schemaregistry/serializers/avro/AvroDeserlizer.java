@@ -29,10 +29,10 @@ import java.util.Map;
 
 public class AvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
     AvroSchema<T> avroSchema;
-    public AvroDeserlizer(String scope, String groupId, SchemaRegistryClient client,
+    public AvroDeserlizer(String groupId, SchemaRegistryClient client,
                           @Nullable AvroSchema<T> schema,
                           Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
-        super(scope, groupId, client, schema, false, compressors, encodingCache);
+        super(groupId, client, schema, false, compressors, encodingCache);
         this.avroSchema = schema;
     }
 

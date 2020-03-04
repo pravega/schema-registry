@@ -28,19 +28,19 @@ public class EncodingCache {
     private final LoadingCache<EncodingInfo, EncodingId> versionCache;
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
 
-    public EncodingCache(String scope, String stream, SchemaRegistryClient registryClient) {
+    public EncodingCache(String groupId, SchemaRegistryClient registryClient) {
         schemaCache = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, VersionInfo>() {
                                                       @ParametersAreNonnullByDefault
                                                       @Override
                                                       public VersionInfo load(final SchemaInfo key) {
-                                                          return registryClient.getSchemaVersion(scope, stream, key);
+                                                          return registryClient.getSchemaVersion(groupId, key);
                                                       }
                                                   });
         versionCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingInfo, EncodingId>() {
                                                       @ParametersAreNonnullByDefault
                                                       @Override
                                                       public EncodingId load(final EncodingInfo key) {
-                                                          return registryClient.getEncodingId(scope, stream, key.getVersionInfo(), 
+                                                          return registryClient.getEncodingId(groupId, key.getVersionInfo(), 
                                                                   key.getCompression());
                                                       }
                                                   });
@@ -48,7 +48,7 @@ public class EncodingCache {
         encodingCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
             public EncodingInfo load(EncodingId key) throws Exception {
-                return registryClient.getEncodingInfo(scope, stream, key);
+                return registryClient.getEncodingInfo(groupId, key);
             }
         });
         

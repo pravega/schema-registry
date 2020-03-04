@@ -20,9 +20,9 @@ import lombok.SneakyThrows;
 import java.io.OutputStream;
 
 public class ProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
-    public ProtobufSerializer(String scope, String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
+    public ProtobufSerializer(String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
                               Compressor compressor, boolean registerSchema, EncodingCache encodingCache) {
-        super(scope, groupId, client, schema, compressor, registerSchema, encodingCache);
+        super(groupId, client, schema, compressor, registerSchema, encodingCache);
     }
 
     @SneakyThrows

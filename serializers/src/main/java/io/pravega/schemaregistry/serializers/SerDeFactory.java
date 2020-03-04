@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.protobuf.Message;
+import io.pravega.schemaregistry.PravegaGroupIdGenerator;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -23,6 +24,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SerDeFactory {
+    private static final PravegaGroupIdGenerator GROUP_ID_GENERATOR = new PravegaGroupIdGenerator();
     private final SchemaRegistryClient registryClient;
 
     private SerDeFactory(SchemaRegistryClient registryClient) {
@@ -39,26 +41,29 @@ public class SerDeFactory {
      * @return returns a avro based PravegaSerDe. 
      */
     public <T> PravegaSerDe<T> createAvroSerDe(SerDeConfig config, AvroSchema<T> schemaData) {
-        EncodingCache encodingCache = new EncodingCache(config.getScope(), config.getStream(), registryClient);
+        String groupId = GROUP_ID_GENERATOR.getGroupId(config.getScope(), config.getStream());
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
         AbstractPravegaSerializer<T> serializer = null;
         AbstractPravegaDeserializer<T> deserializer = null;
 
         if (config.getSerializerConfig() != null) {
-            serializer = new AvroSerializer<>(config.getScope(), config.getStream(),
-                    registryClient, schemaData, config.getSerializerConfig().getCompressor(), 
+            serializer = new AvroSerializer<>(groupId, registryClient, schemaData, config.getSerializerConfig().getCompressor(), 
                     config.getSerializerConfig().isAutoRegisterSchema(), encodingCache);
         } 
         
         if (config.getDeserializerConfig() != null) {
-            deserializer = new AvroDeserlizer<>(config.getScope(), config.getStream(),
-                    registryClient, schemaData, config.getDeserializerConfig().getCompressorMap(), encodingCache);
+            deserializer = new AvroDeserlizer<>(groupId, registryClient, schemaData, 
+                    config.getDeserializerConfig().getCompressorMap(), encodingCache);
         }
         
         return new PravegaSerDe<>(serializer, deserializer);
     }
 
     public <T> PravegaSerDe<T> createMultiplexedAvroSerDe(SerDeConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
-        EncodingCache encodingCache = new EncodingCache(config.getScope(), config.getStream(), registryClient);
+        String groupId = GROUP_ID_GENERATOR.getGroupId(config.getScope(), config.getStream());
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
         MultiplexedSerializer<T> serializer = null;
         MultiplexedDeserializer<T> deserializer = null;
@@ -66,8 +71,7 @@ public class SerDeFactory {
         if (config.getSerializerConfig() != null) {
             Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                     .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, 
-                            x -> new AvroSerializer<>(config.getScope(), config.getStream(), 
-                                    registryClient, x.getValue(), config.getSerializerConfig().getCompressor(),
+                            x -> new AvroSerializer<>(groupId, registryClient, x.getValue(), config.getSerializerConfig().getCompressor(),
                                     config.getSerializerConfig().isAutoRegisterSchema(), encodingCache)));
             serializer = new MultiplexedSerializer<>(serializerMap);
         } 
@@ -75,9 +79,8 @@ public class SerDeFactory {
         if (config.getDeserializerConfig() != null) {
             Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                     .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
-                            x -> new AvroDeserlizer<>(config.getScope(), config.getStream(),
-                                    registryClient, x.getValue(), config.getDeserializerConfig().getCompressorMap(), encodingCache)));
-            deserializer = new MultiplexedDeserializer<>(config.getScope(), config.getStream(), registryClient, 
+                            x -> new AvroDeserlizer<>(groupId, registryClient, x.getValue(), config.getDeserializerConfig().getCompressorMap(), encodingCache)));
+            deserializer = new MultiplexedDeserializer<>(groupId, registryClient, 
                     deserializerMap, false, config.getDeserializerConfig().getCompressorMap(), encodingCache);
         }
         
@@ -85,20 +88,22 @@ public class SerDeFactory {
     }
 
     public <T extends Message> PravegaSerDe<T> createProtobufSerDe(SerDeConfig config, ProtobufSchema<T> schemaData) {
-        EncodingCache encodingCache = new EncodingCache(config.getScope(), config.getStream(), registryClient);
+        String groupId = GROUP_ID_GENERATOR.getGroupId(config.getScope(), config.getStream());
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
         AbstractPravegaSerializer<T> serializer = null;
         AbstractPravegaDeserializer<T> deserializer = null;
         if (config.getSerializerConfig() != null) {
             // schema cannot be null
-            serializer = new ProtobufSerializer<>(config.getScope(), config.getStream(), registryClient, 
+            serializer = new ProtobufSerializer<>(groupId, registryClient, 
                     schemaData, config.getSerializerConfig().getCompressor(),
                     config.getSerializerConfig().isAutoRegisterSchema(), encodingCache);
         }
 
         if (config.getDeserializerConfig() != null) {
             // schema can be null in which case deserialization will happen into dynamic message
-            deserializer = new ProtobufDeserlizer<>(config.getScope(), config.getStream(), registryClient, 
+            deserializer = new ProtobufDeserlizer<>(groupId, registryClient, 
                     schemaData, config.getDeserializerConfig().getCompressorMap(), encodingCache);
         }
 
@@ -107,7 +112,9 @@ public class SerDeFactory {
 
     public <T extends Message> PravegaSerDe<T> createMultiplexedProtobufSerDe(SerDeConfig config, Map<Class<? extends T>, 
             ProtobufSchema<T>> schemas) {
-        EncodingCache encodingCache = new EncodingCache(config.getScope(), config.getStream(), registryClient);
+        String groupId = GROUP_ID_GENERATOR.getGroupId(config.getScope(), config.getStream());
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
         MultiplexedSerializer<T> serializer = null;
         MultiplexedDeserializer<T> deserializer = null;
@@ -115,8 +122,7 @@ public class SerDeFactory {
         if (config.getSerializerConfig() != null) {
             Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                     .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                            x -> new ProtobufSerializer<>(config.getScope(), config.getStream(),
-                                    registryClient, x.getValue(), config.getSerializerConfig().getCompressor(),
+                            x -> new ProtobufSerializer<>(groupId, registryClient, x.getValue(), config.getSerializerConfig().getCompressor(),
                                     config.getSerializerConfig().isAutoRegisterSchema(), encodingCache)));
             serializer = new MultiplexedSerializer<>(serializerMap);
         }
@@ -124,9 +130,8 @@ public class SerDeFactory {
         if (config.getDeserializerConfig() != null) {
             Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                     .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
-                            x -> new ProtobufDeserlizer<>(config.getScope(), config.getStream(),
-                                    registryClient, x.getValue(), config.getDeserializerConfig().getCompressorMap(), encodingCache)));
-            deserializer = new MultiplexedDeserializer<>(config.getScope(), config.getStream(), registryClient, 
+                            x -> new ProtobufDeserlizer<>(groupId, registryClient, x.getValue(), config.getDeserializerConfig().getCompressorMap(), encodingCache)));
+            deserializer = new MultiplexedDeserializer<>(groupId, registryClient, 
                     deserializerMap, false, config.getDeserializerConfig().getCompressorMap(), encodingCache);
         }
 

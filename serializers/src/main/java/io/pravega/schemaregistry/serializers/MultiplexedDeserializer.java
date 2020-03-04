@@ -22,11 +22,11 @@ import java.util.Map;
 public class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
 
-    protected MultiplexedDeserializer(String scope, String stream, SchemaRegistryClient client,
+    protected MultiplexedDeserializer(String groupId, SchemaRegistryClient client,
                                       Map<String, AbstractPravegaDeserializer<T>> deserializers,
                                       boolean skipHeaders, Map<CompressionType, Compressor> compressorMap, 
                                       EncodingCache encodingCache) {
-        super(scope, stream, client, null, skipHeaders, compressorMap, encodingCache);
+        super(groupId, client, null, skipHeaders, compressorMap, encodingCache);
         // 1. validate each schema
         // 2. ensure all data 
         this.deserializers = deserializers; 

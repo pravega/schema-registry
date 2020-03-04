@@ -25,10 +25,10 @@ import java.util.Map;
 
 public class ProtobufDeserlizer<T extends Message> extends AbstractPravegaDeserializer<T> {
     ProtobufSchema<T> protobufSchema;
-    public ProtobufDeserlizer(String scope, String groupId, SchemaRegistryClient client,
+    public ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
                               @Nullable ProtobufSchema<T> schema, Map<CompressionType, Compressor> compressorMap,
                               EncodingCache encodingCache) {
-        super(scope, groupId, client, schema, true, compressorMap, encodingCache);
+        super(groupId, client, schema, true, compressorMap, encodingCache);
         this.protobufSchema = schema;
     }
 

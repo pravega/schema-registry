@@ -30,9 +30,9 @@ import java.util.concurrent.atomic.AtomicReference;
 
 public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<T> {
     private static final byte PROTOCOL = 0x0;
+
+    private final String groupId;
     
-    private final String scope;
-    private final String stream;
     private final SchemaInfo schemaInfo;
     private final AtomicReference<VersionInfo> version;
     private final AtomicBoolean encodeHeader;
@@ -42,15 +42,13 @@ public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<
     private final boolean registerSchema;
     private final EncodingCache encodingCache;
 
-    protected AbstractPravegaSerializer(String scope,
-                                        String stream,
+    protected AbstractPravegaSerializer(String groupId,
                                         SchemaRegistryClient client,
                                         SchemaData<T> schema,
                                         Compressor compressor, 
                                         boolean registerSchema,
                                         EncodingCache encodingCache) {
-        this.scope = scope;
-        this.stream = stream;
+        this.groupId = groupId;
         this.client = client;
         this.schemaInfo = schema.getSchemaInfo();
         this.encodingCache = encodingCache;
@@ -62,14 +60,14 @@ public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<
     }
     
     private void initialize() {
-        GroupProperties groupProperties = client.getGroupProperties(scope, stream);
+        GroupProperties groupProperties = client.getGroupProperties(groupId);
         SchemaValidationRules schemaValidationRules = groupProperties.getSchemaValidationRules();
         
         this.encodeHeader.set(groupProperties.isEnableEncoding());
         if (registerSchema) {
             // register schema
             this.version.compareAndSet(null, 
-                    client.addSchemaIfAbsent(scope, stream, schemaInfo, schemaValidationRules));
+                    client.addSchemaIfAbsent(groupId, schemaInfo, schemaValidationRules));
         } else {
             // get already registered schema version. If schema is not registered, this will throw an exception. 
             this.version.compareAndSet(null, encodingCache.getVersionFromSchema(schemaInfo));
