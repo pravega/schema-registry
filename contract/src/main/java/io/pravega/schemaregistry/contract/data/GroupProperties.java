@@ -24,11 +24,12 @@ import java.io.IOException;
  * 
  * {@link GroupProperties#schemaType} identifies the serialization format and schema type used to describe the schema.
  * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
- * {@link GroupProperties#subgroupBySchemaName} that specifies if schemas are subgrouped by event type. This is to enable 
- * the registry for scenarios such as event sourcing, or message bus where different types of events could be written to the same
- * stream. The users can register new versions of each distinct type of schema, and the registry will subgroup them and 
- * check for compatibility for each type independently.
- * If subgroupBySchemaName is set to true, then schemas are automatically divided into subgroups uniquely identified by 
+ * {@link GroupProperties#validateByEventType} that specifies if schemas have validation rules applied for schemas that share the 
+ * same {@link SchemaInfo#name} which represents the event type. This ensures that the registry can support scenarios like 
+ * event sourcing, or message bus where different types of events could be written to the same
+ * stream. The users can register new versions of each distinct type of schema, and the registry will check for compatibility 
+ * for each type independently.
+ * If validateByEventType is set to true, then schemas are automatically divided into subgroups uniquely identified by 
  * {@link SchemaInfo#name}.  
  * {@link GroupProperties#enableEncoding} This flag is used to specify if registry should generate encoding ids or not. 
  * If enableEncoding is set to true, the registry service will generate {@link EncodingId} for writer applications using 
@@ -47,7 +48,7 @@ public class GroupProperties {
 
     private final SchemaType schemaType;
     private final SchemaValidationRules schemaValidationRules;
-    private final boolean subgroupBySchemaName;
+    private final boolean validateByEventType;
     private final boolean enableEncoding;
 
     private static class GroupPropertiesBuilder implements ObjectBuilder<GroupProperties> {
@@ -72,14 +73,14 @@ public class GroupProperties {
         private void write00(GroupProperties e, RevisionDataOutput target) throws IOException {
             SchemaType.SERIALIZER.serialize(target, e.schemaType);
             SchemaValidationRules.SERIALIZER.serialize(target, e.schemaValidationRules);
-            target.writeBoolean(e.subgroupBySchemaName);
+            target.writeBoolean(e.validateByEventType);
             target.writeBoolean(e.enableEncoding);
         }
 
         private void read00(RevisionDataInput source, GroupProperties.GroupPropertiesBuilder b) throws IOException {
             b.schemaType(SchemaType.SERIALIZER.deserialize(source))
              .schemaValidationRules(SchemaValidationRules.SERIALIZER.deserialize(source))
-             .subgroupBySchemaName(source.readBoolean())
+             .validateByEventType(source.readBoolean())
              .enableEncoding(source.readBoolean());
         }
     }

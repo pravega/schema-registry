@@ -325,6 +325,39 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/canRead:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: canRead
+      description: check if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CanReadRequest
+          description: Checks if schema can be used to read the data in the stream based on compatibility rules. 
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema can be used to read
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
   /groups/{groupName}/schemas/versions:
     parameters:
       - in: path
@@ -343,7 +376,7 @@ paths:
         200:
           description: Versioned history of schemas registered under the group
           schema:
-            $ref: "#/definitions/SchemaEvolutionList"
+            $ref: "#/definitions/SchemaList"
         404:
           description: Group with given name not found
         500:
@@ -411,7 +444,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/subgroups:
+  /groups/{groupName}/eventTypes:
     parameters:
       - in: path
         name: groupName
@@ -421,20 +454,20 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getSubGroups
-      description: Fetch all subgroups under a Group. Schemas under a group can be subgrouped based on event type. A subgroup denotes a set of schemas that are evolved separately.  
+      operationId: getEventTypes
+      description: Fetch all eventTypes under a Group. This api will return schema types.  
       produces:
         - application/json
       responses:
         200:
-          description: List of subgroups under the group
+          description: List of eventTypes under the group
           schema:
-            $ref: "#/definitions/SubgroupsList"
+            $ref: "#/definitions/EventTypesList"
         404:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/subgroups/{subgroupName}/schemas/versions:
+  /groups/{groupName}/eventTypes/{eventTypeName}/schemas/versions:
     parameters:
       - in: path
         name: groupName
@@ -442,27 +475,27 @@ paths:
         required: true
         type: string
       - in: path
-        name: subgroupName
-        description: Subgroup name
+        name: eventTypeName
+        description: Event type
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getSubGroupSchemas
-      description: Fetch all schemas registered under a sub Group
+      operationId: getEventTypeSchemas
+      description: Fetch all schemas registered with the given schema name
       produces:
         - application/json
       responses:
         200:
-          description: Versioned history of schemas registered under the group
+          description: Versioned history of schemas registered under the group of specified schema type
           schema:
-            $ref: "#/definitions/SchemaEvolutionList"
+            $ref: "#/definitions/SchemaList"
         404:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/subgroups/{subgroupName}/schemas/versions/{versionId}:
+  /groups/{groupName}/eventTypes/{eventTypeName}/schemas/versions/{versionId}:
     parameters:
       - in: path
         name: groupName
@@ -470,25 +503,26 @@ paths:
         required: true
         type: string
       - in: path
-        name: subgroupName
-        description: Subgroup name
+        name: eventTypeName
+        description: Event type
         required: true
         type: string
       - in: path
         name: versionId
         description: version id
         required: true
-        type: string
+        type: integer
+        format: int32
     get:
       tags:
       - "Schema"
-      operationId: getSchemaFromSubgroupVersion
+      operationId: getSchemaFromVersionForEventType
       description: Fetch the properties of an existing Group
       consumes:
         - application/json
       parameters:
         - in: body
-          name: GetSchemaFromSubgroupVersionRequest
+          name: GetSchemaForEventTypeByVersionRequest
           description: Get schema corresponding to the version
           required: true
           schema:
@@ -507,7 +541,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details  
-  /groups/{groupName}/subgroups/{subgroupName}/schemas/versions/latest:
+  /groups/{groupName}/eventTypes/{eventTypeName}/schemas/versions/latest:
     parameters:
       - in: path
         name: groupName
@@ -515,20 +549,20 @@ paths:
         required: true
         type: string
       - in: path
-        name: subgroupName
-        description: Subgroup name
+        name: eventTypeName
+        description: Event Type 
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getLatestSubgroupSchema
+      operationId: getLatestSchemaForEventType
       description: Fetch the properties of an existing Group
       produces:
         - application/json
       responses:
         200:
-          description: Found latest schema in subgroup
+          description: Found latest schema in eventType
           schema:
             $ref: "#/definitions/SchemaWithVersion"
         404:
@@ -557,7 +591,7 @@ paths:
           schema:
             type: object
             properties:
-              subgroupName: 
+              eventTypeName: 
                 type: string
               versionInfo:
                   $ref: "#/definitions/VersionInfo"
@@ -634,7 +668,7 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/GroupProperties"
-  SubgroupsList:
+  EventTypesList:
     type: object
     properties:
       groups:
@@ -650,7 +684,7 @@ definitions:
           $ref: "#/definitions/SchemaValidationRules"
       schemaType:
           $ref: "#/definitions/SchemaType"
-      subgroupBySchemaName:
+      validateByEventType:
           type: boolean
       enableEncoding:
           type: boolean
@@ -698,7 +732,7 @@ definitions:
         $ref: "#/definitions/SchemaInfo"
       version:
         $ref: "#/definitions/VersionInfo"
-  SchemaEvolution:
+  SchemaVersionAndRules:
     type: object
     properties:
       schemaInfo:
@@ -707,13 +741,13 @@ definitions:
         $ref: "#/definitions/VersionInfo"
       validationRules:
         $ref: "#/definitions/SchemaValidationRules"
-  SchemaEvolutionList:
+  SchemaList:
     type: object
     properties:
       schemas:
         type: array
         items:
-          $ref: "#/definitions/SchemaEvolution"        
+          $ref: "#/definitions/SchemaVersionAndRules"        
   CompressionType:
     type: object
     properties:
@@ -765,8 +799,12 @@ definitions:
   SchemaValidationRules:
     type: object
     properties:
-       compatibility:
+      compatibility:
         $ref: "#/definitions/Compatibility" 
+      rules:
+        type: array  
+        items:
+          $ref: "#/definitions/SchemaValidationRule"
   SchemaValidationRule:
     type: object
     properties:

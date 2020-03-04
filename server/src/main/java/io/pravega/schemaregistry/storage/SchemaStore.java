@@ -34,26 +34,25 @@ public interface SchemaStore {
     CompletableFuture<Position> getGroupEtag(String group);
 
     CompletableFuture<GroupProperties> getGroupProperties(String group);
-
+    
     CompletableFuture<Void> updateValidationPolicy(String group, Position etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<String>> listSubGroups(String group);
-
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group);
+    CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token);
+    
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
 
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, VersionInfo from);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String group, String subgroup);
-
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName,
+                                                                               ContinuationToken token);
+    
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
 
     CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
-
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String subgroup);
+    
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String eventTypeName);
 
     CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo);
-
-    CompletableFuture<VersionInfo> addSchemaToSubgroup(String group, String subgroup, Position etag, SchemaInfo schemaInfo);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 
@@ -64,6 +63,6 @@ public interface SchemaStore {
     CompletableFuture<List<CompressionType>> getCompressions(String group);
 
     CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group);
-
-    CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String group, String subgroup);
+    
+    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName);
 }

@@ -155,20 +155,20 @@ public class Group<T> {
         return Futures.toVoid(wal.writeToLog(record, etag));
     }
 
-    public CompletableFuture<ListWithToken<String>> getSubgroups() {
+    public CompletableFuture<ListWithToken<String>> getEventTypes() {
         return getGroupProperties()
                 .thenCompose(groupProperties -> {
-                    if (!groupProperties.isSubgroupBySchemaName()) {
+                    if (!groupProperties.isValidateByEventType()) {
                         return Futures.failedFuture(new IllegalStateException());
                     }
                     // get all index keys
                     return sync().thenCompose(v -> index.getAllKeys())
                                 .thenApply(list -> {
-                                    List<String> subgroups = list
+                                    List<String> eventTypes = list
                                             .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)
                                             .map(x -> ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName())
                                             .distinct().collect(Collectors.toList());
-                                    return new ListWithToken<>(subgroups, null);
+                                    return new ListWithToken<>(eventTypes, null);
                                 });
                 });
     }

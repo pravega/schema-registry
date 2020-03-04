@@ -5,22 +5,23 @@ import io.pravega.schemaregistry.contract.generated.rest.model.*;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaValidationRuleRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.EventTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromSubgroupVersionRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForEventTypeByVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaEvolutionList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
-import io.pravega.schemaregistry.contract.generated.rest.model.SubgroupsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
@@ -44,6 +45,11 @@ public class GroupsApiServiceImpl extends GroupsApiService {
     }
     @Override
     public Response addSchemaValidationRule(String groupName, AddSchemaValidationRuleRequest addSchemaValidationRuleRequest, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
+    public Response canRead(String groupName, CanReadRequest canReadRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -73,6 +79,16 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
+    public Response getEventTypeSchemas(String groupName, String eventTypeName, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
+    public Response getEventTypes(String groupName, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
     public Response getGroupProperties(String groupName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
@@ -88,7 +104,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getLatestSubgroupSchema(String groupName, String subgroupName, SecurityContext securityContext) throws NotFoundException {
+    public Response getLatestSchemaForEventType(String groupName, String eventTypeName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -98,12 +114,12 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getSchemaFromSubgroupVersion(String groupName, String subgroupName, String versionId, GetSchemaFromSubgroupVersionRequest getSchemaFromSubgroupVersionRequest, SecurityContext securityContext) throws NotFoundException {
+    public Response getSchemaFromVersion(String groupName, String versionId, GetSchemaFromVersionRequest getSchemaFromVersionRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getSchemaFromVersion(String groupName, String versionId, GetSchemaFromVersionRequest getSchemaFromVersionRequest, SecurityContext securityContext) throws NotFoundException {
+    public Response getSchemaFromVersionForEventType(String groupName, String eventTypeName, Integer versionId, GetSchemaForEventTypeByVersionRequest getSchemaForEventTypeByVersionRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -119,16 +135,6 @@ public class GroupsApiServiceImpl extends GroupsApiService {
     }
     @Override
     public Response getSchemaVersion(String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response getSubGroupSchemas(String groupName, String subgroupName, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response getSubGroups(String groupName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

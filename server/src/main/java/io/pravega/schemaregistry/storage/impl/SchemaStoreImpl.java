@@ -76,12 +76,13 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String group) {
-        return getGroup(group).thenCompose(Group::getSubgroups);
+    public CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token) {
+        return getGroup(group).thenCompose(Group::getEventTypes);
     }
 
+
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token) {
         return getGroup(group).thenCompose(Group::getSchemas);
     }
 
@@ -91,8 +92,9 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String group, String subgroup) {
-        return getGroup(group).thenCompose(grp -> grp.getSchemas(subgroup));
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName,
+                                                                                      ContinuationToken token) {
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(eventTypeName));
     }
 
     @Override
@@ -113,11 +115,6 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     @Override
     public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo) {
         return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, etag));
-    }
-
-    @Override
-    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String group, String subgroup, Position etag, SchemaInfo schemaInfo) {
-        return getGroup(group).thenCompose(grp -> grp.addSchemaToSubGroup(subgroup, schemaInfo, etag));
     }
 
     @Override
@@ -147,9 +144,10 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getSubGroupHistory(String group, String subgroup) {
-        return getGroup(group).thenCompose(grp -> grp.getHistory(subgroup));
+    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName) {
+        return getGroup(group).thenCompose(grp -> grp.getHistory(eventTypeName));
     }
+
     // endregion
 
     private CompletableFuture<Group<T>> getGroup(String group) {
