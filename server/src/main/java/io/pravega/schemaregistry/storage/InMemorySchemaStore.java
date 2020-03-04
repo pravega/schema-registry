@@ -56,17 +56,17 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listSubGroups(String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token) {
         return null;
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String group, String subgroup, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName, ContinuationToken token) {
         return null;
     }
 
@@ -81,7 +81,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String subgroup) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String eventTypeName) {
         return null;
     }
 
@@ -89,12 +89,7 @@ public class InMemorySchemaStore implements SchemaStore {
     public CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position position, SchemaInfo schemaInfo) {
         return null;
     }
-
-    @Override
-    public CompletableFuture<VersionInfo> addSchemaToSubgroup(String group, String subgroup, Position position, SchemaInfo schemaInfo) {
-        return null;
-    }
-
+    
     @Override
     public CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo) {
         return null;
@@ -121,7 +116,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String group, String subgroup) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName) {
         return null;
     }
 }

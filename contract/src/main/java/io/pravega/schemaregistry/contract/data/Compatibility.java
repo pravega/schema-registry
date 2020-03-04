@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.Data;
 
 /**
- * Defines different Compatibility policy options for schema evolution for schemas within a group (or subgroup).
+ * Defines different Compatibility policy options for schema evolution for schemas within a group.
 
  * {@link Type#AllowAny}: allow any changes to schema without any checks performed by the registry. 
  * {@link Type#DisallowAll}: disables any changes to the schema for the group.

@@ -63,8 +63,8 @@ public interface SchemaRegistryClient {
      * Gets group's properties. 
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#subgroupBySchemaName} that specifies if schemas are subgrouped by event type. 
-     * Event Types are uniquely identified by {@link SchemaInfo#name}. 
+     * {@link GroupProperties#validateByEventType} that specifies if schemas should be exclusively validated against 
+     * schemas that have the same {@link SchemaInfo#name}. 
      * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify 
      * encoding properties in {@link EncodingInfo}.
      * 
@@ -104,7 +104,7 @@ public interface SchemaRegistryClient {
      * @return List of subgroups within the group. If group is configured to store schemas in subgroups then 
      *  subgroups are returned. Otherwise an empty list is returned.  
      */
-    List<String> getSubgroups(String group);
+    List<String> getEventTypes(String group);
 
     /**
      * Adds schema to the group. If group is configured to include schemas by event type in subgroups, then 
@@ -150,32 +150,32 @@ public interface SchemaRegistryClient {
     EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType);
 
     /**
-     * Gets latest schema and version for the group (or subgroup, if specified). 
-     * For groups configured with {@link GroupProperties#subgroupBySchemaName}, the subgroup name needs to be supplied to 
-     * get the latest schema for the subgroup. 
+     * Gets latest schema and version for the group (or eventTypeName, if specified). 
+     * For groups configured with {@link GroupProperties#validateByEventType}, the eventTypeName name needs to be supplied to 
+     * get the latest schema for the eventTypeName. 
      * 
      * @param group Name of group. 
-     * @param subgroup Name of subgroup. 
+     * @param eventTypeName Name of eventTypeName. 
      *                 
-     * @return Schema with version for the last schema that was added to the group (or subgroup).
+     * @return Schema with version for the last schema that was added to the group (or eventTypeName).
      */
-    SchemaWithVersion getLatestSchema(String group, @Nullable String subgroup);
+    SchemaWithVersion getLatestSchema(String group, @Nullable String eventTypeName);
 
     /**
-     * Gets all schemas with corresponding versions for the group (or subgroup, if specified). 
-     * For groups configured with {@link GroupProperties#subgroupBySchemaName}, the subgroup name needs to be supplied to 
-     * get the latest schema for the subgroup. {@link SchemaInfo#name} is used as the subgroup name. 
+     * Gets all schemas with corresponding versions for the group (or eventTypeName, if specified). 
+     * For groups configured with {@link GroupProperties#validateByEventType}, the eventTypeName name needs to be supplied to 
+     * get the latest schema for the eventTypeName. {@link SchemaInfo#name} is used as the eventTypeName name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
      * @param group Name of group.
-     * @param subgroup Name of subgroup. 
+     * @param eventTypeName Name of eventTypeName. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String subgroup);
+    List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String eventTypeName);
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#subgroupBySchemaName}
-     * the subgroup name is taken from the SchemaInfo. 
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByEventType}
+     * the version will contain the schemaName taken from the {@link SchemaInfo#name}. 
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      * 
      * @param group Name of group. 

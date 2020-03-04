@@ -27,8 +27,8 @@ import javax.validation.constraints.*;
  */
 
 public class GetEncodingIdRequest   {
-  @JsonProperty("subgroupName")
-  private String subgroupName = null;
+  @JsonProperty("eventTypeName")
+  private String eventTypeName = null;
 
   @JsonProperty("versionInfo")
   private VersionInfo versionInfo = null;
@@ -36,23 +36,23 @@ public class GetEncodingIdRequest   {
   @JsonProperty("compressionType")
   private CompressionType compressionType = null;
 
-  public GetEncodingIdRequest subgroupName(String subgroupName) {
-    this.subgroupName = subgroupName;
+  public GetEncodingIdRequest eventTypeName(String eventTypeName) {
+    this.eventTypeName = eventTypeName;
     return this;
   }
 
   /**
-   * Get subgroupName
-   * @return subgroupName
+   * Get eventTypeName
+   * @return eventTypeName
    **/
-  @JsonProperty("subgroupName")
+  @JsonProperty("eventTypeName")
   @ApiModelProperty(value = "")
-  public String getSubgroupName() {
-    return subgroupName;
+  public String getEventTypeName() {
+    return eventTypeName;
   }
 
-  public void setSubgroupName(String subgroupName) {
-    this.subgroupName = subgroupName;
+  public void setEventTypeName(String eventTypeName) {
+    this.eventTypeName = eventTypeName;
   }
 
   public GetEncodingIdRequest versionInfo(VersionInfo versionInfo) {
@@ -103,14 +103,14 @@ public class GetEncodingIdRequest   {
       return false;
     }
     GetEncodingIdRequest getEncodingIdRequest = (GetEncodingIdRequest) o;
-    return Objects.equals(this.subgroupName, getEncodingIdRequest.subgroupName) &&
+    return Objects.equals(this.eventTypeName, getEncodingIdRequest.eventTypeName) &&
         Objects.equals(this.versionInfo, getEncodingIdRequest.versionInfo) &&
         Objects.equals(this.compressionType, getEncodingIdRequest.compressionType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(subgroupName, versionInfo, compressionType);
+    return Objects.hash(eventTypeName, versionInfo, compressionType);
   }
 
 
@@ -119,7 +119,7 @@ public class GetEncodingIdRequest   {
     StringBuilder sb = new StringBuilder();
     sb.append("class GetEncodingIdRequest {\n");
     
-    sb.append("    subgroupName: ").append(toIndentedString(subgroupName)).append("\n");
+    sb.append("    eventTypeName: ").append(toIndentedString(eventTypeName)).append("\n");
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
     sb.append("}");

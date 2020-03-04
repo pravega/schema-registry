@@ -37,25 +37,21 @@ public interface SchemaStore {
     
     CompletableFuture<Position> updateValidationPolicy(String group, Position etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<String>> listSubGroups(String group, ContinuationToken token);
+    CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token);
     
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group,
-                                                                                           ContinuationToken token);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInSubgroup(String group,
-                                                                                           String subgroup, 
-                                                                                           ContinuationToken token);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName,
+                                                                               ContinuationToken token);
     
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
     
     CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String subgroup);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String eventTypeName);
 
     CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo);
 
-    CompletableFuture<VersionInfo> addSchemaToSubgroup(String group, String subgroup, Position etag, SchemaInfo schemaInfo);
-    
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
     
     CompletableFuture<EncodingId> createOrGetEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType);
@@ -66,5 +62,5 @@ public interface SchemaStore {
 
     CompletableFuture<List<SchemaEvolution>> getGroupHistory(String group);
     
-    CompletableFuture<List<SchemaEvolution>> getSubGroupHistory(String group, String subgroup);
+    CompletableFuture<List<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName);
 }

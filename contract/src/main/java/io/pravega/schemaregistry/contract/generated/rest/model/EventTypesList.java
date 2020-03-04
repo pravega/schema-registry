@@ -16,36 +16,45 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * GetSchemaFromSubgroupVersionRequest
+ * EventTypesList
  */
 
-public class GetSchemaFromSubgroupVersionRequest   {
-  @JsonProperty("versionInfo")
-  private VersionInfo versionInfo = null;
+public class EventTypesList   {
+  @JsonProperty("groups")
+  private List<String> groups = null;
 
-  public GetSchemaFromSubgroupVersionRequest versionInfo(VersionInfo versionInfo) {
-    this.versionInfo = versionInfo;
+  public EventTypesList groups(List<String> groups) {
+    this.groups = groups;
+    return this;
+  }
+
+  public EventTypesList addGroupsItem(String groupsItem) {
+    if (this.groups == null) {
+      this.groups = new ArrayList<String>();
+    }
+    this.groups.add(groupsItem);
     return this;
   }
 
   /**
-   * Get versionInfo
-   * @return versionInfo
+   * Get groups
+   * @return groups
    **/
-  @JsonProperty("versionInfo")
+  @JsonProperty("groups")
   @ApiModelProperty(value = "")
-  public VersionInfo getVersionInfo() {
-    return versionInfo;
+  public List<String> getGroups() {
+    return groups;
   }
 
-  public void setVersionInfo(VersionInfo versionInfo) {
-    this.versionInfo = versionInfo;
+  public void setGroups(List<String> groups) {
+    this.groups = groups;
   }
 
 
@@ -57,22 +66,22 @@ public class GetSchemaFromSubgroupVersionRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GetSchemaFromSubgroupVersionRequest getSchemaFromSubgroupVersionRequest = (GetSchemaFromSubgroupVersionRequest) o;
-    return Objects.equals(this.versionInfo, getSchemaFromSubgroupVersionRequest.versionInfo);
+    EventTypesList eventTypesList = (EventTypesList) o;
+    return Objects.equals(this.groups, eventTypesList.groups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(versionInfo);
+    return Objects.hash(groups);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class GetSchemaFromSubgroupVersionRequest {\n");
+    sb.append("class EventTypesList {\n");
     
-    sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
+    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
     sb.append("}");
     return sb.toString();
   }

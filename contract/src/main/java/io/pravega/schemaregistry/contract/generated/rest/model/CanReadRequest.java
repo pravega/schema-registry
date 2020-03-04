@@ -16,45 +16,36 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SubgroupsList
+ * CanReadRequest
  */
 
-public class SubgroupsList   {
-  @JsonProperty("groups")
-  private List<String> groups = null;
+public class CanReadRequest   {
+  @JsonProperty("schemaInfo")
+  private SchemaInfo schemaInfo = null;
 
-  public SubgroupsList groups(List<String> groups) {
-    this.groups = groups;
-    return this;
-  }
-
-  public SubgroupsList addGroupsItem(String groupsItem) {
-    if (this.groups == null) {
-      this.groups = new ArrayList<String>();
-    }
-    this.groups.add(groupsItem);
+  public CanReadRequest schemaInfo(SchemaInfo schemaInfo) {
+    this.schemaInfo = schemaInfo;
     return this;
   }
 
   /**
-   * Get groups
-   * @return groups
+   * Get schemaInfo
+   * @return schemaInfo
    **/
-  @JsonProperty("groups")
+  @JsonProperty("schemaInfo")
   @ApiModelProperty(value = "")
-  public List<String> getGroups() {
-    return groups;
+  public SchemaInfo getSchemaInfo() {
+    return schemaInfo;
   }
 
-  public void setGroups(List<String> groups) {
-    this.groups = groups;
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
+    this.schemaInfo = schemaInfo;
   }
 
 
@@ -66,22 +57,22 @@ public class SubgroupsList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SubgroupsList subgroupsList = (SubgroupsList) o;
-    return Objects.equals(this.groups, subgroupsList.groups);
+    CanReadRequest canReadRequest = (CanReadRequest) o;
+    return Objects.equals(this.schemaInfo, canReadRequest.schemaInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(schemaInfo);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SubgroupsList {\n");
+    sb.append("class CanReadRequest {\n");
     
-    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }
