@@ -103,7 +103,7 @@ public class ModelHelper {
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
         return new GroupProperties()
                 .enableEncoding(groupProperties.isEnableEncoding())
-                .validateByEventType(groupProperties.isValidateByEventType())
+                .validateByObjectType(groupProperties.isValidateByObjectType())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
 

@@ -23,19 +23,19 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * EventTypesList
+ * ObjectTypesList
  */
 
-public class EventTypesList   {
+public class ObjectTypesList   {
   @JsonProperty("groups")
   private List<String> groups = null;
 
-  public EventTypesList groups(List<String> groups) {
+  public ObjectTypesList groups(List<String> groups) {
     this.groups = groups;
     return this;
   }
 
-  public EventTypesList addGroupsItem(String groupsItem) {
+  public ObjectTypesList addGroupsItem(String groupsItem) {
     if (this.groups == null) {
       this.groups = new ArrayList<String>();
     }
@@ -66,8 +66,8 @@ public class EventTypesList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    EventTypesList eventTypesList = (EventTypesList) o;
-    return Objects.equals(this.groups, eventTypesList.groups);
+    ObjectTypesList objectTypesList = (ObjectTypesList) o;
+    return Objects.equals(this.groups, objectTypesList.groups);
   }
 
   @Override
@@ -79,7 +79,7 @@ public class EventTypesList   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class EventTypesList {\n");
+    sb.append("class ObjectTypesList {\n");
     
     sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
     sb.append("}");

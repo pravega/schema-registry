@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.Data;
 
 /**
- * Describes changes to the group (or subgroup) and the validation rules {@link SchemaEvolution#rules} that were 
+ * Describes changes to the group and the validation rules {@link SchemaEvolution#rules} that were 
  * applied while registering {@link SchemaEvolution#schema} and the unique {@link SchemaEvolution#version} identifier 
  * that was assigned to it. 
  */

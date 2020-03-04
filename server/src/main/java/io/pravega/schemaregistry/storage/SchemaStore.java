@@ -37,18 +37,18 @@ public interface SchemaStore {
     
     CompletableFuture<Position> updateValidationPolicy(String group, Position etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token);
+    CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token);
     
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName,
-                                                                               ContinuationToken token);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
+                                                                                ContinuationToken token);
     
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
     
     CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String eventTypeName);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName);
 
     CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo);
 
@@ -62,5 +62,5 @@ public interface SchemaStore {
 
     CompletableFuture<List<SchemaEvolution>> getGroupHistory(String group);
     
-    CompletableFuture<List<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName);
+    CompletableFuture<List<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);
 }

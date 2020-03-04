@@ -70,8 +70,8 @@ public class SchemaRegistryService {
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#validateByEventType} that specifies if schemas are evolved by event type.
-     * Event Types are uniquely identified by {@link SchemaInfo#name}.
+     * {@link GroupProperties#validateByObjectType} that specifies if schemas are evolved by object type.
+     * Object types are uniquely identified by {@link SchemaInfo#name}.
      * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify
      * encoding properties in {@link EncodingInfo}.
      *
@@ -95,20 +95,20 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets list of event types registered under the group. Event types are identified by {@link SchemaInfo#name}
+     * Gets list of object types registered under the group. Object types are identified by {@link SchemaInfo#name}
      *
      * @param group Name of group.
      * @param token Continuation token.
-     * @return CompletableFuture which holds list of event types upon completion.
+     * @return CompletableFuture which holds list of object types upon completion.
      */
-    public CompletableFuture<ListWithToken<String>> getEventTypes(String group, ContinuationToken token) {
-        return store.listEventTypes(group, token);
+    public CompletableFuture<ListWithToken<String>> getObjectTypes(String group, ContinuationToken token) {
+        return store.listObjectTypes(group, token);
     }
 
     /**
-     * Adds schema to the group. If group is configured with {@link GroupProperties#validateByEventType}, then
+     * Adds schema to the group. If group is configured with {@link GroupProperties#validateByObjectType}, then
      * the {@link SchemaInfo#name} is used to filter previous schemas and apply schema validation policy against schemas
-     * of event type.
+     * of object type.
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in
      * {@link GroupProperties#schemaValidationRules}
      *
@@ -128,10 +128,10 @@ public class SchemaRegistryService {
                     .thenCompose(etag -> store.getGroupProperties(group)
                                               .thenCompose(prop -> {
                                                   SchemaValidationRules policy = prop.getSchemaValidationRules();
-                                                  if (prop.isValidateByEventType()) {
-                                                      String eventTypeName = schema.getName();
+                                                  if (prop.isValidateByObjectType()) {
+                                                      String objectTypeName = schema.getName();
                                                       // todo: apply policy
-                                                      // get schemas by event type for validation
+                                                      // get schemas by object type for validation
                                                       return store.addSchemaToGroup(group, etag, schema);
                                                   } else {
                                                       // todo: apply policy
@@ -177,40 +177,40 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets latest schema and version for the group (or eventType, if specified).
-     * For groups configured with {@link GroupProperties#validateByEventType}, the eventType name needs to be supplied to
-     * get the latest schema for the event type.
+     * Gets latest schema and version for the group (or objectType, if specified).
+     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypename needs to be supplied to
+     * get the latest schema for the object type.
      *
      * @param group    Name of group.
-     * @param eventTypeName Event type.
+     * @param objectTypeName Object type.
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String eventTypeName) {
-        if (eventTypeName == null) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String objectTypeName) {
+        if (objectTypeName == null) {
             return store.getLatestSchema(group);
         } else {
-            return store.getLatestSchema(group, eventTypeName);
+            return store.getLatestSchema(group, objectTypeName);
         }
     }
 
     /**
-     * Gets all schemas with corresponding versions for the group (or eventTypeName, if specified).
-     * For groups configured with {@link GroupProperties#validateByEventType}, the eventTypeName name needs to be supplied to
-     * get the latest schema for the eventTypeName. {@link SchemaInfo#name} is used as the eventTypeName name.
+     * Gets all schemas with corresponding versions for the group (or objectTypeName, if specified).
+     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypeName name needs to be supplied to
+     * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name.
      * The order in the list matches the order in which schemas were evolved within the group.
      *
      * @param group    Name of group.
-     * @param eventTypeName Event Type.
+     * @param objectTypeName Object type.
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
-    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String eventTypeName) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
         return store.getGroupProperties(group)
                     .thenCompose(prop -> {
-                        if (prop.isValidateByEventType()) {
-                            if (eventTypeName == null) {
+                        if (prop.isValidateByObjectType()) {
+                            if (objectTypeName == null) {
                                 throw new InputMismatchException();
                             }
-                            return store.getGroupHistoryForEventType(group, eventTypeName);
+                            return store.getGroupHistoryForObjectType(group, objectTypeName);
                         } else {
                             return store.getGroupHistory(group);
                         }
@@ -218,8 +218,8 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByEventType}
-     * the eventType name is taken from the {@link SchemaInfo#name}.
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByObjectType}
+     * the objectTypename is taken from the {@link SchemaInfo#name}.
      * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
      *
      * @param group  Name of group.
@@ -233,8 +233,8 @@ public class SchemaRegistryService {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * If {@link GroupProperties#validateByEventType} is set, the validation is performed against schemas with same 
-     * event type identified by {@link SchemaInfo#name}.
+     * If {@link GroupProperties#validateByObjectType} is set, the validation is performed against schemas with same 
+     * object type identified by {@link SchemaInfo#name}.
      *
      * @param group           Name of group.
      * @param schema          Schema to check for validity.

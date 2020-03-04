@@ -49,7 +49,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
     
     @Override
-    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByEventType, boolean enableEncoding) {
+    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByObjectType, boolean enableEncoding) {
         WebTarget webTarget = client.target(uri).path("groups");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
@@ -58,7 +58,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .enableEncoding(enableEncoding).groupByEventType(validateByEventType)
+                                                             .enableEncoding(enableEncoding).validateByObjectType(validateByObjectType)
                                                              .groupName(group)
                                                              .validationRules(compatibility);
         Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
@@ -88,7 +88,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 x -> {
                     SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
                     SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
-                    return new GroupProperties(schemaType, rules, x.isValidateByEventType(), x.isEnableEncoding());
+                    return new GroupProperties(schemaType, rules, x.isValidateByObjectType(), x.isEnableEncoding());
                 }));
     }
 
@@ -113,7 +113,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<String> getEventTypes(String group) {
+    public List<String> getObjectTypes(String group) {
         return null;
     }
 
@@ -138,12 +138,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaWithVersion getLatestSchema(String group, @Nullable String eventTypeName) {
+    public SchemaWithVersion getLatestSchema(String group, @Nullable String objectTypeName) {
         return null;
     }
 
     @Override
-    public List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String eventTypeName) {
+    public List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
         return null;
     }
 

@@ -56,7 +56,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listEventTypes(String group, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token) {
         return null;
     }
 
@@ -66,7 +66,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByEventType(String group, String eventTypeName, ContinuationToken token) {
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName, ContinuationToken token) {
         return null;
     }
 
@@ -81,7 +81,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String eventTypeName) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName) {
         return null;
     }
 
@@ -116,7 +116,7 @@ public class InMemorySchemaStore implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaEvolution>> getGroupHistoryForEventType(String group, String eventTypeName) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName) {
         return null;
     }
 }

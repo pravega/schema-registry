@@ -66,7 +66,7 @@ paths:
                   $ref: "#/definitions/SchemaValidationRules"
               enableEncoding:
                 type: boolean
-              groupByEventType:
+              validateByObjectType:
                 type: boolean
       responses:
         201:
@@ -444,7 +444,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/eventTypes:
+  /groups/{groupName}/objectTypes:
     parameters:
       - in: path
         name: groupName
@@ -454,20 +454,20 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getEventTypes
-      description: Fetch all eventTypes under a Group. This api will return schema types.  
+      operationId: getObjectTypes
+      description: Fetch all objectTypes under a Group. This api will return schema types.  
       produces:
         - application/json
       responses:
         200:
-          description: List of eventTypes under the group
+          description: List of objectTypes under the group
           schema:
-            $ref: "#/definitions/EventTypesList"
+            $ref: "#/definitions/ObjectTypesList"
         404:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/eventTypes/{eventTypeName}/schemas/versions:
+  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions:
     parameters:
       - in: path
         name: groupName
@@ -475,14 +475,14 @@ paths:
         required: true
         type: string
       - in: path
-        name: eventTypeName
-        description: Event type
+        name: objectTypeName
+        description: Object type
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getEventTypeSchemas
+      operationId: getObjectTypeSchemas
       description: Fetch all schemas registered with the given schema name
       produces:
         - application/json
@@ -495,7 +495,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/eventTypes/{eventTypeName}/schemas/versions/{versionId}:
+  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions/{versionId}:
     parameters:
       - in: path
         name: groupName
@@ -503,8 +503,8 @@ paths:
         required: true
         type: string
       - in: path
-        name: eventTypeName
-        description: Event type
+        name: objectTypeName
+        description: Object type
         required: true
         type: string
       - in: path
@@ -516,13 +516,13 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getSchemaFromVersionForEventType
+      operationId: getSchemaFromVersionForObjectType
       description: Fetch the properties of an existing Group
       consumes:
         - application/json
       parameters:
         - in: body
-          name: GetSchemaForEventTypeByVersionRequest
+          name: GetSchemaForObjectTypeByVersionRequest
           description: Get schema corresponding to the version
           required: true
           schema:
@@ -541,7 +541,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details  
-  /groups/{groupName}/eventTypes/{eventTypeName}/schemas/versions/latest:
+  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions/latest:
     parameters:
       - in: path
         name: groupName
@@ -549,20 +549,20 @@ paths:
         required: true
         type: string
       - in: path
-        name: eventTypeName
-        description: Event Type 
+        name: objectTypeName
+        description: Object type 
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getLatestSchemaForEventType
+      operationId: getLatestSchemaForObjectType
       description: Fetch the properties of an existing Group
       produces:
         - application/json
       responses:
         200:
-          description: Found latest schema in eventType
+          description: Found latest schema in objectType
           schema:
             $ref: "#/definitions/SchemaWithVersion"
         404:
@@ -591,7 +591,7 @@ paths:
           schema:
             type: object
             properties:
-              eventTypeName: 
+              objectTypeName: 
                 type: string
               versionInfo:
                   $ref: "#/definitions/VersionInfo"
@@ -668,7 +668,7 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/GroupProperties"
-  EventTypesList:
+  ObjectTypesList:
     type: object
     properties:
       groups:
@@ -684,7 +684,7 @@ definitions:
           $ref: "#/definitions/SchemaValidationRules"
       schemaType:
           $ref: "#/definitions/SchemaType"
-      validateByEventType:
+      validateByObjectType:
           type: boolean
       enableEncoding:
           type: boolean
