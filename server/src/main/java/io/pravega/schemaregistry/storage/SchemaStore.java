@@ -41,10 +41,13 @@ public interface SchemaStore {
     
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasInGroup(String group, VersionInfo from);
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, VersionInfo from, ContinuationToken token);
 
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
                                                                                 ContinuationToken token);
+
+    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
+                                                                                VersionInfo from, ContinuationToken token);
     
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
 
@@ -56,7 +59,7 @@ public interface SchemaStore {
     
     CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName);
 
-    CompletableFuture<VersionInfo> addSchemaToGroup(String group, Position etag, SchemaInfo schemaInfo, VersionInfo versionInfo);
+    CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 

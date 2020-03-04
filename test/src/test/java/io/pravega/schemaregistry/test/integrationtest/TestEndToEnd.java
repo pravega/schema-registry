@@ -11,30 +11,77 @@ package io.pravega.schemaregistry.test.integrationtest;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
-import org.apache.avro.reflect.ReflectData;
+import org.apache.avro.SchemaBuilder;
+import org.apache.curator.shaded.com.google.common.base.Charsets;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public abstract class TestEndToEnd {
+    ScheduledExecutorService executor;
 
-    protected ScheduledExecutorService executor;
+    private final Schema schema1 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .endRecord();
+
+    private final Schema schema2 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .withDefault("backward compatible with schema1")
+            .endRecord();
+
+    private final Schema schema3 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .endRecord();
+
+    private final Schema schemaTest2 = SchemaBuilder
+            .record("MyTest2")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .endRecord();
     
     @Before
     public void setUp() {
@@ -53,53 +100,59 @@ public abstract class TestEndToEnd {
         SchemaRegistryClient client = new TestRegistryClient(service);
         
         String group = "group";
+        
         assertEquals(client.listGroups().size(), 0);
         
         client.addGroup(group, SchemaType.of(SchemaType.Type.Avro),  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
+                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 true, true);
         assertEquals(client.listGroups().size(), 1);
 
-        Schema schema = ReflectData.get().getSchema(TestClass.class); 
-        SchemaInfo schemaInfo = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro), 
-                schema.toString().getBytes(), ImmutableMap.of());
+        String myTest = "MyTest";
+        SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.of(SchemaType.Type.Avro), 
+                schema1.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
 
         // attempt to add an existing schema
         client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
 
-        Schema schema2 = ReflectData.get().getSchema(TestClass2.class);
-        SchemaInfo schemaInfo2 = new SchemaInfo(TestClass.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
-                schema2.toString().getBytes(), ImmutableMap.of());
+        SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.of(SchemaType.Type.Avro),
+                schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
         client.addSchemaIfAbsent(group, schemaInfo2, SchemaValidationRules.of());
 
-        client.updateSchemaValidationRules(group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)));
+        client.updateSchemaValidationRules(group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.FullTransitive)));
 
-        Schema schema3 = ReflectData.get().getSchema(TestClass3.class);
-        SchemaInfo schemaInfo3 = new SchemaInfo(TestClass3.class.getSimpleName(), SchemaType.of(SchemaType.Type.Avro),
-                schema3.toString().getBytes(), ImmutableMap.of());
-        client.addSchemaIfAbsent(group, schemaInfo3, SchemaValidationRules.of());
+        SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SchemaType.of(SchemaType.Type.Avro),
+                schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
-        log.info("Schema Evolution History: {}", client.getObjectTypes(group));
-        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(group, TestClass.class.getSimpleName()));
-        log.info("Schema Evolution History: {}", client.getGroupEvolutionHistory(group, TestClass3.class.getSimpleName()));
+        AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
+        CompletableFuture.supplyAsync(() -> client.addSchemaIfAbsent(group, schemaInfo3, SchemaValidationRules.of()))
+                         .exceptionally(e -> {
+                             exceptionRef.set(Exceptions.unwrap(e));
+                             return null;
+                         }).join();
+        
+        assertTrue(exceptionRef.get() instanceof IncompatibleSchemaException);
+        
+        String myTest2 = "MyTest2";
+        SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.of(SchemaType.Type.Avro),
+                schemaTest2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
+        client.addSchemaIfAbsent(group, schemaInfo4, SchemaValidationRules.of());
+
+        List<String> objectTypes = client.getObjectTypes(group);
+        assertEquals(objectTypes.size(), 2);
+        assertTrue(objectTypes.contains(myTest));
+        assertTrue(objectTypes.contains(myTest2));
+        List<SchemaEvolution> groupEvolutionHistory = client.getGroupEvolutionHistory(group, null);
+        assertEquals(groupEvolutionHistory.size(), 3);
+        List<SchemaEvolution> myTestHistory = client.getGroupEvolutionHistory(group, myTest);
+        assertEquals(myTestHistory.size(), 2);
+        List<SchemaEvolution> myTest2History = client.getGroupEvolutionHistory(group, myTest2);
+        assertEquals(myTest2History.size(), 1);
     }
 
     abstract SchemaStore getStore();
 
-    @Data
-    public static class TestClass {
-        private final String test;
-    }
-    
-    @Data
-    public static class TestClass2 {
-        private final String test;
-    }
-
-    @Data
-    public static class TestClass3 {
-        private final String test;
-    }
 }
+

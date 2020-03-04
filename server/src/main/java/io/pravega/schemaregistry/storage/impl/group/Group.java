@@ -16,6 +16,7 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -77,100 +78,28 @@ public class Group<T> {
     }
     
     public CompletableFuture<Void> create(SchemaType schemaType, boolean enableEncoding, boolean validateByObjectType, SchemaValidationRules schemaValidationRules) {
-        return wal.writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, validateByObjectType, schemaValidationRules), null)
+        return writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, validateByObjectType, schemaValidationRules))
                   .thenCompose(pos -> {
                       IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
                       Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
-                      Operation.Add addSyncTill = new Operation.Add(SYNCD_TILL, walPosition);
-                      return updateIndex(Lists.newArrayList(addGroupProp, addSyncTill));
+                      return updateIndex(Lists.newArrayList(addGroupProp), walPosition);
                   });
     }
     
     @SuppressWarnings("unchecked")
-    public CompletableFuture<Position> sync() {
-        return index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
-             .thenCompose(value -> {
-                 Position pos = value == null ? null : value.getValue().getPosition();
-                 return wal.readFrom(pos)
-                         .thenCompose(list -> {
-                             List<Operation> operations = new LinkedList<>();
-                             list.forEach(x -> {
-                                 if (x.getRecord() instanceof Record.SchemaRecord) {
-                                     Record.SchemaRecord record = (Record.SchemaRecord) x.getRecord();
-                                     Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(record.getVersionInfo()), new IndexRecord.WALPositionValue(x.getPosition()));
-                                     Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(record.getSchemaInfo())),
-                                             new IndexRecord.SchemaVersionValue(Collections.singletonList(record.getVersionInfo())));
-                                     operations.add(add);
-                                     operations.add(addToList);
-                                 } else if (x.getRecord() instanceof Record.EncodingRecord) {
-                                     Record.EncodingRecord record = (Record.EncodingRecord) x.getRecord();
-                                     IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(record.getEncodingId());
-                                     IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(record.getVersionInfo(), record.getCompressionType());
-                                     Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
-                                     Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
-                                     operations.add(idToInfo);
-                                     operations.add(infoToId);
-                                 } else if (x.getRecord() instanceof Record.ValidationRecord) {
-                                     Operation.GetAndSet getAndSet = new Operation.GetAndSet(new IndexRecord.ValidationPolicyKey(),
-                                             new IndexRecord.WALPositionValue(x.getPosition()),
-                                             m -> ((IndexRecord.WALPositionValue) m).getPosition().getPosition().compareTo(x.getPosition().getPosition()) < 0);
-                                     operations.add(getAndSet);
-                                 }
-                             });
-                             return updateIndex(operations)
-                                     .thenApply(v -> {
-                                         if (list.isEmpty()) {
-                                             return pos;
-                                         } else {
-                                             return list.get(list.size() - 1).getPosition();
-                                         }
-                                     });
-                         });
-             });
-    }
-
-    public CompletableFuture<SchemaValidationRules> getCurrentValidationRules() {
-        return sync()
-                .thenCompose(v -> index.getRecord(VALIDATION_POLICY_INDEX_KEY, IndexRecord.WALPositionValue.class)
-                                       .thenCompose(validationRecordPosition -> {
-                                           if (validationRecordPosition == null) {
-                                               return index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class)
-                                                           .thenCompose(groupPropPos -> {
-                                                              return wal.readAt(groupPropPos.getPosition(), Record.GroupPropertiesRecord.class)
-                                                              .thenApply(Record.GroupPropertiesRecord::getValidationRules);        
-                                                           });
-                                               
-                                           } else {
-                                               return wal.readAt(validationRecordPosition.getPosition(), Record.ValidationRecord.class)
-                                                                                         .thenApply(Record.ValidationRecord::getValidationRules);
-                                           }
-                                       }));
-    }
-
     public CompletableFuture<Position> getCurrentEtag() {
         return wal.getCurrentEtag();
     }
-
-    public CompletableFuture<Void> writeToLog(Record record, Position etag) {
-        return Futures.toVoid(wal.writeToLog(record, etag));
-    }
-
+    
     public CompletableFuture<ListWithToken<String>> getObjectTypes() {
-        return getGroupProperties()
-                .thenCompose(groupProperties -> {
-                    if (!groupProperties.isValidateByObjectType()) {
-                        return Futures.failedFuture(new IllegalStateException());
-                    }
-                    // get all index keys
-                    return sync().thenCompose(v -> index.getAllKeys())
-                                .thenApply(list -> {
-                                    List<String> objectTypes = list
-                                            .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)
-                                            .map(x -> ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName())
-                                            .distinct().collect(Collectors.toList());
-                                    return new ListWithToken<>(objectTypes, null);
-                                });
-                });
+        return syncIndex().thenCompose(v -> index.getAllKeys())
+                          .thenApply(list -> {
+                         List<String> objectTypes = list
+                                 .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)
+                                 .map(x -> ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName())
+                                 .distinct().collect(Collectors.toList());
+                         return new ListWithToken<>(objectTypes, null);
+                     });
     }
 
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas() {
@@ -180,8 +109,8 @@ public class Group<T> {
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(VersionInfo from) {
         IndexRecord.VersionInfoKey versionInfoKey = new IndexRecord.VersionInfoKey(from);
         return index.getRecord(versionInfoKey, IndexRecord.WALPositionValue.class)
-        .thenCompose(fromPos -> getSchemasInternal(fromPos == null ? null : fromPos.getPosition(), 
-                x -> x.getRecord() instanceof Record.SchemaRecord));
+                    .thenCompose(fromPos -> getSchemasInternal(fromPos.getPosition(),
+                            x -> x.getRecord() instanceof Record.SchemaRecord));
     }
 
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String objectTypeName) {
@@ -190,23 +119,19 @@ public class Group<T> {
                         ((Record.SchemaRecord) x.getRecord()).getSchemaInfo().getName().equals(objectTypeName));
     }
 
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemasInternal(Position position, Predicate<RecordWithPosition> predicate) {
-        return wal.readFrom(position)
-                  .thenApply(records -> {
-                      List<SchemaWithVersion> schemas = records.stream().filter(predicate).map(x -> {
-                          Record.SchemaRecord record = (Record.SchemaRecord) x.getRecord();
-                          return new SchemaWithVersion(record.getSchemaInfo(), record.getVersionInfo());
-                      }).collect(Collectors.toList());
-
-                      return new ListWithToken<>(schemas, null);
-                  });
+    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String objectTypeName, VersionInfo from) {
+        IndexRecord.VersionInfoKey versionInfoKey = new IndexRecord.VersionInfoKey(from);
+        return index.getRecord(versionInfoKey, IndexRecord.WALPositionValue.class)
+                    .thenCompose(fromPos -> getSchemasInternal(fromPos.getPosition(),
+                            x -> x.getRecord() instanceof Record.SchemaRecord &&
+                                    ((Record.SchemaRecord) x.getRecord()).getSchemaInfo().getName().equals(objectTypeName)));
     }
     
     public CompletableFuture<SchemaInfo> getSchema(VersionInfo versionInfo) {
         return index.getRecord(new IndexRecord.VersionInfoKey(versionInfo), IndexRecord.WALPositionValue.class)
                 .thenCompose(record -> {
                     if (record == null) {
-                        return sync().thenCompose(v -> 
+                        return syncIndex().thenCompose(v -> 
                                 index.getRecord(new IndexRecord.VersionInfoKey(versionInfo), IndexRecord.WALPositionValue.class));
                     } else {
                         return CompletableFuture.completedFuture(record);
@@ -220,8 +145,8 @@ public class Group<T> {
         return getVersionInternal(schemaInfo, fingerPrint)
                 .thenCompose(found -> {
                     if (found == null) {
-                        // sync and search again
-                        return sync().thenCompose(v -> getVersionInternal(schemaInfo, fingerPrint));
+                        // syncIndex and search again
+                        return syncIndex().thenCompose(v -> getVersionInternal(schemaInfo, fingerPrint));
                     } else {
                         return CompletableFuture.completedFuture(found);
                     }
@@ -235,94 +160,31 @@ public class Group<T> {
                 });
     }
     
-    private CompletableFuture<VersionInfo> getVersionInternal(SchemaInfo schemaInfo, long fingerprint) {
-        IndexRecord.SchemaInfoKey key = new IndexRecord.SchemaInfoKey(fingerprint);
-
-        return index.getRecord(key, IndexRecord.SchemaVersionValue.class)
-                    .thenCompose(record -> {
-                        if (record != null) {
-                            return findVersion(record.getVersions(), schemaInfo)
-                                    .thenApply(found -> {
-                                        if (found != null) {
-                                            return found;
-                                        } else {
-                                            return null;
-                                        }
-                                    });
-
-                        } else {
-                            return CompletableFuture.completedFuture(null);
-                        }
-                    });
-    }
-
-    public CompletableFuture<VersionInfo> findVersion(List<VersionInfo> versions, SchemaInfo toFind) {
-        AtomicReference<VersionInfo> found = new AtomicReference<>();
-        Iterator<VersionInfo> iterator = versions.iterator();
-        return Futures.loop(() -> {
-            return iterator.hasNext() && found.get() == null;
-        }, () -> {
-            VersionInfo version = iterator.next();
-            return getSchema(version)
-                    .thenAccept(schema -> {
-                        if (Arrays.equals(schema.getSchemaData(), toFind.getSchemaData())) {
-                            found.set(version);
-                        }
-                    });
-        }, executor)
-                .thenApply(v -> found.get());
-    }
-
     public CompletableFuture<EncodingId> getOrCreateEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
         return getEncodingId(versionInfo, compressionType)
-                .thenCompose(encodingId -> {
-                    if (encodingId == null) {
-                        return sync().thenCompose(position -> getEncodingId(versionInfo, compressionType)
-                                     .thenCompose(encodingIdSyncd -> {
-                                         if (encodingIdSyncd == null) {
-                                             return generateNewEncodingId(versionInfo, compressionType, position);
-                                         } else {
-                                             return CompletableFuture.completedFuture(encodingIdSyncd);
-                                         }
-                                     }));
+                .thenCompose(either -> {
+                    if (either.isLeft()) {
+                        return CompletableFuture.completedFuture(either.getLeft());
                     } else {
-                        return CompletableFuture.completedFuture(encodingId);
+                        return generateNewEncodingId(versionInfo, compressionType, either.getRight());
                     }
                 });
     }
-
-    private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CompressionType compressionType, Position position) {
-        return getNextEncodingId()
-                .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, compressionType), position)
-                        .thenCompose(v -> {
-                            IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(id);
-                            IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
-                            Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
-                            Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
-                            return updateIndex(Lists.newArrayList(idToInfo, infoToId));
-                        }).thenApply(v -> id));
-    }
-
-    public CompletableFuture<EncodingId> getEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
-        IndexRecord.EncodingInfoIndex encodingInfoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
-        return index.getRecord(encodingInfoIndex, IndexRecord.EncodingIdIndex.class)
-             .thenApply(record -> record == null ? null : record.getEncodingId());
-    }
-
+    
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
         IndexRecord.EncodingIdIndex encodingIdIndex = new IndexRecord.EncodingIdIndex(encodingId);
         return index.getRecord(encodingIdIndex, IndexRecord.EncodingInfoIndex.class)
              .thenCompose(encodingInfo -> {
                  if (encodingInfo == null) {
-                     return sync()
+                     return syncIndex()
                              .thenCompose(v -> index.getRecord(encodingIdIndex, IndexRecord.EncodingInfoIndex.class)
-                                                .thenApply(info -> {
-                                         if (info == null) {
-                                             throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, encodingId.toString());
-                                         } else {
-                                             return info;
-                                         }
-                                     }));
+                                                    .thenApply(info -> {
+                                                        if (info == null) {
+                                                            throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, encodingId.toString());
+                                                        } else {
+                                                            return info;
+                                                        }
+                                                    }));
                  } else {
                      return CompletableFuture.completedFuture(encodingInfo);
                  }
@@ -352,7 +214,7 @@ public class Group<T> {
         return getLatestEntryFor(versionForObjectType, VERSION_COMPARATOR)
                 .thenCompose(entry -> {
                     if (entry == null) {
-                        return null;
+                        return CompletableFuture.completedFuture(null);
                     } else {
                         IndexRecord.VersionInfoKey key = (IndexRecord.VersionInfoKey) entry.getKey();
                         VersionInfo version = key.getVersionInfo();
@@ -362,8 +224,7 @@ public class Group<T> {
     }
 
     public CompletableFuture<List<CompressionType>> getCompressions() {
-        return sync()
-                .thenCompose(v -> {
+        return syncIndex().thenCompose(v -> {
                     Predicate<IndexRecord.IndexKey> encodingInfoPredicate = x -> x instanceof IndexRecord.EncodingInfoIndex;
                     return index.getAllEntries(encodingInfoPredicate)
                                 .thenApply(list -> {
@@ -412,25 +273,74 @@ public class Group<T> {
                 .thenCompose(v -> {
                     Operation.GetAndSet getAndSet = new Operation.GetAndSet(new IndexRecord.ValidationPolicyKey(), new IndexRecord.WALPositionValue(etag),
                             x -> etag.getPosition().compareTo(((IndexRecord.WALPositionValue) x).getPosition().getPosition()) > 0);
-                    return updateIndex(Collections.singletonList(getAndSet));
+                    return updateIndex(Collections.singletonList(getAndSet), new IndexRecord.WALPositionValue(etag));
                 });
     }
 
     public CompletableFuture<GroupProperties> getGroupProperties() {
-        CompletableFuture<Record.GroupPropertiesRecord> grpPropertiesFuture = getGroupPropertiesRecord();
+        return syncIndex().thenCompose(v -> {
+                    CompletableFuture<Record.GroupPropertiesRecord> grpPropertiesFuture = getGroupPropertiesRecord();
 
-        CompletableFuture<SchemaValidationRules> rulesFuture = getCurrentValidationRules();
+                    CompletableFuture<SchemaValidationRules> rulesFuture = getCurrentValidationRules();
 
-        return CompletableFuture.allOf(grpPropertiesFuture, rulesFuture)
-                                .thenApply(v -> {
-                                    Record.GroupPropertiesRecord properties = grpPropertiesFuture.join();
-                                    SchemaValidationRules rules = rulesFuture.join();
-                                    return new GroupProperties(properties.getSchemaType(), rules,
-                                            properties.isValidateByObjectType(), properties.isEnableEncoding());
-                                });
+                    return CompletableFuture.allOf(grpPropertiesFuture, rulesFuture)
+                                            .thenApply(x -> {
+                                                Record.GroupPropertiesRecord properties = grpPropertiesFuture.join();
+                                                SchemaValidationRules rules = rulesFuture.join();
+                                                return new GroupProperties(properties.getSchemaType(), rules,
+                                                        properties.isValidateByObjectType(), properties.isEnableEncoding());
+                                            });
+                });
     }
 
-    private CompletableFuture<Void> updateIndex(List<Operation> operations) {
+    private long getFingerprint(SchemaInfo schemaInfo) {
+        return HASH.hashBytes(schemaInfo.getSchemaData()).asLong();
+    }
+
+    @SuppressWarnings("unchecked")
+    private CompletableFuture<Position> syncIndex() {
+        return index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
+                    .thenCompose(value -> {
+                        Position pos = value == null ? null : value.getValue().getPosition();
+                        return wal.readFrom(pos)
+                                  .thenCompose(list -> {
+                                      List<Operation> operations = new LinkedList<>();
+                                      list.forEach(x -> {
+                                          if (x.getRecord() instanceof Record.SchemaRecord) {
+                                              Record.SchemaRecord record = (Record.SchemaRecord) x.getRecord();
+                                              Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(record.getVersionInfo()), new IndexRecord.WALPositionValue(x.getPosition()));
+                                              Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(record.getSchemaInfo())),
+                                                      new IndexRecord.SchemaVersionValue(Collections.singletonList(record.getVersionInfo())));
+                                              operations.add(add);
+                                              operations.add(addToList);
+                                          } else if (x.getRecord() instanceof Record.EncodingRecord) {
+                                              Record.EncodingRecord record = (Record.EncodingRecord) x.getRecord();
+                                              IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(record.getEncodingId());
+                                              IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(record.getVersionInfo(), record.getCompressionType());
+                                              Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
+                                              Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
+                                              operations.add(idToInfo);
+                                              operations.add(infoToId);
+                                          } else if (x.getRecord() instanceof Record.ValidationRecord) {
+                                              Operation.GetAndSet getAndSet = new Operation.GetAndSet(new IndexRecord.ValidationPolicyKey(),
+                                                      new IndexRecord.WALPositionValue(x.getPosition()),
+                                                      m -> ((IndexRecord.WALPositionValue) m).getPosition().getPosition()
+                                                                                             .compareTo(x.getPosition().getPosition()) < 0);
+                                              operations.add(getAndSet);
+                                          }
+                                      });
+                                      if (!list.isEmpty()) {
+                                          Position syncdTill = list.get(list.size() - 1).getNext();
+                                          return updateIndex(operations, new IndexRecord.WALPositionValue(syncdTill))
+                                                  .thenApply(v -> syncdTill);
+                                      } else {
+                                          return CompletableFuture.completedFuture(pos);
+                                      }
+                                  });
+                    });
+    }
+    
+    private CompletableFuture<Void> updateIndex(List<Operation> operations, IndexRecord.WALPositionValue syncdTill) {
         List<CompletableFuture<Void>> futures = new LinkedList<>();
         operations.forEach(operation -> {
             if (operation instanceof Operation.Add) {
@@ -472,7 +382,33 @@ public class Group<T> {
             }
         });
         
-        return Futures.allOf(futures);
+        return Futures.allOf(futures)
+                .thenCompose(v -> index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
+                                   .thenCompose(syncdTillWithVersion -> addOrUpdateSyncdTillKey(syncdTill, syncdTillWithVersion)));
+    }
+
+    @SuppressWarnings("unchecked")
+    private CompletableFuture<Void> addOrUpdateSyncdTillKey(IndexRecord.WALPositionValue syncdTill,
+                                                            Index.Value<IndexRecord.WALPositionValue, T> syncdTillWithVersion) {
+        if (syncdTillWithVersion == null) {
+            return index.addEntry(SYNCD_TILL, syncdTill);
+        } else {
+            Position newPos = syncdTill.getPosition();
+            Position existingPos = syncdTillWithVersion.getValue().getPosition();
+            if (newPos.getPosition().compareTo(existingPos.getPosition()) > 0) {
+                return index.updateEntry(SYNCD_TILL, syncdTill, syncdTillWithVersion.getVersion());
+            } else {
+                return CompletableFuture.completedFuture(null);
+            }
+        }
+    }
+
+    private CompletableFuture<Position> writeToLog(Record record) {
+        return wal.writeToLog(record, null);
+    }
+
+    private CompletableFuture<Void> writeToLog(Record record, Position etag) {
+        return Futures.toVoid(wal.writeToLog(record, etag));
     }
 
     private CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, VersionInfo next, Position etag) {
@@ -481,7 +417,8 @@ public class Group<T> {
                                 Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(next), new IndexRecord.WALPositionValue(etag));
                                 Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(schemaInfo)),
                                         new IndexRecord.SchemaVersionValue(Collections.singletonList(next)));
-                                return updateIndex(Lists.newArrayList(add, addToList)).thenApply(x -> next);
+                                return updateIndex(Lists.newArrayList(add, addToList), new IndexRecord.WALPositionValue(etag))
+                                        .thenApply(x -> next);
                             });
     }
 
@@ -508,15 +445,36 @@ public class Group<T> {
                     }
                 });
     }
-
-    private long getFingerprint(SchemaInfo schemaInfo) {
-        return HASH.hashBytes(schemaInfo.getSchemaData()).asLong();
-    }
-
+    
     private CompletableFuture<Index.Entry> getLatestEntryFor(Predicate<IndexRecord.IndexKey> predicate, Comparator<Index.Entry> entryComparator) {
-        return sync()
+        return syncIndex()
                 .thenCompose(v -> index.getAllEntries(predicate)
                                        .thenApply(entries -> entries.stream().max(entryComparator).orElse(null)));
+    }
+
+    private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CompressionType compressionType, Position position) {
+        return getNextEncodingId()
+                .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, compressionType), position)
+                        .thenCompose(v -> {
+                            IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(id);
+                            IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
+                            Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
+                            Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
+                            return updateIndex(Lists.newArrayList(idToInfo, infoToId), new IndexRecord.WALPositionValue(position));
+                        }).thenApply(v -> id));
+    }
+
+    private CompletableFuture<Either<EncodingId, Position>> getEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
+        IndexRecord.EncodingInfoIndex encodingInfoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
+        return index.getRecord(encodingInfoIndex, IndexRecord.EncodingIdIndex.class)
+                    .thenCompose(record -> {
+                        if (record == null) {
+                            return syncIndex().thenCompose(pos -> index.getRecord(encodingInfoIndex, IndexRecord.EncodingIdIndex.class)
+                                                                       .thenApply(rec -> rec != null ? Either.left(rec.getEncodingId()) : Either.right(pos)));
+                        } else {
+                            return CompletableFuture.completedFuture(Either.left(record.getEncodingId()));
+                        }
+                    });
     }
 
     private CompletableFuture<EncodingId> getNextEncodingId() {
@@ -534,13 +492,65 @@ public class Group<T> {
     
     private CompletableFuture<Record.GroupPropertiesRecord> getGroupPropertiesRecord() {
         return index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class)
-             .thenCompose(record -> {
-                 if (record == null) {
-                     return sync().thenCompose(v ->
-                             index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class));
-                 } else {
-                     return CompletableFuture.completedFuture(record);
-                 }
-             }).thenCompose(record -> wal.readAt(record.getPosition(), Record.GroupPropertiesRecord.class));
+             .thenCompose(record -> wal.readAt(record.getPosition(), Record.GroupPropertiesRecord.class));
+    }
+
+    private CompletableFuture<SchemaValidationRules> getCurrentValidationRules() {
+        return index.getRecord(VALIDATION_POLICY_INDEX_KEY, IndexRecord.WALPositionValue.class)
+                    .thenCompose(validationRecordPosition -> {
+                        if (validationRecordPosition == null) {
+                            return index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class)
+                                        .thenCompose(groupPropPos -> {
+                                            return wal.readAt(groupPropPos.getPosition(), Record.GroupPropertiesRecord.class)
+                                                      .thenApply(Record.GroupPropertiesRecord::getValidationRules);
+                                        });
+
+                        } else {
+                            return wal.readAt(validationRecordPosition.getPosition(), Record.ValidationRecord.class)
+                                      .thenApply(Record.ValidationRecord::getValidationRules);
+                        }
+                    });
+    }
+
+    private CompletableFuture<VersionInfo> getVersionInternal(SchemaInfo schemaInfo, long fingerprint) {
+        IndexRecord.SchemaInfoKey key = new IndexRecord.SchemaInfoKey(fingerprint);
+
+        return index.getRecord(key, IndexRecord.SchemaVersionValue.class)
+                    .thenCompose(record -> {
+                        if (record != null) {
+                            return findVersion(record.getVersions(), schemaInfo);
+                        } else {
+                            return CompletableFuture.completedFuture(null);
+                        }
+                    });
+    }
+
+    private CompletableFuture<VersionInfo> findVersion(List<VersionInfo> versions, SchemaInfo toFind) {
+        AtomicReference<VersionInfo> found = new AtomicReference<>();
+        Iterator<VersionInfo> iterator = versions.iterator();
+        return Futures.loop(() -> {
+            return iterator.hasNext() && found.get() == null;
+        }, () -> {
+            VersionInfo version = iterator.next();
+            return getSchema(version)
+                    .thenAccept(schema -> {
+                        if (Arrays.equals(schema.getSchemaData(), toFind.getSchemaData())) {
+                            found.set(version);
+                        }
+                    });
+        }, executor)
+                      .thenApply(v -> found.get());
+    }
+
+    private CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemasInternal(Position position, Predicate<RecordWithPosition> predicate) {
+        return wal.readFrom(position)
+                  .thenApply(records -> {
+                      List<SchemaWithVersion> schemas = records.stream().filter(predicate).map(x -> {
+                          Record.SchemaRecord record = (Record.SchemaRecord) x.getRecord();
+                          return new SchemaWithVersion(record.getSchemaInfo(), record.getVersionInfo());
+                      }).collect(Collectors.toList());
+
+                      return new ListWithToken<>(schemas, null);
+                  });
     }
 }

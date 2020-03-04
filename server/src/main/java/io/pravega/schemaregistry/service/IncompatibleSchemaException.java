@@ -7,14 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.records;
+package io.pravega.schemaregistry.service;
 
-import io.pravega.schemaregistry.storage.Position;
-import lombok.Data;
-
-@Data
-public class RecordWithPosition {
-    private final Position position;
-    private final Record record;
-    private final Position next;
+public class IncompatibleSchemaException extends RuntimeException {
 }

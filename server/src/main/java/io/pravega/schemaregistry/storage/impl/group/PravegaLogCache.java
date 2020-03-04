@@ -13,6 +13,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import com.google.common.util.concurrent.UncheckedExecutionException;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.SynchronizerClientFactory;
 import io.pravega.client.state.Revision;
@@ -30,6 +31,7 @@ import javax.annotation.ParametersAreNonnullByDefault;
 import java.nio.ByteBuffer;
 import java.util.Iterator;
 import java.util.Map;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -89,7 +91,11 @@ public class PravegaLogCache {
 
     @SneakyThrows(ExecutionException.class)
     public RecordCacheValue getRecord(RecordCacheKey recordCacheKey) {
-        return recordCache.get(recordCacheKey);
+        try {
+            return recordCache.get(recordCacheKey);
+        } catch (UncheckedExecutionException ex) {
+            throw new CompletionException(ex.getCause());
+        }
     }
     
     public void putRecord(RecordCacheKey key, RecordCacheValue record) {

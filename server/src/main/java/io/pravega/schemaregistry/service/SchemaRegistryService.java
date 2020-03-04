@@ -21,6 +21,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -32,6 +33,7 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -70,38 +72,10 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties) {
         Preconditions.checkNotNull(groupProperties.getSchemaType());
         Preconditions.checkNotNull(groupProperties.getSchemaValidationRules());
-        Preconditions.checkArgument(validateRules(groupProperties, groupProperties.getSchemaValidationRules()));
+        Preconditions.checkArgument(validateRules(groupProperties.getSchemaType(), groupProperties.getSchemaValidationRules()));
         return store.createGroup(group, groupProperties);
     }
-
-    private boolean validateRules(GroupProperties groupProperties, SchemaValidationRules newRules) {
-        Preconditions.checkNotNull(newRules);
-        Compatibility.Type compatibility = newRules.getCompatibility().getCompatibility();
-        boolean objectTypeCheck = !groupProperties.isValidateByObjectType() ||
-                isValidObjectTypePolicy(compatibility);
-
-        switch (groupProperties.getSchemaType().getSchemaType()) {
-            case Avro:
-                return objectTypeCheck;
-            case Protobuf:
-            case Json:
-            case Custom:
-                return objectTypeCheck && isValidNonAvroPolicy(compatibility);
-        }
-        return true;
-    }
-
-    private boolean isValidObjectTypePolicy(Compatibility.Type compatibility) {
-        return !(compatibility.equals(Compatibility.Type.BackwardTill) ||
-                compatibility.equals(Compatibility.Type.ForwardTill) ||
-                compatibility.equals(Compatibility.Type.BackwardTillAndForwardTill));
-    }
-
-    private boolean isValidNonAvroPolicy(Compatibility.Type compatibility) {
-        return compatibility.equals(Compatibility.Type.AllowAny) ||
-                compatibility.equals(Compatibility.Type.DisallowAll);
-    }
-
+    
     /**
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
@@ -127,14 +101,7 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<Void> updateSchemaValidationPolicy(String group, SchemaValidationRules validationRules) {
         return store.getGroupEtag(group)
-                    .thenCompose(pos -> store.getGroupProperties(group)
-                                             .thenCompose(groupProperties -> {
-                                                 if (validateRules(groupProperties, validationRules)) {
-                                                     return store.updateValidationRules(group, pos, validationRules);
-                                                 } else {
-                                                     throw new IllegalArgumentException();
-                                                 }
-                                             }));
+                    .thenCompose(pos -> store.updateValidationRules(group, pos, validationRules));
     }
 
     /**
@@ -166,31 +133,24 @@ public class SchemaRegistryService {
         // validate schema against group policy + rules on schema
         // 3. conditionally update the schema
         return store.getGroupEtag(group)
-                    .thenCompose(etag -> store.getGroupProperties(group)
-                                              .thenCompose(prop -> {
-                                                  return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
-                                                          e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, () -> {
-                                                      CompletableFuture<VersionInfo> latest;
-                                                              if (prop.isValidateByObjectType()) {
-                                                                  String objectTypeName = schema.getName();
-
-                                                                  // policy cannot be backward till forward till etc. 
-                                                                  // get schemas for object type for validation
-                                                                  latest = store.getLatestVersion(group, objectTypeName);
-                                                              } else {
-                                                                  // todo: apply policy
-                                                                  // get schemas for group for validation
-                                                                  latest = store.getLatestVersion(group);
-                                                              }
-                                                              return latest.thenCompose(latestVersion -> {
-                                                                  int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
-                                                                  VersionInfo nextVersion = new VersionInfo(schema.getName(), next);
-                                                                  return store.addSchemaToGroup(group, etag, schema, nextVersion);
-                                                              });
-                                                          });
-                                              }));
+                    .thenCompose(etag ->
+                            store.getGroupProperties(group)
+                                 .thenCompose(prop -> Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
+                                         e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                         () -> { // Schema doesnt exist. Validate and add it
+                                             return getSchemasForValidation(group, schema, prop, rules)
+                                                     .thenApply(schemas -> checkCompatibility(schema, prop, rules, schemas))
+                                                     .thenCompose(valid -> {
+                                                         if (!valid) {
+                                                             throw new IncompatibleSchemaException();
+                                                         }
+                                                         return getNextVersion(group, schema, prop)
+                                                                 .thenCompose(nextVersion ->
+                                                                         store.addSchemaToGroup(group, schema, nextVersion, etag));
+                                                     });
+                                         })));
     }
-
+    
     /**
      * Gets schema corresponding to the version.
      *
@@ -226,12 +186,13 @@ public class SchemaRegistryService {
         return store.getGroupProperties(group)
                     .thenCompose(prop -> {
                         if (prop.isValidateByObjectType()) {
-                            return store.getLatestSchema(group, version.getSchemaName());
+                            return store.getLatestVersion(group, version.getSchemaName());
                         } else {
-                            return store.getLatestSchema(group);
+                            return store.getLatestVersion(group);
                         }
                     }).thenApply(latest -> {
                     // TODO: based on compatibility type either allow or deny the version
+                    
                     return null;
                 }).thenCompose(v -> store.createOrGetEncodingId(group, version, compressionType));
     }
@@ -264,14 +225,11 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
     public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
-        return store.getGroupProperties(group)
-                    .thenCompose(prop -> {
-                        if (prop.isValidateByObjectType()) {
-                            return store.getGroupHistoryForObjectType(group, objectTypeName);
-                        } else {
-                            return store.getGroupHistory(group);
-                        }
-                    }).thenApply(ListWithToken::getList);
+        if (objectTypeName != null) {
+            return store.getGroupHistoryForObjectType(group, objectTypeName).thenApply(ListWithToken::getList);
+        } else {
+            return store.getGroupHistory(group).thenApply(ListWithToken::getList);
+        }
     }
 
     /**
@@ -299,96 +257,22 @@ public class SchemaRegistryService {
      * @return True if it satisfies validation checks, false otherwise. 
      */
     public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema, SchemaValidationRules rules) {
-        // based on compatibility policy, fetch specific schemas for the group and perform validations
-        // TODO: validate schema
-
         return store.getGroupProperties(group)
-                    .thenCompose(prop -> {
-                        return getSchemasForValidation(group, schema, prop, rules)
-                                .thenCompose(schemas -> {
-                                    // TODO: check compatibility
-                                    return null;
-                                });
-                    });
+                    .thenCompose(prop -> getSchemasForValidation(group, schema, prop, rules)
+                            .thenApply(schemas -> checkCompatibility(schema, prop, rules, schemas)));
     }
 
-    private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String group, SchemaInfo schema,
-                                                                               GroupProperties groupProperties, SchemaValidationRules additionalRules) {
-        CompletableFuture<List<SchemaWithVersion>> schemasFuture;
-        switch (groupProperties.getSchemaValidationRules().getCompatibility().getCompatibility()) {
-            case DisallowAll:
-            case AllowAny:
-                schemasFuture = CompletableFuture.completedFuture(Collections.emptyList());
-                break;
-            case Backward:
-            case Forward:
-            case Full:
-                // get latest schema
-                if (groupProperties.isValidateByObjectType()) {
-                    schemasFuture = store.getLatestSchema(group, schema.getName())
-                                         .thenApply(Collections::singletonList);
-                } else {
-                    schemasFuture = store.getLatestSchema(group)
-                                         .thenApply(Collections::singletonList);
-                }
-                break;
-            case BackwardTransitive:
-            case ForwardTransitive:
-            case FullTransitive:
-                // get all schemas
-                if (groupProperties.isValidateByObjectType()) {
-                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), null)
-                                         .thenApply(ListWithToken::getList);
-                } else {
-                    schemasFuture = store.listSchemasInGroup(group, null)
-                                         .thenApply(ListWithToken::getList);
-                }
-                break;
-            case BackwardTill:
-                // get schema till
-                assert !groupProperties.isValidateByObjectType();
-                assert groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill() != null;
-                schemasFuture = store.listSchemasInGroup(group,
-                        groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill())
-                                     .thenApply(ListWithToken::getList);
-                break;
-            case ForwardTill:
-                // get schema till
-                assert !groupProperties.isValidateByObjectType();
-                assert groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill() != null;
-                schemasFuture = store.listSchemasInGroup(group,
-                        groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill())
-                                     .thenApply(ListWithToken::getList);
-                break;
-            case BackwardTillAndForwardTill:
-                assert !groupProperties.isValidateByObjectType();
-                assert groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill() != null;
-                assert groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill() != null;
-                VersionInfo backwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill();
-                VersionInfo forwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill();
-                VersionInfo versionTill = backwardTill.getVersion() < forwardTill.getVersion() ? backwardTill : forwardTill;
-                schemasFuture = store.listSchemasInGroup(group, versionTill)
-                                     .thenApply(ListWithToken::getList);
-                break;
-            default:
-                throw new IllegalArgumentException();
-        }
-
-        return schemasFuture;
-    }
-
-    private boolean checkCompatibility(String group, SchemaInfo schema, GroupProperties groupProperties,
-                                       SchemaValidationRules additionalRules, List<SchemaWithVersion> schemas) {
-        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
-
-        return false;
-    }
-
+    /**
+     * Checks whether given schema can be used to read data written by schemas active in the group. 
+     * 
+     * @param group Name of the group.
+     * @param schema Schema to check for ability to read. 
+     * @return True if schema can be used for reading subject to compatibility policy, false otherwise.  
+     */
     public CompletableFuture<Boolean> canRead(String group, SchemaInfo schema) {
         return store.getGroupProperties(group)
-                    .thenApply(prop -> {
-                        return true;
-                    });
+                    .thenCompose(prop -> getSchemasForValidation(group, schema, prop, SchemaValidationRules.of())
+                            .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)));
     }
     
     /**
@@ -409,5 +293,203 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<List<CompressionType>> getCompressions(String group) {
         return store.getCompressions(group);
+    }
+
+    private CompletableFuture<VersionInfo> getNextVersion(String group, SchemaInfo schema, GroupProperties prop) {
+        CompletableFuture<VersionInfo> latest;
+        if (prop.isValidateByObjectType()) {
+            String objectTypeName = schema.getName();
+
+            latest = store.getLatestVersion(group, objectTypeName);
+        } else {
+            latest = store.getLatestVersion(group);
+        }
+        return latest.thenApply(latestVersion -> {
+            int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
+            return new VersionInfo(schema.getName(), next);
+        });
+    }
+
+    private boolean validateRules(SchemaType schemaType, SchemaValidationRules newRules) {
+        Preconditions.checkNotNull(newRules);
+        Compatibility.Type compatibility = newRules.getCompatibility().getCompatibility();
+
+        switch (schemaType.getSchemaType()) {
+            case Avro:
+                return true;
+            case Protobuf:
+            case Json:
+            case Custom:
+                return compatibility.equals(Compatibility.Type.AllowAny) ||
+                        compatibility.equals(Compatibility.Type.DisallowAll);
+        }
+        return true;
+    }
+
+    private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String group, SchemaInfo schema,
+                                                                               GroupProperties groupProperties, SchemaValidationRules additionalRules) {
+        CompletableFuture<List<SchemaWithVersion>> schemasFuture;
+        VersionInfo backwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill();
+        VersionInfo forwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill();
+        switch (groupProperties.getSchemaValidationRules().getCompatibility().getCompatibility()) {
+            case DisallowAll:
+            case AllowAny:
+                schemasFuture = CompletableFuture.completedFuture(Collections.emptyList());
+                break;
+            case Backward:
+            case Forward:
+            case Full:
+                // get last schema
+                if (groupProperties.isValidateByObjectType()) {
+                    schemasFuture = store.getLatestSchema(group, schema.getName())
+                                         .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
+                } else {
+                    schemasFuture = store.getLatestSchema(group)
+                                         .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
+                }
+                break;
+            case BackwardTransitive:
+            case ForwardTransitive:
+            case FullTransitive:
+                // get all schemas
+                if (groupProperties.isValidateByObjectType()) {
+                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), null)
+                                         .thenApply(ListWithToken::getList);
+                } else {
+                    schemasFuture = store.listSchemas(group, null)
+                                         .thenApply(ListWithToken::getList);
+                }
+                break;
+            case BackwardTill:
+                // get schema till
+                assert backwardTill != null;
+                if (groupProperties.isValidateByObjectType()) {
+                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), backwardTill, null)
+                                         .thenApply(ListWithToken::getList);
+                } else {
+                    schemasFuture = store.listSchemas(group, backwardTill, null)
+                                         .thenApply(ListWithToken::getList);
+                }
+                break;
+            case ForwardTill:
+                // get schema till
+                assert forwardTill != null;
+                if (groupProperties.isValidateByObjectType()) {
+                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), forwardTill, null)
+                                         .thenApply(ListWithToken::getList);
+                } else {
+                    schemasFuture = store.listSchemas(group, forwardTill, null)
+                                         .thenApply(ListWithToken::getList);
+                }
+                break;
+            case BackwardTillAndForwardTill:
+                assert backwardTill != null;
+                assert forwardTill != null;
+                VersionInfo versionTill = backwardTill.getVersion() < forwardTill.getVersion() ? backwardTill : forwardTill;
+                if (groupProperties.isValidateByObjectType()) {
+                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), versionTill, null)
+                                         .thenApply(ListWithToken::getList);
+                } else {
+                    schemasFuture = store.listSchemas(group, versionTill, null)
+                                         .thenApply(ListWithToken::getList);
+                }
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+
+        return schemasFuture;
+    }
+
+    private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
+                                       SchemaValidationRules additionalRules, List<SchemaWithVersion> schemasWithVersion) {
+        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
+
+        List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema).collect(Collectors.toList());
+        Collections.reverse(schemas);
+        Compatibility compatibility = groupProperties.getSchemaValidationRules().getCompatibility();
+        boolean isValid;
+        switch (compatibility.getCompatibility()) {
+            case Backward:
+            case BackwardTill:
+            case BackwardTransitive:
+                isValid = checker.canRead(schema, schemas);
+                break;
+            case Forward:
+            case ForwardTill:
+            case ForwardTransitive:
+                isValid = checker.canBeRead(schema, schemas);
+                break;
+            case Full:
+            case FullTransitive:
+                isValid = checker.canMutuallyRead(schema, schemas);
+                break;
+            case BackwardTillAndForwardTill:
+                List<SchemaInfo> backwardTillList = new LinkedList<>();
+                List<SchemaInfo> forwardTillList = new LinkedList<>();
+                schemasWithVersion.forEach(x -> {
+                    if (x.getVersion().getVersion() >= compatibility.getBackwardTill().getVersion()) {
+                        backwardTillList.add(x.getSchema());
+                    }
+                    if (x.getVersion().getVersion() >= compatibility.getForwardTill().getVersion()) {
+                        forwardTillList.add(x.getSchema());
+                    }
+                });
+                isValid = checker.canRead(schema, backwardTillList) & checker.canBeRead(schema, forwardTillList);
+                break;
+            case AllowAny:
+                isValid = true;
+                break;
+            case DisallowAll:
+            default:
+                isValid = false;
+                break;
+        }
+        return isValid;
+    }
+
+    private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {
+        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
+
+        List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema)
+                                                     .collect(Collectors.toList());
+        Collections.reverse(schemas);
+        Compatibility compatibility = prop.getSchemaValidationRules().getCompatibility();
+        boolean canRead;
+        switch (compatibility.getCompatibility()) {
+            case Backward:
+            case BackwardTill:
+            case BackwardTransitive:
+                canRead = checker.canRead(schema, schemas);
+                break;
+            case Forward:
+            case ForwardTill:
+            case ForwardTransitive:
+            case Full:
+            case DisallowAll:
+                // check can read latest.
+                canRead = !schemas.isEmpty() &&
+                        checker.canRead(schema, Collections.singletonList(schemas.get(0)));
+                break;
+            case FullTransitive:
+                canRead = checker.canRead(schema, schemas);
+                break;
+            case BackwardTillAndForwardTill:
+                List<SchemaInfo> backwardTillList = new LinkedList<>();
+                schemasWithVersion.forEach(x -> {
+                    if (x.getVersion().getVersion() >= compatibility.getBackwardTill().getVersion()) {
+                        backwardTillList.add(x.getSchema());
+                    }
+                });
+                canRead = checker.canRead(schema, backwardTillList);
+                break;
+            case AllowAny:
+                canRead = true;
+                break;
+            default:
+                canRead = false;
+                break;
+        }
+        return canRead;
     }
 }

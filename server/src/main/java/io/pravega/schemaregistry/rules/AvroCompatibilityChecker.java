@@ -12,55 +12,61 @@ package io.pravega.schemaregistry.rules;
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaValidationException;
+import org.apache.avro.SchemaValidator;
+import org.apache.avro.SchemaValidatorBuilder;
+import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class AvroCompatibilityChecker implements CompatibilityChecker {
-    /**
-     * Checks if readerSchema can be used to read data written using schema 1.
-     * 
-     * @param writerSchemas Writer schema. 
-     * @param readerSchema Reader schema.
-     * @return True if readerSchema can be used to read data written using schema 1, false otherwise. 
-     */
-    public boolean canRead(List<SchemaInfo> writerSchemas, SchemaInfo readerSchema) {
-        Preconditions.checkArgument(readerSchema.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
-        Preconditions.checkArgument(writerSchemas.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
-        
-        // TODO: implement this check
+    private static final SchemaValidator CAN_READ = new SchemaValidatorBuilder().canReadStrategy().validateAll();
+    private static final SchemaValidator CAN_BE_READ = new SchemaValidatorBuilder().canBeReadStrategy().validateAll();
+    private static final SchemaValidator MUTUAL_READ = new SchemaValidatorBuilder().mutualReadStrategy().validateAll();
+
+    public boolean canRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
+        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
+        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
+        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
+        List<Schema> writers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
+                                                .collect(Collectors.toList());
+        try {
+            CAN_READ.validate(schema, writers);
+        } catch (SchemaValidationException e) {
+            return false;
+        }
         return true;
     }
 
-    /**
-     * Checks if schema1 can be used to read data written using schema 2.
-     *
-     * @param writerSchema reader schema. 
-     * @param readerSchemas writer schema.
-     * @return True if schema1 can be used to read data written using schema 2, false otherwise. 
-     */
-    public boolean canBeRead(SchemaInfo writerSchema, List<SchemaInfo> readerSchemas) {
-        Preconditions.checkArgument(writerSchema.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
-        Preconditions.checkArgument(readerSchemas.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
+    public boolean canBeRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
+        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
+        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
 
-        // TODO: implement this check
+        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
+        List<Schema> readers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
+                                                .collect(Collectors.toList());
+        try {
+            CAN_BE_READ.validate(schema, readers);
+        } catch (SchemaValidationException e) {
+            return false;
+        }
         return true;
-        
     }
 
-    /**
-     * Checks if both schema1 and schema2 can be used to read data written with either. 
-     *
-     * @param schema1 Schema 1. 
-     * @param schema2 Schema 2.
-     * @return True if schema2 can read data written using schema 1 and schema 1 can read data written using schema 2. 
-     * False otherwise.  
-     */
-    public boolean canMutuallyRead(SchemaInfo schema1, SchemaInfo schema2) {
-        Preconditions.checkArgument(schema1.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
-        Preconditions.checkArgument(schema2.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
+    public boolean canMutuallyRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
+        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
+        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(s -> s.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
 
-        // TODO: implement this check
+        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
+        List<Schema> schemas = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
+                                                .collect(Collectors.toList());
+        try {
+            MUTUAL_READ.validate(schema, schemas);
+        } catch (SchemaValidationException e) {
+            return false;
+        }
         return true;
-        
     }
 }

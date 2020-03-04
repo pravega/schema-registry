@@ -35,7 +35,7 @@ public interface SchemaRegistryClient {
      * @param group Name of group that uniquely identifies the group. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
-     * @param validateByObjectType Property to describe whether group should be subdivided into sub groups by object types. 
+     * @param validateByObjectType Property to describe whether group should have schema evolution checks performed by object types. 
      *                            Object Types are uniquely identified by {@link SchemaInfo#name}. 
      * @param enableEncoding Property that indicates whether registry service should generating an encoding id. If 
      *                       set to false, {@link EncodingInfo} and {@link EncodingId} are not generated for schemas in 

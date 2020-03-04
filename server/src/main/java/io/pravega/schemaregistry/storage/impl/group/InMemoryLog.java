@@ -70,7 +70,8 @@ public class InMemoryLog implements Log {
         List<RecordWithPosition> recordWithPositions = new ArrayList<>(log.size() - startingPos);
         for (int i = startingPos; i < log.size(); i++) {
             InMemoryPosition inMemoryPosition = new InMemoryPosition(i);
-            recordWithPositions.add(new RecordWithPosition(inMemoryPosition, readAt(inMemoryPosition, Record.class).join()));
+            InMemoryPosition next = new InMemoryPosition(i + 1);
+            recordWithPositions.add(new RecordWithPosition(inMemoryPosition, readAt(inMemoryPosition, Record.class).join(), next));
         }
         return CompletableFuture.completedFuture(recordWithPositions);
     }
