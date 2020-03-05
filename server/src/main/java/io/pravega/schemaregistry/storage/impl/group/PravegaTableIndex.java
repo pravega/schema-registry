@@ -25,7 +25,7 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class PravegaTableIndex implements Index<Version> {
-    public static final String TABLE_NAME_FORMAT = PravegaTableGroups.SCHEMA_REGISTRY_SCOPE + "/table-%s-%s/0";
+    public static final String TABLE_NAME_FORMAT = PravegaTableGroups.SCHEMA_REGISTRY_SCOPE + "/table-%s/0";
     private static final IndexKeySerializer INDEX_KEY_SERIALIZER = new IndexKeySerializer();
     
     private final TableStore tablesStore;
@@ -36,8 +36,8 @@ public class PravegaTableIndex implements Index<Version> {
         this.tableName = getIndexName(groupName, id); 
     }
 
-    static String getIndexName(String groupName, String id) {
-        return String.format(TABLE_NAME_FORMAT, groupName, id);
+    private static String getIndexName(String groupName, String id) {
+        return String.format(TABLE_NAME_FORMAT, id);
     }
     
     public CompletableFuture<Void> create() {

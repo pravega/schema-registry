@@ -20,6 +20,7 @@ import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.reflect.ReflectDatumWriter;
@@ -40,18 +41,12 @@ public class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
     @SneakyThrows
     @Override
     protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
-        Schema schema;
-        Schema.Parser parser = new Schema.Parser();
-        if (avroSchema == null) {
-            schema = parser.parse(new String(schemaInfo.getSchemaData(), Charsets.UTF_8));
-        } else {
-            schema = avroSchema.getSchema();
-        }
+        Schema schema = avroSchema.getSchema();
         
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
 
-        if (var.getClass().isAssignableFrom(GenericRecord.class)) {
+        if (var.getClass().isAssignableFrom(IndexedRecord.class)) {
             if (var.getClass().isAssignableFrom(SpecificRecord.class)) {
                 SpecificDatumWriter<T> writer = new SpecificDatumWriter<>(schema);
                 writer.write(var, encoder);

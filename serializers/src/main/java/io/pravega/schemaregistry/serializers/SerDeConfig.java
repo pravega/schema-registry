@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
@@ -21,9 +22,9 @@ import java.util.Map;
 @Data
 @Builder
 public class SerDeConfig {
-    private final String scope;
-    private final String stream;
     private final SchemaType schemaType;
+    private final String groupId;
+    private final boolean autoRegisterSchema;
     private final SerializerConfig serializerConfig;
     private final DeserializerConfig deserializerConfig;
     
@@ -31,11 +32,9 @@ public class SerDeConfig {
     @Builder
     public static class SerializerConfig {
         private final Compressor compressor;
-        private final boolean autoRegisterSchema;
 
         public static final class SerializerConfigBuilder {
             private Compressor compressor = new Compressor.Noop();
-            private boolean autoRegisterSchema = false;
         }
     }
     
@@ -46,7 +45,14 @@ public class SerDeConfig {
 
         public static final class DeserializerConfigBuilder {
             private Map<CompressionType, Compressor> compressorMap = Collections.singletonMap(
-                    CompressionType.of(CompressionType.Type.None), new Compressor.Noop());
+                    CompressionType.NONE, new Compressor.Noop());
         }
+    }
+    
+    public static final class SerDeConfigBuilder {
+        private GroupIdGenerator.Type groupIdGeneratorType = GroupIdGenerator.Type.QualifiedStreamName;
+        private SerializerConfig serializerConfig = SerializerConfig.builder().build();
+        private DeserializerConfig deserializerConfig = DeserializerConfig.builder().build();
+        private boolean autoRegisterSchema = false;
     }
 }

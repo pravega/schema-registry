@@ -20,8 +20,10 @@ public class MultiplexedSerializer<T> implements PravegaSerializer<T> {
     }
     
     @Override
+    @SuppressWarnings("unchecked")
     public ByteBuffer serialize(T obj) {
-        AbstractPravegaSerializer<T> serializer = serializers.get(obj.getClass());
+        Class<? extends T> tClass = (Class<? extends T>) obj.getClass();
+        AbstractPravegaSerializer<T> serializer = serializers.get(tClass);
         return serializer.serialize(obj);
     }
 }

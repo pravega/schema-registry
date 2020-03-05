@@ -158,6 +158,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
+    public boolean canRead(String group, SchemaInfo schema) {
+        return false;
+    }
+
+    @Override
     public List<CompressionType> getCompressions(String group) {
         return null;
     }

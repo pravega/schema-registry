@@ -12,7 +12,5 @@ package io.pravega.schemaregistry.schemas;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 public interface SchemaData<T> {
-    byte[] getSchemaBytes();
-    
     SchemaInfo getSchemaInfo();
 }

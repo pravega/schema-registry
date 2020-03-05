@@ -25,19 +25,18 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
     @Getter
     private final Parser<T> parser;
     @Getter
-    private final DescriptorProtos.DescriptorProto descriptorProto;
+    private final DescriptorProtos.FileDescriptorSet descriptorProto;
     
     private final SchemaInfo schemaInfo;
 
-    private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.DescriptorProto descriptorProto) {
+    private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         this.parser = parser;
-        this.descriptorProto = descriptorProto;
-        this.schemaInfo = new SchemaInfo(name, SchemaType.of(SchemaType.Type.Protobuf), 
+        this.descriptorProto = fileDescriptorSet;
+        this.schemaInfo = new SchemaInfo(name, SchemaType.PROTOBUF, 
                 getSchemaBytes(), ImmutableMap.of());
     }
     
-    @Override
-    public byte[] getSchemaBytes() {
+    private byte[] getSchemaBytes() {
         return descriptorProto.toByteArray();
     }
 
@@ -48,11 +47,10 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
     
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass) {
+    public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
-        DescriptorProtos.DescriptorProto descriptorProto = defaultInstance.getDescriptorForType().toProto();
-        return new ProtobufSchema<>(tClass.getSimpleName(), tParser, descriptorProto);
+        return new ProtobufSchema<>(tClass.getSimpleName(), tParser, fileDescriptorSet);
     }
 }
 

@@ -33,7 +33,7 @@ import java.util.function.Function;
 
 public class PravegaLog implements Log {
     static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
-    private static final String LOG_NAME_FORMAT = "log-%s-%s";
+    private static final String LOG_NAME_FORMAT = "log-%s";
     
     private final PravegaLogCache logCache;
     private final ClientConfig clientConfig;
@@ -53,7 +53,7 @@ public class PravegaLog implements Log {
     }
 
     static String getLogName(String groupName, String uuid) {
-        return String.format(LOG_NAME_FORMAT, groupName, uuid);
+        return String.format(LOG_NAME_FORMAT, uuid);
     }
     
     public CompletableFuture<Void> create() {

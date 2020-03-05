@@ -20,6 +20,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializers.AbstractPravegaDeserializer;
 import lombok.SneakyThrows;
+import org.apache.commons.lang3.SerializationException;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
@@ -51,7 +52,7 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
         Descriptors.FileDescriptor fd = Descriptors.FileDescriptor.buildFrom(mainDescriptor, dependencyArray);
 
         Descriptors.Descriptor messageType = fd.getMessageTypes().stream().filter(x -> x.getName().equals(schemaToUse.getName()))
-                                               .findAny().get();
+                                               .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getName())));
 
         return DynamicMessage.parseFrom(messageType, buffer.array());
     }

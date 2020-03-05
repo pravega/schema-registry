@@ -29,7 +29,10 @@ import java.io.IOException;
 @Builder
 public class CompressionType {
     public static final Serializer SERIALIZER = new Serializer();
-
+    public static final CompressionType NONE = CompressionType.of(Type.None); 
+    public static final CompressionType SNAPPY = CompressionType.of(Type.Snappy); 
+    public static final CompressionType GZIP = CompressionType.of(Type.GZip);
+    
     public enum Type {
         None,
         Snappy,

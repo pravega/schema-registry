@@ -9,7 +9,29 @@
  */
 package io.pravega.schemaregistry;
 
-@FunctionalInterface
+import lombok.SneakyThrows;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 public interface GroupIdGenerator {
-    String getGroupId(String... args);
+
+    @SneakyThrows
+    static String getGroupId(Type type, String... args) {
+        switch (type) {
+            case QualifiedStreamName:
+                StringBuilder qualifiedNameBuilder = new StringBuilder();
+                for (String arg : args) {
+                    qualifiedNameBuilder.append(arg);
+                    qualifiedNameBuilder.append("/");
+                }
+                return URLEncoder.encode(qualifiedNameBuilder.toString(), StandardCharsets.UTF_8.toString());
+            default:
+                throw new IllegalArgumentException();
+        }
+    }
+    
+    enum Type {
+        QualifiedStreamName,
+    }
 }

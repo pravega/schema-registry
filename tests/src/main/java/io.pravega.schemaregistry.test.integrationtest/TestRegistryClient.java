@@ -118,6 +118,11 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
+    public boolean canRead(String group, SchemaInfo schema) {
+        return service.canRead(group, schema).join();
+    }
+
+    @Override
     public List<CompressionType> getCompressions(String group) {
         return service.getCompressions(group).join();
     }

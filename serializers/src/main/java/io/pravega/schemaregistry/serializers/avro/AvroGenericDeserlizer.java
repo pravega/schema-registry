@@ -11,42 +11,44 @@ package io.pravega.schemaregistry.serializers.avro;
 
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.serializers.AbstractPravegaDeserializer;
 import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
-import org.apache.avro.reflect.ReflectDatumReader;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public class AvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
-    AvroSchema<T> avroSchema;
-    public AvroDeserlizer(String groupId, SchemaRegistryClient client,
-                          AvroSchema<T> schema,
-                          Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, compressors, encodingCache);
-        Preconditions.checkNotNull(schema);
-        this.avroSchema = schema;
+public class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
+    public AvroGenericDeserlizer(String groupId, SchemaRegistryClient client,
+                                 Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
+        super(groupId, client, null, false, compressors, encodingCache);
     }
 
     @SneakyThrows
     @Override
-    protected T deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected GenericRecord deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
         Schema.Parser parser = new Schema.Parser();
         Schema writerSchema = parser.parse(new String(writerSchemaInfo.getSchemaData()));
-        Schema readerSchema = avroSchema.getSchema();
+        Schema readerSchema;
+        if (readerSchemaInfo == null) {
+            // read using writer schema
+            readerSchema = writerSchema;
+        } else {
+            readerSchema = parser.parse(new String(readerSchemaInfo.getSchemaData()));
+        }
         
-        ReflectDatumReader<T> genericDatumReader = new ReflectDatumReader<>(writerSchema, readerSchema);
+        GenericDatumReader<GenericRecord> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(buffer.array(), null);
         return genericDatumReader.read(null, decoder);
     }

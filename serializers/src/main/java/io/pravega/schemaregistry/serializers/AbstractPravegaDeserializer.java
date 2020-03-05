@@ -70,7 +70,13 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
         this.encodeHeader.set(groupProperties.isEnableEncoding());
 
         if (schemaInfo.get() != null) {
+            log.info("Validate caller supplied schema.");
             client.validateSchema(groupId, schemaInfo.get(), schemaValidationRules);
+        } else if (!this.encodeHeader.get()) {
+            log.info("Retrieving latest schema from the registry for reads.");
+            schemaInfo.set(client.getLatestSchema(groupId, null).getSchema());
+        } else {
+            log.info("Read using writer schema.");
         }
     }
     
@@ -78,14 +84,13 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
     public T deserialize(ByteBuffer data) {
         if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
-            CompressionType compressionType = CompressionType.of(CompressionType.Type.None);
+            CompressionType compressionType = CompressionType.NONE;
             if (skipHeaders) {
                 int currentPos = data.position();
                 data.position(currentPos + HEADER_SIZE);
             } else {
-                byte[] bytes = new byte[Integer.BYTES];
-                data.get(bytes, 1, Integer.BYTES);
-                EncodingId encodingId = new EncodingId(BitConverter.readInt(bytes, 0));
+                byte protocol = data.get();
+                EncodingId encodingId = new EncodingId(data.getInt());
                 EncodingInfo encodingInfo = encodingCache.getEncodingInfo(encodingId);
                 compressionType = encodingInfo.getCompression();
                 writerSchema = encodingInfo.getSchemaInfo();

@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
+import io.pravega.common.util.BitConverter;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
@@ -48,6 +49,12 @@ public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<
                                         Compressor compressor, 
                                         boolean registerSchema,
                                         EncodingCache encodingCache) {
+        Preconditions.checkNotNull(groupId);
+        Preconditions.checkNotNull(client);
+        Preconditions.checkNotNull(compressor);
+        Preconditions.checkNotNull(encodingCache);
+        Preconditions.checkNotNull(schema);
+        
         this.groupId = groupId;
         this.client = client;
         this.schemaInfo = schema.getSchemaInfo();
@@ -83,7 +90,7 @@ public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<
             EncodingId encodingId = encodingCache.getEncodingId(schemaInfo, compressor.getCompressionType());
 
             outputStream.write(PROTOCOL);
-            outputStream.write(encodingId.getId());
+            BitConverter.writeInt(outputStream, encodingId.getId());
         }
         
         // if schema is not null, pass the schema to the serializer implementation
