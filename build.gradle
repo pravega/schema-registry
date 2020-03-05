@@ -288,7 +288,7 @@ project('serializers') {
     }
 }
 
-project('test') {
+project('tests') {
     dependencies {
         compile project(':common')
         compile project(':contract')

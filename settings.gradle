@@ -14,5 +14,4 @@ include 'client',
         'common',
         'server',
         'serializers',
-        'contract',
-        'test'
+        'contract',       'tests'
