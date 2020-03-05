@@ -14,9 +14,11 @@ import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CompressionTypeRecord;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SchemaTypeRecord;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.AllArgsConstructor;
@@ -98,13 +100,13 @@ public interface Record {
             private void write00(EncodingRecord e, RevisionDataOutput target) throws IOException {
                 EncodingId.SERIALIZER.serialize(target, e.encodingId);
                 VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
-                CompressionType.SERIALIZER.serialize(target, e.compressionType);
+                CompressionTypeRecord.SERIALIZER.serialize(target, new CompressionTypeRecord(e.compressionType));
             }
 
             private void read00(RevisionDataInput source, EncodingRecord.EncodingRecordBuilder b) throws IOException {
                 b.encodingId(EncodingId.SERIALIZER.deserialize(source))
                  .versionInfo(VersionInfo.SERIALIZER.deserialize(source))
-                 .compressionType(CompressionType.SERIALIZER.deserialize(source));
+                 .compressionType(CompressionTypeRecord.SERIALIZER.deserialize(source).getCompressionType());
             }
         }
     }
@@ -176,14 +178,14 @@ public interface Record {
             }
 
             private void write00(GroupPropertiesRecord e, RevisionDataOutput target) throws IOException {
-                SchemaType.SERIALIZER.serialize(target, e.schemaType);
+                SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
                 target.writeBoolean(e.enableEncoding);
                 target.writeBoolean(e.validateByObjectType);
                 SchemaValidationRules.SERIALIZER.serialize(target, e.validationRules);
             }
 
             private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
-                b.schemaType(SchemaType.SERIALIZER.deserialize(source))
+                b.schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
                  .enableEncoding(source.readBoolean())
                  .validateByObjectType(source.readBoolean())
                  .validationRules(SchemaValidationRules.SERIALIZER.deserialize(source));

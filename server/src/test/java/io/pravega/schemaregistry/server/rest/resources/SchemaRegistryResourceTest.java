@@ -53,10 +53,10 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     
     @Test
     public void groups() throws ExecutionException, InterruptedException {
-        GroupProperties group1 = new GroupProperties(SchemaType.of(SchemaType.Type.Avro), 
+        GroupProperties group1 = new GroupProperties(SchemaType.Avro, 
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 false, false);
-        GroupProperties group2 = new GroupProperties(SchemaType.of(SchemaType.Type.Protobuf), 
+        GroupProperties group2 = new GroupProperties(SchemaType.Protobuf, 
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 false, false);
 

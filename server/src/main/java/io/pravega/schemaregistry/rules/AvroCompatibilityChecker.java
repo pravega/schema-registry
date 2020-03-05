@@ -27,8 +27,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     private static final SchemaValidator MUTUAL_READ = new SchemaValidatorBuilder().mutualReadStrategy().validateAll();
 
     public boolean canRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
-        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
-        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
+        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.Avro));
+        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.Avro)));
         Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
         List<Schema> writers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
                                                 .collect(Collectors.toList());
@@ -41,8 +41,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     }
 
     public boolean canBeRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
-        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
-        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
+        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.Avro));
+        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSchemaType().equals(SchemaType.Avro)));
 
         Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
         List<Schema> readers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
@@ -56,8 +56,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     }
 
     public boolean canMutuallyRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
-        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro)));
-        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(s -> s.getSchemaType().equals(SchemaType.of(SchemaType.Type.Avro))));
+        Preconditions.checkArgument(toValidate.getSchemaType().equals(SchemaType.Avro));
+        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(s -> s.getSchemaType().equals(SchemaType.Avro)));
 
         Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
         List<Schema> schemas = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))

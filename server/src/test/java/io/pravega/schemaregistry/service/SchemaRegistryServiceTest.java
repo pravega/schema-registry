@@ -47,7 +47,7 @@ public class SchemaRegistryServiceTest {
             return CompletableFuture.completedFuture(new ListWithToken<>(groups, null));
         }).when(store).listGroups(any());
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new GroupProperties(SchemaType.of(SchemaType.Type.Avro), 
+            return CompletableFuture.completedFuture(new GroupProperties(SchemaType.Avro, 
                     new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), false, false));
         }).when(store).getGroupProperties(anyString());
 
