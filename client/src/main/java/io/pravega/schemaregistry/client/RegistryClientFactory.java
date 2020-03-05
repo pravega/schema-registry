@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.client;
 import io.pravega.schemaregistry.client.impl.SchemaRegistryClientImpl;
 
 public class RegistryClientFactory {
-    public SchemaRegistryClient createRegistryClient(RegistryClientConfig config) {
+    public static SchemaRegistryClient createRegistryClient(SchemaRegistryClientConfig config) {
         return new SchemaRegistryClientImpl(config.getSchemaRegistryUri());
     }
 }

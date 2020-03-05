@@ -71,14 +71,14 @@ public class GroupProperties {
         }
 
         private void write00(GroupProperties e, RevisionDataOutput target) throws IOException {
-            SchemaType.SERIALIZER.serialize(target, e.schemaType);
+            SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
             SchemaValidationRules.SERIALIZER.serialize(target, e.schemaValidationRules);
             target.writeBoolean(e.validateByObjectType);
             target.writeBoolean(e.enableEncoding);
         }
 
         private void read00(RevisionDataInput source, GroupProperties.GroupPropertiesBuilder b) throws IOException {
-            b.schemaType(SchemaType.SERIALIZER.deserialize(source))
+            b.schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
              .schemaValidationRules(SchemaValidationRules.SERIALIZER.deserialize(source))
              .validateByObjectType(source.readBoolean())
              .enableEncoding(source.readBoolean());

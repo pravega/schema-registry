@@ -13,7 +13,7 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 
 public class CompressionFactory {
     public static Compressor getCompressor(CompressionType compressionType) {
-        switch (compressionType.getCompressionType()) {
+        switch (compressionType) {
             case None:
                 return new Compressor.Noop();
             case Snappy: 

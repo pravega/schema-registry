@@ -7,19 +7,16 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.serializers.avro;
+package io.pravega.schemaregistry.serializers;
 
-import com.google.common.base.Charsets;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.serializers.AbstractPravegaSerializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.BinaryEncoder;
 import org.apache.avro.io.EncoderFactory;
@@ -30,10 +27,10 @@ import org.apache.avro.specific.SpecificRecord;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 
-public class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
-    AvroSchema<T> avroSchema;
-    public AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
-                          Compressor compressor, boolean registerSchema, EncodingCache encodingCache) {
+class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
+    private final AvroSchema<T> avroSchema;
+    AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
+                   Compressor compressor, boolean registerSchema, EncodingCache encodingCache) {
         super(groupId, client, schema, compressor, registerSchema, encodingCache);
         this.avroSchema = schema;
     }

@@ -7,28 +7,26 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.serializers.protobuf;
+package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.serializers.AbstractPravegaDeserializer;
 import lombok.SneakyThrows;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
+import java.util.function.BiFunction;
 
 public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractPravegaDeserializer<T> {
-    ProtobufSchema<T> protobufSchema;
-    public ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
-                              ProtobufSchema<T> schema, Map<CompressionType, Compressor> compressorMap,
-                              EncodingCache encodingCache) {
-        super(groupId, client, schema, true, compressorMap, encodingCache);
+    private final ProtobufSchema<T> protobufSchema;
+    ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
+                       ProtobufSchema<T> schema, BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress,
+                       EncodingCache encodingCache) {
+        super(groupId, client, schema, true, uncompress, encodingCache);
         Preconditions.checkNotNull(schema);
         this.protobufSchema = schema;
     }

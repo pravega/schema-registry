@@ -314,7 +314,7 @@ public class SchemaRegistryService {
         Preconditions.checkNotNull(newRules);
         Compatibility.Type compatibility = newRules.getCompatibility().getCompatibility();
 
-        switch (schemaType.getSchemaType()) {
+        switch (schemaType) {
             case Avro:
                 return true;
             case Protobuf:

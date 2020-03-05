@@ -12,21 +12,21 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
+import java.util.function.BiFunction;
 
-public class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
+class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
 
-    protected MultiplexedDeserializer(String groupId, SchemaRegistryClient client,
-                                      Map<String, AbstractPravegaDeserializer<T>> deserializers,
-                                      boolean skipHeaders, Map<CompressionType, Compressor> compressorMap, 
-                                      EncodingCache encodingCache) {
-        super(groupId, client, null, skipHeaders, compressorMap, encodingCache);
+    MultiplexedDeserializer(String groupId, SchemaRegistryClient client,
+                            Map<String, AbstractPravegaDeserializer<T>> deserializers,
+                            boolean skipHeaders, BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress,
+                            EncodingCache encodingCache) {
+        super(groupId, client, null, skipHeaders, uncompress, encodingCache);
         // 1. validate each schema
         // 2. ensure all data 
         this.deserializers = deserializers; 

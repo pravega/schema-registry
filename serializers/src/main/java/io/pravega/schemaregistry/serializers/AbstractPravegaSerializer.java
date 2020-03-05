@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
+import io.pravega.client.stream.Serializer;
 import io.pravega.common.util.BitConverter;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -29,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<T> {
+abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     private static final byte PROTOCOL = 0x0;
 
     private final String groupId;
@@ -80,8 +81,9 @@ public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<
             this.version.compareAndSet(null, encodingCache.getVersionFromSchema(schemaInfo));
         }
     }
-
+    
     @SneakyThrows
+    @Override
     public ByteBuffer serialize(T obj) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         
@@ -104,6 +106,11 @@ public abstract class AbstractPravegaSerializer<T> implements PravegaSerializer<
 
         return compressor.compress(ByteBuffer.wrap(outputStream.toByteArray()));
     }
-    
+
     protected abstract void serialize(T var, SchemaInfo schema, OutputStream outputStream);
+
+    @Override
+    public T deserialize(ByteBuffer bytes) {
+        throw new IllegalStateException();
+    }
 }

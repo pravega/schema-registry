@@ -32,7 +32,7 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
     private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         this.parser = parser;
         this.descriptorProto = fileDescriptorSet;
-        this.schemaInfo = new SchemaInfo(name, SchemaType.PROTOBUF, 
+        this.schemaInfo = new SchemaInfo(name, SchemaType.Protobuf, 
                 getSchemaBytes(), ImmutableMap.of());
     }
     

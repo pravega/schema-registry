@@ -21,7 +21,6 @@ import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.reflect.ReflectData;
-import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificDatumReader;
 
@@ -37,7 +36,7 @@ public class AvroSchema<T> implements SchemaData<T> {
         this.schema = schema;
         this.schemaInfo = new SchemaInfo(
                 schema.getName(),
-                SchemaType.AVRO, getSchemaBytes(), ImmutableMap.of());
+                SchemaType.Avro, getSchemaBytes(), ImmutableMap.of());
         this.tClass = tClass;
     }
 
@@ -69,7 +68,6 @@ public class AvroSchema<T> implements SchemaData<T> {
     }
     
     public T deserialize(Schema writerSchema, byte[] bytes) throws IOException {
-        
         SpecificDatumReader<T> reader = new SpecificDatumReader<>(writerSchema, schema);
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
         return reader.read(null, decoder);

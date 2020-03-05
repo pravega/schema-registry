@@ -16,7 +16,7 @@ public class CompatibilityCheckerFactory {
     private static final AlwaysTrueCompatibilityChecker ALWAYS_TRUE_COMPATIBILITY_CHECKER = new AlwaysTrueCompatibilityChecker();
     
     public static CompatibilityChecker getCompatibilityChecker(SchemaType schemaType) {
-        if (schemaType.getSchemaType().equals(SchemaType.Type.Avro)) {
+        if (schemaType.equals(SchemaType.Avro)) {
             return AVRO_COMPATIBILITY_CHECKER;
         } else {
             return ALWAYS_TRUE_COMPATIBILITY_CHECKER;

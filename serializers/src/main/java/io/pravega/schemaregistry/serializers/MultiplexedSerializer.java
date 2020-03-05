@@ -9,13 +9,15 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import io.pravega.client.stream.Serializer;
+
 import java.nio.ByteBuffer;
 import java.util.Map;
 
-public class MultiplexedSerializer<T> implements PravegaSerializer<T> {
+class MultiplexedSerializer<T> implements Serializer<T> {
     private final Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializers;
 
-    public MultiplexedSerializer(Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializers) {
+    MultiplexedSerializer(Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializers) {
         this.serializers = serializers;
     }
     
@@ -25,5 +27,10 @@ public class MultiplexedSerializer<T> implements PravegaSerializer<T> {
         Class<? extends T> tClass = (Class<? extends T>) obj.getClass();
         AbstractPravegaSerializer<T> serializer = serializers.get(tClass);
         return serializer.serialize(obj);
+    }
+
+    @Override
+    public T deserialize(ByteBuffer serializedValue) {
+        throw new IllegalStateException();
     }
 }

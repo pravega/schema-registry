@@ -90,7 +90,7 @@ public class SchemaInfo {
 
         private void write00(SchemaInfo e, RevisionDataOutput target) throws IOException {
             target.writeUTF(e.name);
-            SchemaType.SERIALIZER.serialize(target, e.schemaType);
+            SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
             target.writeArray(e.schemaData);
             target.writeCompactInt(e.properties.size());
             target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
@@ -98,7 +98,7 @@ public class SchemaInfo {
 
         private void read00(RevisionDataInput source, SchemaInfo.SchemaInfoBuilder b) throws IOException {
             b.name(source.readUTF())
-                .schemaType(SchemaType.SERIALIZER.deserialize(source))
+                .schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
                 .schemaData(source.readArray())
                 .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
         }

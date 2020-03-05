@@ -17,7 +17,7 @@ import java.net.URI;
  * Registry client configuration used to create registry client. 
  */
 @Data
-public class RegistryClientConfig {
+public class SchemaRegistryClientConfig {
     private final URI schemaRegistryUri;
 
     /**

@@ -24,16 +24,17 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ReaderConfig;
 import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
+import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.local.LocalPravegaEmulator;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.PravegaSerDe;
-import io.pravega.schemaregistry.serializers.SerDeConfig;
+import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerDeFactory;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
@@ -43,21 +44,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.io.BinaryEncoder;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.reflect.ReflectDatumWriter;
+import org.apache.avro.reflect.ReflectData;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
-
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public class TestPravegaClientEndToEnd {
@@ -101,7 +96,9 @@ public class TestPravegaClientEndToEnd {
             .type(Schema.create(Schema.Type.STRING))
             .noDefault()
             .endRecord();
-    
+    private LocalPravegaEmulator localPravega;
+    private ClientConfig clientConfig;
+
     private SchemaStore schemaStore;
     private ScheduledExecutorService executor;
 
@@ -132,10 +129,7 @@ public class TestPravegaClientEndToEnd {
 
         executor.shutdownNow();
     }
-
-    LocalPravegaEmulator localPravega;
-    ClientConfig clientConfig;
-
+    
     @Test
     public void testEndToEnd() throws IOException {
         // create stream
@@ -150,33 +144,35 @@ public class TestPravegaClientEndToEnd {
 
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
 
-        SchemaType schemaType = SchemaType.of(SchemaType.Type.Avro);
+        SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 true, true);
 
         AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
 
-        SerDeConfig serDeConfig = SerDeConfig.builder()
-                                             .schemaType(schemaType)
-                                             .groupId(groupId)
-                                             .autoRegisterSchema(true)
-                                       .build();
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .autoRegisterSchema(true)
+                                                            .registryConfigOrClient(Either.right(client))
+                                                            .build();
         
-        PravegaSerDe<TestClass> serDe = SerDeFactory.createSerDe(client, serDeConfig, schema);
+        Serializer<TestClass> serializer = SerDeFactory.avroSerializer(serializerConfig, schema);
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
-        EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serDe, EventWriterConfig.builder().build());
+        EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         writer.writeEvent(new TestClass("test"));
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         readerGroupManager.createReaderGroup("rg", 
                 ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        PravegaSerDe<TestClass> genericSerde = SerDeFactory.createGenericDeserializer(client, serDeConfig, schema);
+        AvroSchema<GenericRecord> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
-        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", "rg", serDe, ReaderConfig.builder().build());
+        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, readSchema);
 
-        EventRead<TestClass> event = reader.readNextEvent(1000);
+        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", "rg", deserializer, ReaderConfig.builder().build());
+
+        EventRead<GenericRecord> event = reader.readNextEvent(1000);
         System.err.println(event.getEvent());
         
     }

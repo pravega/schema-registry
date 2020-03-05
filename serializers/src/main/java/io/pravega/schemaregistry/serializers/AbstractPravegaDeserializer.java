@@ -9,10 +9,9 @@
  */
 package io.pravega.schemaregistry.serializers;
 
-import io.pravega.common.util.BitConverter;
+import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -25,12 +24,12 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.BiFunction;
 
 @Slf4j
-public abstract class AbstractPravegaDeserializer<T> implements PravegaDeserializer<T> {
+abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private static final byte PROTOCOL = 0x0;
     private static final int HEADER_SIZE = 1 + Integer.BYTES;
 
@@ -39,7 +38,7 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
     private final AtomicReference<SchemaInfo> schemaInfo;
     private final AtomicBoolean encodeHeader;
-    private final Map<CompressionType, Compressor> compressors;
+    private final BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress;
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
     
@@ -47,7 +46,7 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
                                           SchemaRegistryClient client,
                                           @Nullable SchemaData<T> schema,
                                           boolean skipHeaders,
-                                          Map<CompressionType, Compressor> compressors, EncodingCache encodingCache) {
+                                          BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
         this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
@@ -57,7 +56,7 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
         }
         this.encodeHeader = new AtomicBoolean();
         this.skipHeaders = skipHeaders;
-        this.compressors = compressors;
+        this.uncompress = uncompress;
             
         initialize();
     }
@@ -81,10 +80,15 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
     }
     
     @Override
+    public ByteBuffer serialize(T obj) {
+        throw new IllegalStateException();
+    }
+    
+    @Override
     public T deserialize(ByteBuffer data) {
         if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
-            CompressionType compressionType = CompressionType.NONE;
+            CompressionType compressionType = CompressionType.None;
             if (skipHeaders) {
                 int currentPos = data.position();
                 data.position(currentPos + HEADER_SIZE);
@@ -96,7 +100,7 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
                 writerSchema = encodingInfo.getSchemaInfo();
             }
             
-            ByteBuffer uncompressed = compressors.get(compressionType).uncompress(data);
+            ByteBuffer uncompressed = uncompress.apply(compressionType, data);
             
             if (schemaInfo.get() == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into
@@ -110,7 +114,6 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
             return deserialize(data, null, schemaInfo.get());
         }
     }
-
     
     protected abstract T deserialize(ByteBuffer buffer, SchemaInfo writerSchema, SchemaInfo readerSchema);
 }

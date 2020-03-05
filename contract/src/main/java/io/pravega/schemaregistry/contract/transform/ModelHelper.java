@@ -37,8 +37,7 @@ public class ModelHelper {
             case CUSTOM:
                 return io.pravega.schemaregistry.contract.data.SchemaType.custom(schemaType.getCustomTypeName());
             default:
-                return io.pravega.schemaregistry.contract.data.SchemaType.of(
-                        searchEnum(io.pravega.schemaregistry.contract.data.SchemaType.Type.class, schemaType.getSchemaType().name()));
+                return searchEnum(io.pravega.schemaregistry.contract.data.SchemaType.class, schemaType.getSchemaType().name());
         }
     }
 
@@ -60,8 +59,8 @@ public class ModelHelper {
             case CUSTOM:
                 return io.pravega.schemaregistry.contract.data.CompressionType.custom(compressionType.getCustomTypeName());
             default:
-                return io.pravega.schemaregistry.contract.data.CompressionType.of(searchEnum(
-                        io.pravega.schemaregistry.contract.data.CompressionType.Type.class, compressionType.getCompressionType().name()));
+                return searchEnum(
+                        io.pravega.schemaregistry.contract.data.CompressionType.class, compressionType.getCompressionType().name());
         }
     }
 
@@ -121,12 +120,12 @@ public class ModelHelper {
     }
 
     public static SchemaType encode(io.pravega.schemaregistry.contract.data.SchemaType schemaType) {
-        if (schemaType.getSchemaType().equals(io.pravega.schemaregistry.contract.data.SchemaType.Type.Custom)) {
+        if (schemaType.equals(io.pravega.schemaregistry.contract.data.SchemaType.Custom)) {
             SchemaType schemaTypeModel = new SchemaType().schemaType(SchemaType.SchemaTypeEnum.CUSTOM);
             return schemaTypeModel.customTypeName(schemaType.getCustomTypeName());
         } else {
             return new SchemaType().schemaType(
-                    searchEnum(SchemaType.SchemaTypeEnum.class, schemaType.getSchemaType().name()));
+                    searchEnum(SchemaType.SchemaTypeEnum.class, schemaType.name()));
         }
     }
 
@@ -135,12 +134,12 @@ public class ModelHelper {
     }
 
     public static CompressionType encode(io.pravega.schemaregistry.contract.data.CompressionType compression) {
-        if (compression.getCompressionType().equals(io.pravega.schemaregistry.contract.data.CompressionType.Type.Custom)) {
+        if (compression.equals(io.pravega.schemaregistry.contract.data.CompressionType.Custom)) {
             return new CompressionType().compressionType(CompressionType.CompressionTypeEnum.CUSTOM)
                                              .customTypeName(compression.getCustomTypeName());
         } else {
             return new CompressionType().compressionType(
-                    searchEnum(CompressionType.CompressionTypeEnum.class, compression.getCompressionType().name()));
+                    searchEnum(CompressionType.CompressionTypeEnum.class, compression.name()));
         }
     }
 

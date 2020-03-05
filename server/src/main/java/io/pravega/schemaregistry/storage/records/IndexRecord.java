@@ -15,6 +15,7 @@ import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CompressionTypeRecord;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.storage.Position;
@@ -344,12 +345,12 @@ public interface IndexRecord {
 
             private void write00(EncodingInfoIndex e, RevisionDataOutput target) throws IOException {
                 VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
-                CompressionType.SERIALIZER.serialize(target, e.compressionType);
+                CompressionTypeRecord.SERIALIZER.serialize(target, new CompressionTypeRecord(e.compressionType));
             }
 
             private void read00(RevisionDataInput source, EncodingInfoIndex.EncodingInfoIndexBuilder b) throws IOException {
                 b.versionInfo(VersionInfo.SERIALIZER.deserialize(source))
-                 .compressionType(CompressionType.SERIALIZER.deserialize(source));
+                 .compressionType(CompressionTypeRecord.SERIALIZER.deserialize(source).getCompressionType());
             }
         }
     }

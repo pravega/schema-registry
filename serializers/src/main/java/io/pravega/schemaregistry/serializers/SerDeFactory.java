@@ -12,196 +12,165 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
+import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
+import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.impl.SchemaRegistryClientImpl;
-import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.schemas.SchemaData;
-import io.pravega.schemaregistry.serializers.avro.AvroDeserlizer;
-import io.pravega.schemaregistry.serializers.avro.AvroGenericDeserlizer;
-import io.pravega.schemaregistry.serializers.avro.AvroSerializer;
-import io.pravega.schemaregistry.serializers.protobuf.ProtobufDeserlizer;
-import io.pravega.schemaregistry.serializers.protobuf.ProtobufGenericDeserlizer;
-import io.pravega.schemaregistry.serializers.protobuf.ProtobufSerializer;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.commons.lang3.NotImplementedException;
+import org.apache.avro.generic.IndexedRecord;
 
-import java.net.URI;
+import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SerDeFactory {
-    public static <T> PravegaSerDe<T> createSerDe(URI registryUri, SerDeConfig config, SchemaData<T> schemaData) {
-        SchemaRegistryClientImpl registryClient = new SchemaRegistryClientImpl(registryUri);
-        return createSerDe(registryClient, config, schemaData);
-    }
-    
-    @SuppressWarnings("unchecked")
-    public static <T> PravegaSerDe<T> createSerDe(SchemaRegistryClient registryClient, SerDeConfig config, SchemaData<T> schemaData) {
-        switch (config.getSchemaType().getSchemaType()) {
-            case Avro:
-                assert schemaData instanceof AvroSchema;
-                return avroSerDe(registryClient, config, (AvroSchema<T>) schemaData);
-            case Protobuf:
-                assert schemaData instanceof ProtobufSchema;
-                return (PravegaSerDe<T>) protobufSerDe(registryClient, config, (ProtobufSchema<? extends GeneratedMessageV3>) schemaData);
-            default:
-                throw new NotImplementedException("serializer does not exist");
-        }
-    }
-    
-    public static PravegaSerDe createGenericDeserializer(URI registryUri, SerDeConfig config) {
-        SchemaRegistryClientImpl registryClient = new SchemaRegistryClientImpl(registryUri);
-        return createGenericDeserializer(registryClient, config);
-    }
-    
-    public static PravegaSerDe createGenericDeserializer(SchemaRegistryClient registryClient, SerDeConfig config) {
-        switch (config.getSchemaType().getSchemaType()) {
-            case Avro:
-                return genericAvroDeserializer(registryClient, config);
-            case Protobuf:
-                return genericProtobufDeserializer(registryClient, config);
-            default:
-                throw new NotImplementedException("serializer does not exist");
-        }
-    }
-    
-    private static <T> PravegaSerDe<T> avroSerDe(SchemaRegistryClient registryClient, SerDeConfig config, AvroSchema<T> schemaData) {
+
+    public static <T> Serializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        Preconditions.checkArgument(config.getSchemaType().getSchemaType().equals(SchemaType.Type.Avro));
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         String groupId = config.getGroupId();
         EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
-        AbstractPravegaSerializer<T> serializer = null;
-        AbstractPravegaDeserializer<T> deserializer = null;
-
-        if (config.getSerializerConfig() != null) {
-            serializer = new AvroSerializer<>(groupId, registryClient, schemaData, config.getSerializerConfig().getCompressor(),
-                    config.isAutoRegisterSchema(), encodingCache);
-        }
-
-        if (config.getDeserializerConfig() != null) {
-            deserializer = new AvroDeserlizer<>(groupId, registryClient, schemaData,
-                    config.getDeserializerConfig().getCompressorMap(), encodingCache);
-        }
-
-        return new PravegaSerDe<>(serializer, deserializer);
+        return new AvroSerializer<>(groupId, registryClient, schemaData, config.getCompressor(),
+                config.isAutoRegisterSchema(), encodingCache);
     }
 
-    private static <T extends GeneratedMessageV3> PravegaSerDe<T> protobufSerDe(SchemaRegistryClient registryClient, SerDeConfig config, ProtobufSchema<T> schemaData) {
-        Preconditions.checkArgument(config.getSchemaType().getSchemaType().equals(SchemaType.Type.Protobuf));
+    public static <T extends IndexedRecord> Serializer<T> avroDeserializer(SerializerConfig config, 
+                                                                           AvroSchema<T> schemaData) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(schemaData);
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         String groupId = config.getGroupId();
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        return new AvroDeserlizer<>(groupId, registryClient, schemaData, config.getUncompress(), encodingCache);
+    }
+
+    public static Serializer<GenericRecord> genericAvroDeserializer(SerializerConfig config, 
+                                                                    @Nullable AvroSchema<GenericRecord> schemaData) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
-        AbstractPravegaSerializer<T> serializer = null;
-        AbstractPravegaDeserializer<T> deserializer = null;
-        if (config.getSerializerConfig() != null) {
-            // schema cannot be null
-            serializer = new ProtobufSerializer<>(groupId, registryClient,
-                    schemaData, config.getSerializerConfig().getCompressor(),
-                    config.isAutoRegisterSchema(), encodingCache);
-        }
-
-        if (config.getDeserializerConfig() != null) {
-            // schema can be null in which case deserialization will happen into dynamic message
-            deserializer = new ProtobufDeserlizer<>(groupId, registryClient,
-                    schemaData, config.getDeserializerConfig().getCompressorMap(), encodingCache);
-        }
-
-        return new PravegaSerDe<>(serializer, deserializer);
+        return new AvroGenericDeserlizer(groupId, registryClient, schemaData, config.getUncompress(), encodingCache);
     }
 
-    private static PravegaSerDe<GenericRecord> genericAvroDeserializer(SchemaRegistryClient registryClient, SerDeConfig config) {
-        Preconditions.checkNotNull(config.getDeserializerConfig());
-        Preconditions.checkArgument(config.getSchemaType().getSchemaType().equals(SchemaType.Type.Avro));
-
+    public static <T extends GeneratedMessageV3> Serializer<T> protobufSerializer(SerializerConfig config, 
+                                                                                  ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
-        AbstractPravegaDeserializer<GenericRecord> deserializer = new AvroGenericDeserlizer(groupId, registryClient,
-                config.getDeserializerConfig().getCompressorMap(), encodingCache);
-
-        return new PravegaSerDe<>(null, deserializer);
+        return new ProtobufSerializer<>(groupId, registryClient, schemaData, config.getCompressor(),
+                config.isAutoRegisterSchema(), encodingCache);
     }
 
-    private static PravegaSerDe<DynamicMessage> genericProtobufDeserializer(SchemaRegistryClient registryClient, SerDeConfig config) {
-        Preconditions.checkNotNull(config.getDeserializerConfig());
-        Preconditions.checkArgument(config.getSchemaType().getSchemaType().equals(SchemaType.Type.Protobuf));
-
+    public static <T extends GeneratedMessageV3> Serializer<T> protobufDeserializer(SerializerConfig config, 
+                                                                                    ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
-        AbstractPravegaDeserializer<DynamicMessage> deserializer = new ProtobufGenericDeserlizer(groupId, registryClient,
-                config.getDeserializerConfig().getCompressorMap(), encodingCache);
-
-        return new PravegaSerDe<>(null, deserializer);
+        // schema can be null in which case deserialization will happen into dynamic message
+        return new ProtobufDeserlizer<>(groupId, registryClient, schemaData, config.getUncompress(), encodingCache);
     }
-    
-    public static <T extends GeneratedMessageV3> PravegaSerDe<T> multiplexedProtobufSerDe(SchemaRegistryClient registryClient, SerDeConfig config, 
-                                                                                   Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
-        Preconditions.checkArgument(config.getSchemaType().getSchemaType().equals(SchemaType.Type.Protobuf));
+
+    public static Serializer<DynamicMessage> genericProtobufDeserializer(SerializerConfig config) {
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         String groupId = config.getGroupId();
 
         EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
-        MultiplexedSerializer<T> serializer = null;
-        MultiplexedDeserializer<T> deserializer = null;
-
-        if (config.getSerializerConfig() != null) {
-            Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
-                    .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                            x -> new ProtobufSerializer<>(groupId, registryClient, x.getValue(), config.getSerializerConfig().getCompressor(),
-                                    config.isAutoRegisterSchema(), encodingCache)));
-            serializer = new MultiplexedSerializer<>(serializerMap);
-        }
-
-        if (config.getDeserializerConfig() != null) {
-            Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
-                    .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
-                            x -> new ProtobufDeserlizer<>(groupId, registryClient, x.getValue(), config.getDeserializerConfig().getCompressorMap(), encodingCache)));
-            deserializer = new MultiplexedDeserializer<>(groupId, registryClient,
-                    deserializerMap, false, config.getDeserializerConfig().getCompressorMap(), encodingCache);
-        }
-
-        return new PravegaSerDe<>(serializer, deserializer);
+        return new ProtobufGenericDeserlizer(groupId, registryClient, config.getUncompress(), encodingCache);
     }
 
-    public static <T> PravegaSerDe<T> multiplexedAvroSerDe(SchemaRegistryClient registryClient, SerDeConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+    public static <T extends GeneratedMessageV3> Serializer<T> multiplexedProtobufSerializer(
+            SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+                        x -> new ProtobufSerializer<>(groupId, registryClient, x.getValue(), config.getCompressor(),
+                                config.isAutoRegisterSchema(), encodingCache)));
+        return new MultiplexedSerializer<>(serializerMap);
+    }
+
+    public static <T extends GeneratedMessageV3> Serializer<T> multiplexedProtobufDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
+                        x -> new ProtobufDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
+        return new MultiplexedDeserializer<>(groupId, registryClient,
+                deserializerMap, false, config.getUncompress(), encodingCache);
+    }
+
+    public static <T> Serializer<T> multiplexedAvroSerializer(SerializerConfig config,
+                                                              Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
-        Preconditions.checkArgument(config.getSchemaType().equals(SchemaType.SERIALIZER));
 
         String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
         EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
 
-        MultiplexedSerializer<T> serializer = null;
-        MultiplexedDeserializer<T> deserializer = null;
+        Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+                        x -> new AvroSerializer<>(groupId, registryClient, x.getValue(), config.getCompressor(),
+                                config.isAutoRegisterSchema(), encodingCache)));
+        return new MultiplexedSerializer<>(serializerMap);
+    }
 
-        if (config.getSerializerConfig() != null) {
-            Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
-                    .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                            x -> new AvroSerializer<>(groupId, registryClient, x.getValue(), config.getSerializerConfig().getCompressor(),
-                                    config.isAutoRegisterSchema(), encodingCache)));
-            serializer = new MultiplexedSerializer<>(serializerMap);
-        }
+    public static <T extends IndexedRecord> Serializer<T> multiplexedAvroDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(schemas);
 
-        if (config.getDeserializerConfig() != null) {
-            Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
-                    .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
-                            x -> new AvroDeserlizer<>(groupId, registryClient, x.getValue(), config.getDeserializerConfig().getCompressorMap(), encodingCache)));
-            deserializer = new MultiplexedDeserializer<>(groupId, registryClient,
-                    deserializerMap, false, config.getDeserializerConfig().getCompressorMap(), encodingCache);
-        }
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
 
-        return new PravegaSerDe<>(serializer, deserializer);
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
+                        x -> new AvroDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
+        return new MultiplexedDeserializer<>(groupId, registryClient,
+                deserializerMap, false, config.getUncompress(), encodingCache);
     }
 }

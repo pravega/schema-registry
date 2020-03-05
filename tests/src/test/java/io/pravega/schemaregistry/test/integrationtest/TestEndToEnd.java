@@ -103,13 +103,13 @@ public abstract class TestEndToEnd {
         
         assertEquals(client.listGroups().size(), 0);
         
-        client.addGroup(group, SchemaType.of(SchemaType.Type.Avro),  
+        client.addGroup(group, SchemaType.Avro,  
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 true, true);
         assertEquals(client.listGroups().size(), 1);
 
         String myTest = "MyTest";
-        SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.of(SchemaType.Type.Avro), 
+        SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.Avro, 
                 schema1.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
@@ -117,13 +117,13 @@ public abstract class TestEndToEnd {
         // attempt to add an existing schema
         client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
 
-        SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.of(SchemaType.Type.Avro),
+        SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.Avro,
                 schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
         client.addSchemaIfAbsent(group, schemaInfo2, SchemaValidationRules.of());
 
         client.updateSchemaValidationRules(group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.FullTransitive)));
 
-        SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SchemaType.of(SchemaType.Type.Avro),
+        SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SchemaType.Avro,
                 schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
@@ -136,7 +136,7 @@ public abstract class TestEndToEnd {
         assertTrue(exceptionRef.get() instanceof IncompatibleSchemaException);
         
         String myTest2 = "MyTest2";
-        SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.of(SchemaType.Type.Avro),
+        SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.Avro,
                 schemaTest2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
         client.addSchemaIfAbsent(group, schemaInfo4, SchemaValidationRules.of());
 

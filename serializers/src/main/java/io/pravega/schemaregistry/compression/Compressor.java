@@ -23,7 +23,7 @@ public interface Compressor {
     class Noop implements Compressor {
         @Override
         public CompressionType getCompressionType() {
-            return CompressionType.NONE;
+            return CompressionType.None;
         }
 
         @Override
