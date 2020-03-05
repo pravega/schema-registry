@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers.avro;
 
+import com.google.common.base.Charsets;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializers.AbstractPravegaSerializer;
@@ -42,7 +43,7 @@ public class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
         Schema schema;
         Schema.Parser parser = new Schema.Parser();
         if (avroSchema == null) {
-            schema = parser.parse(new String(schemaInfo.getSchemaData()));
+            schema = parser.parse(new String(schemaInfo.getSchemaData(), Charsets.UTF_8));
         } else {
             schema = avroSchema.getSchema();
         }

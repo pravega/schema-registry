@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers.protobuf;
 
-import com.google.protobuf.Message;
+import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.compression.Compressor;
@@ -19,7 +19,7 @@ import io.pravega.schemaregistry.serializers.AbstractPravegaSerializer;
 import lombok.SneakyThrows;
 import java.io.OutputStream;
 
-public class ProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
+public class ProtobufSerializer<T extends GeneratedMessageV3> extends AbstractPravegaSerializer<T> {
     public ProtobufSerializer(String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
                               Compressor compressor, boolean registerSchema, EncodingCache encodingCache) {
         super(groupId, client, schema, compressor, registerSchema, encodingCache);

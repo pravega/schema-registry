@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 @Slf4j
 public abstract class AbstractPravegaDeserializer<T> implements PravegaDeserializer<T> {
     private static final byte PROTOCOL = 0x0;
+    private static final int HEADER_SIZE = 1 + Integer.BYTES;
 
     private final String groupId;
     private final SchemaRegistryClient client;
@@ -68,7 +69,9 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
 
         this.encodeHeader.set(groupProperties.isEnableEncoding());
 
-        client.validateSchema(groupId, schemaInfo.get(), schemaValidationRules);
+        if (schemaInfo.get() != null) {
+            client.validateSchema(groupId, schemaInfo.get(), schemaValidationRules);
+        }
     }
     
     @Override
@@ -78,7 +81,7 @@ public abstract class AbstractPravegaDeserializer<T> implements PravegaDeseriali
             CompressionType compressionType = CompressionType.of(CompressionType.Type.None);
             if (skipHeaders) {
                 int currentPos = data.position();
-                data.position(currentPos + 1 + Integer.BYTES);
+                data.position(currentPos + HEADER_SIZE);
             } else {
                 byte[] bytes = new byte[Integer.BYTES];
                 data.get(bytes, 1, Integer.BYTES);

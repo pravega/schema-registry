@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.schemas;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
@@ -46,8 +47,7 @@ public class AvroSchema<T> implements SchemaData<T> {
     
     @Override
     public byte[] getSchemaBytes() {
-        // TODO: charset utf 8
-        return schema.toString().getBytes();
+        return schema.toString().getBytes(Charsets.UTF_8);
     }
 
     @Override
