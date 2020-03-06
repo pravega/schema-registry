@@ -27,33 +27,11 @@ import javax.validation.constraints.*;
  */
 
 public class GetEncodingIdRequest   {
-  @JsonProperty("objectTypeName")
-  private String objectTypeName = null;
-
   @JsonProperty("versionInfo")
   private VersionInfo versionInfo = null;
 
   @JsonProperty("compressionType")
   private CompressionType compressionType = null;
-
-  public GetEncodingIdRequest objectTypeName(String objectTypeName) {
-    this.objectTypeName = objectTypeName;
-    return this;
-  }
-
-  /**
-   * Get objectTypeName
-   * @return objectTypeName
-   **/
-  @JsonProperty("objectTypeName")
-  @ApiModelProperty(value = "")
-  public String getObjectTypeName() {
-    return objectTypeName;
-  }
-
-  public void setObjectTypeName(String objectTypeName) {
-    this.objectTypeName = objectTypeName;
-  }
 
   public GetEncodingIdRequest versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
@@ -103,14 +81,13 @@ public class GetEncodingIdRequest   {
       return false;
     }
     GetEncodingIdRequest getEncodingIdRequest = (GetEncodingIdRequest) o;
-    return Objects.equals(this.objectTypeName, getEncodingIdRequest.objectTypeName) &&
-        Objects.equals(this.versionInfo, getEncodingIdRequest.versionInfo) &&
+    return Objects.equals(this.versionInfo, getEncodingIdRequest.versionInfo) &&
         Objects.equals(this.compressionType, getEncodingIdRequest.compressionType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(objectTypeName, versionInfo, compressionType);
+    return Objects.hash(versionInfo, compressionType);
   }
 
 
@@ -119,7 +96,6 @@ public class GetEncodingIdRequest   {
     StringBuilder sb = new StringBuilder();
     sb.append("class GetEncodingIdRequest {\n");
     
-    sb.append("    objectTypeName: ").append(toIndentedString(objectTypeName)).append("\n");
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
     sb.append("}");

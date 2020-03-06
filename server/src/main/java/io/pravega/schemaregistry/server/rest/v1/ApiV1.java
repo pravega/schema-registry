@@ -341,7 +341,7 @@ public final class ApiV1 {
                                          @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
-        @GET
+        @POST
         @Path("/{groupName}/schemas/validate")
         @Consumes({"application/json"})
         @Produces({"application/json"})
@@ -355,11 +355,11 @@ public final class ApiV1 {
                       @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
-        @GET
+        @POST
         @Path("/{groupName}/schemas/canRead")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema can be used to read for compatibility policy in the schema validation rules.", response = Void.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = Void.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema can be used to read", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
@@ -368,6 +368,5 @@ public final class ApiV1 {
                      @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) CanReadRequest canReadRequest,
                      @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
-
     }
 }

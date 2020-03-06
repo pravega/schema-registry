@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.contract.transform;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
@@ -66,6 +67,21 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
         return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion());
+    }
+
+    public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
+        return new io.pravega.schemaregistry.contract.data.EncodingInfo(decode(encodingInfo.getVersionInfo()), 
+                decode(encodingInfo.getSchemaInfo()), decode(encodingInfo.getCompressionType()));
+    }
+
+    public static <T> io.pravega.schemaregistry.contract.data.SchemaWithVersion decode(SchemaWithVersion schemaWithVersion) {
+        return new io.pravega.schemaregistry.contract.data.SchemaWithVersion(decode(schemaWithVersion.getSchemaInfo()),
+                decode(schemaWithVersion.getVersion()));
+    }
+
+    public static SchemaEvolution decode(SchemaVersionAndRules schemaEvolution) {
+        return new io.pravega.schemaregistry.contract.data.SchemaEvolution(decode(schemaEvolution.getSchemaInfo()),
+                decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()));
     }
     // endregion
 
