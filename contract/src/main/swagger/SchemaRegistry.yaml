@@ -297,7 +297,7 @@ paths:
         description: Group name
         required: true
         type: string
-    get:
+    post:
       tags:
       - "Schema"
       operationId: validate
@@ -321,6 +321,8 @@ paths:
       responses:
         200:
           description: Schema is valid
+          valid:
+             $ref: "#/definitions/Valid"
         404:
           description: Group with given name not found
         500:
@@ -332,7 +334,7 @@ paths:
         description: Group name
         required: true
         type: string
-    get:
+    post:
       tags:
       - "Schema"
       operationId: canRead
@@ -354,6 +356,8 @@ paths:
       responses:
         200:
           description: Schema can be used to read
+          canRead:
+             $ref: "#/definitions/CanRead"
         404:
           description: Group with given name not found
         500:
@@ -591,8 +595,6 @@ paths:
           schema:
             type: object
             properties:
-              objectTypeName: 
-                type: string
               versionInfo:
                   $ref: "#/definitions/VersionInfo"
               compressionType:
@@ -819,3 +821,14 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/CompressionType"
+  Valid:
+    type: object
+    properties:
+      valid:
+        type: boolean
+  CanRead:
+    type: object
+    properties:
+      compatible:
+        type: boolean
+          

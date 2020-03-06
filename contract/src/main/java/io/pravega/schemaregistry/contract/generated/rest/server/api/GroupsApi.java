@@ -111,7 +111,7 @@ public class GroupsApi  {
     throws NotFoundException {
         return delegate.addSchemaValidationRule(groupName,addSchemaValidationRuleRequest,securityContext);
     }
-    @GET
+    @POST
     @Path("/{groupName}/schemas/canRead")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
@@ -444,7 +444,7 @@ public class GroupsApi  {
     throws NotFoundException {
         return delegate.updateSchemaValidationRules(groupName,updateValidationRulesPolicyRequest,securityContext);
     }
-    @GET
+    @POST
     @Path("/{groupName}/schemas/validate")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })

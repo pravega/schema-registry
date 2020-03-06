@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.server.rest.resources;
 
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaValidationRuleRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
@@ -31,6 +32,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
@@ -229,7 +231,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         SchemaValidationRules rules = ModelHelper.decode(validateRequest.getValidationRules());
         registryService.validateSchema(groupName, schemaInfo, rules)
                        .thenApply(compatible -> {
-                           return Response.status(Status.OK).build(); })
+                           return Response.status(Status.OK).entity(new Valid().valid(compatible)).build(); })
                        .exceptionally(exception -> {
                            log.warn("validate failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
@@ -243,8 +245,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     public void canRead(String groupName, CanReadRequest canReadRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(canReadRequest.getSchemaInfo());
         registryService.canRead(groupName, schemaInfo)
-                       .thenApply(compatible -> {
-                           return Response.status(Status.OK).build(); })
+                       .thenApply(canRead -> {
+                           return Response.status(Status.OK).entity(new CanRead().compatible(canRead)).build(); })
                        .exceptionally(exception -> {
                            log.warn("can read failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
