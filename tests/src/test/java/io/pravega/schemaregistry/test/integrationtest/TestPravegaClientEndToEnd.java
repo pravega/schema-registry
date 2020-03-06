@@ -34,7 +34,9 @@ import io.pravega.local.LocalPravegaEmulator;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -62,16 +64,17 @@ import org.junit.Test;
 
 import java.io.IOException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @Slf4j
 public class TestPravegaClientEndToEnd implements AutoCloseable {
@@ -148,6 +151,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     
     @Test
     public void test() throws IOException {
+        testCompression();
         testAvroSchemaEvolution();
         
         testAvroReflect();    
@@ -259,6 +263,87 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
+
+        event = reader.readNextEvent(1000);
+        assertNotNull(event.getEvent());
+        // endregion
+    }
+    
+    private void testCompression() {
+        // create stream
+        String scope = "scope";
+        String stream = "avrocompression";
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+
+        StreamManager streamManager = new StreamManagerImpl(clientConfig);
+        streamManager.createScope(scope);
+        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+
+        SchemaType schemaType = SchemaType.Avro;
+        client.addGroup(groupId, schemaType,  
+                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
+                true, true);
+
+        AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
+        AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
+        AvroSchema<Test1> schema3 = AvroSchema.of(Test1.class);
+
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .autoRegisterSchema(true)
+                                                            .registryConfigOrClient(Either.right(client))
+                                                            .build();
+
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        // region writer with schema1
+        Serializer<GenericRecord> serializer = SerDeFactory.avroSerializer(serializerConfig, schema1);
+
+        EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
+        writer.writeEvent(record);
+        // endregion
+        
+        // region writer with schema2
+        serializer = SerDeFactory.avroSerializer(serializerConfig, schema2);
+
+        writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
+        writer.writeEvent(record);
+        // endregion
+        
+        // region writer with schema3
+        String mycompression = "mycompression";
+        serializerConfig = SerializerConfig.builder()
+                                           .groupId(groupId)
+                                           .autoRegisterSchema(true)
+                                           .compressor(new Compressor() {
+                                               @Override
+                                               public CompressionType getCompressionType() {
+                                                   return CompressionType.custom(mycompression);
+                                               }
+
+                                               @Override
+                                               public ByteBuffer compress(ByteBuffer data) {
+                                                   return data;
+                                               }
+
+                                               @Override
+                                               public ByteBuffer uncompress(ByteBuffer data) {
+                                                   return data;
+                                               }
+                                           })
+                                           .registryConfigOrClient(Either.right(client))
+                                           .build();
+
+        Serializer<Test1> serializer2 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+        EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
+        writer2.writeEvent(new Test1("a", 1));
+
+        List<CompressionType> list = client.getCompressions(groupId);
+        assertEquals(2, list.size());
+        assertTrue(list.stream().anyMatch(x -> mycompression.equals(x.getCustomTypeName())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
         // endregion
     }
     
@@ -541,7 +626,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // endregion
     }
     
-    void testProtobufMultiplexed() throws IOException {
+    private void testProtobufMultiplexed() throws IOException {
         // create stream
         String scope = "scope";
         String stream = "protomultiplexed";
