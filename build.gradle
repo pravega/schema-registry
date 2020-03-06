@@ -197,7 +197,7 @@ project('client') {
 project('server') {
     sourceSets {
         main.resources.srcDirs += "$projectDir/src/conf"
-        test.resources.srcDirs += "$rootDir/config"
+        test.resources.srcDirs += "$rootDir/resources"
     }
 
     apply plugin: 'application'
@@ -289,6 +289,10 @@ project('serializers') {
 }
 
 project('tests') {
+    sourceSets {
+        test.resources.srcDirs += "$rootDir/resources"
+    }
+
     dependencies {
         compile project(':common')
         compile project(':contract')

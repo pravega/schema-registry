@@ -15,16 +15,10 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import lombok.Getter;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.generic.IndexedRecord;
-import org.apache.avro.io.BinaryDecoder;
-import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificData;
-import org.apache.avro.specific.SpecificDatumReader;
-
-import java.io.IOException;
+import org.apache.avro.specific.SpecificRecordBase;
 
 public class AvroSchema<T> implements SchemaData<T> {
     @Getter
@@ -42,11 +36,15 @@ public class AvroSchema<T> implements SchemaData<T> {
 
     public static <T> AvroSchema<T> of(Class<T> tClass) {
         Schema schema;
-        if (tClass.isAssignableFrom(IndexedRecord.class)) {
+        if (tClass.isAssignableFrom(SpecificRecordBase.class)) {
             schema = SpecificData.get().getSchema(tClass);
         } else {
             schema = ReflectData.get().getSchema(tClass);
         }
+        return new AvroSchema<>(schema, tClass);
+    }
+    
+    public static <T> AvroSchema<T> of(Class<T> tClass, Schema schema) {
         return new AvroSchema<>(schema, tClass);
     }
     
@@ -61,21 +59,5 @@ public class AvroSchema<T> implements SchemaData<T> {
     @Override
     public SchemaInfo getSchemaInfo() {
         return schemaInfo;
-    }
-    
-    public void serialize(T obj) {
-        
-    }
-    
-    public T deserialize(Schema writerSchema, byte[] bytes) throws IOException {
-        SpecificDatumReader<T> reader = new SpecificDatumReader<>(writerSchema, schema);
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
-        return reader.read(null, decoder);
-    }
-
-    public static GenericRecord deserializeGeneric(Schema writerSchema, Schema readerSchema, byte[] bytes) throws IOException {
-        GenericDatumReader<GenericRecord> reader = new GenericDatumReader<>(writerSchema, readerSchema);
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(bytes, null);
-        return reader.read(null, decoder);
     }
 }

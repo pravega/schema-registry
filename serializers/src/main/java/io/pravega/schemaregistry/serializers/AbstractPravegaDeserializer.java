@@ -17,7 +17,6 @@ import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.SchemaData;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +45,8 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                                           SchemaRegistryClient client,
                                           @Nullable SchemaData<T> schema,
                                           boolean skipHeaders,
-                                          BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
+                                          BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, 
+                                          EncodingCache encodingCache) {
         this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
@@ -64,13 +64,14 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     @Synchronized
     private void initialize() {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
-        SchemaValidationRules schemaValidationRules = groupProperties.getSchemaValidationRules();
 
         this.encodeHeader.set(groupProperties.isEnableEncoding());
 
         if (schemaInfo.get() != null) {
             log.info("Validate caller supplied schema.");
-            client.validateSchema(groupId, schemaInfo.get(), schemaValidationRules);
+            if (!client.canRead(groupId, schemaInfo.get())) {
+                throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.get().getName());
+            }
         } else if (!this.encodeHeader.get()) {
             log.info("Retrieving latest schema from the registry for reads.");
             schemaInfo.set(client.getLatestSchema(groupId, null).getSchema());

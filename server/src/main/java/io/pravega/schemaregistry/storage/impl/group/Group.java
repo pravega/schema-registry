@@ -534,7 +534,7 @@ public class Group<T> {
             VersionInfo version = iterator.next();
             return getSchema(version)
                     .thenAccept(schema -> {
-                        if (Arrays.equals(schema.getSchemaData(), toFind.getSchemaData())) {
+                        if (Arrays.equals(schema.getSchemaData(), toFind.getSchemaData()) && schema.getName().equals(toFind.getName())) {
                             found.set(version);
                         }
                     });

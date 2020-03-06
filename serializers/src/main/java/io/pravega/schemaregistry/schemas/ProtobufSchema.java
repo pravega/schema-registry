@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.schemas;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
@@ -51,6 +52,21 @@ public class ProtobufSchema<T extends Message> implements SchemaData<T> {
         T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
         return new ProtobufSchema<>(tClass.getSimpleName(), tParser, fileDescriptorSet);
+    }
+    
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public static <T extends GeneratedMessageV3> ProtobufSchema<GeneratedMessageV3> of(String name, Class<T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
+        T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
+        Parser<GeneratedMessageV3> tParser = (Parser<GeneratedMessageV3>) defaultInstance.getParserForType();
+
+        return new ProtobufSchema<>(name, tParser, fileDescriptorSet);
+    }
+
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public static ProtobufSchema<DynamicMessage> of(String name, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
+        return new ProtobufSchema<>(name, null, fileDescriptorSet);
     }
 }
 

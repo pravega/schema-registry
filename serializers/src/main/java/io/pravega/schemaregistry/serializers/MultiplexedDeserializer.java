@@ -35,7 +35,6 @@ class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     @Override
     protected T deserialize(ByteBuffer buffer, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        Preconditions.checkArgument(readerSchema == null);
         return deserializers.get(writerSchema.getName()).deserialize(buffer, writerSchema, readerSchema);
     }
 }

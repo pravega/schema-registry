@@ -190,10 +190,8 @@ public class SchemaRegistryService {
                         } else {
                             return store.getLatestVersion(group);
                         }
-                    }).thenApply(latest -> {
+                    }).thenAccept(latest -> {
                     // TODO: based on compatibility type either allow or deny the version
-                    
-                    return null;
                 }).thenCompose(v -> store.createOrGetEncodingId(group, version, compressionType));
     }
 
