@@ -29,6 +29,7 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
+import io.pravega.common.Exceptions;
 import io.pravega.local.LocalPravegaEmulator;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -40,6 +41,7 @@ import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
@@ -49,7 +51,10 @@ import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
 import io.pravega.shared.segment.StreamSegmentNameUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.Schema;
+import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.junit.After;
@@ -70,6 +75,39 @@ import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public class TestPravegaClientEndToEnd implements AutoCloseable {
+    private static final Schema SCHEMA1 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .endRecord();
+
+    private static final Schema SCHEMA2 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .withDefault("backward compatible with schema1")
+            .endRecord();
+
+    private static final Schema SCHEMA3 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("c")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .endRecord();
+
     private final LocalPravegaEmulator localPravega;
     private final ClientConfig clientConfig;
 
@@ -110,6 +148,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     
     @Test
     public void test() throws IOException {
+        testAvroSchemaEvolution();
+        
         testAvroReflect();    
         testAvroGenerated();    
         testAvroMultiplexed();   
@@ -117,6 +157,109 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         testProtobuf(true);
         testProtobuf(false);
         testProtobufMultiplexed();
+    }
+    
+    private void testAvroSchemaEvolution() {
+        // create stream
+        String scope = "scope";
+        String stream = "avroevolution";
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+
+        StreamManager streamManager = new StreamManagerImpl(clientConfig);
+        streamManager.createScope(scope);
+        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+
+        SchemaType schemaType = SchemaType.Avro;
+        client.addGroup(groupId, schemaType,  
+                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
+                true, true);
+
+        AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
+        AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
+        AvroSchema<GenericRecord> schema3 = AvroSchema.of(SCHEMA3);
+
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .autoRegisterSchema(true)
+                                                            .registryConfigOrClient(Either.right(client))
+                                                            .build();
+
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        // region writer with schema1
+        Serializer<GenericRecord> serializer = SerDeFactory.avroSerializer(serializerConfig, schema1);
+
+        EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
+        writer.writeEvent(record);
+        // endregion
+        
+        // region writer with schema2
+        serializer = SerDeFactory.avroSerializer(serializerConfig, schema2);
+
+        writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
+        writer.writeEvent(record);
+        // endregion
+        
+        // region writer with schema3
+        // this should throw exception as schema change is not backward compatible.
+        boolean exceptionThrown = false;
+        try {
+            serializer = SerDeFactory.avroSerializer(serializerConfig, schema3);
+        } catch (Exception ex) {
+            exceptionThrown = Exceptions.unwrap(ex) instanceof IncompatibleSchemaException;
+        }
+        assertTrue(exceptionThrown);
+        // endregion
+
+        // region read into specific schema
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream;
+        readerGroupManager.createReaderGroup(rg, 
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+        
+        AvroSchema<GenericRecord> readSchema = AvroSchema.of(SCHEMA2);
+
+        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, readSchema);
+
+        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+
+        // read two events successfully
+        EventRead<GenericRecord> event = reader.readNextEvent(1000);
+        assertNotNull(event.getEvent());
+        event = reader.readNextEvent(1000);
+        assertNotNull(event.getEvent());
+
+        // create new reader, this time with incompatible schema3
+        readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg1 = "rg1" + stream;
+        readerGroupManager.createReaderGroup(rg1, 
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+        
+        readSchema = AvroSchema.of(SCHEMA3);
+
+        exceptionThrown = false;
+        try {
+            deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, readSchema);
+        } catch (Exception ex) {
+            exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
+        }
+        assertTrue(exceptionThrown);
+        
+        // endregion
+        // region read into writer schema
+        String rg2 = "rg2" + stream;
+        readerGroupManager.createReaderGroup(rg2,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+
+        reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
+
+        event = reader.readNextEvent(1000);
+        assertNotNull(event.getEvent());
+        // endregion
     }
     
     private void testAvroReflect() throws IOException {
