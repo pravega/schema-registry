@@ -11,6 +11,10 @@ package io.pravega.schemaregistry.compression;
 
 import io.pravega.schemaregistry.contract.data.CompressionType;
 
+/**
+ * Compression factory class for creating compressor. 
+ * This has implementation for {@link Compressor} for {@link CompressionType#None}
+ */
 public class CompressionFactory {
     public static Compressor getCompressor(CompressionType compressionType) {
         switch (compressionType) {

@@ -38,6 +38,9 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+/**
+ * Schema registry service backend. 
+ */
 public class SchemaRegistryService {
     private final SchemaStore store;
 
@@ -142,7 +145,7 @@ public class SchemaRegistryService {
                                                      .thenApply(schemas -> checkCompatibility(schema, prop, rules, schemas))
                                                      .thenCompose(valid -> {
                                                          if (!valid) {
-                                                             throw new IncompatibleSchemaException();
+                                                             throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
                                                          }
                                                          return getNextVersion(group, schema, prop)
                                                                  .thenCompose(nextVersion ->
@@ -190,9 +193,7 @@ public class SchemaRegistryService {
                         } else {
                             return store.getLatestVersion(group);
                         }
-                    }).thenAccept(latest -> {
-                    // TODO: based on compatibility type either allow or deny the version
-                }).thenCompose(v -> store.createOrGetEncodingId(group, version, compressionType));
+                    }).thenCompose(v -> store.createOrGetEncodingId(group, version, compressionType));
     }
 
     /**

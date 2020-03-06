@@ -9,17 +9,24 @@
  */
 package io.pravega.schemaregistry;
 
+import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
-public interface GroupIdGenerator {
-
+/**
+ * Defines strategies for generating groupId for stream. 
+ * Currently there is only one naming strategy that uses streams fully qualified scoped stream name and encodes it using
+ * URL encoder.
+ */
+public class GroupIdGenerator {
     @SneakyThrows
-    static String getGroupId(Type type, String... args) {
+    public static String getGroupId(Type type, String... args) {
         switch (type) {
             case QualifiedStreamName:
+                Preconditions.checkNotNull(args);
+                Preconditions.checkArgument(args.length == 2);
                 StringBuilder qualifiedNameBuilder = new StringBuilder();
                 for (String arg : args) {
                     qualifiedNameBuilder.append(arg);
@@ -31,7 +38,7 @@ public interface GroupIdGenerator {
         }
     }
     
-    enum Type {
+    public enum Type {
         QualifiedStreamName,
     }
 }

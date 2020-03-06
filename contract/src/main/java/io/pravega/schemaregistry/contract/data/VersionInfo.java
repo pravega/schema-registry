@@ -19,6 +19,11 @@ import lombok.Data;
 
 import java.io.IOException;
 
+/**
+ * Object that captures the version of a schema within a group.
+ * It contains schema name matching {@link SchemaInfo#name} along with the registry assigned version for the schema in
+ * the group. 
+ */
 @Data
 @Builder
 @AllArgsConstructor

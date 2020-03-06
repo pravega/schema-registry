@@ -29,6 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * Index Records with different implementations for {@link IndexKey} and {@link IndexValue}.
+ */
 public interface IndexRecord {
     Map<Class<? extends IndexKey>, ? extends VersionedSerializer.WithBuilder<? extends IndexValue, ? extends ObjectBuilder<? extends IndexValue>>> SERIALIZERS_BY_KEY_TYPE =
             ImmutableMap.<Class<? extends IndexKey>, VersionedSerializer.WithBuilder<? extends IndexValue, ? extends ObjectBuilder<? extends IndexValue>>>builder()

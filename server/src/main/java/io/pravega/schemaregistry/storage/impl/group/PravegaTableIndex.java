@@ -24,6 +24,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * Pravega tables based index implementation. 
+ */
 public class PravegaTableIndex implements Index<Version> {
     public static final String TABLE_NAME_FORMAT = PravegaTableGroups.SCHEMA_REGISTRY_SCOPE + "/table-%s/0";
     private static final IndexKeySerializer INDEX_KEY_SERIALIZER = new IndexKeySerializer();

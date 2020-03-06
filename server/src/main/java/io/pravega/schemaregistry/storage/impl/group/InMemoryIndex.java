@@ -25,6 +25,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
+/**
+ * In memory implementation of index. 
+ */
 public class InMemoryIndex implements Index<Integer> {
     @GuardedBy("$lock")
     @Getter(AccessLevel.NONE)

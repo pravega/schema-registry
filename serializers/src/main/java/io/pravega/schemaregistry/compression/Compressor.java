@@ -13,6 +13,10 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 
 import java.nio.ByteBuffer;
 
+/**
+ * Compressor interface that defines methods to compress and uncompress data for a given {@link CompressionType}.
+ * Currently we only have implementation for {@link CompressionType#None}
+ */
 public interface Compressor {
     CompressionType getCompressionType();
 

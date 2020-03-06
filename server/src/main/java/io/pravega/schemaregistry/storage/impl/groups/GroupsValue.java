@@ -20,10 +20,13 @@ import lombok.SneakyThrows;
 
 import java.io.IOException;
 
+/**
+ * Groups listing record in groups table. 
+ */
 @Data
 @Builder
 @AllArgsConstructor
-public class IdWithState {
+public class GroupsValue {
     public static final Serializer SERIALIZER = new Serializer();
 
     private final String id;
@@ -35,17 +38,17 @@ public class IdWithState {
     }
     
     @SneakyThrows
-    public static IdWithState fromBytes(byte[] bytes) {
+    public static GroupsValue fromBytes(byte[] bytes) {
         return SERIALIZER.deserialize(bytes);
     }
     
-    private static class IdWithStateBuilder implements ObjectBuilder<IdWithState> {
+    private static class GroupsValueBuilder implements ObjectBuilder<GroupsValue> {
     }
 
-    static class Serializer extends VersionedSerializer.WithBuilder<IdWithState, IdWithState.IdWithStateBuilder> {
+    static class Serializer extends VersionedSerializer.WithBuilder<GroupsValue, GroupsValue.GroupsValueBuilder> {
         @Override
-        protected IdWithState.IdWithStateBuilder newBuilder() {
-            return IdWithState.builder();
+        protected GroupsValue.GroupsValueBuilder newBuilder() {
+            return GroupsValue.builder();
         }
 
         @Override
@@ -58,12 +61,12 @@ public class IdWithState {
             version(0).revision(0, this::write00, this::read00);
         }
 
-        private void write00(IdWithState e, RevisionDataOutput target) throws IOException {
+        private void write00(GroupsValue e, RevisionDataOutput target) throws IOException {
             target.writeUTF(e.id);
             target.writeCompactInt(e.state.ordinal());
         }
 
-        private void read00(RevisionDataInput source, IdWithState.IdWithStateBuilder b) throws IOException {
+        private void read00(RevisionDataInput source, GroupsValue.GroupsValueBuilder b) throws IOException {
             b.id(source.readUTF());
             int ordinal = source.readCompactInt();
             b.state(State.values()[ordinal]);

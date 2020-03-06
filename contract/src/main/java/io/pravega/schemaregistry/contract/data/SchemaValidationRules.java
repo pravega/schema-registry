@@ -20,6 +20,11 @@ import lombok.Data;
 
 import java.io.IOException;
 
+/**
+ * Schema validation rules that are applied for checking if a schema is valid. 
+ * This contains a set of rules and a {@link Compatibility} policy. The schema will be compared against one or more
+ * existing schemas in the group by applying the rule. 
+ */
 @Data
 @Builder
 @AllArgsConstructor

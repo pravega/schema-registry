@@ -35,6 +35,9 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicReference;
 
+/**
+ * Log cache for caching entries read from {@link PravegaLog}.  
+ */
 public class PravegaLogCache {
     private static final int MAX_CACHE_SIZE = 10000;
     private final LoadingCache<RecordCacheKey, RecordCacheValue> recordCache;

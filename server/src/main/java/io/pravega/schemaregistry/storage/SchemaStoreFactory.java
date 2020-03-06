@@ -18,6 +18,9 @@ import io.pravega.schemaregistry.storage.impl.groups.PravegaTableGroups;
 
 import java.util.concurrent.ScheduledExecutorService;
 
+/**
+ * Factory for creating schema store of different types. 
+ */
 public class SchemaStoreFactory {
     public static SchemaStore createInMemoryStore(ScheduledExecutorService executor) {
         return new SchemaStoreImpl<>(new InMemoryGroups(executor));

@@ -12,6 +12,15 @@ package io.pravega.schemaregistry.common;
 import com.google.common.base.Preconditions;
 import lombok.Data;
 
+/**
+ * A holder object consisting of either of two elements.
+ *
+ * The objects could be of any type. Exactly one of the values will exist while the other will be null. 
+ * If a mutable object is stored in 'Either', then 'Either' itself effectively becomes mutable.
+ *
+ * @param <T> the left element type.
+ * @param <K> the right element type.
+ */
 @Data
 public class Either<T, K> {
     private final T left;

@@ -9,6 +9,9 @@
  */
 package io.pravega.schemaregistry.storage;
 
+/**
+ * {@link SchemaStore} Type.
+ */
 public enum StoreType {
     InMemory,
     Pravega

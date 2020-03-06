@@ -33,6 +33,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
+/**
+ * Wrapper class over {@link PravegaTablesStoreHelper}. Its implementation abstracts the caller classes from the library
+ * used for interacting with pravega tables. 
+ */
 @Slf4j
 public class TableStore {
     private final PravegaTablesStoreHelper tableStoreHelper;

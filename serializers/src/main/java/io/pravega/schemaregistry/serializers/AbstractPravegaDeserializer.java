@@ -17,7 +17,7 @@ import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.schemas.SchemaData;
+import io.pravega.schemaregistry.schemas.SchemaContainer;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
@@ -43,7 +43,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     
     protected AbstractPravegaDeserializer(String groupId,
                                           SchemaRegistryClient client,
-                                          @Nullable SchemaData<T> schema,
+                                          @Nullable SchemaContainer<T> schema,
                                           boolean skipHeaders,
                                           BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, 
                                           EncodingCache encodingCache) {

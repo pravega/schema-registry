@@ -48,9 +48,9 @@ public class PravegaTableGroups implements Groups<Version> {
     
     @Override
     public CompletableFuture<Group<Version>> getGroup(String groupName) {
-        return withCreateNamespacesTableIfNotExist(() -> tableStore.getEntry(tableName, groupName, IdWithState::fromBytes))
+        return withCreateNamespacesTableIfNotExist(() -> tableStore.getEntry(tableName, groupName, GroupsValue::fromBytes))
                          .thenApply(entry -> {
-                       if (!entry.getObject().getState().equals(IdWithState.State.Active)) {
+                       if (!entry.getObject().getState().equals(GroupsValue.State.Active)) {
                            throw new IllegalStateException();
                        } else {
                            return getGroupObject(groupName, entry.getObject()).getGroup();
@@ -65,11 +65,11 @@ public class PravegaTableGroups implements Groups<Version> {
         // 3. create group object and call create on it. 
         // 4. update groups entry to active
         String id = UUID.randomUUID().toString();
-        IdWithState value = new IdWithState(id, IdWithState.State.Creating);
+        GroupsValue value = new GroupsValue(id, GroupsValue.State.Creating);
         return withCreateNamespacesTableIfNotExist(() -> tableStore.addNewEntryIfAbsent(tableName, group, value.toBytes()))
-                         .thenCompose(v -> tableStore.getEntry(tableName, group, IdWithState::fromBytes))
+                         .thenCompose(v -> tableStore.getEntry(tableName, group, GroupsValue::fromBytes))
                          .thenCompose(entry -> {
-                       if (entry.getObject().getState().equals(IdWithState.State.Creating)) {
+                       if (entry.getObject().getState().equals(GroupsValue.State.Creating)) {
                            GroupObj groupObject = getGroupObject(group, entry.getObject());
                            Group<Version> grp = groupObject.getGroup();
                            PravegaLog log = groupObject.getLog();
@@ -80,7 +80,7 @@ public class PravegaTableGroups implements Groups<Version> {
                                      .thenCompose(v -> grp.create(groupProperties.getSchemaType(), groupProperties.isEnableEncoding(),
                                              groupProperties.isValidateByObjectType(), groupProperties.getSchemaValidationRules()))
                                      .thenCompose(v -> {
-                                         byte[] newValue = new IdWithState(entry.getObject().getId(), IdWithState.State.Active).toBytes();
+                                         byte[] newValue = new GroupsValue(entry.getObject().getId(), GroupsValue.State.Active).toBytes();
                                          return tableStore.updateEntry(tableName, group, newValue, entry.getVersion());
                                      })
                               .thenApply(v -> toReturn);
@@ -104,9 +104,9 @@ public class PravegaTableGroups implements Groups<Version> {
         //  2.1 delete index
         //  2.2 delete log
         // 3. delete the groups entry
-        return Futures.exceptionallyExpecting(tableStore.getEntry(tableName, group, IdWithState::fromBytes)
+        return Futures.exceptionallyExpecting(tableStore.getEntry(tableName, group, GroupsValue::fromBytes)
                          .thenCompose(entry -> {
-                              IdWithState newValue = new IdWithState(entry.getObject().getId(), IdWithState.State.Deleting);
+                              GroupsValue newValue = new GroupsValue(entry.getObject().getId(), GroupsValue.State.Deleting);
                               return tableStore.updateEntry(tableName, group, newValue.toBytes(), entry.getVersion())
                                                .thenCompose(version -> {
                                                     GroupObj grpObj = getGroupObject(group, newValue);
@@ -117,7 +117,7 @@ public class PravegaTableGroups implements Groups<Version> {
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);
     }
 
-    private GroupObj getGroupObject(String groupName, IdWithState value) {
+    private GroupObj getGroupObject(String groupName, GroupsValue value) {
         PravegaLog log = new PravegaLog(groupName, value.getId(), clientConfig, logCache, executor);
         PravegaTableIndex index = new PravegaTableIndex(groupName, value.getId(), tableStore);
         Group<Version> group = new Group<>(log, index, executor);

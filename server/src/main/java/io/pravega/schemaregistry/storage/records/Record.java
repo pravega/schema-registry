@@ -21,12 +21,16 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaTypeRecord;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.storage.impl.group.Log;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 import java.io.IOException;
 
+/**
+ * Different Record types that are written into {@link Log}.
+ */
 public interface Record {
     @Data
     @Builder

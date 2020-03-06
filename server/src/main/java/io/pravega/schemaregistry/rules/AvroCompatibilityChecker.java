@@ -21,6 +21,9 @@ import org.apache.curator.shaded.com.google.common.base.Charsets;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Compatibility checker for Avro schemas. 
+ */
 public class AvroCompatibilityChecker implements CompatibilityChecker {
     private static final SchemaValidator CAN_READ = new SchemaValidatorBuilder().canReadStrategy().validateAll();
     private static final SchemaValidator CAN_BE_READ = new SchemaValidatorBuilder().canBeReadStrategy().validateAll();

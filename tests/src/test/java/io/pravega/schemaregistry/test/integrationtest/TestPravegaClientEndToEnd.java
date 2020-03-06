@@ -424,7 +424,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 true, true);
 
-        AvroSchema<Test1> schema = AvroSchema.of(Test1.class, Test1.getClassSchema());
+        AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -446,7 +446,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         readerGroupManager.createReaderGroup(rg, 
                 ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
-        AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class, Test1.getClassSchema());
+        AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
         Serializer<Test1> deserializer = SerDeFactory.avroDeserializer(serializerConfig, readSchema);
 
@@ -485,9 +485,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
                 true, true);
 
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(SpecificRecordBase.class, Test1.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(SpecificRecordBase.class, Test2.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(SpecificRecordBase.class, Test3.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Test1.class, Test1.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Test2.class, Test2.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Test3.class, Test3.getClassSchema());
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)

@@ -31,6 +31,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 
+/**
+ * Pravega revisioned stream based log implementation. 
+ */
 public class PravegaLog implements Log {
     static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
     private static final String LOG_NAME_FORMAT = "log-%s";
@@ -91,7 +94,7 @@ public class PravegaLog implements Log {
                         throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, pos.getRevision().toString());
                     }
                     logCache.putRecord(cacheKeySupplier.apply(pos.getRevision()), new PravegaLogCache.RecordCacheValue(record, rev));
-                    return new PravegaPosition(pos.getRevision());
+                    return new PravegaPosition(rev);
                 }, executorService);
     }
 

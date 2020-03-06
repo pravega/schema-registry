@@ -13,6 +13,9 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.util.List;
 
+/**
+ * Compatibility checker interface to compare a schema against existing schemas for compatibility. 
+ */
 public interface CompatibilityChecker {
     /**
      * Checks if toValidate can be used to read data written using all schemas in toValidateAgainst.

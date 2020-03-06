@@ -24,6 +24,9 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndR
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
+/**
+ * Provides translation (encode/decode) between the Model classes and its REST representation.
+ */
 public class ModelHelper {
 
     // region decode

@@ -38,14 +38,14 @@ public class InMemoryLog implements Log {
     @Override
     @Synchronized
     public CompletableFuture<Position> writeToLog(Record record, Position position) {
-        InMemoryPosition pos = position == null ? HEAD_POSITION : (InMemoryPosition) position;
+        InMemoryPosition pos = (InMemoryPosition) position;
 
         if (pos.getPosition() != log.size()) {
             throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, record.getClass().toString());
         }
 
         log.add(record);
-        return CompletableFuture.completedFuture(pos);
+        return CompletableFuture.completedFuture(new InMemoryPosition(log.size()));
     }
 
     @Override

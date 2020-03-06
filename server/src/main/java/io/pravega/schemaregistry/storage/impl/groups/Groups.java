@@ -15,6 +15,11 @@ import io.pravega.schemaregistry.storage.impl.group.Group;
 
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Groups table for doing operations on groups resource. 
+ * 
+ * @param <T> Type of Version for group. 
+ */
 public interface Groups<T> {
     CompletableFuture<Group<T>> getGroup(String groupName);
 

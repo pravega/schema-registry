@@ -19,6 +19,9 @@ import lombok.Data;
 
 import java.io.IOException;
 
+/**
+ * Container object for {@link SchemaType}.
+ */
 @Data
 @Builder
 @AllArgsConstructor

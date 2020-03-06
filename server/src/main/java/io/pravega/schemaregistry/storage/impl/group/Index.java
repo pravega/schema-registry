@@ -17,6 +17,12 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 
+/**
+ * Index for all records stored for a group. The index can be in memory or backed by a key value table.
+ * The {@link Log} is the source of truth about the state of {@link Group} and index is a convenience to optimize query 
+ * responses. The index can lag behind the log but will eventually catch up. 
+ * @param <V> Version of index
+ */
 public interface Index<V> {
     CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys();
 

@@ -20,7 +20,7 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.schemas.SchemaData;
+import io.pravega.schemaregistry.schemas.SchemaContainer;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -46,7 +46,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
 
     protected AbstractPravegaSerializer(String groupId,
                                         SchemaRegistryClient client,
-                                        SchemaData<T> schema,
+                                        SchemaContainer<T> schema,
                                         Compressor compressor, 
                                         boolean registerSchema,
                                         EncodingCache encodingCache) {

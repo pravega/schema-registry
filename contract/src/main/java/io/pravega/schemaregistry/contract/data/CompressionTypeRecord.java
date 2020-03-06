@@ -19,6 +19,9 @@ import lombok.Data;
 
 import java.io.IOException;
 
+/**
+ * Container object for {@link CompressionType}.
+ */
 @Data
 @Builder
 @AllArgsConstructor

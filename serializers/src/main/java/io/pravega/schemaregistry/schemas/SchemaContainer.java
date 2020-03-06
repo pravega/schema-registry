@@ -11,6 +11,11 @@ package io.pravega.schemaregistry.schemas;
 
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
-public interface SchemaData<T> {
+/**
+ * Interface for container class for schemas for different serialization formats. 
+ * 
+ * @param <T> Type of object. 
+ */
+public interface SchemaContainer<T> {
     SchemaInfo getSchemaInfo();
 }

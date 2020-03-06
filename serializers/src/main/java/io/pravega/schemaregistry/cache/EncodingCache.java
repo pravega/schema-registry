@@ -23,6 +23,9 @@ import lombok.SneakyThrows;
 import javax.annotation.ParametersAreNonnullByDefault;
 import java.util.concurrent.ExecutionException;
 
+/**
+ * Local cache for storing schemas that are retrieved from the registry service.  
+ */
 public class EncodingCache {
     private final LoadingCache<SchemaInfo, VersionInfo> schemaCache;
     private final LoadingCache<EncodingInfo, EncodingId> versionCache;

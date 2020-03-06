@@ -26,6 +26,9 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
+/**
+ * In memory groups implementation. 
+ */
 public class InMemoryGroups implements Groups<Integer> {
     @GuardedBy("$lock")
     private final Map<String, Group<Integer>> groups = new HashMap<>();

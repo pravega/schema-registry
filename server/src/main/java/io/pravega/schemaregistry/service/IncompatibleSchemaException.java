@@ -9,5 +9,12 @@
  */
 package io.pravega.schemaregistry.service;
 
+/**
+ * Exception thrown when a schema fails the {@link io.pravega.schemaregistry.rules.CompatibilityChecker}'s checks for
+ * the set compatibility policy. 
+ */
 public class IncompatibleSchemaException extends RuntimeException {
+    public IncompatibleSchemaException(String message) {
+        super(message);
+    }
 }

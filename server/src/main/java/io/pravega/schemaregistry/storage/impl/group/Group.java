@@ -48,7 +48,14 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-public class Group<T> {
+/**
+ * Class that implements all storage logic for a group. 
+ * It makes use of two storage primitives, namely an append only write ahead log {@link Log} and an index {@link Index}.
+ * The group's state is written into the log and then the index is updated for optimizing the queries. 
+ * The source of truth is the log and the index may eventually catches up with the log. 
+ * @param <V> Type of version used in the index. 
+ */
+public class Group<V> {
     private static final IndexRecord.SyncdTillKey SYNCD_TILL = new IndexRecord.SyncdTillKey();
     private static final IndexRecord.ValidationPolicyKey VALIDATION_POLICY_INDEX_KEY = new IndexRecord.ValidationPolicyKey();
     private static final IndexRecord.GroupPropertyKey GROUP_PROPERTY_INDEX_KEY = new IndexRecord.GroupPropertyKey();
@@ -67,23 +74,24 @@ public class Group<T> {
 
     private final Log wal;
 
-    private final Index<T> index;
+    private final Index<V> index;
     
     private final ScheduledExecutorService executor;
 
-    public Group(Log wal, Index<T> index, ScheduledExecutorService executor) {
+    public Group(Log wal, Index<V> index, ScheduledExecutorService executor) {
         this.wal = wal;
         this.index = index;
         this.executor = executor;
     }
     
     public CompletableFuture<Void> create(SchemaType schemaType, boolean enableEncoding, boolean validateByObjectType, SchemaValidationRules schemaValidationRules) {
-        return writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, validateByObjectType, schemaValidationRules))
-                  .thenCompose(pos -> {
+        return wal.getCurrentEtag()
+                  .thenCompose(pos -> writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, validateByObjectType, schemaValidationRules), pos)
+                  .thenCompose(v -> {
                       IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
                       Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
                       return updateIndex(Lists.newArrayList(addGroupProp), walPosition);
-                  });
+                  }));
     }
     
     @SuppressWarnings("unchecked")
@@ -389,7 +397,7 @@ public class Group<T> {
 
     @SuppressWarnings("unchecked")
     private CompletableFuture<Void> addOrUpdateSyncdTillKey(IndexRecord.WALPositionValue syncdTill,
-                                                            Index.Value<IndexRecord.WALPositionValue, T> syncdTillWithVersion) {
+                                                            Index.Value<IndexRecord.WALPositionValue, V> syncdTillWithVersion) {
         if (syncdTillWithVersion == null) {
             return index.addEntry(SYNCD_TILL, syncdTill);
         } else {
@@ -402,11 +410,7 @@ public class Group<T> {
             }
         }
     }
-
-    private CompletableFuture<Position> writeToLog(Record record) {
-        return wal.writeToLog(record, null);
-    }
-
+    
     private CompletableFuture<Void> writeToLog(Record record, Position etag) {
         return Futures.toVoid(wal.writeToLog(record, etag));
     }

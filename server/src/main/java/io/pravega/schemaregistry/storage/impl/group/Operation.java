@@ -14,22 +14,34 @@ import lombok.Data;
 
 import java.util.function.Predicate;
 
+/**
+ * Represents different operations on the Index. 
+ */
 interface Operation {
     class Noop implements Operation {
     }
 
+    /**
+     * Add new entry to the index. 
+     */
     @Data
     class Add implements Operation {
         private final IndexRecord.IndexKey key;
         private final IndexRecord.IndexValue value;
     }
 
+    /**
+     * Add entry to an existing list value. 
+     */
     @Data
     class AddToList implements Operation {
         private final IndexRecord.IndexKey key;
         private final IndexRecord.IndexValue value;
     }
 
+    /**
+     * Get and update operation if existing value satisfies the {@link #condition}. 
+     */
     @Data
     class GetAndSet implements Operation {
         private final IndexRecord.IndexKey key;

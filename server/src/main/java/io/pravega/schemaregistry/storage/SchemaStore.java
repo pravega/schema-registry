@@ -24,6 +24,9 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+/**
+ * Schema Store interface for storing and retrieving and querying schemas. 
+ */
 public interface SchemaStore {
     CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token);
 

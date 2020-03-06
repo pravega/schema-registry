@@ -11,6 +11,11 @@ package io.pravega.schemaregistry.rules;
 
 import io.pravega.schemaregistry.contract.data.SchemaType;
 
+/**
+ * Factory for compatibility checkers. 
+ * Currently we only have implementation for avro compatibility checker. 
+ * For all other SchemaType the default {@link AlwaysTrueCompatibilityChecker} is used. 
+ */
 public class CompatibilityCheckerFactory {
     private static final AvroCompatibilityChecker AVRO_COMPATIBILITY_CHECKER = new AvroCompatibilityChecker();
     private static final AlwaysTrueCompatibilityChecker ALWAYS_TRUE_COMPATIBILITY_CHECKER = new AlwaysTrueCompatibilityChecker();
