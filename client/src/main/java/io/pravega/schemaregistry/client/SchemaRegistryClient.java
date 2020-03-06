@@ -195,6 +195,16 @@ public interface SchemaRegistryClient {
     boolean validateSchema(String group, SchemaInfo schema, SchemaValidationRules validationRules);
 
     /**
+     * Checks whether given schema can be used to read by validating it for reads against one or more existing schemas in the group  
+     * subject to current {@link GroupProperties#schemaValidationRules} policy.
+     * 
+     * @param group Name of group. 
+     * @param schema Schema to check to be used for reads. 
+     * @return True if it can be used to read, false otherwise. 
+     */
+    boolean canRead(String group, SchemaInfo schema);
+
+    /**
      * List of compressions used for encoding in the group. This will be returned only if {@link GroupProperties#enableEncoding}
      * is set to true. 
      * 

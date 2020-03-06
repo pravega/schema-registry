@@ -15,15 +15,22 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import org.glassfish.jersey.test.JerseyTest;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -33,6 +40,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -99,6 +108,19 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         
         // region add new schema
         // endregion
+
+        // can read
+        doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any());
+        CanReadRequest canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
+                .schemaName("name")
+                .schemaType(ModelHelper.encode(SchemaType.Avro))
+                .schemaData(new byte[0])
+                .properties(Collections.emptyMap())
+        );
+        Future<Response> future = target(GROUPS + "/" + "mygroup" + "/schemas/canRead").request().async()
+                                                                                       .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
+        Response response = future.get();
+        assertTrue(response.readEntity(CanRead.class).isCompatible());
     }
     
     @Test
