@@ -333,12 +333,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             throw new RuntimeException("Internal Service error.");
         }
     }
-
-    @Override
-    public boolean canRead(String group, SchemaInfo schema) {
-        return false;
-    }
-
+    
     @Override
     public List<CompressionType> getCompressions(String group) {
         WebTarget webTarget = client.target(uri).path("groups").path("compressions");
