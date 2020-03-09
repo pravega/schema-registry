@@ -36,7 +36,21 @@ public interface Log {
      */
     CompletableFuture<Position> writeToLog(Record record, Position etag);
 
+    /**
+     * Method to read at a specific location in the log. 
+     * 
+     * @param position position to read at. 
+     * @param tClass Class of entity to read. 
+     * @param <T> Type of entity to read. 
+     * @return Record of type T read back from the position in the log. 
+     */
     <T extends Record> CompletableFuture<T> readAt(Position position, Class<T> tClass);
 
+    /**
+     * Method to read all records from the specified position. 
+     * 
+     * @param position position to read from. 
+     * @return A list of records with their positions. 
+     */
     CompletableFuture<List<RecordWithPosition>> readFrom(Position position);
 }

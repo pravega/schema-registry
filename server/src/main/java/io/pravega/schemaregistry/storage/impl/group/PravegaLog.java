@@ -35,7 +35,7 @@ import java.util.function.Function;
  * Pravega revisioned stream based log implementation. 
  */
 public class PravegaLog implements Log {
-    static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
+    private static final String LOG_SCOPE_FORMAT = "scope-%s";
     private static final String LOG_NAME_FORMAT = "log-%s";
     
     private final PravegaLogCache logCache;
@@ -43,6 +43,7 @@ public class PravegaLog implements Log {
     private final PravegaLogCache.ClientCacheKey clientCacheKey;
     private final Function<Revision, PravegaLogCache.RecordCacheKey> cacheKeySupplier;
     private final ScheduledExecutorService executorService;
+    private final String scopeName;
     private final String logName;
     
     public PravegaLog(String group, String id, ClientConfig clientConfig,
@@ -52,25 +53,30 @@ public class PravegaLog implements Log {
         this.executorService = executorService;
         this.clientCacheKey = new PravegaLogCache.ClientCacheKey(group, id);
         this.cacheKeySupplier = revision -> new PravegaLogCache.RecordCacheKey(clientCacheKey, revision);
-        this.logName = getLogName(group, id);
+        this.scopeName = getScopeName(id);
+        this.logName = getLogName(group);
     }
 
-    static String getLogName(String groupName, String uuid) {
-        return String.format(LOG_NAME_FORMAT, uuid);
+    static String getScopeName(String uuid) {
+        return String.format(LOG_SCOPE_FORMAT, uuid);
+    }
+
+    static String getLogName(String groupName) {
+        return String.format(LOG_NAME_FORMAT, groupName);
     }
     
     public CompletableFuture<Void> create() {
         return CompletableFuture.runAsync(() -> {
             StreamManager manager = new StreamManagerImpl(clientConfig);
-            manager.createScope(SCHEMA_REGISTRY_SCOPE);
-            manager.createStream(SCHEMA_REGISTRY_SCOPE, logName, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            manager.createScope(logName);
+            manager.createStream(logName, logName, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
         }, executorService);
     }
 
     public CompletableFuture<Void> delete() {
         return CompletableFuture.runAsync(() -> {
             StreamManager manager = new StreamManagerImpl(clientConfig);
-            manager.deleteStream(SCHEMA_REGISTRY_SCOPE, logName);
+            manager.deleteStream(logName, logName);
         }, executorService);
     }
 
