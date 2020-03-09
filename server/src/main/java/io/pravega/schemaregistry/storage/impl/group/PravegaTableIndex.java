@@ -14,7 +14,6 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.controller.store.stream.Version;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
-import io.pravega.schemaregistry.storage.impl.groups.PravegaTableGroups;
 import io.pravega.schemaregistry.storage.records.IndexKeySerializer;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
 

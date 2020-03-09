@@ -66,13 +66,9 @@ import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-
-import static org.junit.Assert.*;
 
 @Slf4j
-public class Main2 {
+public class Demo {
     private static final Schema SCHEMA1 = SchemaBuilder
             .record("MyTest")
             .fields()
@@ -111,7 +107,7 @@ public class Main2 {
     private final SchemaRegistryClient client;
     private final String id;
     
-    public Main2() throws Exception {
+    public Demo() throws Exception {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create("http://localhost:9092"));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -119,19 +115,17 @@ public class Main2 {
     }
     
     public static void main(String[] args) throws Exception {
-        Main2 main2 = new Main2();
-        main2.testCompression();
-        main2.testAvroSchemaEvolution();
+        Demo demo = new Demo();
+        demo.testCompression();
+        demo.testAvroSchemaEvolution();
 
-        main2.testAvroReflect();
-        main2.testAvroGenerated();
-        main2.testAvroMultiplexed();
+        demo.testAvroReflect();
+        demo.testAvroGenerated();
+        demo.testAvroMultiplexed();
 
-        main2.testProtobuf(true);
-        main2.testProtobuf(false);
-        main2.testProtobufMultiplexed();
-        
-        System.err.println("huha");
+        demo.testProtobuf(true);
+        demo.testProtobuf(false);
+        demo.testProtobufMultiplexed();
     }
     
     private void testAvroSchemaEvolution() {
@@ -185,7 +179,6 @@ public class Main2 {
         } catch (Exception ex) {
             exceptionThrown = true;
         }
-        assertTrue(exceptionThrown);
         // endregion
 
         // region read into specific schema
@@ -202,9 +195,9 @@ public class Main2 {
 
         // read two events successfully
         EventRead<GenericRecord> event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert event.getEvent() != null;
         event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert  event.getEvent() != null;
 
         // create new reader, this time with incompatible schema3
         readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
@@ -220,7 +213,7 @@ public class Main2 {
         } catch (Exception ex) {
             exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
         }
-        assertTrue(exceptionThrown);
+        assert exceptionThrown;
         
         // endregion
         // region read into writer schema
@@ -233,10 +226,10 @@ public class Main2 {
         reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
         event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert event.getEvent() != null;
 
         event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert event.getEvent() != null;
         // endregion
     }
     
@@ -312,9 +305,9 @@ public class Main2 {
         writer2.writeEvent(new Test1("a", 1));
 
         List<CompressionType> list = client.getCompressions(groupId);
-        assertEquals(2, list.size());
-        assertTrue(list.stream().anyMatch(x -> mycompression.equals(x.getCustomTypeName())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
+        assert 2 == list.size();
+        assert list.stream().anyMatch(x -> mycompression.equals(x.getCustomTypeName()));
+        assert list.stream().anyMatch(x -> x.equals(CompressionType.None));
         // endregion
     }
     
@@ -363,7 +356,7 @@ public class Main2 {
         EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         EventRead<GenericRecord> event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert null != event.getEvent();
 
         // endregion
         // region read into writer schema
@@ -376,7 +369,7 @@ public class Main2 {
         reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
         event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert null != event.getEvent();
         // endregion
     }
     
@@ -424,7 +417,7 @@ public class Main2 {
         EventStreamReader<Test1> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         EventRead<Test1> event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert null != event.getEvent();
 
         // endregion
         // region read into writer schema
@@ -437,7 +430,7 @@ public class Main2 {
         EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
         EventRead<GenericRecord> event2 = reader2.readNextEvent(1000);
-        assertNotNull(event2.getEvent());
+        assert null != event2.getEvent();
         // endregion
     }
     
@@ -491,14 +484,14 @@ public class Main2 {
         EventStreamReader<SpecificRecordBase> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         EventRead<SpecificRecordBase> event1 = reader.readNextEvent(1000);
-        assertNotNull(event1.getEvent());
-        assertTrue(event1.getEvent() instanceof Test1);
+        assert null != event1.getEvent();
+        assert event1.getEvent() instanceof Test1;
         EventRead<SpecificRecordBase> event2 = reader.readNextEvent(1000);
-        assertNotNull(event2.getEvent());
-        assertTrue(event2.getEvent() instanceof Test2);
+        assert null != event2.getEvent();
+        assert event2.getEvent() instanceof Test2;
         EventRead<SpecificRecordBase> event3 = reader.readNextEvent(1000);
-        assertNotNull(event3.getEvent());
-        assertTrue(event3.getEvent() instanceof Test3);
+        assert null != event3.getEvent();
+        assert event3.getEvent() instanceof Test3;
 
         // endregion
         // region read into writer schema
@@ -511,11 +504,11 @@ public class Main2 {
         EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
         EventRead<GenericRecord> genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        assert null != genEvent.getEvent();
         genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        assert null != genEvent.getEvent();
         genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        assert null != genEvent.getEvent();
         // endregion
     }
     
@@ -565,7 +558,7 @@ public class Main2 {
         EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
         EventRead<ProtobufTest.Message1> event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
+        assert null != event.getEvent();
 
         // endregion
         
@@ -580,7 +573,7 @@ public class Main2 {
         EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
         EventRead<DynamicMessage> event2 = reader2.readNextEvent(1000);
-        assertNotNull(event2.getEvent());
+        assert null != event2.getEvent();
 
         // 2. try with passing the schema. reader schema will be used to read
         String rg3 = "rg3" + encodeHeaders;
@@ -593,7 +586,7 @@ public class Main2 {
         reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
         event2 = reader2.readNextEvent(1000);
-        assertNotNull(event2.getEvent());
+        assert null != event2.getEvent();
         // endregion
     }
     
@@ -654,14 +647,14 @@ public class Main2 {
         EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         EventRead<GeneratedMessageV3> event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof ProtobufTest.Message1);
+        assert null != event.getEvent();
+        assert event.getEvent() instanceof ProtobufTest.Message1;
         event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof ProtobufTest.Message2);
+        assert null != event.getEvent();
+        assert event.getEvent() instanceof ProtobufTest.Message2;
         event = reader.readNextEvent(1000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof ProtobufTest.Message3);
+        assert null != event.getEvent();
+        assert event.getEvent() instanceof ProtobufTest.Message3;
 
         // endregion
         // region read into writer schema
@@ -674,11 +667,11 @@ public class Main2 {
         EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
         EventRead<DynamicMessage> genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        assert null != genEvent.getEvent();
         genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        assert null != genEvent.getEvent();
         genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        assert null != genEvent.getEvent();
         // endregion
     }
 
