@@ -52,8 +52,8 @@ public class PravegaLogCache {
                                 @Override
                                 public RevisionedStreamClient<Record> load(final ClientCacheKey key) {
                                     SynchronizerClientFactory clientFactory = SynchronizerClientFactory.withScope(
-                                            PravegaLog.getScopeName(key.id), clientConfig);
-                                    String logName = PravegaLog.getLogName(key.group);
+                                            PravegaLog.getScopeName(key.group, key.id), clientConfig);
+                                    String logName = PravegaLog.getLogName(key.group, key.id);
 
                                     return clientFactory.createRevisionedStreamClient(logName, new RecordsSerializer<>(),
                                             SynchronizerConfig.builder().build());

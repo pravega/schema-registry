@@ -60,7 +60,7 @@ public final class Config {
     
     private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPoolSize", 50);
     
-    private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.controller.url", "localhost:9090");
+    private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.controller.url", "tcp://localhost:9090");
     
     private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.storeType", "Pravega");
     

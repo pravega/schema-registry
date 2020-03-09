@@ -38,6 +38,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.v1.ApiV1;
+import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
@@ -48,6 +49,10 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLDecoder;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status;
@@ -89,12 +94,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
 
     @Override
     public void createGroup(CreateGroupRequest createGroupRequest, SecurityContext securityContext,
-                            AsyncResponse asyncResponse) throws NotFoundException {
+                            AsyncResponse asyncResponse) throws NotFoundException, UnsupportedEncodingException {
         SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
         SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         GroupProperties properties = new GroupProperties(
                 schemaType, validationRules, createGroupRequest.isValidateByObjectType(), createGroupRequest.isEnableEncoding());
-        registryService.createGroup(createGroupRequest.getGroupName(), properties)
+        String groupName = URLDecoder.decode(createGroupRequest.getGroupName(), StandardCharsets.UTF_8.toString());
+        registryService.createGroup(groupName, properties)
                        .thenApply(createStatus -> {
                            if (!createStatus) {
                                return Response.status(Status.CONFLICT).build();
@@ -217,8 +223,14 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                            VersionInfo version = ModelHelper.encode(versionInfo);
                            return Response.status(Status.OK).entity(version).build(); })
                        .exceptionally(exception -> {
-                           log.warn("addSchemaToGroupIfAbsent failed with exception: ", exception);
-                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                           if (Exceptions.unwrap(exception) instanceof IncompatibleSchemaException) {
+                               log.info("addSchemaToGroupIfAbsent incompatible schema {}", groupName);
+                               return Response.status(Status.CONFLICT).build();
+                           } else {
+                               log.warn("addSchemaToGroupIfAbsent failed with exception: ", exception);
+                               return Response.status(Status.INTERNAL_SERVER_ERROR).build(); 
+                           }
+                       })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
                            return response;
@@ -292,7 +304,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getSchemaVersion(String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersion(String groupName, Long fingerprint, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(getSchemaVersion.getSchemaInfo());
 
         registryService.getSchemaVersion(groupName, schemaInfo)

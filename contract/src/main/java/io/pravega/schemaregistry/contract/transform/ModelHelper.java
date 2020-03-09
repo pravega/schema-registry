@@ -86,6 +86,16 @@ public class ModelHelper {
         return new io.pravega.schemaregistry.contract.data.SchemaEvolution(decode(schemaEvolution.getSchemaInfo()),
                 decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()));
     }
+
+    public static io.pravega.schemaregistry.contract.data.EncodingId decode(EncodingId encodingId) {
+        return new io.pravega.schemaregistry.contract.data.EncodingId(encodingId.getEncodingId());
+    }
+
+    public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
+        return new io.pravega.schemaregistry.contract.data.GroupProperties(decode(groupProperties.getSchemaType()),
+                decode(groupProperties.getSchemaValidationRules()), groupProperties.isValidateByObjectType(),
+                groupProperties.isEnableEncoding());
+    }
     // endregion
 
     // region encode
@@ -120,6 +130,7 @@ public class ModelHelper {
 
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
         return new GroupProperties()
+                .schemaType(encode(groupProperties.getSchemaType()))
                 .enableEncoding(groupProperties.isEnableEncoding())
                 .validateByObjectType(groupProperties.isValidateByObjectType())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));

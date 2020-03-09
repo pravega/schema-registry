@@ -225,14 +225,20 @@ paths:
           description: Group not found
         500:
           description: Internal server error while deleting the Group
-  /groups/{groupName}/schemas:
+  /groups/{groupName}/schemas/schema/{fingerprint}:
     parameters:
       - in: path
         name: groupName
         description: Group name
         required: true
         type: string
-    get:
+      - in: path
+        name: fingerprint
+        description: schema fingerprint
+        required: true
+        type: integer
+        format: int64
+    post:
       tags:
       - "Schema"
       operationId: getSchemaVersion
@@ -260,6 +266,13 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
     post:
       tags:
       - "Schema"
@@ -288,6 +301,8 @@ paths:
             $ref: "#/definitions/VersionInfo"
         404:
           description: Group not found
+        409:
+          description: Incompatible schema
         500:
           description: Internal server error while creating a Group
   /groups/{groupName}/schemas/validate:

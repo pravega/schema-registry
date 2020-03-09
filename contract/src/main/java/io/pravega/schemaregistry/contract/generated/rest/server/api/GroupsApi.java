@@ -85,6 +85,8 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
         
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
+        
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToGroupRequest addSchemaToGroupRequest
@@ -395,8 +397,8 @@ public class GroupsApi  {
     throws NotFoundException {
         return delegate.getSchemaValidationRules(groupName,securityContext);
     }
-    @GET
-    @Path("/{groupName}/schemas")
+    @POST
+    @Path("/{groupName}/schemas/schema/{fingerprint}")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags={ "Schema", })
@@ -407,10 +409,11 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "schema fingerprint",required=true) @PathParam("fingerprint") Long fingerprint
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaVersion getSchemaVersion
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaVersion(groupName,getSchemaVersion,securityContext);
+        return delegate.getSchemaVersion(groupName,fingerprint,getSchemaVersion,securityContext);
     }
     @GET
     

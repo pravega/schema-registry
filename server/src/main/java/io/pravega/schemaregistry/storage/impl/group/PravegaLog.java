@@ -53,23 +53,23 @@ public class PravegaLog implements Log {
         this.executorService = executorService;
         this.clientCacheKey = new PravegaLogCache.ClientCacheKey(group, id);
         this.cacheKeySupplier = revision -> new PravegaLogCache.RecordCacheKey(clientCacheKey, revision);
-        this.scopeName = getScopeName(id);
-        this.logName = getLogName(group);
+        this.scopeName = getScopeName(group, id);
+        this.logName = getLogName(group, id);
     }
 
-    static String getScopeName(String uuid) {
-        return String.format(LOG_SCOPE_FORMAT, uuid);
+    static String getScopeName(String group, String id) {
+        return String.format(LOG_SCOPE_FORMAT, id);
     }
 
-    static String getLogName(String groupName) {
-        return String.format(LOG_NAME_FORMAT, groupName);
+    static String getLogName(String group, String id) {
+        return String.format(LOG_NAME_FORMAT, id);
     }
     
     public CompletableFuture<Void> create() {
         return CompletableFuture.runAsync(() -> {
             StreamManager manager = new StreamManagerImpl(clientConfig);
-            manager.createScope(logName);
-            manager.createStream(logName, logName, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            manager.createScope(scopeName);
+            manager.createStream(scopeName, logName, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
         }, executorService);
     }
 

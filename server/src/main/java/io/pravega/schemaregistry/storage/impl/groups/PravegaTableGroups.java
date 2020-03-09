@@ -48,7 +48,7 @@ public class PravegaTableGroups implements Groups<Version> {
     
     @Override
     public CompletableFuture<Group<Version>> getGroup(String groupName) {
-        return withCreateNamespacesTableIfNotExist(() -> tableStore.getEntry(tableName, groupName, GroupsValue::fromBytes))
+        return withCreateGroupsTableIfAbsent(() -> tableStore.getEntry(tableName, groupName, GroupsValue::fromBytes))
                          .thenApply(entry -> {
                        if (!entry.getObject().getState().equals(GroupsValue.State.Active)) {
                            throw new IllegalStateException();
@@ -66,7 +66,7 @@ public class PravegaTableGroups implements Groups<Version> {
         // 4. update groups entry to active
         String id = UUID.randomUUID().toString();
         GroupsValue value = new GroupsValue(id, GroupsValue.State.Creating);
-        return withCreateNamespacesTableIfNotExist(() -> tableStore.addNewEntryIfAbsent(tableName, group, value.toBytes()))
+        return withCreateGroupsTableIfAbsent(() -> tableStore.addNewEntryIfAbsent(tableName, group, value.toBytes()))
                          .thenCompose(v -> tableStore.getEntry(tableName, group, GroupsValue::fromBytes))
                          .thenCompose(entry -> {
                        if (entry.getObject().getState().equals(GroupsValue.State.Creating)) {
@@ -93,7 +93,7 @@ public class PravegaTableGroups implements Groups<Version> {
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups() {
         // read from groups's table
-        return withCreateNamespacesTableIfNotExist(() -> tableStore.getAllKeys(tableName))
+        return withCreateGroupsTableIfAbsent(() -> tableStore.getAllKeys(tableName))
                          .thenApply(list -> new ListWithToken<>(list, null));
     }
 
@@ -124,7 +124,7 @@ public class PravegaTableGroups implements Groups<Version> {
         return new GroupObj(group, log, index);
     }
 
-    private <T> CompletableFuture<T> withCreateNamespacesTableIfNotExist(Supplier<CompletableFuture<T>> supplier) {
+    private <T> CompletableFuture<T> withCreateGroupsTableIfAbsent(Supplier<CompletableFuture<T>> supplier) {
         return Futures.exceptionallyComposeExpecting(supplier.get(),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                 () -> tableStore.createTable(GROUPS).thenCompose(v -> supplier.get()));

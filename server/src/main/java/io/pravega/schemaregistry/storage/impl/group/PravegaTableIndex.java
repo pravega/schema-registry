@@ -28,7 +28,7 @@ import java.util.stream.Collectors;
  * Pravega tables based index implementation. 
  */
 public class PravegaTableIndex implements Index<Version> {
-    public static final String TABLE_NAME_FORMAT = "table-%s/table-%s/0";
+    public static final String TABLE_NAME_FORMAT = "table-%s/index/0";
     private static final IndexKeySerializer INDEX_KEY_SERIALIZER = new IndexKeySerializer();
     
     private final TableStore tablesStore;
@@ -40,7 +40,7 @@ public class PravegaTableIndex implements Index<Version> {
     }
 
     private static String getIndexName(String groupName, String id) {
-        return String.format(TABLE_NAME_FORMAT, id, groupName);
+        return String.format(TABLE_NAME_FORMAT, id);
     }
     
     public CompletableFuture<Void> create() {
