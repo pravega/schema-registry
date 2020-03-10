@@ -55,7 +55,9 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
         Schema readerSchema = avroSchema.getSchema();
         
         SpecificDatumReader<T> genericDatumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(buffer.array(), null);
+        byte[] array = new byte[buffer.remaining()];
+        buffer.get(array);
+        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(array, null);
         return genericDatumReader.read(null, decoder);
     }
 }

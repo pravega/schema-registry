@@ -153,7 +153,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     public void test() throws IOException {
         testCompression();
         testAvroSchemaEvolution();
-        
+
         testAvroReflect();    
         testAvroGenerated();    
         testAvroMultiplexed();   
@@ -436,7 +436,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 0));
+        writer.writeEvent(new Test1("test", 1000));
 
         // endregion
 
@@ -454,6 +454,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventRead<Test1> event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
+        assertEquals("test", event.getEvent().getName().toString());
+        assertEquals(1000, event.getEvent().getField1());
 
         // endregion
         // region read into writer schema

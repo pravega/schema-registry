@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest;
+package io.pravega.schemaregistry.test.integrationtest.demo;
 
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.DescriptorProtos;
@@ -467,9 +467,9 @@ public class Demo {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<SpecificRecordBase> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 0));
-        writer.writeEvent(new Test2("test", 0, "test"));
-        writer.writeEvent(new Test3("test", 0, "test", "test"));
+        writer.writeEvent(new Test1("test", 0)).join();
+        writer.writeEvent(new Test2("test", 0, "test")).join();
+        writer.writeEvent(new Test3("test", 0, "test", "test")).join();
 
         // endregion
 
@@ -527,7 +527,7 @@ public class Demo {
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
                 true, encodeHeaders);
 
-        Path path = Paths.get("/home/shivesh/pravega/schema-registry/tests/resources/proto/protobufTest.pb");
+        Path path = Paths.get("tests/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
@@ -605,7 +605,7 @@ public class Demo {
                 new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
                 true, true);
 
-        Path path = Paths.get("/home/shivesh/pravega/schema-registry/tests/resources/proto/protobufTest.pb");
+        Path path = Paths.get("tests/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 

@@ -43,8 +43,8 @@ class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
 
-        if (var.getClass().isAssignableFrom(IndexedRecord.class)) {
-            if (var.getClass().isAssignableFrom(SpecificRecord.class)) {
+        if (IndexedRecord.class.isAssignableFrom(var.getClass())) {
+            if (SpecificRecord.class.isAssignableFrom(var.getClass())) {
                 SpecificDatumWriter<T> writer = new SpecificDatumWriter<>(schema);
                 writer.write(var, encoder);
             } else {
