@@ -441,7 +441,7 @@ public class SchemaRegistryService {
                 break;
             case DisallowAll:
             default:
-                isValid = false;
+                isValid = schemasWithVersion.isEmpty();
                 break;
         }
         return isValid;

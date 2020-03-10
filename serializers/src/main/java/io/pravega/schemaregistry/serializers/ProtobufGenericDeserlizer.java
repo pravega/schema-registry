@@ -69,7 +69,7 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
         SchemaInfo schemaToUse = readerSchemaInfo == null ? writerSchemaInfo : readerSchemaInfo;
         Descriptors.Descriptor messageType = cache.get(schemaToUse);
 
-        byte[] array = new byte[buffer.limit() - buffer.position()];
+        byte[] array = new byte[buffer.remaining()];
         buffer.get(array);
         return DynamicMessage.parseFrom(messageType, array);
     }

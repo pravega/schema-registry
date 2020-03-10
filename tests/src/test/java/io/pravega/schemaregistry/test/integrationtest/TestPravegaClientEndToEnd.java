@@ -30,7 +30,6 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
-import io.pravega.local.LocalPravegaEmulator;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
@@ -111,30 +110,19 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
             .noDefault()
             .endRecord();
 
-    private final LocalPravegaEmulator localPravega;
     private final ClientConfig clientConfig;
 
     private final SchemaStore schemaStore;
     private final ScheduledExecutorService executor;
     private final SchemaRegistryService service;
     private final SchemaRegistryClient client;
-
+    private final PravegaStandaloneUtils pravegaStandaloneUtils;
+    
     public TestPravegaClientEndToEnd() throws Exception {
+        pravegaStandaloneUtils = PravegaStandaloneUtils.startPravega();
         executor = Executors.newScheduledThreadPool(10);
-        LocalPravegaEmulator.LocalPravegaEmulatorBuilder emulatorBuilder = LocalPravegaEmulator
-                .builder()
-                .controllerPort(9090)
-                .segmentStorePort(1234)
-                .zkPort(2180)
-                .restServerPort(9091)
-                .enableRestServer(false)
-                .enableAuth(false)
-                .enableTls(false);
 
-        localPravega = emulatorBuilder.build();
-        localPravega.getInProcPravegaCluster().start();
-
-        clientConfig = ClientConfig.builder().controllerURI(URI.create(localPravega.getInProcPravegaCluster().getControllerURI())).build();
+        clientConfig = ClientConfig.builder().controllerURI(URI.create(pravegaStandaloneUtils.getControllerURI())).build();
 
         schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
 
@@ -145,7 +133,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     @Override
     @After
     public void close() throws Exception {
-        localPravega.close();
         executor.shutdownNow();
     }
     

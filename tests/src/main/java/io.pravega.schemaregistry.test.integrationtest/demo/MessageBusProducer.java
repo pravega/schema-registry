@@ -19,7 +19,6 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -46,6 +45,7 @@ import org.apache.commons.cli.ParseException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -111,13 +111,41 @@ public class MessageBusProducer {
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
-        AtomicInteger counter1 = new AtomicInteger();
-        AtomicInteger counter2 = new AtomicInteger();
-        AtomicInteger counter3 = new AtomicInteger();
-        CompletableFuture.allOf(
-                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test1("test1", counter1.incrementAndGet())), 1000, executor), executor),
-                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test2("test2", counter2.incrementAndGet(), "field2")), 1000, executor), executor),
-                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test3("test3", counter3.incrementAndGet(), "field2", "field3")), 1000, executor), executor));
+        AtomicInteger counter = new AtomicInteger();
+
+        while (true) {
+            System.out.println("choose: (1, 2 or 3)");
+            System.out.println("1. Test1");
+            System.out.println("2. Test2");
+            System.out.println("3. Test3");
+            System.out.println("> ");
+            Scanner in = new Scanner(System.in);
+            String s = in.nextLine();
+            try {
+                int choice = Integer.parseInt(s);
+                switch (choice) {
+                    case 1:
+                        Test1 test1 = new Test1("test1", counter.incrementAndGet());
+                        producer.produce(test1).join();
+                        System.out.println("Written event:" + test1);
+                        break;
+                    case 2:
+                        Test2 test2 = new Test2("test2", counter.incrementAndGet(), "field2");
+                        producer.produce(test2).join();
+                        System.out.println("Written event:" + test2);
+                        break;
+                    case 3:
+                        Test3 test3 = new Test3("test3", counter.incrementAndGet(), "field2", "field3");
+                        producer.produce(test3).join();
+                        System.out.println("Written event:" + test3);
+                        break;
+                    default:
+                        System.err.println("invalid choice!");
+                }
+            } catch (Exception e) {
+                System.err.println("invalid choice!");
+            }
+        }
     }
     
     private void initialize(String groupId) {
@@ -157,7 +185,6 @@ public class MessageBusProducer {
     }
 
     private CompletableFuture<Void> produce(SpecificRecordBase event) {
-
         return writer.writeEvent(event);
     }
 }

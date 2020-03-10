@@ -21,6 +21,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 
@@ -93,14 +94,21 @@ public class SchemaInfo {
             SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
             target.writeArray(e.schemaData);
             target.writeCompactInt(e.properties.size());
-            target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
+            if (!e.properties.isEmpty()) {
+                target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
+            }
         }
 
         private void read00(RevisionDataInput source, SchemaInfo.SchemaInfoBuilder b) throws IOException {
             b.name(source.readUTF())
                 .schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
-                .schemaData(source.readArray())
-                .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
+                .schemaData(source.readArray());
+            int size = source.readCompactInt();
+            if (size > 0) {
+                b.properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
+            } else {
+                b.properties(Collections.emptyMap());
+            }
         }
     }
 }
