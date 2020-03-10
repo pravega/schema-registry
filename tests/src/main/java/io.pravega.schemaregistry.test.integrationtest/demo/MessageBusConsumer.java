@@ -51,8 +51,6 @@ import org.apache.commons.cli.ParseException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 
 public class MessageBusConsumer {
     private final ClientConfig clientConfig;
@@ -111,9 +109,7 @@ public class MessageBusConsumer {
         String stream = cmd.getOptionValue("stream");
         
         MessageBusConsumer consumer = new MessageBusConsumer(controllerUri, registryUri, scope, stream);
-
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
+        
         while (true) {
             EventRead<SpecificRecordBase> event = consumer.consume();
             if (event.getEvent() != null) {

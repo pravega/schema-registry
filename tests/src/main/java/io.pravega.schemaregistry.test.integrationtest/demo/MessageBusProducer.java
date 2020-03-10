@@ -115,9 +115,9 @@ public class MessageBusProducer {
         AtomicInteger counter2 = new AtomicInteger();
         AtomicInteger counter3 = new AtomicInteger();
         CompletableFuture.allOf(
-                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test1("test1", counter1.incrementAndGet())), 10000, executor), executor),
-                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test2("test2", counter2.incrementAndGet(), "field2")), 10000, executor), executor),
-                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test3("test3", counter3.incrementAndGet(), "field2", "field3")), 10000, executor), executor));
+                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test1("test1", counter1.incrementAndGet())), 1000, executor), executor),
+                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test2("test2", counter2.incrementAndGet(), "field2")), 1000, executor), executor),
+                Futures.loop(() -> true, () -> Futures.delayedFuture(() -> producer.produce(new Test3("test3", counter3.incrementAndGet(), "field2", "field3")), 1000, executor), executor));
     }
     
     private void initialize(String groupId) {

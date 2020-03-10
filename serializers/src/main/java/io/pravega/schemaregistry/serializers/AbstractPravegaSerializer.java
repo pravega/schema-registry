@@ -105,9 +105,6 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         outputStream.flush();
 
         byte[] array = outputStream.toByteArray();
-        for (byte a : array) {
-            System.err.println(a);
-        }
         
         return compressor.compress(ByteBuffer.wrap(array));
     }
