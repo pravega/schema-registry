@@ -24,7 +24,6 @@ import java.util.function.BiFunction;
 /**
  * Serializer Config class that is passed to {@link SerDeFactory} for creating serializer. 
  */
-@SuppressWarnings("javadoc")
 @Data
 @Builder
 public class SerializerConfig {
