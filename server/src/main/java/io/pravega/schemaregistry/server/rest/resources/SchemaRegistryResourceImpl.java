@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.server.rest.resources;
 
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaValidationRuleRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
@@ -147,22 +146,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     public void getSchemaValidationRules(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         throw new NotImplementedException("get schema validation rules");
     }
-
-    @Override
-    public void getSchemaValidationRule(String groupName, String rule, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        throw new NotImplementedException("get schema validation rule");
-    }
-
-    @Override
-    public void deleteSchemaValidationRule(String groupName, String rule, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        throw new NotImplementedException("delete schema validation rule");
-    }
-
-    @Override
-    public void addSchemaValidationRule(String groupName, AddSchemaValidationRuleRequest addSchemaValidationRuleRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        throw new NotImplementedException("add schema validation rule");
-    }
-
+    
     @Override
     public void deleteGroup(String groupName, SecurityContext securityContext,
                             AsyncResponse asyncResponse) throws NotFoundException {
