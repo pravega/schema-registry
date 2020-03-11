@@ -306,7 +306,7 @@ project('tests') {
     }
 
     javadoc {
-        title = "Serializers"
+        title = "Tests"
         dependsOn delombok
         source = delombok.outputDir
         failOnError = false

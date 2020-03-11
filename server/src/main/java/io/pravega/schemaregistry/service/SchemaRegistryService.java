@@ -127,10 +127,9 @@ public class SchemaRegistryService {
      *
      * @param group  Name of group.
      * @param schema Schema to add.
-     * @param rules  Schema validation rules to apply.
      * @return CompletableFuture that holds versionInfo which uniquely identifies where the schema is added in the group.
      */
-    public CompletableFuture<VersionInfo> addSchemaIfAbsent(String group, SchemaInfo schema, SchemaValidationRules rules) {
+    public CompletableFuture<VersionInfo> addSchemaIfAbsent(String group, SchemaInfo schema) {
         // 1. get group policy
         // 2. get checker for schema type.
         // validate schema against group policy + rules on schema
@@ -141,8 +140,8 @@ public class SchemaRegistryService {
                                  .thenCompose(prop -> Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
                                          e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                                          () -> { // Schema doesnt exist. Validate and add it
-                                             return getSchemasForValidation(group, schema, prop, rules)
-                                                     .thenApply(schemas -> checkCompatibility(schema, prop, rules, schemas))
+                                             return getSchemasForValidation(group, schema, prop)
+                                                     .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
                                                      .thenCompose(valid -> {
                                                          if (!valid) {
                                                              throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
@@ -252,13 +251,12 @@ public class SchemaRegistryService {
      *
      * @param group Name of group. 
      * @param schema Schema to check for validity. 
-     * @param rules validation rules to apply.
      * @return True if it satisfies validation checks, false otherwise. 
      */
-    public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema, SchemaValidationRules rules) {
+    public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema) {
         return store.getGroupProperties(group)
-                    .thenCompose(prop -> getSchemasForValidation(group, schema, prop, rules)
-                            .thenApply(schemas -> checkCompatibility(schema, prop, rules, schemas)));
+                    .thenCompose(prop -> getSchemasForValidation(group, schema, prop)
+                            .thenApply(schemas -> checkCompatibility(schema, prop, schemas)));
     }
 
     /**
@@ -270,7 +268,7 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<Boolean> canRead(String group, SchemaInfo schema) {
         return store.getGroupProperties(group)
-                    .thenCompose(prop -> getSchemasForValidation(group, schema, prop, SchemaValidationRules.of())
+                    .thenCompose(prop -> getSchemasForValidation(group, schema, prop)
                             .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)));
     }
     
@@ -326,7 +324,7 @@ public class SchemaRegistryService {
     }
 
     private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String group, SchemaInfo schema,
-                                                                               GroupProperties groupProperties, SchemaValidationRules additionalRules) {
+                                                                               GroupProperties groupProperties) {
         CompletableFuture<List<SchemaWithVersion>> schemasFuture;
         VersionInfo backwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getBackwardTill();
         VersionInfo forwardTill = groupProperties.getSchemaValidationRules().getCompatibility().getForwardTill();
@@ -401,7 +399,7 @@ public class SchemaRegistryService {
     }
 
     private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
-                                       SchemaValidationRules additionalRules, List<SchemaWithVersion> schemasWithVersion) {
+                                       List<SchemaWithVersion> schemasWithVersion) {
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
 
         List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema).collect(Collectors.toList());

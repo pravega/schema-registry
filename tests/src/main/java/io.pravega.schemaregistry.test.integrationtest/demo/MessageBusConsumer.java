@@ -160,7 +160,7 @@ public class MessageBusConsumer {
 
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
+        String rg = "rg" + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 

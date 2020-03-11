@@ -215,9 +215,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     public void addSchemaToGroupIfAbsent(String groupName, AddSchemaToGroupRequest addSchemaRequest,
                                          SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(addSchemaRequest.getSchemaInfo());
-        SchemaValidationRules schemaValidationRules = ModelHelper.decode(addSchemaRequest.getRules());
 
-        registryService.addSchemaIfAbsent(groupName, schemaInfo, schemaValidationRules)
+        registryService.addSchemaIfAbsent(groupName, schemaInfo)
                        .thenApply(versionInfo -> {
                            VersionInfo version = ModelHelper.encode(versionInfo);
                            return Response.status(Status.OK).entity(version).build(); })
@@ -239,8 +238,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     @Override
     public void validate(String groupName, ValidateRequest validateRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(validateRequest.getSchemaInfo());
-        SchemaValidationRules rules = ModelHelper.decode(validateRequest.getValidationRules());
-        registryService.validateSchema(groupName, schemaInfo, rules)
+        registryService.validateSchema(groupName, schemaInfo)
                        .thenApply(compatible -> {
                            return Response.status(Status.OK).entity(new Valid().valid(compatible)).build(); })
                        .exceptionally(exception -> {

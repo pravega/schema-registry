@@ -159,72 +159,6 @@ paths:
           description: Conflict while attempting to update policy. 
         500:
           description: Internal server error while fetching Group details
-    post:
-      tags:
-      - "Group"
-      operationId: addSchemaValidationRule
-      description: add new schema validation rule to Group
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: AddSchemaValidationRuleRequest
-          description: add new rule to group policy
-          required: true
-          schema:
-            type: object
-            properties:
-              validationRules:
-                  $ref: "#/definitions/SchemaValidationRule"
-      responses:
-        200:
-          description: Added new rule to schema validation policy
-        404:
-          description: Group with given name not found
-        409:
-          description: Conflict while attempting to add rule. 
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/rules/{rule}:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: rule
-        description: Rule name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Group"
-      operationId: getSchemaValidationRule
-      description: Fetch the properties of an existing Group
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Found schema validation rule
-          schema:
-            $ref: "#/definitions/SchemaValidationRule"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-    delete:
-      tags:
-      - "Group"
-      operationId: deleteSchemaValidationRule
-      description: Delete a Schema Validation Rule
-      responses:
-        204:
-          description: Successfully deleted the Rule
-        404:
-          description: Group not found
-        500:
-          description: Internal server error while deleting the Group
   /groups/{groupName}/schemas/schema/{fingerprint}:
     parameters:
       - in: path
@@ -290,8 +224,6 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
-              rules:
-                  $ref: "#/definitions/SchemaValidationRules"
       produces:
         - application/json
       responses:

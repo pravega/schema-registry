@@ -113,11 +113,10 @@ public interface SchemaRegistryClient {
      * 
      * @param group Name of group. 
      * @param schema Schema to add. 
-     * @param rules Schema validation rules to apply. 
      *              
      * @return versionInfo which uniquely identifies where the schema is added in the group.   
      */
-    VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema, SchemaValidationRules rules);
+    VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema);
 
     /**
      * Gets schema corresponding to the version. 
@@ -189,10 +188,9 @@ public interface SchemaRegistryClient {
      * 
      * @param group Name of group. 
      * @param schema Schema to check for validity. 
-     * @param validationRules validation rules to apply.
      * @return True if it satisfies validation checks, false otherwise. 
      */
-    boolean validateSchema(String group, SchemaInfo schema, SchemaValidationRules validationRules);
+    boolean validateSchema(String group, SchemaInfo schema);
 
     /**
      * Checks whether given schema can be used to read by validating it for reads against one or more existing schemas in the group  

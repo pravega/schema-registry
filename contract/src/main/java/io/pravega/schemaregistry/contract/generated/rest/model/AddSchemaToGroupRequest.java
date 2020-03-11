@@ -17,7 +17,6 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
@@ -29,9 +28,6 @@ import javax.validation.constraints.*;
 public class AddSchemaToGroupRequest   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
-
-  @JsonProperty("rules")
-  private SchemaValidationRules rules = null;
 
   public AddSchemaToGroupRequest schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
@@ -52,25 +48,6 @@ public class AddSchemaToGroupRequest   {
     this.schemaInfo = schemaInfo;
   }
 
-  public AddSchemaToGroupRequest rules(SchemaValidationRules rules) {
-    this.rules = rules;
-    return this;
-  }
-
-  /**
-   * Get rules
-   * @return rules
-   **/
-  @JsonProperty("rules")
-  @ApiModelProperty(value = "")
-  public SchemaValidationRules getRules() {
-    return rules;
-  }
-
-  public void setRules(SchemaValidationRules rules) {
-    this.rules = rules;
-  }
-
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -81,13 +58,12 @@ public class AddSchemaToGroupRequest   {
       return false;
     }
     AddSchemaToGroupRequest addSchemaToGroupRequest = (AddSchemaToGroupRequest) o;
-    return Objects.equals(this.schemaInfo, addSchemaToGroupRequest.schemaInfo) &&
-        Objects.equals(this.rules, addSchemaToGroupRequest.rules);
+    return Objects.equals(this.schemaInfo, addSchemaToGroupRequest.schemaInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, rules);
+    return Objects.hash(schemaInfo);
   }
 
 
@@ -97,7 +73,6 @@ public class AddSchemaToGroupRequest   {
     sb.append("class AddSchemaToGroupRequest {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
-    sb.append("    rules: ").append(toIndentedString(rules)).append("\n");
     sb.append("}");
     return sb.toString();
   }

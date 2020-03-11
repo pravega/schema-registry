@@ -18,7 +18,6 @@ import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.schemas.SchemaContainer;
 import lombok.Getter;
@@ -69,13 +68,12 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     
     private void initialize() {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
-        SchemaValidationRules schemaValidationRules = groupProperties.getSchemaValidationRules();
         
         this.encodeHeader.set(groupProperties.isEnableEncoding());
         if (registerSchema) {
             // register schema
             this.version.compareAndSet(null, 
-                    client.addSchemaIfAbsent(groupId, schemaInfo, schemaValidationRules));
+                    client.addSchemaIfAbsent(groupId, schemaInfo));
         } else {
             // get already registered schema version. If schema is not registered, this will throw an exception. 
             this.version.compareAndSet(null, encodingCache.getVersionFromSchema(schemaInfo));

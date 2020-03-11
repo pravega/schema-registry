@@ -168,11 +168,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema, SchemaValidationRules rules) {
+    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
-        addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema)).rules(ModelHelper.encode(rules));
+        addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
         Response response = invocationBuilder.post(Entity.entity(addSchemaToGroupRequest, MediaType.APPLICATION_JSON));
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
@@ -340,12 +340,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean validateSchema(String group, SchemaInfo schema, SchemaValidationRules validationRules) {
+    public boolean validateSchema(String group, SchemaInfo schema) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("validate");
         
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ValidateRequest validateRequest = new ValidateRequest()
-                .schemaInfo(ModelHelper.encode(schema)).validationRules(ModelHelper.encode(validationRules));
+                .schemaInfo(ModelHelper.encode(schema));
         Response response = invocationBuilder.post(Entity.entity(validateRequest, MediaType.APPLICATION_JSON));
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return response.readEntity(Valid.class).isValid();

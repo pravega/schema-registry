@@ -78,8 +78,8 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema, SchemaValidationRules rules) {
-        return service.addSchemaIfAbsent(group, schema, rules).join();
+    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema) {
+        return service.addSchemaIfAbsent(group, schema).join();
     }
 
     @Override
@@ -113,8 +113,8 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean validateSchema(String group, SchemaInfo schema, SchemaValidationRules validationRules) {
-        return service.validateSchema(group, schema, validationRules).join();
+    public boolean validateSchema(String group, SchemaInfo schema) {
+        return service.validateSchema(group, schema).join();
     }
 
     @Override

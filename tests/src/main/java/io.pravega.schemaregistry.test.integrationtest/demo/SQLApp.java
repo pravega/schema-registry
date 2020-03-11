@@ -160,7 +160,7 @@ public class SQLApp {
         SchemaInfo tableSchemaInfo = new SchemaInfo("table", schemaType, tableSchema.toBytes(), map);
         
         client.addGroup(tableGroupId, schemaType, validationRules, false, false);
-        client.addSchemaIfAbsent(tableGroupId, tableSchemaInfo, validationRules);
+        client.addSchemaIfAbsent(tableGroupId, tableSchemaInfo);
     }
 
     @SneakyThrows

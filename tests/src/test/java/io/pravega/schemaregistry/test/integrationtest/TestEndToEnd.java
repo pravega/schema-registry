@@ -112,14 +112,14 @@ public abstract class TestEndToEnd {
         SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.Avro, 
                 schema1.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
-        client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo);
 
         // attempt to add an existing schema
-        client.addSchemaIfAbsent(group, schemaInfo, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo);
 
         SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.Avro,
                 schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
-        client.addSchemaIfAbsent(group, schemaInfo2, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo2);
 
         client.updateSchemaValidationRules(group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.FullTransitive)));
 
@@ -127,7 +127,7 @@ public abstract class TestEndToEnd {
                 schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-        CompletableFuture.supplyAsync(() -> client.addSchemaIfAbsent(group, schemaInfo3, SchemaValidationRules.of()))
+        CompletableFuture.supplyAsync(() -> client.addSchemaIfAbsent(group, schemaInfo3))
                          .exceptionally(e -> {
                              exceptionRef.set(Exceptions.unwrap(e));
                              return null;
@@ -138,7 +138,7 @@ public abstract class TestEndToEnd {
         String myTest2 = "MyTest2";
         SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.Avro,
                 schemaTest2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
-        client.addSchemaIfAbsent(group, schemaInfo4, SchemaValidationRules.of());
+        client.addSchemaIfAbsent(group, schemaInfo4);
 
         List<String> objectTypes = client.getObjectTypes(group);
         assertEquals(objectTypes.size(), 2);
