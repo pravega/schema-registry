@@ -27,6 +27,8 @@ rat {
             '**/*.log',
             '**/*.lock',
             '**/*.json',
+            '**/*.proto',
+            '**/*.avsc',
             '**/config/*jks*',
             '**/config/*.crt',
             '**/config/*.key',

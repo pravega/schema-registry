@@ -10,3 +10,8 @@
  */
 rootProject.name = 'schema-registry'
 
+include 'client',
+        'common',
+        'server',
+        'serializers',
+        'contract',       'tests'
