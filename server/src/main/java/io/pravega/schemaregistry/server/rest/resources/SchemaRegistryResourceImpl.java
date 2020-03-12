@@ -74,9 +74,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     public void listGroups(SecurityContext securityContext,
                            AsyncResponse asyncResponse) throws NotFoundException {
         registryService.listGroups(null)
-                       .thenApply(groupsInNamespace -> {
+                       .thenApply(groups -> {
                            GroupsList groupsList = new GroupsList();
-                           groupsInNamespace.getMap().forEach((x, y) -> groupsList.addGroupsItem(ModelHelper.encode(x, y)));
+                           groups.getMap().forEach((x, y) -> groupsList.addGroupsItem(ModelHelper.encode(x, y)));
                            return Response.status(Status.OK).entity(groupsList).build(); })
                        .exceptionally(exception -> {
                            if (Exceptions.unwrap(exception) instanceof NotFoundException) {
