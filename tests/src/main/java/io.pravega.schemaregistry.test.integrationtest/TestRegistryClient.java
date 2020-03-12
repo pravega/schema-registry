@@ -59,7 +59,7 @@ public class TestRegistryClient implements SchemaRegistryClient {
 
     @Override
     public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
-        service.updateSchemaValidationPolicy(group, validationRules).join();
+        service.updateSchemaValidationRules(group, validationRules).join();
     }
 
     @Override

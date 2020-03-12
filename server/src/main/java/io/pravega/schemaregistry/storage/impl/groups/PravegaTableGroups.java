@@ -29,8 +29,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
 public class PravegaTableGroups implements Groups<Version> {
-    public static final String SCHEMA_REGISTRY_SCOPE = "pravega-schema-registry";
-    public static final String GROUPS = SCHEMA_REGISTRY_SCOPE + "/groups/0";
+    private static final String GROUPS = "schema-registry/groups/0";
 
     private final PravegaLogCache logCache;
     private final ClientConfig clientConfig;

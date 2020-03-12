@@ -103,7 +103,7 @@ public class SchemaRegistryService {
      * @param validationRules New validation rules for the group.
      * @return CompletableFuture which is completed when validation policy update completes.
      */
-    public CompletableFuture<Void> updateSchemaValidationPolicy(String group, SchemaValidationRules validationRules) {
+    public CompletableFuture<Void> updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
         return store.getGroupEtag(group)
                     .thenCompose(pos -> store.updateValidationRules(group, pos, validationRules));
     }

@@ -131,7 +131,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     @Override
     public void updateSchemaValidationRules(String groupName, UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         SchemaValidationRules rules = ModelHelper.decode(updateValidationRulesPolicyRequest.getValidationRules());
-        registryService.updateSchemaValidationPolicy(groupName, rules)
+        registryService.updateSchemaValidationRules(groupName, rules)
                        .thenApply(groupProperty -> Response.status(Status.OK).build())
                        .exceptionally(exception -> {
                            log.warn("updateSchemaValidationRules failed with exception: ", exception);
