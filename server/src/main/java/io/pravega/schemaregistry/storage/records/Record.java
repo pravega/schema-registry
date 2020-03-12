@@ -26,7 +26,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Different Record types that are written into {@link Log}.
@@ -158,8 +161,8 @@ public interface Record {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final SchemaType schemaType;
-        private final boolean enableEncoding;
         private final boolean validateByObjectType;
+        private final Map<String, String> properties;
         private final SchemaValidationRules validationRules;
 
         private static class GroupPropertiesRecordBuilder implements ObjectBuilder<GroupPropertiesRecord> {
@@ -183,15 +186,15 @@ public interface Record {
 
             private void write00(GroupPropertiesRecord e, RevisionDataOutput target) throws IOException {
                 SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
-                target.writeBoolean(e.enableEncoding);
                 target.writeBoolean(e.validateByObjectType);
+                target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
                 SchemaValidationRules.SERIALIZER.serialize(target, e.validationRules);
             }
 
             private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
                 b.schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
-                 .enableEncoding(source.readBoolean())
                  .validateByObjectType(source.readBoolean())
+                 .properties(source.readMap(DataInput::readUTF, DataInput::readUTF))
                  .validationRules(SchemaValidationRules.SERIALIZER.deserialize(source));
             }
         }

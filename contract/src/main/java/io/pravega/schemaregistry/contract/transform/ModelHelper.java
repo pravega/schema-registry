@@ -9,10 +9,8 @@
  */
 package io.pravega.schemaregistry.contract.transform;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
-import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -20,9 +18,17 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
+import org.apache.commons.lang3.NotImplementedException;
+
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Provides translation (encode/decode) between the Model classes and its REST representation.
@@ -46,10 +52,59 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaValidationRules decode(SchemaValidationRules rules) {
-        io.pravega.schemaregistry.contract.data.Compatibility compatibilityRule = decode(rules.getCompatibility());
-        return new io.pravega.schemaregistry.contract.data.SchemaValidationRules(ImmutableList.of(), compatibilityRule);
+        List<io.pravega.schemaregistry.contract.data.SchemaValidationRule> list = rules.getRules().entrySet().stream().map(rule -> {
+            io.pravega.schemaregistry.contract.data.SchemaValidationRule schemaValidationRule = null;
+            if (rule.getValue().getRule() instanceof LinkedHashMap) {
+                String name = (String) ((LinkedHashMap) rule.getValue().getRule()).get("name");
+                if (name.equals(Compatibility.class.getSimpleName())) {
+                    String policy = (String) ((LinkedHashMap) rule.getValue().getRule()).get("policy");
+                    io.pravega.schemaregistry.contract.data.Compatibility.Type policyType = searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, policy);
+                    switch (policyType) {
+                        case AllowAny:
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.allowAny();
+                            break;
+                        case DenyAll:
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.denyAll();
+                            break;
+                        case Backward:
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backward();
+                            break;
+                        case BackwardTransitive:
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTransitive();
+                            break;
+                        case Forward:
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.forward();
+                            break;
+                        case ForwardTransitive:
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.forwardTransitive();
+                            break;
+                        case BackwardTill:
+                            LinkedHashMap backwardTill = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("backwardTill");
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTill(getVersionInfo(backwardTill));
+                            break;
+                        case ForwardTill:
+                            LinkedHashMap forwardTill = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("forwardTill");
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.forwardTill(getVersionInfo(forwardTill));
+                            break;
+                        case BackwardAndForwardTill:
+                            LinkedHashMap backwardTill2 = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("backwardTill");
+                            LinkedHashMap forwardTill2 = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("forwardTill");
+                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(getVersionInfo(backwardTill2), getVersionInfo(forwardTill2));
+                            break;
+                            default:
+                                throw new IllegalArgumentException();
+                    }
+                    return schemaValidationRule;
+                } else {
+                    throw new NotImplementedException("Rule not implemented");
+                }
+            } else {
+                throw new IllegalArgumentException("Rule not supported");
+            }
+        }).collect(Collectors.toList());
+        return io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(list);
     }
-
+    
     public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
         io.pravega.schemaregistry.contract.data.VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         io.pravega.schemaregistry.contract.data.VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
@@ -94,7 +149,7 @@ public class ModelHelper {
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
         return new io.pravega.schemaregistry.contract.data.GroupProperties(decode(groupProperties.getSchemaType()),
                 decode(groupProperties.getSchemaValidationRules()), groupProperties.isValidateByObjectType(),
-                groupProperties.isEnableEncoding());
+                groupProperties.getProperties());
     }
     // endregion
 
@@ -106,12 +161,28 @@ public class ModelHelper {
     }
 
     public static SchemaValidationRules encode(io.pravega.schemaregistry.contract.data.SchemaValidationRules rules) {
-        return new SchemaValidationRules().compatibility(encode(rules.getCompatibility()));
+        Map<String, SchemaValidationRule> map = rules.getRules().entrySet().stream().collect(Collectors.toMap(rule -> {
+            if (rule.getValue() instanceof io.pravega.schemaregistry.contract.data.Compatibility) {
+                return io.pravega.schemaregistry.contract.generated.rest.model.Compatibility.class.getSimpleName();
+            } else {
+                throw new NotImplementedException("Rule not implemented");
+            }
+        }, rule -> {
+            SchemaValidationRule schemaValidationRule;
+            if (rule.getValue() instanceof io.pravega.schemaregistry.contract.data.Compatibility) {
+                schemaValidationRule = new SchemaValidationRule().rule(encode((io.pravega.schemaregistry.contract.data.Compatibility) rule.getValue()));
+            } else {
+                throw new NotImplementedException("Rule not implemented");
+            }
+            return schemaValidationRule;
+        }));
+        return new SchemaValidationRules().rules(map);
     }
 
     public static Compatibility encode(io.pravega.schemaregistry.contract.data.Compatibility compatibility) {
-        Compatibility policy = new Compatibility().policy(
-                searchEnum(Compatibility.PolicyEnum.class, compatibility.getCompatibility().name()));
+        Compatibility policy = new io.pravega.schemaregistry.contract.generated.rest.model.Compatibility()
+                .name(compatibility.getName())
+                .policy(searchEnum(Compatibility.PolicyEnum.class, compatibility.getCompatibility().name()));
         if (compatibility.getBackwardTill() != null) {
             VersionInfo backwardTill = encode(compatibility.getBackwardTill());
             policy = policy.backwardTill(backwardTill);
@@ -131,7 +202,7 @@ public class ModelHelper {
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
         return new GroupProperties()
                 .schemaType(encode(groupProperties.getSchemaType()))
-                .enableEncoding(groupProperties.isEnableEncoding())
+                .properties(groupProperties.getProperties())
                 .validateByObjectType(groupProperties.isValidateByObjectType())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
@@ -181,8 +252,7 @@ public class ModelHelper {
 
     // endregion
 
-    private static <T extends Enum<?>> T searchEnum(Class<T> enumeration,
-                                                    String search) {
+    private static <T extends Enum<?>> T searchEnum(Class<T> enumeration, String search) {
         for (T each : enumeration.getEnumConstants()) {
             if (each.name().compareToIgnoreCase(search) == 0) {
                 return each;
@@ -190,4 +260,12 @@ public class ModelHelper {
         }
         throw new IllegalArgumentException();
     }
+
+    private static io.pravega.schemaregistry.contract.data.VersionInfo getVersionInfo(LinkedHashMap backwardTill) {
+        String schemaName = (String) backwardTill.get("schemaName");
+        int version = (int) backwardTill.get("version");
+
+        return new io.pravega.schemaregistry.contract.data.VersionInfo(schemaName, version);
+    }
+
 }

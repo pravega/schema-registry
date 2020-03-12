@@ -20,6 +20,9 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -39,8 +42,8 @@ public class GroupProperties   {
   @JsonProperty("validateByObjectType")
   private Boolean validateByObjectType = null;
 
-  @JsonProperty("enableEncoding")
-  private Boolean enableEncoding = null;
+  @JsonProperty("properties")
+  private Map<String, String> properties = null;
 
   public GroupProperties groupName(String groupName) {
     this.groupName = groupName;
@@ -118,23 +121,31 @@ public class GroupProperties   {
     this.validateByObjectType = validateByObjectType;
   }
 
-  public GroupProperties enableEncoding(Boolean enableEncoding) {
-    this.enableEncoding = enableEncoding;
+  public GroupProperties properties(Map<String, String> properties) {
+    this.properties = properties;
+    return this;
+  }
+
+  public GroupProperties putPropertiesItem(String key, String propertiesItem) {
+    if (this.properties == null) {
+      this.properties = new HashMap<String, String>();
+    }
+    this.properties.put(key, propertiesItem);
     return this;
   }
 
   /**
-   * Get enableEncoding
-   * @return enableEncoding
+   * Get properties
+   * @return properties
    **/
-  @JsonProperty("enableEncoding")
+  @JsonProperty("properties")
   @ApiModelProperty(value = "")
-  public Boolean isEnableEncoding() {
-    return enableEncoding;
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
-  public void setEnableEncoding(Boolean enableEncoding) {
-    this.enableEncoding = enableEncoding;
+  public void setProperties(Map<String, String> properties) {
+    this.properties = properties;
   }
 
 
@@ -151,12 +162,12 @@ public class GroupProperties   {
         Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
         Objects.equals(this.schemaType, groupProperties.schemaType) &&
         Objects.equals(this.validateByObjectType, groupProperties.validateByObjectType) &&
-        Objects.equals(this.enableEncoding, groupProperties.enableEncoding);
+        Objects.equals(this.properties, groupProperties.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaValidationRules, schemaType, validateByObjectType, enableEncoding);
+    return Objects.hash(groupName, schemaValidationRules, schemaType, validateByObjectType, properties);
   }
 
 
@@ -169,7 +180,7 @@ public class GroupProperties   {
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    validateByObjectType: ").append(toIndentedString(validateByObjectType)).append("\n");
-    sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
+    sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");
     return sb.toString();
   }

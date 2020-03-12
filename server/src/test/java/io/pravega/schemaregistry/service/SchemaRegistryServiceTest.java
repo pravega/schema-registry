@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.service;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Lists;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
@@ -22,6 +21,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 
 import static org.junit.Assert.assertEquals;
@@ -48,7 +48,7 @@ public class SchemaRegistryServiceTest {
         }).when(store).listGroups(any());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new GroupProperties(SchemaType.Avro, 
-                    new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), false, false));
+                    SchemaValidationRules.of(Compatibility.backward()), false, Collections.singletonMap("Encode", "false")));
         }).when(store).getGroupProperties(anyString());
 
         MapWithToken<String, GroupProperties> result = service.listGroups(null).join();

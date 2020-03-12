@@ -41,6 +41,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
@@ -84,9 +85,9 @@ public class Group<V> {
         this.executor = executor;
     }
     
-    public CompletableFuture<Void> create(SchemaType schemaType, boolean enableEncoding, boolean validateByObjectType, SchemaValidationRules schemaValidationRules) {
+    public CompletableFuture<Void> create(SchemaType schemaType, Map<String, String> properties, boolean validateByObjectType, SchemaValidationRules schemaValidationRules) {
         return wal.getCurrentEtag()
-                  .thenCompose(pos -> writeToLog(new Record.GroupPropertiesRecord(schemaType, enableEncoding, validateByObjectType, schemaValidationRules), pos)
+                  .thenCompose(pos -> writeToLog(new Record.GroupPropertiesRecord(schemaType, validateByObjectType, properties, schemaValidationRules), pos)
                   .thenCompose(v -> {
                       IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
                       Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
@@ -296,7 +297,7 @@ public class Group<V> {
                                                 Record.GroupPropertiesRecord properties = grpPropertiesFuture.join();
                                                 SchemaValidationRules rules = rulesFuture.join();
                                                 return new GroupProperties(properties.getSchemaType(), rules,
-                                                        properties.isValidateByObjectType(), properties.isEnableEncoding());
+                                                        properties.isValidateByObjectType(), properties.getProperties());
                                             });
                 });
     }

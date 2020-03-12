@@ -26,6 +26,7 @@ import lombok.SneakyThrows;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -68,8 +69,10 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     
     private void initialize() {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
-        
-        this.encodeHeader.set(groupProperties.isEnableEncoding());
+
+        Map<String, String> properties = groupProperties.getProperties();
+        boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerDeFactory.ENCODE));
+        encodeHeader.set(toEncodeHeader);
         if (registerSchema) {
             // register schema
             this.version.compareAndSet(null, 

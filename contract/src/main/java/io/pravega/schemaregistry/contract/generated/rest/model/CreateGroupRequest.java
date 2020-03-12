@@ -20,6 +20,9 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -36,8 +39,8 @@ public class CreateGroupRequest   {
   @JsonProperty("validationRules")
   private SchemaValidationRules validationRules = null;
 
-  @JsonProperty("enableEncoding")
-  private Boolean enableEncoding = null;
+  @JsonProperty("properties")
+  private Map<String, String> properties = null;
 
   @JsonProperty("validateByObjectType")
   private Boolean validateByObjectType = null;
@@ -99,23 +102,31 @@ public class CreateGroupRequest   {
     this.validationRules = validationRules;
   }
 
-  public CreateGroupRequest enableEncoding(Boolean enableEncoding) {
-    this.enableEncoding = enableEncoding;
+  public CreateGroupRequest properties(Map<String, String> properties) {
+    this.properties = properties;
+    return this;
+  }
+
+  public CreateGroupRequest putPropertiesItem(String key, String propertiesItem) {
+    if (this.properties == null) {
+      this.properties = new HashMap<String, String>();
+    }
+    this.properties.put(key, propertiesItem);
     return this;
   }
 
   /**
-   * Get enableEncoding
-   * @return enableEncoding
+   * Get properties
+   * @return properties
    **/
-  @JsonProperty("enableEncoding")
+  @JsonProperty("properties")
   @ApiModelProperty(value = "")
-  public Boolean isEnableEncoding() {
-    return enableEncoding;
+  public Map<String, String> getProperties() {
+    return properties;
   }
 
-  public void setEnableEncoding(Boolean enableEncoding) {
-    this.enableEncoding = enableEncoding;
+  public void setProperties(Map<String, String> properties) {
+    this.properties = properties;
   }
 
   public CreateGroupRequest validateByObjectType(Boolean validateByObjectType) {
@@ -150,13 +161,13 @@ public class CreateGroupRequest   {
     return Objects.equals(this.groupName, createGroupRequest.groupName) &&
         Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
         Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
-        Objects.equals(this.enableEncoding, createGroupRequest.enableEncoding) &&
+        Objects.equals(this.properties, createGroupRequest.properties) &&
         Objects.equals(this.validateByObjectType, createGroupRequest.validateByObjectType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, validationRules, enableEncoding, validateByObjectType);
+    return Objects.hash(groupName, schemaType, validationRules, properties, validateByObjectType);
   }
 
 
@@ -168,7 +179,7 @@ public class CreateGroupRequest   {
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
-    sb.append("    enableEncoding: ").append(toIndentedString(enableEncoding)).append("\n");
+    sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("    validateByObjectType: ").append(toIndentedString(validateByObjectType)).append("\n");
     sb.append("}");
     return sb.toString();

@@ -105,7 +105,7 @@ public final class ApiV1 {
         void deleteGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                          @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
-        
+
         @GET
         @Path("/{groupName}/compressions")
         @Produces({"application/json"})
@@ -226,7 +226,7 @@ public final class ApiV1 {
                                   @ApiParam(value = "Get schema corresponding to the version", required = true) GetSchemaFromVersionRequest getSchemaFromVersionRequest,
                                   @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
-        
+
         @GET
         @Path("/{groupName}/rules")
         @Produces({"application/json"})

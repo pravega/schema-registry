@@ -16,10 +16,10 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -63,7 +63,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
     
     @Override
-    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByObjectType, boolean enableEncoding) {
+    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByObjectType, Map<String, String> properties) {
         WebTarget webTarget = client.target(uri).path("v1/groups");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
@@ -72,7 +72,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .enableEncoding(enableEncoding).validateByObjectType(validateByObjectType)
+                                                             .properties(properties).validateByObjectType(validateByObjectType)
                                                              .groupName(group)
                                                              .validationRules(compatibility);
         Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
@@ -111,7 +111,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 x -> {
                     SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
                     SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
-                    return new GroupProperties(schemaType, rules, x.isValidateByObjectType(), x.isEnableEncoding());
+                    return new GroupProperties(schemaType, rules, x.isValidateByObjectType(), x.getProperties());
                 }));
     }
 
@@ -146,12 +146,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @Override
     public void addSchemaValidationRule(String group, SchemaValidationRule rule) {
-        throw new NotImplementedException("Rule not implemented");
+        throw new NotImplementedException("SchemaValidationRule not implemented");
     }
 
     @Override
     public void removeSchemaValidationRule(String group, SchemaValidationRule rule) {
-        throw new NotImplementedException("Rule not implemented");
+        throw new NotImplementedException("SchemaValidationRule not implemented");
     }
 
     @Override
@@ -181,7 +181,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
             throw new RuntimeException("Schema is incompatible.");
         } else {
-            throw new RuntimeException("Internal Service error. Failed to get objectTypes.");
+            throw new RuntimeException("Internal Service error. Failed to addSchema.");
         }
     }
 
@@ -195,7 +195,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new RuntimeException("Schema not found.");
         } else {
-            throw new RuntimeException("Internal Service error. Failed to get objectTypes.");
+            throw new RuntimeException("Internal Service error. Failed to get schema.");
         }
     }
 

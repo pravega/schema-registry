@@ -96,7 +96,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
         SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         GroupProperties properties = new GroupProperties(
-                schemaType, validationRules, createGroupRequest.isValidateByObjectType(), createGroupRequest.isEnableEncoding());
+                schemaType, validationRules, createGroupRequest.isValidateByObjectType(), createGroupRequest.getProperties());
         String groupName = URLDecoder.decode(createGroupRequest.getGroupName(), StandardCharsets.UTF_8.toString());
         registryService.createGroup(groupName, properties)
                        .thenApply(createStatus -> {

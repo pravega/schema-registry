@@ -15,10 +15,10 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -38,8 +38,8 @@ public class TestRegistryClient implements SchemaRegistryClient {
     
     @Override
     public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, 
-                            boolean validateByObjectType, boolean enableEncoding) {
-        return service.createGroup(group, new GroupProperties(schemaType, validationRules, validateByObjectType, enableEncoding)).join();
+                            boolean validateByObjectType, Map<String, String> properties) {
+        return service.createGroup(group, new GroupProperties(schemaType, validationRules, validateByObjectType, properties)).join();
     }
 
     @Override

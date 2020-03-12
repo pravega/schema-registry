@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest;
 
-import com.google.common.collect.ImmutableList;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -67,6 +66,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -144,7 +144,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         testAvroReflect();    
         testAvroGenerated();    
         testAvroMultiplexed();   
-        
+
         testProtobuf(true);
         testProtobuf(false);
         testProtobufMultiplexed();
@@ -162,8 +162,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
 
         AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
         AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
@@ -268,8 +268,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
 
         AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
         AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
@@ -346,8 +346,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
 
         AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
 
@@ -408,8 +408,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
 
         AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
 
@@ -471,8 +471,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
 
         AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Test1.class, Test1.getClassSchema());
         AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Test2.class, Test2.getClassSchema());
@@ -548,9 +548,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
         SchemaType schemaType = SchemaType.Protobuf;
-        client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
-                true, encodeHeaders);
+        client.addGroup(groupId, schemaType,
+                SchemaValidationRules.of(Compatibility.allowAny()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
 
         Path path = Paths.get("resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
@@ -626,9 +626,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
         SchemaType schemaType = SchemaType.Protobuf;
-        client.addGroup(groupId, schemaType,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.AllowAny)), 
-                true, true);
+        client.addGroup(groupId, schemaType,
+                SchemaValidationRules.of(Compatibility.allowAny()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
 
         Path path = Paths.get("resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);

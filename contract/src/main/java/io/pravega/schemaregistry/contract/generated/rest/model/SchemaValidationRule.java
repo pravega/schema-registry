@@ -25,48 +25,27 @@ import javax.validation.constraints.*;
  */
 
 public class SchemaValidationRule   {
-  @JsonProperty("name")
-  private String name = null;
+  @JsonProperty("rule")
+  private Object rule = null;
 
-  @JsonProperty("value")
-  private String value = null;
-
-  public SchemaValidationRule name(String name) {
-    this.name = name;
+  public SchemaValidationRule rule(Object rule) {
+    this.rule = rule;
     return this;
   }
 
   /**
-   * Get name
-   * @return name
+   * Get rule
+   * @return rule
    **/
-  @JsonProperty("name")
-  @ApiModelProperty(value = "")
-  public String getName() {
-    return name;
+  @JsonProperty("rule")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
+  public Object getRule() {
+    return rule;
   }
 
-  public void setName(String name) {
-    this.name = name;
-  }
-
-  public SchemaValidationRule value(String value) {
-    this.value = value;
-    return this;
-  }
-
-  /**
-   * Get value
-   * @return value
-   **/
-  @JsonProperty("value")
-  @ApiModelProperty(value = "")
-  public String getValue() {
-    return value;
-  }
-
-  public void setValue(String value) {
-    this.value = value;
+  public void setRule(Object rule) {
+    this.rule = rule;
   }
 
 
@@ -79,13 +58,12 @@ public class SchemaValidationRule   {
       return false;
     }
     SchemaValidationRule schemaValidationRule = (SchemaValidationRule) o;
-    return Objects.equals(this.name, schemaValidationRule.name) &&
-        Objects.equals(this.value, schemaValidationRule.value);
+    return Objects.equals(this.rule, schemaValidationRule.rule);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, value);
+    return Objects.hash(rule);
   }
 
 
@@ -94,8 +72,7 @@ public class SchemaValidationRule   {
     StringBuilder sb = new StringBuilder();
     sb.append("class SchemaValidationRule {\n");
     
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    value: ").append(toIndentedString(value)).append("\n");
+    sb.append("    rule: ").append(toIndentedString(rule)).append("\n");
     sb.append("}");
     return sb.toString();
   }

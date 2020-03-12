@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SerDeFactory {
+    public static final String ENCODE = "encode";
+
     // region avro
 
     /**

@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest.demo;
 
-import com.google.common.collect.ImmutableList;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
@@ -45,6 +44,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
+import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -139,8 +139,8 @@ public class Writer1 {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)),
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()),
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {

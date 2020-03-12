@@ -1,6 +1,7 @@
 *.iml
 *.iws
 *.ipr
+*.log.gz
 /out
 .project
 build

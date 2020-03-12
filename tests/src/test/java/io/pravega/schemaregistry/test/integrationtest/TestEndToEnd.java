@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest;
 
-import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -18,6 +17,7 @@ import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.serializers.SerDeFactory;
 import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
@@ -29,6 +29,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -104,8 +105,8 @@ public abstract class TestEndToEnd {
         assertEquals(client.listGroups().size(), 0);
         
         client.addGroup(group, SchemaType.Avro,  
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
         assertEquals(client.listGroups().size(), 1);
 
         String myTest = "MyTest";
@@ -121,7 +122,7 @@ public abstract class TestEndToEnd {
                 schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
         client.addSchemaIfAbsent(group, schemaInfo2);
 
-        client.updateSchemaValidationRules(group, new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.FullTransitive)));
+        client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()));
 
         SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SchemaType.Avro,
                 schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());

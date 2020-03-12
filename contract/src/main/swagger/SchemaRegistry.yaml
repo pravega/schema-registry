@@ -64,8 +64,12 @@ paths:
                   $ref: "#/definitions/SchemaType"
               validationRules:
                   $ref: "#/definitions/SchemaValidationRules"
-              enableEncoding:
-                type: boolean
+              properties:
+                type: object
+                additionalProperties:
+                  type: string
+                  minLength: 0
+                  maxLength: 40
               validateByObjectType:
                 type: boolean
       responses:
@@ -635,8 +639,12 @@ definitions:
           $ref: "#/definitions/SchemaType"
       validateByObjectType:
           type: boolean
-      enableEncoding:
-          type: boolean
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
   SchemaType:
     type: object
     properties:
@@ -726,12 +734,16 @@ definitions:
           $ref: "#/definitions/CompressionType"
   Compatibility:
     type: object
+    required:
+      - name
     properties:
+      name:
+        type: string
       policy:
         type: string
         enum:
           - AllowAny
-          - DisallowAll
+          - DenyAll
           - Backward
           - Forward
           - ForwardTransitive
@@ -745,22 +757,101 @@ definitions:
         $ref: "#/definitions/VersionInfo"        
       forwardTill:
         $ref: "#/definitions/VersionInfo"        
+#  AllowAnyRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#  DenyAllRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#  BackwardRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#  BackwardTillRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#      till:  
+#        $ref: "#/definitions/VersionInfo"        
+#  BackwardTransitiveRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#  ForwardRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#  ForwardTillRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
+#      till:  
+#        $ref: "#/definitions/VersionInfo"        
+#  ForwardTransitiveRule:
+#    type: object
+#    required:
+#      - name
+#    properties:
+#      name:
+#        type: string
   SchemaValidationRules:
     type: object
     properties:
-      compatibility:
-        $ref: "#/definitions/Compatibility" 
       rules:
-        type: array  
-        items:
+        type: object
+        additionalProperties:
           $ref: "#/definitions/SchemaValidationRule"
   SchemaValidationRule:
     type: object
+    required:
+      - rule
     properties:
-      name:
-        type: string
-      value:
-        type: string  
+      rule:
+        oneOf:
+          - $ref: '#/definitions/Compatibility'
+#          - $ref: '#/definitions/AllowAnyRule'
+#          - $ref: '#/definitions/DenyAllRule'
+#          - $ref: '#/definitions/BackwardRule'
+#          - $ref: '#/definitions/BackwardTillRule'
+#          - $ref: '#/definitions/BackwardTransitiveRule'
+#          - $ref: '#/definitions/ForwardRule'
+#          - $ref: '#/definitions/ForwardTillRule'
+#          - $ref: '#/definitions/ForwardTransitiveRule'
+        discriminator:
+          propertyName: name
+          mapping:
+            allowAnyRule: '#/definitions/Compatibility'
+#            allowAnyRule: '#/definitions/AllowAnyRule'
+#            denyAllRule: '#/definitions/DenyAllRule'
+#            backwardRule: '#/definitions/BackwardRule'
+#            backwardTillRule: '#/definitions/BackwardTillRule'
+#            backwardTransitiveRule: '#/definitions/BackwardTransitiveRule'
+#            forwardRule: '#/definitions/ForwardRule'
+#            forwardTillRule: '#/definitions/ForwardTillRule'
+#            forwardTransitiveRule: '#/definitions/ForwardTransitiveRule'
   CompressionsList:
     type: object
     properties:

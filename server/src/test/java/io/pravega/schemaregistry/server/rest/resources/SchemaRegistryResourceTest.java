@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
-import com.google.common.collect.ImmutableList;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -63,11 +62,11 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     @Test
     public void groups() throws ExecutionException, InterruptedException {
         GroupProperties group1 = new GroupProperties(SchemaType.Avro, 
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                false, false);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                false, Collections.singletonMap("Encode", Boolean.toString(false)));
         GroupProperties group2 = new GroupProperties(SchemaType.Protobuf, 
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)), 
-                false, false);
+                SchemaValidationRules.of(Compatibility.backward()), 
+                false, Collections.singletonMap("Encode", Boolean.toString(false)));
 
         doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();

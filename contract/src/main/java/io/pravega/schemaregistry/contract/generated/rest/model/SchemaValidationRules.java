@@ -16,12 +16,12 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -29,41 +29,19 @@ import javax.validation.constraints.*;
  */
 
 public class SchemaValidationRules   {
-  @JsonProperty("compatibility")
-  private Compatibility compatibility = null;
-
   @JsonProperty("rules")
-  private List<SchemaValidationRule> rules = null;
+  private Map<String, SchemaValidationRule> rules = null;
 
-  public SchemaValidationRules compatibility(Compatibility compatibility) {
-    this.compatibility = compatibility;
-    return this;
-  }
-
-  /**
-   * Get compatibility
-   * @return compatibility
-   **/
-  @JsonProperty("compatibility")
-  @ApiModelProperty(value = "")
-  public Compatibility getCompatibility() {
-    return compatibility;
-  }
-
-  public void setCompatibility(Compatibility compatibility) {
-    this.compatibility = compatibility;
-  }
-
-  public SchemaValidationRules rules(List<SchemaValidationRule> rules) {
+  public SchemaValidationRules rules(Map<String, SchemaValidationRule> rules) {
     this.rules = rules;
     return this;
   }
 
-  public SchemaValidationRules addRulesItem(SchemaValidationRule rulesItem) {
+  public SchemaValidationRules putRulesItem(String key, SchemaValidationRule rulesItem) {
     if (this.rules == null) {
-      this.rules = new ArrayList<SchemaValidationRule>();
+      this.rules = new HashMap<String, SchemaValidationRule>();
     }
-    this.rules.add(rulesItem);
+    this.rules.put(key, rulesItem);
     return this;
   }
 
@@ -73,11 +51,11 @@ public class SchemaValidationRules   {
    **/
   @JsonProperty("rules")
   @ApiModelProperty(value = "")
-  public List<SchemaValidationRule> getRules() {
+  public Map<String, SchemaValidationRule> getRules() {
     return rules;
   }
 
-  public void setRules(List<SchemaValidationRule> rules) {
+  public void setRules(Map<String, SchemaValidationRule> rules) {
     this.rules = rules;
   }
 
@@ -91,13 +69,12 @@ public class SchemaValidationRules   {
       return false;
     }
     SchemaValidationRules schemaValidationRules = (SchemaValidationRules) o;
-    return Objects.equals(this.compatibility, schemaValidationRules.compatibility) &&
-        Objects.equals(this.rules, schemaValidationRules.rules);
+    return Objects.equals(this.rules, schemaValidationRules.rules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compatibility, rules);
+    return Objects.hash(rules);
   }
 
 
@@ -106,7 +83,6 @@ public class SchemaValidationRules   {
     StringBuilder sb = new StringBuilder();
     sb.append("class SchemaValidationRules {\n");
     
-    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("    rules: ").append(toIndentedString(rules)).append("\n");
     sb.append("}");
     return sb.toString();

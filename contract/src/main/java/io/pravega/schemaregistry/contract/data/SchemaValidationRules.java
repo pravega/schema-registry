@@ -9,33 +9,42 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
-import com.google.common.collect.ImmutableList;
 import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.SneakyThrows;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Schema validation rules that are applied for checking if a schema is valid. 
- * This contains a set of rules and a {@link Compatibility} policy. The schema will be compared against one or more
- * existing schemas in the group by applying the rule. 
+ * This contains a set of rules. The schema will be compared against one or more existing schemas in the group by applying the rule. 
  */
 @Data
 @Builder
-@AllArgsConstructor
 public class SchemaValidationRules {
     public static final Serializer SERIALIZER = new Serializer();
 
-    private final ImmutableList<SchemaValidationRule> rules;
-    private final Compatibility compatibility;
+    private final Map<String, SchemaValidationRule> rules;
 
-    public static SchemaValidationRules of() {
-        return new SchemaValidationRules(null, null);    
+    private SchemaValidationRules(Map<String, SchemaValidationRule> rules) {
+        this.rules = rules;
+    }
+
+    public static SchemaValidationRules of(SchemaValidationRule rule) {
+        return new SchemaValidationRules(Collections.singletonMap(rule.getName(), rule));
+    }
+
+    public static SchemaValidationRules of(List<SchemaValidationRule> rules) {
+        return new SchemaValidationRules(rules.stream().collect(Collectors.toMap(SchemaValidationRule::getName, x -> x)));
     }
     
     private static class SchemaValidationRulesBuilder implements ObjectBuilder<SchemaValidationRules> {
@@ -57,13 +66,25 @@ public class SchemaValidationRules {
             version(0).revision(0, this::write00, this::read00);
         }
 
+        @SneakyThrows(IOException.class)
         private void write00(SchemaValidationRules e, RevisionDataOutput target) throws IOException {
-            Compatibility.SERIALIZER.serialize(target, e.compatibility);
+            target.writeCompactInt(e.getRules().size());
+            for (Map.Entry<String, SchemaValidationRule> rule : e.getRules().entrySet()) {
+                target.writeUTF(rule.getKey());
+                target.writeArray(SchemaValidationRule.SERIALIZER.toBytes(rule.getValue()));                
+            }
         }
 
+        @SneakyThrows(IOException.class)
         private void read00(RevisionDataInput source, SchemaValidationRules.SchemaValidationRulesBuilder b) throws IOException {
-            b.rules(ImmutableList.of())
-             .compatibility(Compatibility.SERIALIZER.deserialize(source));
+            int count = source.readCompactInt();
+            Map<String, SchemaValidationRule> rules = new HashMap<>();
+            for (int i = 0; i < count; i++) {
+                String name = source.readUTF();
+                byte[] bytes = source.readArray();
+                rules.put(name, SchemaValidationRule.SERIALIZER.fromBytes(bytes));
+            }
+            b.rules(rules);
         }
     }
 }

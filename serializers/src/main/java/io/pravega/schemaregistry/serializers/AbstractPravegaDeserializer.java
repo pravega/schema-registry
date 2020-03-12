@@ -23,6 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.BiFunction;
@@ -65,7 +66,9 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private void initialize() {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
-        this.encodeHeader.set(groupProperties.isEnableEncoding());
+        Map<String, String> properties = groupProperties.getProperties();
+        boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerDeFactory.ENCODE));
+        this.encodeHeader.set(toEncodeHeader);
 
         if (schemaInfo.get() != null) {
             log.info("Validate caller supplied schema.");

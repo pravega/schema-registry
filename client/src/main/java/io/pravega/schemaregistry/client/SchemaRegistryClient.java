@@ -37,13 +37,12 @@ public interface SchemaRegistryClient {
      * @param validationRules Schema validation policy to apply for the group. 
      * @param validateByObjectType Property to describe whether group should have schema evolution checks performed by object types. 
      *                            Object Types are uniquely identified by {@link SchemaInfo#name}. 
-     * @param enableEncoding Property that indicates whether registry service should generating an encoding id. If 
-     *                       set to false, {@link EncodingInfo} and {@link EncodingId} are not generated for schemas in 
-     *                       the group. 
+     * @param properties          Map of properties. Example properties could include flag to indicate whether client should
+     *                            encode registry service generated encoding id with payload. 
      * @return True indicates if the group was added successfully, false if it exists. 
      */
     boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules,
-                     boolean validateByObjectType, boolean enableEncoding);
+                     boolean validateByObjectType, Map<String, String> properties);
     
     /**
      * Api to remove group. 
@@ -65,8 +64,7 @@ public interface SchemaRegistryClient {
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#validateByObjectType} that specifies if schemas should be exclusively validated against 
      * schemas that have the same {@link SchemaInfo#name}. 
-     * {@link GroupProperties#enableEncoding} describes whether registry should generate encoding ids to identify 
-     * encoding properties in {@link EncodingInfo}.
+     * {@link GroupProperties#properties} describes generic properties for a group.
      * 
      * @param group Name of group.
      * @return Group properties which includes property like Schema Type and compatibility policy. 
@@ -85,7 +83,7 @@ public interface SchemaRegistryClient {
      * Add new rule to {@link SchemaValidationRules}. 
      * 
      * @param group Name of group. 
-     * @param rule Rule to add
+     * @param rule SchemaValidationRule to add
      */
     void addSchemaValidationRule(String group, SchemaValidationRule rule);
 
@@ -93,7 +91,7 @@ public interface SchemaRegistryClient {
      * Remove rule from {@link SchemaValidationRules}.
      * 
      * @param group Name of group. 
-     * @param rule Rule to remove
+     * @param rule SchemaValidationRule to remove
      */
     void removeSchemaValidationRule(String group, SchemaValidationRule rule);
     
@@ -203,8 +201,7 @@ public interface SchemaRegistryClient {
     boolean canRead(String group, SchemaInfo schema);
 
     /**
-     * List of compressions used for encoding in the group. This will be returned only if {@link GroupProperties#enableEncoding}
-     * is set to true. 
+     * List of compressions used for encoding in the group. 
      * 
      * @param group Name of group. 
      * @return List of compressions used for encoding in the group. 

@@ -18,7 +18,7 @@ import lombok.Setter;
  * Registry supports Avro, Protobuf and Json schema types but any custom type could be used with the registry using custom type. 
  *
  * If a schema type is not present in the enum it can be specified using {@link SchemaType#custom} with {@link SchemaType#customTypeName}. 
- * Allowed values of {@link Compatibility} mode with custom type are AllowAny or DisallowAll.
+ * Allowed values of {@link Compatibility} mode with custom type are AllowAny or DenyAll.
  */
 
 public enum SchemaType {

@@ -22,7 +22,7 @@ import java.io.IOException;
  * Defines different Compatibility policy options for schema evolution for schemas within a group.
 
  * {@link Type#AllowAny}: allow any changes to schema without any checks performed by the registry. 
- * {@link Type#DisallowAll}: disables any changes to the schema for the group.
+ * {@link Type#DenyAll}: disables any changes to the schema for the group.
  * {@link Type#Backward}: a new schema can read data written by last schema. 
  * {@link Type#BackwardTransitive}: a new schema can read data written by any of previous schemas. 
  * {@link Type#BackwardTill}: a new schema can read data written by any of previous schemas till schema 
@@ -33,13 +33,13 @@ import java.io.IOException;
  * can read data written by new schema. 
  * {@link Type#Full}: both backward and forward.
  * {@link Type#FullTransitive}: both backward and forward compatibility with all previous schemas.
- * {@link Type#BackwardTillAndForwardTill}: All previous schemas till schema identified by version {@link Compatibility#forwardTill}
+ * {@link Type#BackwardAndForwardTill}: All previous schemas till schema identified by version {@link Compatibility#forwardTill}
  * can read data written by new schema. New schema can be used to read data written by any of previous schemas till schema 
  * identified by version {@link Compatibility#backwardTill}. 
  */
 @Data
 @Builder
-public class Compatibility {
+public class Compatibility implements SchemaValidationRule {
     public static final Serializer SERIALIZER = new Serializer();
 
     private final Type compatibility;
@@ -55,37 +55,70 @@ public class Compatibility {
         this.backwardTill = backwardTill;
         this.forwardTill = forwardTill;
     }
-    
+
+    @Override
+    public String getName() {
+        return Compatibility.class.getSimpleName();
+    }
+
     public enum Type {
-        AllowAny, 
-        DisallowAll, 
+        AllowAny,
+        DenyAll,
         Backward,
         BackwardTill,
-        BackwardTransitive, 
-        Forward, 
+        BackwardTransitive,
+        Forward,
         ForwardTill,
         ForwardTransitive,
-        BackwardTillAndForwardTill,
+        BackwardAndForwardTill,
         Full,
         FullTransitive;
     }
-
-    public static Compatibility of(Compatibility.Type type) {
-        return new Compatibility(type);
+    
+    public static Compatibility backward() {
+        return new Compatibility(Type.Backward);
     }
-
-    public static Compatibility backwardTill(VersionInfo backwardTill) {
-        return new Compatibility(Type.BackwardTill, backwardTill, null);
+    
+    public static Compatibility backwardTill(VersionInfo version) {
+        return new Compatibility(Type.BackwardTill, version, null);
+    }
+    
+    public static Compatibility backwardTransitive() {
+        return new Compatibility(Type.BackwardTransitive);
+    }
+    
+    public static Compatibility forward() {
+        return new Compatibility(Type.Forward);
     }
 
     public static Compatibility forwardTill(VersionInfo forwardTill) {
         return new Compatibility(Type.ForwardTill, null, forwardTill);
     }
 
-    public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
-        return new Compatibility(Type.ForwardTill, backwardTill, forwardTill);
+    public static Compatibility forwardTransitive() {
+        return new Compatibility(Type.ForwardTransitive);
     }
 
+    public static Compatibility full() {
+        return new Compatibility(Type.Full);
+    }
+
+    public static Compatibility fullTransitive() {
+        return new Compatibility(Type.FullTransitive);
+    }
+
+    public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
+        return new Compatibility(Type.BackwardAndForwardTill, backwardTill, forwardTill);
+    }
+
+    public static Compatibility allowAny() {
+        return new Compatibility(Type.AllowAny);
+    }
+
+    public static Compatibility denyAll() {
+        return new Compatibility(Type.DenyAll);
+    }
+    
     private static class CompatibilityBuilder implements ObjectBuilder<Compatibility> {
     }
 

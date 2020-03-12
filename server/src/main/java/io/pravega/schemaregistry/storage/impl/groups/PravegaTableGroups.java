@@ -77,7 +77,7 @@ public class PravegaTableGroups implements Groups<Version> {
                            
                            boolean toReturn = entry.getObject().getId().equals(id);
                            return log.create().thenCompose(v -> index.create())
-                                     .thenCompose(v -> grp.create(groupProperties.getSchemaType(), groupProperties.isEnableEncoding(),
+                                     .thenCompose(v -> grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(),
                                              groupProperties.isValidateByObjectType(), groupProperties.getSchemaValidationRules()))
                                      .thenCompose(v -> {
                                          byte[] newValue = new GroupsValue(entry.getObject().getId(), GroupsValue.State.Active).toBytes();

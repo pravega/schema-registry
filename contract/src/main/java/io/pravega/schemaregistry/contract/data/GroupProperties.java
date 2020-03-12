@@ -17,7 +17,10 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Map;
 
 /**
  * Different configuration choices for a group. 
@@ -31,11 +34,11 @@ import java.io.IOException;
  * for each type independently.
  * If validateByObjectType is set to true, then schemas are validate against other schemas in the group that share the same 
  * {@link SchemaInfo#name}.  
- * {@link GroupProperties#enableEncoding} This flag is used to specify if registry should generate encoding ids or not. 
- * If enableEncoding is set to true, the registry service will generate {@link EncodingId} for writer applications using 
- * registry client to associate encoding id with the serialized payload. A reader application can query the registry service
- * to learn if it needs to expect event payload with an encoding header or not. 
- * This allows schema registry to be used with pravega streams without actually forcing applications to include encoding information 
+ * {@link GroupProperties#properties} This is general purpose properties bag to include any additional metadata for the group. 
+ * For example, a group properties can include information about whether encodingIds are written as header along with data payload.  
+ * Its usage in pravega clients is to indicate the same. The writer and reader clients may look for specific properties to determine 
+ * how to decode the payload in the stream. 
+ * This allows schema registry to be used with pravega streams with applications optionally choosing to include encoding information 
  * with the payload. This is useful for serialization formats where it is not mandatory to share writer schema at the read time 
  * while still accruing other benefits of registry service such as declaration of structure of data in the stream and evolution
  * of schemas in conformance with schema validation rules. 
@@ -49,7 +52,7 @@ public class GroupProperties {
     private final SchemaType schemaType;
     private final SchemaValidationRules schemaValidationRules;
     private final boolean validateByObjectType;
-    private final boolean enableEncoding;
+    private final Map<String, String> properties;
 
     private static class GroupPropertiesBuilder implements ObjectBuilder<GroupProperties> {
     }
@@ -74,14 +77,14 @@ public class GroupProperties {
             SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
             SchemaValidationRules.SERIALIZER.serialize(target, e.schemaValidationRules);
             target.writeBoolean(e.validateByObjectType);
-            target.writeBoolean(e.enableEncoding);
+            target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
         }
 
         private void read00(RevisionDataInput source, GroupProperties.GroupPropertiesBuilder b) throws IOException {
             b.schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
              .schemaValidationRules(SchemaValidationRules.SERIALIZER.deserialize(source))
              .validateByObjectType(source.readBoolean())
-             .enableEncoding(source.readBoolean());
+             .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
         }
     }
 }

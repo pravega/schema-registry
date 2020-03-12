@@ -27,13 +27,16 @@ import javax.validation.constraints.*;
  */
 
 public class Compatibility   {
+  @JsonProperty("name")
+  private String name = null;
+
   /**
    * Gets or Sets policy
    */
   public enum PolicyEnum {
     ALLOWANY("AllowAny"),
     
-    DISALLOWALL("DisallowAll"),
+    DENYALL("DenyAll"),
     
     BACKWARD("Backward"),
     
@@ -84,6 +87,26 @@ public class Compatibility   {
 
   @JsonProperty("forwardTill")
   private VersionInfo forwardTill = null;
+
+  public Compatibility name(String name) {
+    this.name = name;
+    return this;
+  }
+
+  /**
+   * Get name
+   * @return name
+   **/
+  @JsonProperty("name")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
 
   public Compatibility policy(PolicyEnum policy) {
     this.policy = policy;
@@ -152,14 +175,15 @@ public class Compatibility   {
       return false;
     }
     Compatibility compatibility = (Compatibility) o;
-    return Objects.equals(this.policy, compatibility.policy) &&
+    return Objects.equals(this.name, compatibility.name) &&
+        Objects.equals(this.policy, compatibility.policy) &&
         Objects.equals(this.backwardTill, compatibility.backwardTill) &&
         Objects.equals(this.forwardTill, compatibility.forwardTill);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(policy, backwardTill, forwardTill);
+    return Objects.hash(name, policy, backwardTill, forwardTill);
   }
 
 
@@ -168,6 +192,7 @@ public class Compatibility   {
     StringBuilder sb = new StringBuilder();
     sb.append("class Compatibility {\n");
     
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    policy: ").append(toIndentedString(policy)).append("\n");
     sb.append("    backwardTill: ").append(toIndentedString(backwardTill)).append("\n");
     sb.append("    forwardTill: ").append(toIndentedString(forwardTill)).append("\n");

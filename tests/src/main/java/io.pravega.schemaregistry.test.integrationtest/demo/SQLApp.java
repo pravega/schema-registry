@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.test.integrationtest.demo;
 
 import com.google.common.base.Charsets;
-import com.google.common.collect.ImmutableList;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -53,6 +52,7 @@ import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -150,7 +150,7 @@ public class SQLApp {
         }
 
         String tableGroupId = getTableGroupId(tableName);
-        SchemaValidationRules validationRules = new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.DisallowAll));
+        SchemaValidationRules validationRules = SchemaValidationRules.of(Compatibility.denyAll());
         SchemaType schemaType = SchemaType.custom("table");
 
         Map<String, String> map = new HashMap<>();
@@ -159,7 +159,7 @@ public class SQLApp {
         
         SchemaInfo tableSchemaInfo = new SchemaInfo("table", schemaType, tableSchema.toBytes(), map);
         
-        client.addGroup(tableGroupId, schemaType, validationRules, false, false);
+        client.addGroup(tableGroupId, schemaType, validationRules, false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
         client.addSchemaIfAbsent(tableGroupId, tableSchemaInfo);
     }
 

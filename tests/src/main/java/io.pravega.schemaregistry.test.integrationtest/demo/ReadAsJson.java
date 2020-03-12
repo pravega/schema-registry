@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest.demo;
 
-import com.google.common.collect.ImmutableList;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
@@ -49,6 +48,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
+import java.util.Collections;
 
 public class ReadAsJson {
     private final ClientConfig clientConfig;
@@ -130,8 +130,8 @@ public class ReadAsJson {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
-                new SchemaValidationRules(ImmutableList.of(), Compatibility.of(Compatibility.Type.Backward)),
-                true, true);
+                SchemaValidationRules.of(Compatibility.backward()),
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamReader<GenericRecord> createReader(String groupId) {
