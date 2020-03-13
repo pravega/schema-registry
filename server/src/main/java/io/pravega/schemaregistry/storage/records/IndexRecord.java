@@ -193,7 +193,7 @@ public interface IndexRecord {
     @AllArgsConstructor
     class VersionInfoKey implements IndexKey {
         public static final Serializer SERIALIZER = new Serializer();
-        
+
         private final VersionInfo versionInfo;
 
         private static class VersionInfoKeyBuilder implements ObjectBuilder<VersionInfoKey> {
@@ -216,11 +216,11 @@ public interface IndexRecord {
             }
 
             private void write00(VersionInfoKey e, RevisionDataOutput target) throws IOException {
-                VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
+                VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
             }
 
             private void read00(RevisionDataInput source, VersionInfoKey.VersionInfoKeyBuilder b) throws IOException {
-                b.versionInfo(VersionInfo.SERIALIZER.deserialize(source));
+                b.versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source));
             }
         }
     }
@@ -276,7 +276,7 @@ public interface IndexRecord {
         public static final Serializer SERIALIZER = new Serializer();
         
         private final List<VersionInfo> versions;
-
+        
         @SneakyThrows
         @Override
         public byte[] toBytes() {
@@ -303,11 +303,11 @@ public interface IndexRecord {
             }
 
             private void write00(SchemaVersionValue e, RevisionDataOutput target) throws IOException {
-                target.writeCollection(e.versions, VersionInfo.SERIALIZER::serialize);
+                target.writeCollection(e.versions, VersionInfoSerializer.SERIALIZER::serialize);
             }
 
             private void read00(RevisionDataInput source, SchemaVersionValue.SchemaVersionValueBuilder b) throws IOException {
-                b.versions(new ArrayList<>(source.readCollection(VersionInfo.SERIALIZER::deserialize)));
+                b.versions(new ArrayList<>(source.readCollection(VersionInfoSerializer.SERIALIZER::deserialize)));
             }
         }
     }
@@ -320,7 +320,7 @@ public interface IndexRecord {
         
         private final VersionInfo versionInfo;
         private final CompressionType compressionType;
-
+        
         @SneakyThrows
         @Override
         public byte[] toBytes() {
@@ -347,12 +347,12 @@ public interface IndexRecord {
             }
 
             private void write00(EncodingInfoIndex e, RevisionDataOutput target) throws IOException {
-                VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
+                VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
                 CompressionTypeRecord.SERIALIZER.serialize(target, new CompressionTypeRecord(e.compressionType));
             }
 
             private void read00(RevisionDataInput source, EncodingInfoIndex.EncodingInfoIndexBuilder b) throws IOException {
-                b.versionInfo(VersionInfo.SERIALIZER.deserialize(source))
+                b.versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source))
                  .compressionType(CompressionTypeRecord.SERIALIZER.deserialize(source).getCompressionType());
             }
         }
@@ -392,11 +392,11 @@ public interface IndexRecord {
             }
 
             private void write00(EncodingIdIndex e, RevisionDataOutput target) throws IOException {
-                EncodingId.SERIALIZER.serialize(target, e.encodingId);
+                EncodingIdSerializer.SERIALIZER.serialize(target, e.encodingId);
             }
 
             private void read00(RevisionDataInput source, EncodingIdIndex.EncodingIdIndexBuilder b) throws IOException {
-                b.encodingId(EncodingId.SERIALIZER.deserialize(source));
+                b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source));
             }
         }
     }

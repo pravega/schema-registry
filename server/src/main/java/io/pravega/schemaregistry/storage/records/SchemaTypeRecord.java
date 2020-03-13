@@ -7,12 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.data;
+package io.pravega.schemaregistry.storage.records;
 
 import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
+import io.pravega.schemaregistry.contract.data.SchemaType;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -29,6 +30,7 @@ public class SchemaTypeRecord {
     public static final Serializer SERIALIZER = new Serializer();
 
     private final SchemaType schemaType;
+
 
     private static class SchemaTypeRecordBuilder implements ObjectBuilder<SchemaTypeRecord> {
     }

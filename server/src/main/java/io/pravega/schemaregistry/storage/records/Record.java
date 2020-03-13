@@ -40,10 +40,10 @@ public interface Record {
     @AllArgsConstructor
     public class SchemaRecord implements Record {
         public static final Serializer SERIALIZER = new Serializer();
-
+        
         private final SchemaInfo schemaInfo;
         private final VersionInfo versionInfo;
-
+        
         private static class SchemaRecordBuilder implements ObjectBuilder<SchemaRecord> {
         }
 
@@ -64,13 +64,13 @@ public interface Record {
             }
 
             private void write00(SchemaRecord e, RevisionDataOutput target) throws IOException {
-                SchemaInfo.SERIALIZER.serialize(target, e.schemaInfo);
-                VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
+                SchemaInfoSerializer.SERIALIZER.serialize(target, e.schemaInfo);
+                VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
-                b.schemaInfo(SchemaInfo.SERIALIZER.deserialize(source))
-                 .versionInfo(VersionInfo.SERIALIZER.deserialize(source));
+                b.schemaInfo(SchemaInfoSerializer.SERIALIZER.deserialize(source))
+                 .versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source));
             }
         }
     }
@@ -84,7 +84,7 @@ public interface Record {
         private final EncodingId encodingId;
         private final VersionInfo versionInfo;
         private final CompressionType compressionType;
-
+        
         private static class EncodingRecordBuilder implements ObjectBuilder<EncodingRecord> {
         }
 
@@ -105,14 +105,14 @@ public interface Record {
             }
 
             private void write00(EncodingRecord e, RevisionDataOutput target) throws IOException {
-                EncodingId.SERIALIZER.serialize(target, e.encodingId);
-                VersionInfo.SERIALIZER.serialize(target, e.versionInfo);
+                EncodingIdSerializer.SERIALIZER.serialize(target, e.encodingId);
+                VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
                 CompressionTypeRecord.SERIALIZER.serialize(target, new CompressionTypeRecord(e.compressionType));
             }
 
             private void read00(RevisionDataInput source, EncodingRecord.EncodingRecordBuilder b) throws IOException {
-                b.encodingId(EncodingId.SERIALIZER.deserialize(source))
-                 .versionInfo(VersionInfo.SERIALIZER.deserialize(source))
+                b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source))
+                 .versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source))
                  .compressionType(CompressionTypeRecord.SERIALIZER.deserialize(source).getCompressionType());
             }
         }
@@ -125,6 +125,7 @@ public interface Record {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final SchemaValidationRules validationRules;
+        
         private static class ValidationRecordBuilder implements ObjectBuilder<ValidationRecord> {
         }
 
@@ -145,11 +146,11 @@ public interface Record {
             }
 
             private void write00(ValidationRecord e, RevisionDataOutput target) throws IOException {
-                SchemaValidationRules.SERIALIZER.serialize(target, e.validationRules);
+                SchemaValidationRulesSerializer.SERIALIZER.serialize(target, e.validationRules);
             }
 
             private void read00(RevisionDataInput source, ValidationRecord.ValidationRecordBuilder b) throws IOException {
-                b.validationRules(SchemaValidationRules.SERIALIZER.deserialize(source));
+                b.validationRules(SchemaValidationRulesSerializer.SERIALIZER.deserialize(source));
             }
         }
     }
@@ -188,14 +189,14 @@ public interface Record {
                 SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
                 target.writeBoolean(e.validateByObjectType);
                 target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
-                SchemaValidationRules.SERIALIZER.serialize(target, e.validationRules);
+                SchemaValidationRulesSerializer.SERIALIZER.serialize(target, e.validationRules);
             }
 
             private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
                 b.schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
                  .validateByObjectType(source.readBoolean())
                  .properties(source.readMap(DataInput::readUTF, DataInput::readUTF))
-                 .validationRules(SchemaValidationRules.SERIALIZER.deserialize(source));
+                 .validationRules(SchemaValidationRulesSerializer.SERIALIZER.deserialize(source));
             }
         }
     }
