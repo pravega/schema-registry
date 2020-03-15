@@ -25,6 +25,7 @@ public class StoreExceptions extends RuntimeException {
     public enum Type {
         DATA_EXISTS,
         DATA_NOT_FOUND,
+        DATA_CONTAINER_NOT_FOUND,
         DATA_NOT_EMPTY,
         WRITE_CONFLICT,
         CONNECTION_ERROR,
@@ -84,6 +85,9 @@ public class StoreExceptions extends RuntimeException {
             case DATA_NOT_FOUND:
                 exception = new DataNotFoundException(errorMessage, cause);
                 break;
+            case DATA_CONTAINER_NOT_FOUND:
+                exception = new DataContainerNotFoundException(errorMessage, cause);
+                break;
             case DATA_NOT_EMPTY:
                 exception = new DataNotEmptyException(errorMessage, cause);
                 break;
@@ -116,6 +120,15 @@ public class StoreExceptions extends RuntimeException {
      */
     public static class DataNotFoundException extends StoreExceptions {
         private DataNotFoundException(String errorMessage, Throwable cause) {
+            super(errorMessage, cause);
+        }
+    }
+
+    /**
+     * Exception type when node does not exist and is operated on.
+     */
+    public static class DataContainerNotFoundException extends StoreExceptions {
+        private DataContainerNotFoundException(String errorMessage, Throwable cause) {
             super(errorMessage, cause);
         }
     }

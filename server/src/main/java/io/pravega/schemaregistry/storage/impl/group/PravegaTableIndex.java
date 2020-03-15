@@ -77,7 +77,7 @@ public class PravegaTableIndex implements Index<Version> {
 
     @Override
     public CompletableFuture<Void> addEntry(IndexRecord.IndexKey key, IndexRecord.IndexValue value) {
-        return Futures.toVoid(tablesStore.addNewEntryIfAbsent(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), value.toBytes()));
+        return tablesStore.addNewEntryIfAbsent(tableName, INDEX_KEY_SERIALIZER.toKeyString(key), value.toBytes());
     }
 
     @Override
