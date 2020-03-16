@@ -40,9 +40,15 @@ import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
+import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializers.JSonGenericObject;
 import io.pravega.schemaregistry.serializers.SerDeFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.test.integrationtest.demo.objects.Address;
+import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser1;
+import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser2;
+import io.pravega.schemaregistry.test.integrationtest.demo.objects.User;
 import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
@@ -724,12 +730,9 @@ public class Demo {
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
-        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.of(ProtobufTest.Message1.class.getSimpleName(), 
-                ProtobufTest.Message1.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.of(ProtobufTest.Message2.class.getSimpleName(), 
-                ProtobufTest.Message2.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.of(ProtobufTest.Message3.class.getSimpleName(), 
-                ProtobufTest.Message3.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofBaseType(ProtobufTest.Message3.class, descriptorSet);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -787,6 +790,144 @@ public class Demo {
         assert null != genEvent.getEvent();
         genEvent = reader2.readNextEvent(1000);
         assert null != genEvent.getEvent();
+        // endregion
+    }
+
+    private void testJson(boolean encodeHeaders) throws IOException {
+        // create stream
+        String scope = "scope";
+        String stream = "json" + encodeHeaders;
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+
+        StreamManager streamManager = new StreamManagerImpl(clientConfig);
+        streamManager.createScope(scope);
+        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+
+        SchemaType schemaType = SchemaType.Json;
+        client.addGroup(groupId, schemaType,
+                SchemaValidationRules.of(Compatibility.allowAny()),
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
+
+        JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
+
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .autoRegisterSchema(true)
+                                                            .registryConfigOrClient(Either.right(client))
+                                                            .build();
+        // region writer
+        Serializer<DerivedUser2> serializer = SerDeFactory.jsonSerializer(serializerConfig, schema);
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        EventStreamWriter<DerivedUser2> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        writer.writeEvent(new DerivedUser2("name", new Address("street", "city"), 30, "user2"));
+
+        // endregion
+
+        // region read into specific schema
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String readerGroupName = "rg" + stream;
+        readerGroupManager.createReaderGroup(readerGroupName,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<DerivedUser2> deserializer = SerDeFactory.jsonDeserializer(serializerConfig, schema);
+
+        EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
+
+        EventRead<DerivedUser2> event = reader.readNextEvent(1000);
+        assert event.getEvent() != null;
+
+        // endregion
+
+        // region generic read
+        String rg2 = "rg2" + stream;
+        readerGroupManager.createReaderGroup(rg2,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<JSonGenericObject> genericDeserializer = SerDeFactory.genericJsonDeserializer(serializerConfig);
+
+        EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+
+        EventRead<JSonGenericObject> event2 = reader2.readNextEvent(1000);
+        assert event2.getEvent() != null;
+        JSonGenericObject obj = event2.getEvent();
+
+        com.fasterxml.jackson.module.jsonSchema.JsonSchema jsonSchema = obj.getJsonSchema();
+        if (encodeHeaders) {
+            assert jsonSchema != null;
+        } else {
+            assert jsonSchema == null;
+        }
+        // endregion
+    }
+
+    private void testJsonMultiplexed() throws IOException {
+        // create stream
+        String scope = "scope";
+        String stream = "jsonmultiplexed";
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+
+        StreamManager streamManager = new StreamManagerImpl(clientConfig);
+        streamManager.createScope(scope);
+        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+
+        SchemaType schemaType = SchemaType.Json;
+        client.addGroup(groupId, schemaType,
+                SchemaValidationRules.of(Compatibility.allowAny()),
+                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+
+        JSONSchema<User> schema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
+        JSONSchema<User> schema2 = JSONSchema.ofBaseType(DerivedUser2.class, User.class);
+
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .autoRegisterSchema(true)
+                                                            .registryConfigOrClient(Either.right(client))
+                                                            .build();
+        // region writer
+        Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();
+        map.put(DerivedUser1.class, schema1);
+        map.put(DerivedUser2.class, schema2);
+        Serializer<User> serializer = SerDeFactory.multiplexedJsonSerializer(serializerConfig, map);
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        EventStreamWriter<User> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        writer.writeEvent(new DerivedUser2());
+        writer.writeEvent(new DerivedUser1());
+
+        // endregion
+
+        // region read into specific schema
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream;
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<User> deserializer = SerDeFactory.multiplexedJsonDeserializer(serializerConfig, map);
+
+        EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+
+        EventRead<User> event = reader.readNextEvent(1000);
+        assert event.getEvent() != null;
+        assert event.getEvent() instanceof DerivedUser2;
+        event = reader.readNextEvent(1000);
+        assert event.getEvent() != null;
+        assert event.getEvent() instanceof DerivedUser1;
+        // endregion
+
+        // region read into writer schema
+        String rg2 = "rg2" + stream;
+        readerGroupManager.createReaderGroup(rg2,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<JSonGenericObject> genericDeserializer = SerDeFactory.genericJsonDeserializer(serializerConfig);
+
+        EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+
+        EventRead<JSonGenericObject> genEvent = reader2.readNextEvent(1000);
+        assert genEvent.getEvent() != null;
+        genEvent = reader2.readNextEvent(1000);
+        assert genEvent.getEvent() != null;
         // endregion
     }
 

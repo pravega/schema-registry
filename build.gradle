@@ -274,7 +274,7 @@ project('serializers') {
         compile group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
         compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
-
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
     }

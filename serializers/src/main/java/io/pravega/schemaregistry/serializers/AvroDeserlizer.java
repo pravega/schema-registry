@@ -31,7 +31,7 @@ import java.util.function.BiFunction;
 
 class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserializer<T> {
     private final AvroSchema<T> avroSchema;
-    private final LoadingCache<String, Schema> knownSchemas;
+    private final LoadingCache<byte[], Schema> knownSchemas;
 
     AvroDeserlizer(String groupId, SchemaRegistryClient client,
                    AvroSchema<T> schema,
@@ -39,9 +39,10 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
         super(groupId, client, schema, false, uncompress, encodingCache);
         Preconditions.checkNotNull(schema);
         this.avroSchema = schema;
-        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<String, Schema>() {
+        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {
             @Override
-            public Schema load(String schemaString) throws Exception {
+            public Schema load(byte[] schemaData) throws Exception {
+                String schemaString = new String(schemaData, Charsets.UTF_8);
                 return new Schema.Parser().parse(schemaString);
             }
         });
@@ -51,7 +52,7 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
     @Override
     protected T deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.get(new String(writerSchemaInfo.getSchemaData(), Charsets.UTF_8));
+        Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData());
         Schema readerSchema = avroSchema.getSchema();
         
         SpecificDatumReader<T> datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);

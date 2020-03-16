@@ -29,12 +29,12 @@ import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 
 public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<DynamicMessage> {
-    private final LoadingCache<SchemaInfo, Descriptors.Descriptor> cache;
+    private final LoadingCache<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
     ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
                               BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
         super(groupId, client, schema, false, uncompress, encodingCache);
-        this.cache = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Descriptors.Descriptor>() {
+        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Descriptors.Descriptor>() {
             @Override
             public Descriptors.Descriptor load(SchemaInfo schemaToUse) throws Exception {
                 DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaToUse.getSchemaData());
@@ -67,7 +67,7 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
         Preconditions.checkArgument(writerSchemaInfo != null || readerSchemaInfo != null);
         
         SchemaInfo schemaToUse = readerSchemaInfo == null ? writerSchemaInfo : readerSchemaInfo;
-        Descriptors.Descriptor messageType = cache.get(schemaToUse);
+        Descriptors.Descriptor messageType = knownSchemas.get(schemaToUse);
 
         byte[] array = new byte[buffer.remaining()];
         buffer.get(array);

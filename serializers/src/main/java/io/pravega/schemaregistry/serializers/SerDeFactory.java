@@ -18,6 +18,7 @@ import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
+import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.IndexedRecord;
@@ -283,6 +284,126 @@ public class SerDeFactory {
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
                         x -> new ProtobufDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
+        return new MultiplexedDeserializer<>(groupId, registryClient,
+                deserializerMap, false, config.getUncompress(), encodingCache);
+    }
+    //endregion
+
+    // region json
+    /**
+     * Creates a typed json serializer for the Schema. The serializer implementation returned from this method is
+     * responsible for interacting with schema registry service and ensures that only valid registered schema can be used. 
+     *
+     * Note: the returned serializer only implements {@link Serializer#serialize(Object)}. 
+     * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
+     *
+     * @param config Serializer Config used for instantiating a new serializer. 
+     * @param schemaData Schema data that encapsulates an Json Schema. 
+     * @param <T> Type of event.  
+     * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
+     * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
+     */
+    public static <T> Serializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schemaData) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        return new JsonSerializer<>(groupId, registryClient, schemaData, config.getCompressor(),
+                config.isAutoRegisterSchema(), encodingCache);
+    }
+
+    /**
+     * Creates a typed json deserializer for the Schema. The deserializer implementation returned from this method is
+     * responsible for interacting with schema registry service and validate the writer schema before using it. 
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}. 
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config Serializer Config used for instantiating a new serializer. 
+     * @param schemaData Schema data that encapsulates an JSONSchema 
+     * @param <T> Type of event. The typed event should be an avro generated class. For generic type use {@link #genericJsonDeserializer}
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
+    public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schemaData) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        // schema can be null in which case deserialization will happen into dynamic message
+        return new JsonDeserlizer<>(groupId, registryClient, schemaData, config.getUncompress(), encodingCache);
+    }
+
+    /**
+     * Creates a generic json deserializer. 
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}. 
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config Serializer Config used for instantiating a new serializer. 
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
+    public static Serializer<JSonGenericObject> genericJsonDeserializer(SerializerConfig config) {
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        String groupId = config.getGroupId();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        return new JsonGenericDeserlizer(groupId, registryClient, config.getUncompress(), encodingCache);
+    }
+
+    /**
+     * A multiplexed Json serializer that takes a map of schemas and validates them individually.
+     *
+     * @param config Serializer config. 
+     * @param schemas map of json schemas. 
+     * @param <T> Base Type of schemas.
+     * @return a Serializer which can serialize events of different types for which schemas are supplied. 
+     */
+    public static <T> Serializer<T> multiplexedJsonSerializer(
+            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
+                        x -> new JsonSerializer<>(groupId, registryClient, x.getValue(), config.getCompressor(),
+                                config.isAutoRegisterSchema(), encodingCache)));
+        return new MultiplexedSerializer<>(serializerMap);
+    }
+
+    /**
+     * A multiplexed json Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     * @param config Serializer config. 
+     * @param schemas map of json schemas. 
+     * @param <T> Base type of schemas. 
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects. 
+     */
+    public static <T> Serializer<T> multiplexedJsonDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(x -> x.getValue().getSchemaId(),
+                        x -> new JsonDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
         return new MultiplexedDeserializer<>(groupId, registryClient,
                 deserializerMap, false, config.getUncompress(), encodingCache);
     }

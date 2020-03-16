@@ -31,14 +31,15 @@ import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 
 class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
-    private final LoadingCache<String, Schema> knownSchemas;
+    private final LoadingCache<byte[], Schema> knownSchemas;
 
     AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<GenericRecord> schema,
                           BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
         super(groupId, client, schema, false, uncompress, encodingCache);
-        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<String, Schema>() {
+        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {
             @Override
-            public Schema load(String schemaString) throws Exception {
+            public Schema load(byte[] schemaData) throws Exception {
+                String schemaString = new String(schemaData, Charsets.UTF_8);
                 return new Schema.Parser().parse(schemaString);
             }
         });
@@ -48,8 +49,8 @@ class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
     @Override
     protected GenericRecord deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.get(new String(writerSchemaInfo.getSchemaData(), Charsets.UTF_8));
-        Schema readerSchema = knownSchemas.get(new String(readerSchemaInfo.getSchemaData(), Charsets.UTF_8));
+        Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData());
+        Schema readerSchema = knownSchemas.get(readerSchemaInfo.getSchemaData());
         
         GenericDatumReader<GenericRecord> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
         byte[] array = new byte[buffer.remaining()];
