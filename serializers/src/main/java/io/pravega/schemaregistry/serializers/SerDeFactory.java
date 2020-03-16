@@ -162,7 +162,6 @@ public class SerDeFactory {
         return new MultiplexedDeserializer<>(groupId, registryClient,
                 deserializerMap, false, config.getUncompress(), encodingCache);
     }
-
     // endregion
     
     // region protobuf

@@ -57,7 +57,7 @@ public class SerializerConfig {
         private Compressor compressor = new Compressor.Noop();
         private BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress = (x, y) -> {
             if (x.equals(CompressionType.None)) {
-                return y;
+                return compressor.uncompress(y);
             } else {
                 throw new IllegalArgumentException();
             }

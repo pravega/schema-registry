@@ -10,8 +10,14 @@
 package io.pravega.schemaregistry.compression;
 
 import io.pravega.schemaregistry.contract.data.CompressionType;
+import lombok.SneakyThrows;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Compressor interface that defines methods to compress and uncompress data for a given {@link CompressionType}.
@@ -38,6 +44,45 @@ public interface Compressor {
         @Override
         public ByteBuffer uncompress(ByteBuffer data) {
             return data;
+        }
+    }
+
+    class GZip implements Compressor {
+        @Override
+        public CompressionType getCompressionType() {
+            return CompressionType.GZip;
+        }
+
+        @SneakyThrows(IOException.class)
+        @Override
+        public ByteBuffer compress(ByteBuffer data) {
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+
+            ByteArrayOutputStream bos = new ByteArrayOutputStream(array.length);
+            GZIPOutputStream gzipOS = new GZIPOutputStream(bos);
+            gzipOS.write(array);
+            gzipOS.close();
+            byte[] compressed = bos.toByteArray();
+            return ByteBuffer.wrap(compressed);
+        }
+
+        @SneakyThrows(IOException.class)
+        @Override
+        public ByteBuffer uncompress(ByteBuffer data) {
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+
+            ByteArrayInputStream bis = new ByteArrayInputStream(array);
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            GZIPInputStream gzipIS = new GZIPInputStream(bis);
+            byte[] buffer = new byte[1024];
+            int len;
+            while ((len = gzipIS.read(buffer)) != -1) {
+                bos.write(buffer, 0, len);
+            }
+            byte[] uncompressed = bos.toByteArray();
+            return ByteBuffer.wrap(uncompressed);
         }
     }
 }

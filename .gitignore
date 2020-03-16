@@ -2,6 +2,7 @@
 *.iws
 *.ipr
 *.log.gz
+*.tmp
 /out
 .project
 build

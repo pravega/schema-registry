@@ -87,6 +87,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     @Override
     public ByteBuffer serialize(T obj) {
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+        ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
         
         if (this.encodeHeader.get()) {
             Preconditions.checkNotNull(schemaInfo);
@@ -98,16 +99,21 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         
         // if schema is not null, pass the schema to the serializer implementation
         if (schemaInfo != null) {
-            serialize(obj, schemaInfo, outputStream);
+            serialize(obj, schemaInfo, dataStream);
         } else {
-            serialize(obj, null, outputStream);
+            serialize(obj, null, dataStream);
         }
 
-        outputStream.flush();
+        dataStream.flush();
 
-        byte[] array = outputStream.toByteArray();
-        
-        return compressor.compress(ByteBuffer.wrap(array));
+        byte[] array = dataStream.toByteArray();
+
+        ByteBuffer compressed = compressor.compress(ByteBuffer.wrap(array));
+        array = new byte[compressed.remaining()];
+        compressed.get(array);
+
+        outputStream.write(array);
+        return ByteBuffer.wrap(outputStream.toByteArray());
     }
 
     protected abstract void serialize(T var, SchemaInfo schema, OutputStream outputStream);

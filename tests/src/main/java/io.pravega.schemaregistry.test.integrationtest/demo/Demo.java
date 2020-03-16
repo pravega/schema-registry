@@ -62,10 +62,12 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 
 @Slf4j
 public class Demo {
@@ -106,12 +108,14 @@ public class Demo {
 
     private final SchemaRegistryClient client;
     private final String id;
-    
+    private final Random random;
+
     public Demo() throws Exception {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create("http://localhost:9092"));
         client = RegistryClientFactory.createRegistryClient(config);
         id = Long.toString(System.currentTimeMillis());
+        random = new Random();
     }
     
     public static void main(String[] args) throws Exception {
@@ -160,7 +164,7 @@ public class Demo {
 
         EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
-        writer.writeEvent(record);
+        writer.writeEvent(record).join();
         // endregion
         
         // region writer with schema2
@@ -168,7 +172,7 @@ public class Demo {
 
         writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
-        writer.writeEvent(record);
+        writer.writeEvent(record).join();
         // endregion
         
         // region writer with schema3
@@ -265,7 +269,7 @@ public class Demo {
 
         EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
-        writer.writeEvent(record);
+        writer.writeEvent(record).join();
         // endregion
         
         // region writer with schema2
@@ -273,44 +277,112 @@ public class Demo {
 
         writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
-        writer.writeEvent(record);
+        writer.writeEvent(record).join();
         // endregion
         
         // region writer with schema3
         String mycompression = "mycompression";
+        Compressor myCompressor = new Compressor() {
+            @Override
+            public CompressionType getCompressionType() {
+                return CompressionType.custom(mycompression);
+            }
+
+            @Override
+            public ByteBuffer compress(ByteBuffer data) {
+                return data;
+            }
+
+            @Override
+            public ByteBuffer uncompress(ByteBuffer data) {
+                return data;
+            }
+        };
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
                                            .autoRegisterSchema(true)
-                                           .compressor(new Compressor() {
-                                               @Override
-                                               public CompressionType getCompressionType() {
-                                                   return CompressionType.custom(mycompression);
-                                               }
-
-                                               @Override
-                                               public ByteBuffer compress(ByteBuffer data) {
-                                                   return data;
-                                               }
-
-                                               @Override
-                                               public ByteBuffer uncompress(ByteBuffer data) {
-                                                   return data;
-                                               }
-                                           })
+                                           .compressor(myCompressor)
                                            .registryConfigOrClient(Either.right(client))
                                            .build();
 
         Serializer<Test1> serializer2 = SerDeFactory.avroSerializer(serializerConfig, schema3);
         EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
-        writer2.writeEvent(new Test1("a", 1));
+        writer2.writeEvent(new Test1("a", 1)).join();
+        // endregion 
+        
+        // region writer with compression gzip and schema 4
+        Compressor.GZip gzip = new Compressor.GZip();
+        serializerConfig = SerializerConfig.builder()
+                                           .groupId(groupId)
+                                           .autoRegisterSchema(true)
+                                           .compressor(gzip)
+                                           .registryConfigOrClient(Either.right(client))
+                                           .build();
+
+        Serializer<Test1> serializer3 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+        EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
+        String bigString = generateBigString(100);
+        writer3.writeEvent(new Test1(bigString, 1));
+        String bigString2 = generateBigString(200);
+        writer3.writeEvent(new Test1(bigString2, 2));
 
         List<CompressionType> list = client.getCompressions(groupId);
-        assert 2 == list.size();
+        assert 3 == list.size();
         assert list.stream().anyMatch(x -> mycompression.equals(x.getCustomTypeName()));
         assert list.stream().anyMatch(x -> x.equals(CompressionType.None));
+        assert list.stream().anyMatch(x -> x.equals(CompressionType.GZip));
+        // endregion
+        
+        // region reader
+        Compressor.Noop noop = new Compressor.Noop();
+
+        serializerConfig = SerializerConfig.builder()
+                                           .groupId(groupId)
+                                           .uncompress((x, y) -> {
+                                               switch (x) {
+                                                   case None:
+                                                       return noop.uncompress(y);
+                                                   case GZip:
+                                                       return gzip.uncompress(y);
+                                                   case Custom:
+                                                       if (x.getCustomTypeName().equals(mycompression)) {
+                                                           return myCompressor.uncompress(y);
+                                                       } else {
+                                                           throw new IllegalArgumentException();
+                                                       }
+                                                   default:
+                                                       throw new IllegalArgumentException();
+                                               }
+                                           })
+                                           .registryConfigOrClient(Either.right(client))
+                                           .build();
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream + System.currentTimeMillis();
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+
+        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+
+        EventRead<GenericRecord> event = reader.readNextEvent(1000);
+        while (event.isCheckpoint() || event.getEvent() != null) {
+            GenericRecord e = event.getEvent();
+            System.err.println(e);
+        }
         // endregion
     }
-    
+
+    private String generateBigString(int sizeInKb) {
+        StringBuilder builder = new StringBuilder();
+        for (int i = 0; i < sizeInKb; i++) {
+            byte[] array = new byte[1024];
+            random.nextBytes(array);
+            builder.append(Base64.getEncoder().encodeToString(array));
+        }
+        return builder.toString();
+    }
+
     private void testAvroReflect() throws IOException {
         // create stream
         String scope = "scope" + id;
@@ -339,7 +411,7 @@ public class Demo {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new TestClass("test"));
+        writer.writeEvent(new TestClass("test")).join();
 
         // endregion
 
@@ -400,7 +472,7 @@ public class Demo {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 0));
+        writer.writeEvent(new Test1("test", 0)).join();
 
         // endregion
 
@@ -543,7 +615,7 @@ public class Demo {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<ProtobufTest.Message1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build());
+        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
 
         // endregion
 
@@ -630,9 +702,9 @@ public class Demo {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<GeneratedMessageV3> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build());
-        writer.writeEvent(ProtobufTest.Message2.newBuilder().setName("test").setField1(0).build());
-        writer.writeEvent(ProtobufTest.Message3.newBuilder().setName("test").setField1(0).setField2(1).build());
+        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
+        writer.writeEvent(ProtobufTest.Message2.newBuilder().setName("test").setField1(0).build()).join();
+        writer.writeEvent(ProtobufTest.Message3.newBuilder().setName("test").setField1(0).setField2(1).build()).join();
 
         // endregion
 
