@@ -296,14 +296,78 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // endregion
 
         // region writer with schema2
-        serializer = SerDeFactory.avroSerializer(serializerConfig, schema2);
+        Serializer<GenericRecord> serializer2 = SerDeFactory.avroSerializer(serializerConfig, schema2);
 
-        writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        writer = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
         record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
         writer.writeEvent(record).join();
         // endregion
 
-        // region writer with schema3
+        // region writer with compression gzip 
+        Compressor.GZipCompressor gzip = new Compressor.GZipCompressor();
+        serializerConfig = SerializerConfig.builder()
+                                           .groupId(groupId)
+                                           .autoRegisterSchema(true)
+                                           .compressor(gzip)
+                                           .registryConfigOrClient(Either.right(client))
+                                           .build();
+
+        Serializer<Test1> serializer3 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+        EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
+        String bigString = generateBigString(100);
+        writer3.writeEvent(new Test1(bigString, 1));
+
+        List<CompressionType> list = client.getCompressions(groupId);
+        assertEquals(2, list.size());
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.GZip)));
+        // endregion
+        
+        // region writer with compression snappy
+        Compressor.SnappyCompressor snappy = new Compressor.SnappyCompressor();
+        serializerConfig = SerializerConfig.builder()
+                                           .groupId(groupId)
+                                           .autoRegisterSchema(true)
+                                           .compressor(snappy)
+                                           .registryConfigOrClient(Either.right(client))
+                                           .build();
+
+        Serializer<Test1> serializer4 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+        EventStreamWriter<Test1> writer4 = clientFactory.createEventWriter(stream, serializer4, EventWriterConfig.builder().build());
+        String bigString2 = generateBigString(200);
+        writer4.writeEvent(new Test1(bigString2, 1));
+
+        list = client.getCompressions(groupId);
+        assertEquals(3, list.size());
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.GZip)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.Snappy)));
+        // endregion
+        
+        // region reader
+        Compressor.Noop noop = new Compressor.Noop();
+
+        serializerConfig = SerializerConfig.builder()
+                                           .groupId(groupId)
+                                           .registryConfigOrClient(Either.right(client))
+                                           .build();
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream + System.currentTimeMillis();
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+
+        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+
+        EventRead<GenericRecord> event = reader.readNextEvent(1000);
+        while (event.isCheckpoint() || event.getEvent() != null) {
+            GenericRecord e = event.getEvent();
+            event = reader.readNextEvent(1000);
+        }
+        // endregion
+
+        // region writer with custom compression
         String mycompression = "mycompression";
         Compressor myCompressor = new Compressor() {
             @Override
@@ -328,82 +392,61 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                            .registryConfigOrClient(Either.right(client))
                                            .build();
 
-        Serializer<Test1> serializer2 = SerDeFactory.avroSerializer(serializerConfig, schema3);
-        EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
-        writer2.writeEvent(new Test1("a", 1)).join();
+        Serializer<Test1> serializer5 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+        EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer5, EventWriterConfig.builder().build());
+        String bigString3 = generateBigString(300);
+        writer2.writeEvent(new Test1(bigString3, 1)).join();
         // endregion 
 
-        // region writer with compression gzip and schema 4
-        Compressor.GZip gzip = new Compressor.GZip();
-        serializerConfig = SerializerConfig.builder()
-                                           .groupId(groupId)
-                                           .autoRegisterSchema(true)
-                                           .compressor(gzip)
-                                           .registryConfigOrClient(Either.right(client))
-                                           .build();
+        list = client.getCompressions(groupId);
+        assertEquals(4, list.size());
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.GZip)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.Snappy)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.Custom) && x.getCustomTypeName().equals(mycompression)));
 
-        Serializer<Test1> serializer3 = SerDeFactory.avroSerializer(serializerConfig, schema3);
-        EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
-        String bigString = generateBigString(100);
-        writer3.writeEvent(new Test1(bigString, 1));
-        String bigString2 = generateBigString(200);
-        writer3.writeEvent(new Test1(bigString2, 2));
+        // region new reader with additional compression
+        reader.close();
+        // add new uncompress for custom serialization
+        SerializerConfig serializerConfig2 = SerializerConfig.builder()
+                                                             .groupId(groupId)
+                                                             .uncompress((x, y) -> {
+                                                                 switch (x) {
+                                                                     case None:
+                                                                         return noop.uncompress(y);
+                                                                     case GZip:
+                                                                         return gzip.uncompress(y);
+                                                                     case Snappy:
+                                                                         return snappy.uncompress(y);
+                                                                     case Custom:
+                                                                         if (x.getCustomTypeName().equals(mycompression)) {
+                                                                             return myCompressor.uncompress(y);
+                                                                         } else {
+                                                                             throw new IllegalArgumentException();
+                                                                         }
+                                                                     default:
+                                                                         throw new IllegalArgumentException();
+                                                                 }
+                                                             })
+                                                             .registryConfigOrClient(Either.right(client))
+                                                             .build();
 
-        List<CompressionType> list = client.getCompressions(groupId);
-        assert 3 == list.size();
-        assert list.stream().anyMatch(x -> mycompression.equals(x.getCustomTypeName()));
-        assert list.stream().anyMatch(x -> x.equals(CompressionType.None));
-        assert list.stream().anyMatch(x -> x.equals(CompressionType.GZip));
-        // endregion
+        Serializer<GenericRecord> deserializer2 = SerDeFactory.genericAvroDeserializer(serializerConfig2, null);
 
-        // region reader
-        Compressor.Noop noop = new Compressor.Noop();
+        EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
 
-        serializerConfig = SerializerConfig.builder()
-                                           .groupId(groupId)
-                                           .uncompress((x, y) -> {
-                                               switch (x) {
-                                                   case None:
-                                                       return noop.uncompress(y);
-                                                   case GZip:
-                                                       return gzip.uncompress(y);
-                                                   case Custom:
-                                                       if (x.getCustomTypeName().equals(mycompression)) {
-                                                           return myCompressor.uncompress(y);
-                                                       } else {
-                                                           throw new IllegalArgumentException();
-                                                       }
-                                                   default:
-                                                       throw new IllegalArgumentException();
-                                               }
-                                           })
-                                           .registryConfigOrClient(Either.right(client))
-                                           .build();
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream + System.currentTimeMillis();
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-
-        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
-
-        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
-
-        EventRead<GenericRecord> event = reader.readNextEvent(1000);
+        event = reader2.readNextEvent(1000);
         while (event.isCheckpoint() || event.getEvent() != null) {
             GenericRecord e = event.getEvent();
-            event = reader.readNextEvent(1000);
+            event = reader2.readNextEvent(1000);
         }
         // endregion
     }
 
     private String generateBigString(int sizeInKb) {
-        StringBuilder builder = new StringBuilder();
-        for (int i = 0; i < sizeInKb; i++) {
-            byte[] array = new byte[1024];
-            random.nextBytes(array);
-            builder.append(Base64.getEncoder().encodeToString(array));
-        }
-        return builder.toString();
+        byte[] array = new byte[1024 * sizeInKb];
+        random.nextBytes(array);
+        return Base64.getEncoder().encodeToString(array);
     }
 
     private void testAvroReflect() throws IOException {

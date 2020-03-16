@@ -25,6 +25,8 @@ rat {
             'deployment/aws/installer/hosts-template',
             'lombok.config',
             '**/*.log',
+            '**/*.log.gz',
+            '**/*.tmp',
             '**/*.lock',
             '**/*.json',
             '**/*.proto',

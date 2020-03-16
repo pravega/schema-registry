@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
+import org.xerial.snappy.Snappy;
 
 /**
  * Compressor interface that defines methods to compress and uncompress data for a given {@link CompressionType}.
@@ -47,7 +48,7 @@ public interface Compressor {
         }
     }
 
-    class GZip implements Compressor {
+    class GZipCompressor implements Compressor {
         @Override
         public CompressionType getCompressionType() {
             return CompressionType.GZip;
@@ -82,6 +83,33 @@ public interface Compressor {
                 bos.write(buffer, 0, len);
             }
             byte[] uncompressed = bos.toByteArray();
+            return ByteBuffer.wrap(uncompressed);
+        }
+    }
+    
+    class SnappyCompressor implements Compressor {
+        @Override
+        public CompressionType getCompressionType() {
+            return CompressionType.Snappy;
+        }
+
+        @SneakyThrows(IOException.class)
+        @Override
+        public ByteBuffer compress(ByteBuffer data) {
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+
+            byte[] compressed = Snappy.compress(array);
+            return ByteBuffer.wrap(compressed);
+        }
+
+        @SneakyThrows(IOException.class)
+        @Override
+        public ByteBuffer uncompress(ByteBuffer data) {
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+
+            byte[] uncompressed = Snappy.uncompress(array);
             return ByteBuffer.wrap(uncompressed);
         }
     }

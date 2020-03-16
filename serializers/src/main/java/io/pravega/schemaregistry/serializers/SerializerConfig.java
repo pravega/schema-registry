@@ -27,6 +27,10 @@ import java.util.function.BiFunction;
 @Data
 @Builder
 public class SerializerConfig {
+    private final static Compressor NOOP = new Compressor.Noop();
+    private final static Compressor GZIP = new Compressor.GZipCompressor();
+    private final static Compressor SNAPPY = new Compressor.SnappyCompressor();
+
     /**
      * Name of the group. 
      */
@@ -54,12 +58,18 @@ public class SerializerConfig {
     private final BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress;
     
     public static final class SerializerConfigBuilder {
-        private Compressor compressor = new Compressor.Noop();
+        private Compressor compressor = NOOP;
+        
         private BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress = (x, y) -> {
-            if (x.equals(CompressionType.None)) {
-                return compressor.uncompress(y);
-            } else {
-                throw new IllegalArgumentException();
+            switch (x) {
+                case None:
+                    return NOOP.uncompress(y);
+                case GZip:
+                    return GZIP.uncompress(y);
+                case Snappy:
+                    return SNAPPY.uncompress(y);
+                default:
+                    throw new IllegalArgumentException();
             }
         };
         private boolean autoRegisterSchema = false;
