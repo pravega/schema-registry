@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.service;
 import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
+import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -38,16 +39,23 @@ import java.util.Comparator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
 /**
  * Schema registry service backend. 
  */
 public class SchemaRegistryService {
+    private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
+                                                                       .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
+
     private final SchemaStore store;
 
-    public SchemaRegistryService(SchemaStore store) {
+    private final ScheduledExecutorService executor;
+
+    public SchemaRegistryService(SchemaStore store, ScheduledExecutorService executor) {
         this.store = store;
+        this.executor = executor;
     }
 
     /**
@@ -186,14 +194,16 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Encoding id for the pair of version and compression type.
      */
     public CompletableFuture<EncodingId> getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
-        return store.getGroupProperties(group)
-                    .thenCompose(prop -> {
-                        if (prop.isValidateByObjectType()) {
-                            return store.getLatestVersion(group, version.getSchemaName());
-                        } else {
-                            return store.getLatestVersion(group);
-                        }
-                    }).thenCompose(v -> store.createOrGetEncodingId(group, version, compressionType));
+        return RETRY.runAsync(() -> {
+                 return store.getEncodingId(group, version, compressionType)
+                             .thenCompose(response -> {
+                                 if (response.isLeft()) {
+                                     return CompletableFuture.completedFuture(response.getLeft());
+                                 } else {
+                                     return store.createEncodingId(group, version, compressionType, response.getRight());
+                                 }
+                             });
+             }, executor);
     }
 
     /**
@@ -207,9 +217,9 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String objectTypeName) {
         if (objectTypeName == null) {
-            return store.getLatestSchema(group);
+            return store.getLatestSchema(group, true);
         } else {
-            return store.getLatestSchema(group, objectTypeName);
+            return store.getLatestSchema(group, objectTypeName, true);
         }
     }
 
@@ -296,10 +306,9 @@ public class SchemaRegistryService {
         CompletableFuture<VersionInfo> latest;
         if (prop.isValidateByObjectType()) {
             String objectTypeName = schema.getName();
-
-            latest = store.getLatestVersion(group, objectTypeName);
+            latest = store.getLatestVersion(group, objectTypeName, false);
         } else {
-            latest = store.getLatestVersion(group);
+            latest = store.getLatestVersion(group, false);
         }
         return latest.thenApply(latestVersion -> {
             int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
@@ -369,10 +378,10 @@ public class SchemaRegistryService {
                 }
             } else {
                 if (groupProperties.isValidateByObjectType()) {
-                    schemasFuture = store.getLatestSchema(group, schema.getName())
+                    schemasFuture = store.getLatestSchema(group, schema.getName(), false)
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {
-                    schemasFuture = store.getLatestSchema(group)
+                    schemasFuture = store.getLatestSchema(group, false)
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 }
             }

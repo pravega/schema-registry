@@ -135,7 +135,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
 
-        service = new SchemaRegistryService(schemaStore);
+        service = new SchemaRegistryService(schemaStore, executor);
         client = new TestRegistryClient(service);
         random = new Random();
     }
@@ -675,7 +675,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         SchemaType schemaType = SchemaType.Protobuf;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
+                false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
 
         Path path = Paths.get("resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
@@ -835,7 +835,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         SchemaType schemaType = SchemaType.Json;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
+                false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
         
         JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
 

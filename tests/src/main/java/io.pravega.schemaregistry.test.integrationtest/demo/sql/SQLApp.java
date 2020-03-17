@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo;
+package io.pravega.schemaregistry.test.integrationtest.demo.sql;
 
 import com.google.common.base.Charsets;
 import io.pravega.client.ClientConfig;

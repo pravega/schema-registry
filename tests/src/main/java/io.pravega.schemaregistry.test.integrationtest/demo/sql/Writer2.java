@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo;
+package io.pravega.schemaregistry.test.integrationtest.demo.sql;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -51,7 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Writer3 {
+public class Writer2 {
     private static final Schema SCHEMA = SchemaBuilder
             .record("User")
             .fields()
@@ -63,10 +63,7 @@ public class Writer3 {
             .noDefault()
             .name("address")
             .type(Schema.create(Schema.Type.STRING))
-            .noDefault()
-            .name("socialSecurity")
-            .type(Schema.create(Schema.Type.STRING))
-            .noDefault()
+            .withDefault("homeless")
             .endRecord();
     private static final Random RANDOM = new Random();
 
@@ -76,7 +73,7 @@ public class Writer3 {
     private final String stream;
     private final EventStreamWriter<GenericRecord> writer;
 
-    private Writer3(String controllerURI, String registryUri, String scope, String stream) {
+    private Writer2(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -115,7 +112,7 @@ public class Writer3 {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("writer3", options);
+            formatter.printHelp("writer2", options);
 
             System.exit(-1);
         }
@@ -125,15 +122,14 @@ public class Writer3 {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
 
-        Writer3 producer = new Writer3(controllerUri, registryUri, scope, stream);
+        Writer2 producer = new Writer2(controllerUri, registryUri, scope, stream);
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-        AtomicInteger integer = new AtomicInteger();
 
+        AtomicInteger integer = new AtomicInteger();
         Futures.loop(() -> true, () -> {
-            String value = Integer.toString(integer.incrementAndGet());
             Exceptions.handleInterrupted(() -> Thread.sleep(1000));
-            return producer.produce("writer3-" + value, "address-" + value, "social-" + value);
+            return producer.produce("writer2-" + integer.incrementAndGet(), "address-" + integer.get());
         }, executor);
     }
 
@@ -146,7 +142,7 @@ public class Writer3 {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {
@@ -167,12 +163,11 @@ public class Writer3 {
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
     }
 
-    private CompletableFuture<Void> produce(String aValue, String bValue, String cValue) {
+    private CompletableFuture<Void> produce(String aValue, String bValue) {
         GenericRecord record = new GenericData.Record(SCHEMA);
         record.put("name", aValue);
         record.put("age", RANDOM.nextInt(100));
         record.put("address", bValue);
-        record.put("socialSecurity", bValue);
 
         return writer.writeEvent(record);
     }

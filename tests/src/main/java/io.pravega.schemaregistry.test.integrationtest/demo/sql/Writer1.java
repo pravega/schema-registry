@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo;
+package io.pravega.schemaregistry.test.integrationtest.demo.sql;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -140,7 +140,7 @@ public class Writer1 {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {

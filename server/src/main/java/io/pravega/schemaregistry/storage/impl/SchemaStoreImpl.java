@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.storage.impl;
 
 import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -66,13 +67,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     @Override
     public CompletableFuture<Void> updateValidationRules(String group, Position etag, SchemaValidationRules policy) {
         return getGroup(group)
-                .thenCompose(grp -> grp.getCurrentEtag().thenCompose(currentEtag -> {
-                    if (!etag.equals(currentEtag)) {
-                        throw StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, "Validation Policy Update");
-                    } else {
-                        return grp.updateValidationPolicy(policy, etag);
-                    }
-                }));
+                .thenCompose(grp -> grp.updateValidationPolicy(policy, etag));
     }
 
     @Override
@@ -109,23 +104,23 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group) {
-        return getGroup(group).thenCompose(Group::getLatestSchema);
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, boolean sync) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(sync));
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(objectTypeName));
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName, boolean sync) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(objectTypeName, sync));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getLatestVersion(String group) {
-        return getGroup(group).thenCompose(Group::getLatestVersion);
+    public CompletableFuture<VersionInfo> getLatestVersion(String group, boolean sync) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestVersion(sync));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestVersion(objectTypeName));
+    public CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName, boolean sync) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestVersion(objectTypeName, sync));
     }
 
     @Override
@@ -139,9 +134,14 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<EncodingId> createOrGetEncodingId(String group, VersionInfo versionInfo,
-                                                               CompressionType compressionType) {
-        return getGroup(group).thenCompose(grp -> grp.getOrCreateEncodingId(versionInfo, compressionType));
+    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType) {
+        return getGroup(group).thenCompose(grp -> grp.getEncodingId(versionInfo, compressionType));
+    }
+
+    @Override
+    public CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType, 
+                                                          Position etag) {
+        return getGroup(group).thenCompose(grp -> grp.createEncodingId(versionInfo, compressionType, etag));
     }
 
     @Override

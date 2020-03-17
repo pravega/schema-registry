@@ -7,14 +7,23 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebus;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
+import io.pravega.client.admin.impl.ReaderGroupManagerImpl;
 import io.pravega.client.admin.impl.StreamManagerImpl;
-import io.pravega.client.stream.EventStreamWriter;
-import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.netty.impl.ConnectionFactoryImpl;
+import io.pravega.client.stream.EventRead;
+import io.pravega.client.stream.EventStreamReader;
+import io.pravega.client.stream.ReaderConfig;
+import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
@@ -26,13 +35,10 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerDeFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
-import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
-import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
-import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
-import org.apache.avro.specific.SpecificRecordBase;
+import io.pravega.shared.segment.StreamSegmentNameUtils;
+import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -43,22 +49,15 @@ import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
 
-public class MessageBusProducer {
+public class ReadAsJson {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamWriter<SpecificRecordBase> writer;
+    private final EventStreamReader<GenericRecord> reader;
 
-    private MessageBusProducer(String controllerURI, String registryUri, String scope, String stream) {
+    private ReadAsJson(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -66,7 +65,7 @@ public class MessageBusProducer {
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
         initialize(groupId);
-        this.writer = createWriter(groupId);
+        this.reader = createReader(groupId);
     }
 
     public static void main(String[] args) {
@@ -97,7 +96,7 @@ public class MessageBusProducer {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("messagebus-producer", options);
+            formatter.printHelp("to-json-app", options);
             
             System.exit(-1);
         }
@@ -107,43 +106,18 @@ public class MessageBusProducer {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
         
-        MessageBusProducer producer = new MessageBusProducer(controllerUri, registryUri, scope, stream);
-
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
-        AtomicInteger counter = new AtomicInteger();
-
+        ReadAsJson consumer = new ReadAsJson(controllerUri, registryUri, scope, stream);
+        
         while (true) {
-            System.out.println("choose: (1, 2 or 3)");
-            System.out.println("1. Test1");
-            System.out.println("2. Test2");
-            System.out.println("3. Test3");
-            System.out.println("> ");
-            Scanner in = new Scanner(System.in);
-            String s = in.nextLine();
-            try {
-                int choice = Integer.parseInt(s);
-                switch (choice) {
-                    case 1:
-                        Test1 test1 = new Test1("test1", counter.incrementAndGet());
-                        producer.produce(test1).join();
-                        System.out.println("Written event:" + test1);
-                        break;
-                    case 2:
-                        Test2 test2 = new Test2("test2", counter.incrementAndGet(), "field2");
-                        producer.produce(test2).join();
-                        System.out.println("Written event:" + test2);
-                        break;
-                    case 3:
-                        Test3 test3 = new Test3("test3", counter.incrementAndGet(), "field2", "field3");
-                        producer.produce(test3).join();
-                        System.out.println("Written event:" + test3);
-                        break;
-                    default:
-                        System.err.println("invalid choice!");
-                }
-            } catch (Exception e) {
-                System.err.println("invalid choice!");
+            EventRead<GenericRecord> event = consumer.consume();
+            if (event.getEvent() != null) {
+                GenericRecord record = event.getEvent();
+                String json = record.toString();
+                Gson gson = new GsonBuilder().setPrettyPrinting().create();
+                JsonParser jp = new JsonParser();
+                JsonElement je = jp.parse(json);
+                String prettyJsonString = gson.toJson(je);
+                System.err.println(prettyJsonString);
             }
         }
     }
@@ -160,11 +134,7 @@ public class MessageBusProducer {
                 true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamWriter<SpecificRecordBase> createWriter(String groupId) {
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Test1.class, Test1.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Test2.class, Test2.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Test3.class, Test3.getClassSchema());
-
+    private EventStreamReader<GenericRecord> createReader(String groupId) {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -172,19 +142,23 @@ public class MessageBusProducer {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
-        map.put(Test1.class, schema1);
-        map.put(Test2.class, schema2);
-        map.put(Test3.class, schema3);
-        Serializer<SpecificRecordBase> serializer = SerDeFactory.multiplexedAvroSerializer(serializerConfig, map);
         // endregion
+        
+        // region read into specific schema
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg-generic" + stream + System.currentTimeMillis();
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
-        return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        return clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+        // endregion
     }
 
-    private CompletableFuture<Void> produce(SpecificRecordBase event) {
-        return writer.writeEvent(event);
+    private EventRead<GenericRecord> consume() {
+        return reader.readNextEvent(1000);
     }
 }

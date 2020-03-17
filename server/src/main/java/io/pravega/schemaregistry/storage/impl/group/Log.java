@@ -21,6 +21,12 @@ import java.util.concurrent.CompletableFuture;
  */
 public interface Log {
     /**
+     * Identifies head of the log.  
+     * @return Position identifying the head of the log. 
+     */
+    CompletableFuture<Position> getFirstEtag();
+    
+    /**
      * Identifies current tail of the log where conditional writes could happen.  
      * @return Position identifying the tail of the log. 
      */

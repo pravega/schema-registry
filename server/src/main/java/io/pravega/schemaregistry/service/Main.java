@@ -38,7 +38,7 @@ public class Main {
             throw new IllegalArgumentException(String.format("Store Type %s not supported", Config.STORE_TYPE));
         }
         
-        SchemaRegistryService service = new SchemaRegistryService(schemaStore);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
 
         RestServer restServer = new RestServer(service, config);
         restServer.startAsync();

@@ -81,6 +81,12 @@ public class PravegaLog implements Log {
     }
 
     @Override
+    public CompletableFuture<Position> getFirstEtag() {
+        RevisionedStreamClient<Record> client = logCache.getClient(clientCacheKey);
+        return CompletableFuture.supplyAsync(() -> new PravegaPosition(client.fetchOldestRevision()), executorService);
+    }
+
+    @Override
     @Synchronized
     public CompletableFuture<Position> getCurrentEtag() {
         RevisionedStreamClient<Record> client = logCache.getClient(clientCacheKey);

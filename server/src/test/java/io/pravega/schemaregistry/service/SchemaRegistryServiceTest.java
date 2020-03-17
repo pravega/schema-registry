@@ -17,12 +17,15 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.storage.SchemaStore;
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
@@ -31,16 +34,23 @@ import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
 public class SchemaRegistryServiceTest {
-    SchemaRegistryService service;
+    private SchemaRegistryService service;
+    private ScheduledExecutorService executor;
 
     @Before
     public void setup() {
+        executor = Executors.newScheduledThreadPool(5);
+    }
+    
+    @After
+    public void teardown() {
+        executor.shutdownNow();
     }
 
     @Test
     public void testGroups() {
         SchemaStore store = mock(SchemaStore.class);
-        SchemaRegistryService service = new SchemaRegistryService(store);
+        SchemaRegistryService service = new SchemaRegistryService(store, executor);
 
         ArrayList<String> groups = Lists.newArrayList("grp1", "grp2");
         doAnswer(x -> {

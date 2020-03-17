@@ -41,7 +41,7 @@ import static org.junit.Assert.assertTrue;
 
 @Slf4j
 public abstract class TestEndToEnd {
-    ScheduledExecutorService executor;
+    protected ScheduledExecutorService executor;
 
     private final Schema schema1 = SchemaBuilder
             .record("MyTest")
@@ -97,7 +97,7 @@ public abstract class TestEndToEnd {
     @Test
     public void testEndToEnd() {
         SchemaStore store = getStore();
-        SchemaRegistryService service = new SchemaRegistryService(store);
+        SchemaRegistryService service = new SchemaRegistryService(store, executor);
         SchemaRegistryClient client = new TestRegistryClient(service);
         
         String group = "group";

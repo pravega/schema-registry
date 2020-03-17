@@ -33,7 +33,8 @@ import java.util.Map;
  * Index Records with different implementations for {@link IndexKey} and {@link IndexValue}.
  */
 public interface IndexRecord {
-    Map<Class<? extends IndexKey>, ? extends VersionedSerializer.WithBuilder<? extends IndexValue, ? extends ObjectBuilder<? extends IndexValue>>> SERIALIZERS_BY_KEY_TYPE =
+    Map<Class<? extends IndexKey>, ? extends VersionedSerializer.WithBuilder<? extends IndexValue, 
+            ? extends ObjectBuilder<? extends IndexValue>>> SERIALIZERS_BY_KEY_TYPE =
             ImmutableMap.<Class<? extends IndexKey>, VersionedSerializer.WithBuilder<? extends IndexValue, ? extends ObjectBuilder<? extends IndexValue>>>builder()
                     .put(VersionInfoKey.class, WALPositionValue.SERIALIZER)
                     .put(SchemaInfoKey.class, SchemaVersionValue.SERIALIZER)
@@ -42,6 +43,9 @@ public interface IndexRecord {
                     .put(SyncdTillKey.class, WALPositionValue.SERIALIZER)
                     .put(EncodingIdIndex.class, EncodingInfoIndex.SERIALIZER)
                     .put(EncodingInfoIndex.class, EncodingIdIndex.SERIALIZER)
+                    .put(LatestEncodingIdKey.class, LatestEncodingIdValue.SERIALIZER)
+                    .put(LatestSchemaVersionKey.class, LatestSchemaVersionValue.SERIALIZER)
+                    .put(LatestSchemaVersionForObjectTypeKey.class, LatestSchemaVersionValue.SERIALIZER)
                     .build();
 
     interface IndexKey {
@@ -396,6 +400,195 @@ public interface IndexRecord {
             }
 
             private void read00(RevisionDataInput source, EncodingIdIndex.EncodingIdIndexBuilder b) throws IOException {
+                b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source));
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class LatestSchemaVersionKey implements IndexKey {
+        public static final Serializer SERIALIZER = new Serializer();
+        
+        private static class LatestSchemaVersionKeyBuilder implements ObjectBuilder<LatestSchemaVersionKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemaVersionKey, LatestSchemaVersionKey.LatestSchemaVersionKeyBuilder> {
+            @Override
+            protected LatestSchemaVersionKey.LatestSchemaVersionKeyBuilder newBuilder() {
+                return LatestSchemaVersionKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(LatestSchemaVersionKey e, RevisionDataOutput target) throws IOException {
+            }
+
+            private void read00(RevisionDataInput source, LatestSchemaVersionKey.LatestSchemaVersionKeyBuilder b) throws IOException {
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class LatestSchemaVersionForObjectTypeKey implements IndexKey {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final String objectType;
+        
+        private static class LatestSchemaVersionForObjectTypeKeyBuilder implements ObjectBuilder<LatestSchemaVersionForObjectTypeKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemaVersionForObjectTypeKey, LatestSchemaVersionForObjectTypeKey.LatestSchemaVersionForObjectTypeKeyBuilder> {
+            @Override
+            protected LatestSchemaVersionForObjectTypeKey.LatestSchemaVersionForObjectTypeKeyBuilder newBuilder() {
+                return LatestSchemaVersionForObjectTypeKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(LatestSchemaVersionForObjectTypeKey e, RevisionDataOutput target) throws IOException {
+                target.writeUTF(e.objectType);
+            }
+
+            private void read00(RevisionDataInput source, LatestSchemaVersionForObjectTypeKey.LatestSchemaVersionForObjectTypeKeyBuilder b) throws IOException {
+                b.objectType(source.readUTF());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class LatestSchemaVersionValue implements IndexValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final VersionInfo version;
+
+        @SneakyThrows
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class LatestSchemaVersionValueBuilder implements ObjectBuilder<LatestSchemaVersionValue> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemaVersionValue, LatestSchemaVersionValue.LatestSchemaVersionValueBuilder> {
+            @Override
+            protected LatestSchemaVersionValue.LatestSchemaVersionValueBuilder newBuilder() {
+                return LatestSchemaVersionValue.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(LatestSchemaVersionValue e, RevisionDataOutput target) throws IOException {
+                VersionInfoSerializer.SERIALIZER.serialize(target, e.version);
+            }
+
+            private void read00(RevisionDataInput source, LatestSchemaVersionValue.LatestSchemaVersionValueBuilder b) throws IOException {
+                b.version(VersionInfoSerializer.SERIALIZER.deserialize(source));
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class LatestEncodingIdKey implements IndexKey {
+        public static final Serializer SERIALIZER = new Serializer();
+        
+        private static class LatestEncodingIdKeyBuilder implements ObjectBuilder<LatestEncodingIdKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<LatestEncodingIdKey, LatestEncodingIdKey.LatestEncodingIdKeyBuilder> {
+            @Override
+            protected LatestEncodingIdKey.LatestEncodingIdKeyBuilder newBuilder() {
+                return LatestEncodingIdKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(LatestEncodingIdKey e, RevisionDataOutput target) throws IOException {
+            }
+
+            private void read00(RevisionDataInput source, LatestEncodingIdKey.LatestEncodingIdKeyBuilder b) throws IOException {
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class LatestEncodingIdValue implements IndexValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final EncodingId encodingId;
+
+        @SneakyThrows
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class LatestEncodingIdValueBuilder implements ObjectBuilder<LatestEncodingIdValue> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<LatestEncodingIdValue, LatestEncodingIdValue.LatestEncodingIdValueBuilder> {
+            @Override
+            protected LatestEncodingIdValue.LatestEncodingIdValueBuilder newBuilder() {
+                return LatestEncodingIdValue.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(LatestEncodingIdValue e, RevisionDataOutput target) throws IOException {
+                EncodingIdSerializer.SERIALIZER.serialize(target, e.encodingId);
+            }
+
+            private void read00(RevisionDataInput source, LatestEncodingIdValue.LatestEncodingIdValueBuilder b) throws IOException {
                 b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source));
             }
         }

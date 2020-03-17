@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
+import com.google.common.collect.Lists;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.controller.store.stream.Version;
@@ -27,8 +28,11 @@ import java.util.stream.Collectors;
  * Pravega tables based index implementation. 
  */
 public class PravegaTableIndex implements Index<Version> {
-    public static final String TABLE_NAME_FORMAT = "table-%s/index/0";
+    private static final String TABLE_NAME_FORMAT = "table-%s/index/0";
     private static final IndexKeySerializer INDEX_KEY_SERIALIZER = new IndexKeySerializer();
+    // immutable keys
+    private static final List<Class<? extends IndexRecord.IndexKey>> IMMUTABLE_RECORDS = 
+            Lists.newArrayList(IndexRecord.VersionInfoKey.class, IndexRecord.GroupPropertyKey.class);
     
     private final TableStore tablesStore;
     private final String tableName;

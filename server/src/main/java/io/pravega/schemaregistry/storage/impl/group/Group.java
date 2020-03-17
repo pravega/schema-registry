@@ -66,12 +66,9 @@ public class Group<V> {
         IndexRecord.VersionInfoKey version2 = (IndexRecord.VersionInfoKey) v2.getKey();
         return Integer.compare(version1.getVersionInfo().getVersion(), version2.getVersionInfo().getVersion());
     };
-    private static final Comparator<Index.Entry> ENCODING_ID_COMPARATOR = (v1, v2) -> {
-        IndexRecord.EncodingIdIndex id1 = (IndexRecord.EncodingIdIndex) v1.getKey();
-        IndexRecord.EncodingIdIndex id2 = (IndexRecord.EncodingIdIndex) v2.getKey();
-        return Integer.compare(id1.getEncodingId().getId(), id2.getEncodingId().getId());
-    };
     private static final HashFunction HASH = Hashing.murmur3_128();
+    private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
+                                                                      .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
 
     private final Log wal;
 
@@ -95,9 +92,8 @@ public class Group<V> {
                   }));
     }
     
-    @SuppressWarnings("unchecked")
     public CompletableFuture<Position> getCurrentEtag() {
-        return wal.getCurrentEtag();
+        return syncIndex();
     }
     
     public CompletableFuture<ListWithToken<String>> getObjectTypes() {
@@ -169,15 +165,9 @@ public class Group<V> {
                 });
     }
     
-    public CompletableFuture<EncodingId> getOrCreateEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
-        return getEncodingId(versionInfo, compressionType)
-                .thenCompose(either -> {
-                    if (either.isLeft()) {
-                        return CompletableFuture.completedFuture(either.getLeft());
-                    } else {
-                        return generateNewEncodingId(versionInfo, compressionType, either.getRight());
-                    }
-                });
+    public CompletableFuture<EncodingId> createEncodingId(VersionInfo versionInfo, CompressionType compressionType,
+                                                               Position etag) {
+        return generateNewEncodingId(versionInfo, compressionType, etag);
     }
     
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
@@ -201,13 +191,11 @@ public class Group<V> {
                 .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCompressionType())));
     }
 
-    public CompletableFuture<SchemaWithVersion> getLatestSchema() {
-        Predicate<IndexRecord.IndexKey> versionPredicate = x -> x instanceof IndexRecord.VersionInfoKey;
-
-        return getLatestEntryFor(versionPredicate, VERSION_COMPARATOR)
-                .thenCompose(max -> {
-                    if (max != null) {
-                        IndexRecord.VersionInfoKey key = (IndexRecord.VersionInfoKey) max.getKey();
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(boolean sync) {
+        return getLatestVersion(sync)
+                .thenCompose(versionInfo -> {
+                    if (versionInfo != null) {
+                        IndexRecord.VersionInfoKey key = new IndexRecord.VersionInfoKey(versionInfo);
                         VersionInfo version = key.getVersionInfo();
                         return getSchema(version).thenApply(schema -> new SchemaWithVersion(schema, version));
                     } else {
@@ -216,18 +204,15 @@ public class Group<V> {
                 });
     }
 
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String objectTypeName) {
-        Predicate<IndexRecord.IndexKey> versionForObjectType = x -> x instanceof IndexRecord.VersionInfoKey &&
-                ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName().equals(objectTypeName);
-
-        return getLatestEntryFor(versionForObjectType, VERSION_COMPARATOR)
-                .thenCompose(entry -> {
-                    if (entry == null) {
-                        return CompletableFuture.completedFuture(null);
-                    } else {
-                        IndexRecord.VersionInfoKey key = (IndexRecord.VersionInfoKey) entry.getKey();
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String objectTypeName, boolean sync) {
+        return getLatestVersion(objectTypeName, sync)
+                .thenCompose(versionInfo -> {
+                    if (versionInfo != null) {
+                        IndexRecord.VersionInfoKey key = new IndexRecord.VersionInfoKey(versionInfo);
                         VersionInfo version = key.getVersionInfo();
                         return getSchema(version).thenApply(schema -> new SchemaWithVersion(schema, version));
+                    } else {
+                        return CompletableFuture.completedFuture(null);
                     }
                 });
     }
@@ -273,7 +258,8 @@ public class Group<V> {
     }
 
     public CompletableFuture<VersionInfo> addSchemaToGroup(SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag) {
-        return addSchema(schemaInfo, versionInfo, etag);
+        return getGroupPropertiesRecord()
+            .thenCompose(prop -> addSchema(schemaInfo, versionInfo, prop.isValidateByObjectType(), etag));
     }
     
     @SuppressWarnings("unchecked")
@@ -356,9 +342,7 @@ public class Group<V> {
                 futures.add(index.addEntry(((Operation.Add) operation).getKey(), ((Operation.Add) operation).getValue()));
             } else if (operation instanceof Operation.GetAndSet) {
                 Operation.GetAndSet op = (Operation.GetAndSet) operation;
-                futures.add(Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
-                     .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException)
-                     .runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
+                futures.add(RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
                                       .thenCompose(existing -> {
                                  if (existing == null) {
                                      return index.addEntry(op.getKey(), op.getValue());
@@ -370,9 +354,7 @@ public class Group<V> {
                              }), executor));
             } else if (operation instanceof Operation.AddToList) {
                 Operation.AddToList op = (Operation.AddToList) operation;
-                futures.add(Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
-                     .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException)
-                     .runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
+                futures.add(RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
                                       .thenCompose(existing -> {
                               if (existing == null) {
                                   return index.addEntry(op.getKey(), op.getValue());
@@ -399,62 +381,74 @@ public class Group<V> {
     @SuppressWarnings("unchecked")
     private CompletableFuture<Void> addOrUpdateSyncdTillKey(IndexRecord.WALPositionValue syncdTill,
                                                             Index.Value<IndexRecord.WALPositionValue, V> syncdTillWithVersion) {
-        if (syncdTillWithVersion == null) {
-            return index.addEntry(SYNCD_TILL, syncdTill);
-        } else {
-            Position newPos = syncdTill.getPosition();
-            Position existingPos = syncdTillWithVersion.getValue().getPosition();
-            if (newPos.getPosition().compareTo(existingPos.getPosition()) > 0) {
-                return index.updateEntry(SYNCD_TILL, syncdTill, syncdTillWithVersion.getVersion());
+         return RETRY.runAsync(() -> {
+            if (syncdTillWithVersion == null) {
+                return index.addEntry(SYNCD_TILL, syncdTill);
             } else {
-                return CompletableFuture.completedFuture(null);
+                Position newPos = syncdTill.getPosition();
+                Position existingPos = syncdTillWithVersion.getValue().getPosition();
+                if (newPos.getPosition().compareTo(existingPos.getPosition()) > 0) {
+                    return index.updateEntry(SYNCD_TILL, syncdTill, syncdTillWithVersion.getVersion());
+                } else {
+                    return CompletableFuture.completedFuture(null);
+                }
             }
-        }
+        }, executor);
     }
     
     private CompletableFuture<Void> writeToLog(Record record, Position etag) {
         return Futures.toVoid(wal.writeToLog(record, etag));
     }
 
-    private CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, VersionInfo next, Position etag) {
+    private CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, VersionInfo next, boolean validateByObjectType, Position etag) {
         return writeToLog(new Record.SchemaRecord(schemaInfo, next), etag)
                             .thenCompose(v -> {
                                 Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(next), new IndexRecord.WALPositionValue(etag));
+                                
                                 Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(schemaInfo)),
                                         new IndexRecord.SchemaVersionValue(Collections.singletonList(next)));
-                                return updateIndex(Lists.newArrayList(add, addToList), new IndexRecord.WALPositionValue(etag))
+
+                                IndexRecord.IndexKey key;
+                                if (validateByObjectType) {
+                                    key = new IndexRecord.LatestSchemaVersionForObjectTypeKey(schemaInfo.getName());
+                                } else {
+                                    key = new IndexRecord.LatestSchemaVersionKey();
+                                }
+                                Operation.GetAndSet getAndSet = new Operation.GetAndSet(key, 
+                                        new IndexRecord.LatestSchemaVersionValue(next), 
+                                        x -> ((IndexRecord.LatestSchemaVersionValue) x).getVersion().getVersion() < next.getVersion());
+                                
+                                return updateIndex(Lists.newArrayList(add, addToList, getAndSet), new IndexRecord.WALPositionValue(etag))
                                         .thenApply(x -> next);
                             });
     }
 
-    public CompletableFuture<VersionInfo> getLatestVersion() {
-        Predicate<IndexRecord.IndexKey> predicate = x -> x instanceof IndexRecord.VersionInfoKey;
+    public CompletableFuture<VersionInfo> getLatestVersion(boolean sync) {
+        IndexRecord.LatestSchemaVersionKey key = new IndexRecord.LatestSchemaVersionKey();
 
-        return getLatestVersion(predicate);
-    }
-    
-    public CompletableFuture<VersionInfo> getLatestVersion(String objectTypeName) {
-        Predicate<IndexRecord.IndexKey> predicate = x -> x instanceof IndexRecord.VersionInfoKey &&
-                ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName().equals(objectTypeName);
-
-        return getLatestVersion(predicate);
-    }
-
-    private CompletableFuture<VersionInfo> getLatestVersion(Predicate<IndexRecord.IndexKey> versionPredicate) {
-        return getLatestEntryFor(versionPredicate, VERSION_COMPARATOR)
-                .thenApply(entry -> {
-                    if (entry == null) {
+        CompletableFuture<Position> syncFuture = sync ? syncIndex() : CompletableFuture.completedFuture(null); 
+        return syncFuture.thenCompose(v -> index.getRecord(key, IndexRecord.LatestSchemaVersionValue.class)
+                .thenApply(rec -> {
+                    if (rec == null) {
                         return null;
                     } else {
-                        return ((IndexRecord.VersionInfoKey) entry.getKey()).getVersionInfo();                        
+                        return rec.getVersion();
                     }
-                });
+                }));
     }
     
-    private CompletableFuture<Index.Entry> getLatestEntryFor(Predicate<IndexRecord.IndexKey> predicate, Comparator<Index.Entry> entryComparator) {
-        return syncIndex()
-                .thenCompose(v -> index.getAllEntries(predicate)
-                                       .thenApply(entries -> entries.stream().max(entryComparator).orElse(null)));
+    public CompletableFuture<VersionInfo> getLatestVersion(String objectTypeName, boolean sync) {
+        IndexRecord.LatestSchemaVersionForObjectTypeKey key = new IndexRecord.LatestSchemaVersionForObjectTypeKey(objectTypeName);
+
+        CompletableFuture<Position> syncFuture = sync ? syncIndex() : CompletableFuture.completedFuture(null);
+        return syncFuture.thenCompose(v -> index.getRecord(key, IndexRecord.LatestSchemaVersionValue.class)
+                                                 .thenApply(rec -> {
+                                                     if (rec == null) {
+                                                         return null;
+                                                     } else {
+                                                         return rec.getVersion();
+                                                     }
+                                                 }));
     }
 
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CompressionType compressionType, Position position) {
@@ -465,11 +459,14 @@ public class Group<V> {
                             IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
                             Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
                             Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
-                            return updateIndex(Lists.newArrayList(idToInfo, infoToId), new IndexRecord.WALPositionValue(position));
+                            Operation.GetAndSet latest = new Operation.GetAndSet(new IndexRecord.LatestEncodingIdKey(), 
+                                    new IndexRecord.LatestEncodingIdValue(idIndex.getEncodingId()), 
+                                    x -> ((IndexRecord.LatestEncodingIdValue) x).getEncodingId().getId() < idIndex.getEncodingId().getId()); 
+                            return updateIndex(Lists.newArrayList(idToInfo, infoToId, latest), new IndexRecord.WALPositionValue(position));
                         }).thenApply(v -> id));
     }
 
-    private CompletableFuture<Either<EncodingId, Position>> getEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
+    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
         IndexRecord.EncodingInfoIndex encodingInfoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
         return index.getRecord(encodingInfoIndex, IndexRecord.EncodingIdIndex.class)
                     .thenCompose(record -> {
@@ -483,16 +480,15 @@ public class Group<V> {
     }
 
     private CompletableFuture<EncodingId> getNextEncodingId() {
-        Predicate<IndexRecord.IndexKey> predicate = x -> x instanceof IndexRecord.EncodingIdIndex;
-        return getLatestEntryFor(predicate, ENCODING_ID_COMPARATOR)
-                .thenApply(entry -> {
-                    if (entry == null) {
-                        return new EncodingId(0);
-                    } else {
-                        IndexRecord.EncodingIdIndex index = (IndexRecord.EncodingIdIndex) entry.getKey();
-                        return new EncodingId(index.getEncodingId().getId() + 1);
-                    }
-                });
+        IndexRecord.LatestEncodingIdKey key = new IndexRecord.LatestEncodingIdKey();
+        return index.getRecord(key, IndexRecord.LatestEncodingIdValue.class)
+             .thenApply(rec -> {
+                 if (rec == null) {
+                     return new EncodingId(0);
+                 } else {
+                     return new EncodingId(rec.getEncodingId().getId() + 1);
+                 }
+             });
     }
     
     private CompletableFuture<Record.GroupPropertiesRecord> getGroupPropertiesRecord() {

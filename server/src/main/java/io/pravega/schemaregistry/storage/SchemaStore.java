@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.storage;
 
 import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -54,19 +55,21 @@ public interface SchemaStore {
     
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
 
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, boolean sync);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName, boolean sync);
     
-    CompletableFuture<VersionInfo> getLatestVersion(String group);
+    CompletableFuture<VersionInfo> getLatestVersion(String group, boolean sync);
     
-    CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName);
+    CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName, boolean sync);
 
     CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 
-    CompletableFuture<EncodingId> createOrGetEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType);
+    CompletableFuture<Either<EncodingId, Position>> getEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType);
+    
+    CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType, Position etag);
 
     CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId);
 

@@ -31,6 +31,12 @@ public class InMemoryLog implements Log {
     
     @Override
     @Synchronized
+    public CompletableFuture<Position> getFirstEtag() {
+        return CompletableFuture.completedFuture(HEAD_POSITION);
+    }
+
+    @Override
+    @Synchronized
     public CompletableFuture<Position> getCurrentEtag() {
         return CompletableFuture.completedFuture(new InMemoryPosition(log.size()));
     }

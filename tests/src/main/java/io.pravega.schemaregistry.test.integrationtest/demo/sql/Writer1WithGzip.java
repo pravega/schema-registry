@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo;
+package io.pravega.schemaregistry.test.integrationtest.demo.sql;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -25,6 +25,7 @@ import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -51,7 +52,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Writer2 {
+public class Writer1WithGzip {
     private static final Schema SCHEMA = SchemaBuilder
             .record("User")
             .fields()
@@ -61,19 +62,16 @@ public class Writer2 {
             .name("age")
             .type(Schema.create(Schema.Type.INT))
             .noDefault()
-            .name("address")
-            .type(Schema.create(Schema.Type.STRING))
-            .withDefault("homeless")
             .endRecord();
     private static final Random RANDOM = new Random();
-
+    
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
     private final EventStreamWriter<GenericRecord> writer;
 
-    private Writer2(String controllerURI, String registryUri, String scope, String stream) {
+    private Writer1WithGzip(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -112,7 +110,7 @@ public class Writer2 {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("writer2", options);
+            formatter.printHelp("writer1", options);
 
             System.exit(-1);
         }
@@ -122,14 +120,15 @@ public class Writer2 {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
 
-        Writer2 producer = new Writer2(controllerUri, registryUri, scope, stream);
+        Writer1WithGzip producer = new Writer1WithGzip(controllerUri, registryUri, scope, stream);
 
         ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
 
         AtomicInteger integer = new AtomicInteger();
+
         Futures.loop(() -> true, () -> {
             Exceptions.handleInterrupted(() -> Thread.sleep(1000));
-            return producer.produce("writer2-" + integer.incrementAndGet(), "address-" + integer.get());
+            return producer.produce("gzipwriter-" + integer.incrementAndGet());
         }, executor);
     }
 
@@ -142,7 +141,7 @@ public class Writer2 {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {
@@ -151,6 +150,7 @@ public class Writer2 {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
+                                                            .compressor(new Compressor.GZipCompressor())
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
@@ -163,11 +163,10 @@ public class Writer2 {
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
     }
 
-    private CompletableFuture<Void> produce(String aValue, String bValue) {
+    private CompletableFuture<Void> produce(String value) {
         GenericRecord record = new GenericData.Record(SCHEMA);
-        record.put("name", aValue);
+        record.put("name", value);
         record.put("age", RANDOM.nextInt(100));
-        record.put("address", bValue);
 
         return writer.writeEvent(record);
     }
