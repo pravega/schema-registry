@@ -21,6 +21,7 @@ import lombok.Data;
 
 import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
+import java.util.function.Function;
 
 /**
  * Serializer Config class that is passed to {@link SerializerFactory} for creating serializer. 
@@ -31,6 +32,18 @@ public class SerializerConfig {
     private final static Codec NOOP = CodecFactory.none();
     private final static Codec GZIP = CodecFactory.gzip();
     private final static Codec SNAPPY = CodecFactory.snappy();
+    private static final BiFunction<CodecType, ByteBuffer, ByteBuffer> DECODER = (x, y) -> {
+        switch (x) {
+            case None:
+                return NOOP.decode(y);
+            case GZip:
+                return GZIP.decode(y);
+            case Snappy:
+                return SNAPPY.decode(y);
+            default:
+                throw new IllegalArgumentException();
+        }
+    };
 
     /**
      * Name of the group. 
@@ -61,18 +74,18 @@ public class SerializerConfig {
     public static final class SerializerConfigBuilder {
         private Codec codec = NOOP;
         
-        private BiFunction<CodecType, ByteBuffer, ByteBuffer> decode = (x, y) -> {
-            switch (x) {
-                case None:
-                    return NOOP.decode(y);
-                case GZip:
-                    return GZIP.decode(y);
-                case Snappy:
-                    return SNAPPY.decode(y);
-                default:
-                    throw new IllegalArgumentException();
-            }
-        };
+        private BiFunction<CodecType, ByteBuffer, ByteBuffer> decode = DECODER;
         private boolean autoRegisterSchema = false;
+        
+        public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+            decode = (x, y) -> {
+                if (x.equals(codecType)) {
+                    return decoder.apply(y);
+                } else {
+                    return decode.apply(x, y);
+                }
+            };
+            return this;
+        }
     }
 }

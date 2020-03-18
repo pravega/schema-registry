@@ -417,24 +417,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // add new decode for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .decode((x, y) -> {
-                                                                 switch (x) {
-                                                                     case None:
-                                                                         return CodecFactory.none().decode(y);
-                                                                     case GZip:
-                                                                         return CodecFactory.gzip().decode(y);
-                                                                     case Snappy:
-                                                                         return CodecFactory.snappy().decode(y);
-                                                                     case Custom:
-                                                                         if (x.getCustomTypeName().equals(mycodec)) {
-                                                                             return myCodec.decode(y);
-                                                                         } else {
-                                                                             throw new IllegalArgumentException();
-                                                                         }
-                                                                     default:
-                                                                         throw new IllegalArgumentException();
-                                                                 }
-                                                             })
+                                                             .addDecoder(myCodec.getCodecType(), myCodec::decode)
                                                              .registryConfigOrClient(Either.right(client))
                                                              .build();
 
