@@ -29,9 +29,9 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
-import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
-import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type3;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -111,9 +111,9 @@ public class MessageBusProducer {
 
         while (true) {
             System.out.println("choose: (1, 2 or 3)");
-            System.out.println("1. Test1");
-            System.out.println("2. Test2");
-            System.out.println("3. Test3");
+            System.out.println("1. Type1");
+            System.out.println("2. Type2");
+            System.out.println("3. Type3");
             System.out.println("> ");
             Scanner in = new Scanner(System.in);
             String s = in.nextLine();
@@ -121,19 +121,19 @@ public class MessageBusProducer {
                 int choice = Integer.parseInt(s);
                 switch (choice) {
                     case 1:
-                        Test1 test1 = new Test1("test1", counter.incrementAndGet());
-                        producer.produce(test1).join();
-                        System.out.println("Written event:" + test1);
+                        Type1 type1 = new Type1("Type1", counter.incrementAndGet());
+                        producer.produce(type1).join();
+                        System.out.println("Written event:" + type1);
                         break;
                     case 2:
-                        Test2 test2 = new Test2("test2", counter.incrementAndGet(), "field2");
-                        producer.produce(test2).join();
-                        System.out.println("Written event:" + test2);
+                        Type2 type2 = new Type2("Type2", counter.incrementAndGet(), "field2");
+                        producer.produce(type2).join();
+                        System.out.println("Written event:" + type2);
                         break;
                     case 3:
-                        Test3 test3 = new Test3("test3", counter.incrementAndGet(), "field2", "field3");
-                        producer.produce(test3).join();
-                        System.out.println("Written event:" + test3);
+                        Type3 type3 = new Type3("Type3", counter.incrementAndGet(), "field2", "field3");
+                        producer.produce(type3).join();
+                        System.out.println("Written event:" + type3);
                         break;
                     default:
                         System.err.println("invalid choice!");
@@ -157,9 +157,9 @@ public class MessageBusProducer {
     }
 
     private EventStreamWriter<SpecificRecordBase> createWriter(String groupId) {
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Test1.class, Test1.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Test2.class, Test2.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Test3.class, Test3.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Type3.class, Type3.getClassSchema());
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -169,9 +169,9 @@ public class MessageBusProducer {
                                                             .build();
 
         Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
-        map.put(Test1.class, schema1);
-        map.put(Test2.class, schema2);
-        map.put(Test3.class, schema3);
+        map.put(Type1.class, schema1);
+        map.put(Type2.class, schema2);
+        map.put(Type3.class, schema3);
         Serializer<SpecificRecordBase> serializer = SerializerFactory.multiTypedAvroSerializer(serializerConfig, map);
         // endregion
 

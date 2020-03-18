@@ -116,11 +116,11 @@ public class SpecificAndGenericConsumer {
                 Either<SpecificRecordBase, GenericRecord> record = event.getEvent();
                 if (record.isLeft()) {
                     if (record.getLeft() instanceof Type1) {
-                        Type1 Type1 = (Type1) record.getLeft();
-                        System.err.println("processing record of type Type1: " + Type1);
+                        Type1 type1 = (Type1) record.getLeft();
+                        System.err.println("processing record of type Type1: " + type1);
                     } else if (record.getLeft() instanceof Type2) {
-                        Type2 Type2 = (Type2) record.getLeft();
-                        System.err.println("processing record of type Type2: " + Type2);
+                        Type2 type2 = (Type2) record.getLeft();
+                        System.err.println("processing record of type Type2: " + type2);
                     } else {
                         throw new IllegalArgumentException(" we should not be here ");
                     }

@@ -32,18 +32,6 @@ public class SerializerConfig {
     private final static Codec NOOP = CodecFactory.none();
     private final static Codec GZIP = CodecFactory.gzip();
     private final static Codec SNAPPY = CodecFactory.snappy();
-    private static final BiFunction<CodecType, ByteBuffer, ByteBuffer> DECODER = (x, y) -> {
-        switch (x) {
-            case None:
-                return NOOP.decode(y);
-            case GZip:
-                return GZIP.decode(y);
-            case Snappy:
-                return SNAPPY.decode(y);
-            default:
-                throw new IllegalArgumentException();
-        }
-    };
 
     /**
      * Name of the group. 
@@ -69,17 +57,29 @@ public class SerializerConfig {
      * from {@link EncodingInfo} and using the codec type read from it. 
      * It should return the uncompressed data back to the deserializer. 
      */
-    private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decode;
+    private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder;
     
     public static final class SerializerConfigBuilder {
         private Codec codec = NOOP;
         
-        private BiFunction<CodecType, ByteBuffer, ByteBuffer> decode = DECODER;
+        private BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder = (x, y) -> {
+            switch (x) {
+                case None:
+                    return NOOP.decode(y);
+                case GZip:
+                    return GZIP.decode(y);
+                case Snappy:
+                    return SNAPPY.decode(y);
+                default:
+                    throw new IllegalArgumentException();
+            }
+        };
+        
         private boolean autoRegisterSchema = false;
         
         public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
-            BiFunction<CodecType, ByteBuffer, ByteBuffer> existing = decode;
-            decode = (x, y) -> {
+            BiFunction<CodecType, ByteBuffer, ByteBuffer> existing = this.decoder;
+            this.decoder = (x, y) -> {
                 if (x.equals(codecType)) {
                     return decoder.apply(y);
                 } else {

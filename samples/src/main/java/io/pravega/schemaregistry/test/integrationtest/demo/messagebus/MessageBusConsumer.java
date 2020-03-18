@@ -37,7 +37,6 @@ import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
 import io.pravega.schemaregistry.test.integrationtest.generated.Type3;
-import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
 import io.pravega.shared.segment.StreamSegmentNameUtils;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
@@ -116,14 +115,14 @@ public class MessageBusConsumer {
             if (event.getEvent() != null) {
                 SpecificRecordBase record = event.getEvent();
                 if (record instanceof Type1) {
-                    Type1 Type1 = (Type1) record;
-                    System.err.println("processing record of type Type1: " + Type1);
+                    Type1 type1 = (Type1) record;
+                    System.err.println("processing record of type Type1: " + type1);
                 } else if (record instanceof Type2) {
-                    Type2 Type2 = (Type2) record;
-                    System.err.println("processing record of type Type2: " + Type2);
+                    Type2 type2 = (Type2) record;
+                    System.err.println("processing record of type Type2: " + type2);
                 } else if (record instanceof Type3) {
-                    Type3 Type3 = (Type3) record;
-                    System.err.println("processing record of type Type3: " + Type3);
+                    Type3 type3 = (Type3) record;
+                    System.err.println("processing record of type Type3: " + type3);
                 }
             }
         }

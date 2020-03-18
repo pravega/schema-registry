@@ -14,7 +14,7 @@ import io.pravega.schemaregistry.contract.data.CodecType;
 import java.nio.ByteBuffer;
 
 /**
- * Codec interface that defines methods to encode and decode data for a given {@link CodecType}.
+ * Codec interface that defines methods to encode and decoder data for a given {@link CodecType}.
  * Currently we only have implementation for {@link CodecType#None}
  */
 public interface Codec {

@@ -136,7 +136,7 @@ public class EncryptionDemo {
         Codec myCodec = getMyCodec(propertiesFromRegistry);
 
         // region new reader with additional codec
-        // add new decode for custom serialization
+        // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
                                                              .addDecoder(myCodec.getCodecType(), myCodec::decode)
