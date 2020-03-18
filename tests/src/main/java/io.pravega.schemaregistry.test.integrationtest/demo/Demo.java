@@ -43,7 +43,7 @@ import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.JSonGenericObject;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.test.integrationtest.demo.objects.Address;
 import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser1;
@@ -156,7 +156,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Avro;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
             AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
@@ -171,7 +171,7 @@ public class Demo {
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             // region writer with schema1
-            Serializer<GenericRecord> serializer = SerDeFactory.avroSerializer(serializerConfig, schema1);
+            Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
 
             EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
             GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
@@ -179,7 +179,7 @@ public class Demo {
             // endregion
 
             // region writer with schema2
-            serializer = SerDeFactory.avroSerializer(serializerConfig, schema2);
+            serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
 
             writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
             record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
@@ -190,7 +190,7 @@ public class Demo {
             // this should throw exception as schema change is not backward compatible.
             boolean exceptionThrown = false;
             try {
-                serializer = SerDeFactory.avroSerializer(serializerConfig, schema3);
+                serializer = SerializerFactory.avroSerializer(serializerConfig, schema3);
             } catch (Exception ex) {
                 exceptionThrown = true;
             }
@@ -204,7 +204,7 @@ public class Demo {
 
                 AvroSchema<GenericRecord> readSchema = AvroSchema.of(SCHEMA2);
 
-                Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, readSchema);
+                Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, readSchema);
 
                 EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -224,7 +224,7 @@ public class Demo {
 
                     exceptionThrown = false;
                     try {
-                        deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, readSchema);
+                        deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, readSchema);
                     } catch (Exception ex) {
                         exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
                     }
@@ -236,7 +236,7 @@ public class Demo {
                     readerGroupManager2.createReaderGroup(rg2,
                             ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                    deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+                    deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
                     reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
@@ -264,7 +264,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Avro;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
             AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
@@ -279,7 +279,7 @@ public class Demo {
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             // region writer with schema1
-            Serializer<GenericRecord> serializer = SerDeFactory.avroSerializer(serializerConfig, schema1);
+            Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
 
             EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
             GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
@@ -287,7 +287,7 @@ public class Demo {
             // endregion
 
             // region writer with schema2
-            Serializer<GenericRecord> serializer2 = SerDeFactory.avroSerializer(serializerConfig, schema2);
+            Serializer<GenericRecord> serializer2 = SerializerFactory.avroSerializer(serializerConfig, schema2);
 
             writer = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
             record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
@@ -303,7 +303,7 @@ public class Demo {
                                                .registryConfigOrClient(Either.right(client))
                                                .build();
 
-            Serializer<Test1> serializer3 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+            Serializer<Test1> serializer3 = SerializerFactory.avroSerializer(serializerConfig, schema3);
             EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
             String bigString = generateBigString(100);
             writer3.writeEvent(new Test1(bigString, 1));
@@ -323,7 +323,7 @@ public class Demo {
                                                .registryConfigOrClient(Either.right(client))
                                                .build();
 
-            Serializer<Test1> serializer4 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+            Serializer<Test1> serializer4 = SerializerFactory.avroSerializer(serializerConfig, schema3);
             EventStreamWriter<Test1> writer4 = clientFactory.createEventWriter(stream, serializer4, EventWriterConfig.builder().build());
             String bigString2 = generateBigString(200);
             writer4.writeEvent(new Test1(bigString2, 1));
@@ -347,7 +347,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+                Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
                 EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -383,7 +383,7 @@ public class Demo {
                                                    .registryConfigOrClient(Either.right(client))
                                                    .build();
 
-                Serializer<Test1> serializer5 = SerDeFactory.avroSerializer(serializerConfig, schema3);
+                Serializer<Test1> serializer5 = SerializerFactory.avroSerializer(serializerConfig, schema3);
                 EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer5, EventWriterConfig.builder().build());
                 String bigString3 = generateBigString(300);
                 writer2.writeEvent(new Test1(bigString3, 1)).join();
@@ -422,7 +422,7 @@ public class Demo {
                                                                      .registryConfigOrClient(Either.right(client))
                                                                      .build();
 
-                Serializer<GenericRecord> deserializer2 = SerDeFactory.genericAvroDeserializer(serializerConfig2, null);
+                Serializer<GenericRecord> deserializer2 = SerializerFactory.genericAvroDeserializer(serializerConfig2, null);
 
                 EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
 
@@ -455,7 +455,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Avro;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
 
@@ -466,7 +466,7 @@ public class Demo {
                                                                 .build();
 
             // region writer
-            Serializer<TestClass> serializer = SerDeFactory.avroSerializer(serializerConfig, schema);
+            Serializer<TestClass> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -482,7 +482,7 @@ public class Demo {
 
                 AvroSchema<GenericRecord> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
-                Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, readSchema);
+                Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, readSchema);
 
                 EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -495,7 +495,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+                deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
                 reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
@@ -519,7 +519,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Avro;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
 
@@ -529,7 +529,7 @@ public class Demo {
                                                                 .registryConfigOrClient(Either.right(client))
                                                                 .build();
             // region writer
-            Serializer<Test1> serializer = SerDeFactory.avroSerializer(serializerConfig, schema);
+            Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -545,7 +545,7 @@ public class Demo {
 
                 AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
-                Serializer<Test1> deserializer = SerDeFactory.avroDeserializer(serializerConfig, readSchema);
+                Serializer<Test1> deserializer = SerializerFactory.avroDeserializer(serializerConfig, readSchema);
 
                 EventStreamReader<Test1> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -558,7 +558,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GenericRecord> genericDeserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+                Serializer<GenericRecord> genericDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
                 EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -582,7 +582,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Avro;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Test1.class, Test1.getClassSchema());
             AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Test2.class, Test2.getClassSchema());
@@ -598,7 +598,7 @@ public class Demo {
             map.put(Test1.class, schema1);
             map.put(Test2.class, schema2);
             map.put(Test3.class, schema3);
-            Serializer<SpecificRecordBase> serializer = SerDeFactory.multiplexedAvroSerializer(serializerConfig, map);
+            Serializer<SpecificRecordBase> serializer = SerializerFactory.multiTypedAvroSerializer(serializerConfig, map);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<SpecificRecordBase> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -614,7 +614,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<SpecificRecordBase> deserializer = SerDeFactory.multiplexedAvroDeserializer(serializerConfig, map);
+                Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
 
                 EventStreamReader<SpecificRecordBase> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -634,7 +634,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GenericRecord> genericDeserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+                Serializer<GenericRecord> genericDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
                 EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -645,6 +645,34 @@ public class Demo {
                 genEvent = reader2.readNextEvent(1000);
                 assert null != genEvent.getEvent();
                 // endregion
+
+                // region read using multiplexed and generic record combination
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map2 = new HashMap<>();
+                // add only two schemas
+                map2.put(Test1.class, schema1);
+                map2.put(Test2.class, schema2);
+
+                Serializer<Either<SpecificRecordBase, GenericRecord>> eitherDeserializer =
+                        SerializerFactory.typedOrGenericAvroDeserializer(serializerConfig, map2);
+
+                EventStreamReader<Either<SpecificRecordBase, GenericRecord>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+
+                EventRead<Either<SpecificRecordBase, GenericRecord>> e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent() != null;
+                assert e1.getEvent().isLeft();
+                assert e1.getEvent().getLeft() instanceof Test1;
+                
+                e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent().isLeft();
+                assert e1.getEvent().getLeft() instanceof Test2;
+                
+                e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent().isRight();
+                //endregion
             }
         }
     }
@@ -662,7 +690,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Protobuf;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.allowAny()),
-                    false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
+                    false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders)));
 
             Path path = Paths.get("tests/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);
@@ -676,7 +704,7 @@ public class Demo {
                                                                 .registryConfigOrClient(Either.right(client))
                                                                 .build();
             // region writer
-            Serializer<ProtobufTest.Message1> serializer = SerDeFactory.protobufSerializer(serializerConfig, schema);
+            Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<ProtobufTest.Message1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -690,7 +718,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(readerGroupName,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<ProtobufTest.Message1> deserializer = SerDeFactory.protobufDeserializer(serializerConfig, schema);
+                Serializer<ProtobufTest.Message1> deserializer = SerializerFactory.protobufDeserializer(serializerConfig, schema);
 
                 EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
@@ -705,7 +733,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DynamicMessage> genericDeserializer = SerDeFactory.genericProtobufDeserializer(serializerConfig, null);
+                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -718,7 +746,7 @@ public class Demo {
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class.getSimpleName(), descriptorSet);
-                genericDeserializer = SerDeFactory.genericProtobufDeserializer(serializerConfig, schema2);
+                genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, schema2);
 
                 reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
@@ -742,7 +770,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Protobuf;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.allowAny()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             Path path = Paths.get("tests/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);
@@ -762,7 +790,7 @@ public class Demo {
             map.put(ProtobufTest.Message1.class, schema1);
             map.put(ProtobufTest.Message2.class, schema2);
             map.put(ProtobufTest.Message3.class, schema3);
-            Serializer<GeneratedMessageV3> serializer = SerDeFactory.multiplexedProtobufSerializer(serializerConfig, map);
+            Serializer<GeneratedMessageV3> serializer = SerializerFactory.multiTypedProtobufSerializer(serializerConfig, map);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<GeneratedMessageV3> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -778,7 +806,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GeneratedMessageV3> deserializer = SerDeFactory.multiplexedProtobufDeserializer(serializerConfig, map);
+                Serializer<GeneratedMessageV3> deserializer = SerializerFactory.multiTypedProtobufDeserializer(serializerConfig, map);
 
                 EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -798,7 +826,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DynamicMessage> genericDeserializer = SerDeFactory.genericProtobufDeserializer(serializerConfig, null);
+                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -809,6 +837,33 @@ public class Demo {
                 genEvent = reader2.readNextEvent(1000);
                 assert null != genEvent.getEvent();
                 // endregion
+
+                // region read using multiplexed and generic record combination
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map2 = new HashMap<>();
+                // add only two schemas
+                map2.put(ProtobufTest.Message1.class, schema1);
+                map2.put(ProtobufTest.Message2.class, schema2);
+
+                Serializer<Either<GeneratedMessageV3, DynamicMessage>> eitherDeserializer =
+                        SerializerFactory.typedOrGenericProtobufDeserializer(serializerConfig, map2);
+
+                EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+
+                EventRead<Either<GeneratedMessageV3, DynamicMessage>> e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent() != null;
+                assert e1.getEvent().isLeft();
+                assert e1.getEvent().getLeft() instanceof ProtobufTest.Message1;
+                
+                e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent().isLeft();
+                assert e1.getEvent().getLeft() instanceof ProtobufTest.Message2;
+                e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent().isRight();
+                //endregion
             }
         }
     }
@@ -826,7 +881,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Json;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.allowAny()),
-                    false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(encodeHeaders)));
+                    false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders)));
 
             JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
 
@@ -836,7 +891,7 @@ public class Demo {
                                                                 .registryConfigOrClient(Either.right(client))
                                                                 .build();
             // region writer
-            Serializer<DerivedUser2> serializer = SerDeFactory.jsonSerializer(serializerConfig, schema);
+            Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<DerivedUser2> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -850,7 +905,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(readerGroupName,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DerivedUser2> deserializer = SerDeFactory.jsonDeserializer(serializerConfig, schema);
+                Serializer<DerivedUser2> deserializer = SerializerFactory.jsonDeserializer(serializerConfig, schema);
 
                 EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
@@ -864,7 +919,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<JSonGenericObject> genericDeserializer = SerDeFactory.genericJsonDeserializer(serializerConfig);
+                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
 
                 EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -896,7 +951,7 @@ public class Demo {
             SchemaType schemaType = SchemaType.Json;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.allowAny()),
-                    true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                    true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
             JSONSchema<User> schema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
             JSONSchema<User> schema2 = JSONSchema.ofBaseType(DerivedUser2.class, User.class);
@@ -910,7 +965,7 @@ public class Demo {
             Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();
             map.put(DerivedUser1.class, schema1);
             map.put(DerivedUser2.class, schema2);
-            Serializer<User> serializer = SerDeFactory.multiplexedJsonSerializer(serializerConfig, map);
+            Serializer<User> serializer = SerializerFactory.multiTypedJsonSerializer(serializerConfig, map);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<User> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -925,7 +980,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<User> deserializer = SerDeFactory.multiplexedJsonDeserializer(serializerConfig, map);
+                Serializer<User> deserializer = SerializerFactory.multiTypedJsonDeserializer(serializerConfig, map);
 
                 EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -942,7 +997,7 @@ public class Demo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<JSonGenericObject> genericDeserializer = SerDeFactory.genericJsonDeserializer(serializerConfig);
+                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
 
                 EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -951,6 +1006,29 @@ public class Demo {
                 genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;
                 // endregion
+
+                // region read using multiplexed and generic record combination
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                Map<Class<? extends User>, JSONSchema<User>> map2 = new HashMap<>();
+                // add only one schema
+                map2.put(DerivedUser1.class, schema1);
+
+                Serializer<Either<User, JSonGenericObject>> eitherDeserializer =
+                        SerializerFactory.typedOrGenericJsonDeserializer(serializerConfig, map2);
+
+                EventStreamReader<Either<User, JSonGenericObject>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+
+                EventRead<Either<User, JSonGenericObject>> e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent() != null;
+                assert e1.getEvent().isRight();
+                
+                e1 = reader3.readNextEvent(1000);
+                assert e1.getEvent().isLeft();
+                assert e1.getEvent().getLeft() instanceof DerivedUser1;
+                //endregion
             }
         }
     }

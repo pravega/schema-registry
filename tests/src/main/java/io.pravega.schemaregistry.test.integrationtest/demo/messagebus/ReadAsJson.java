@@ -35,7 +35,7 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.shared.segment.StreamSegmentNameUtils;
 import org.apache.avro.generic.GenericRecord;
@@ -131,7 +131,7 @@ public class ReadAsJson {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamReader<GenericRecord> createReader(String groupId) {
@@ -150,7 +150,7 @@ public class ReadAsJson {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, null);
+        Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 

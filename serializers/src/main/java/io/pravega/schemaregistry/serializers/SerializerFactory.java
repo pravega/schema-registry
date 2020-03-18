@@ -16,6 +16,7 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
@@ -29,7 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class SerDeFactory {
+public class SerializerFactory {
     public static final String ENCODE = "encode";
 
     // region avro
@@ -118,8 +119,8 @@ public class SerDeFactory {
      * @param <T> Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied. 
      */
-    public static <T extends IndexedRecord> Serializer<T> multiplexedAvroSerializer(SerializerConfig config,
-                                                              Map<Class<? extends T>, AvroSchema<T>> schemas) {
+    public static <T extends IndexedRecord> Serializer<T> multiTypedAvroSerializer(SerializerConfig config,
+                                                                                   Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
 
@@ -145,7 +146,7 @@ public class SerDeFactory {
      * @param <T> Base type of schemas. 
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects. 
      */
-    public static <T extends SpecificRecordBase> Serializer<T> multiplexedAvroDeserializer(
+    public static <T extends SpecificRecordBase> Serializer<T> multiTypedAvroDeserializer(
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -162,6 +163,36 @@ public class SerDeFactory {
                         x -> new AvroDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
         return new MultiplexedDeserializer<>(groupId, registryClient,
                 deserializerMap, false, config.getUncompress(), encodingCache);
+    }
+
+    /**
+     * A multiplexed Avro Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     * @param config Serializer config. 
+     * @param schemas map of avro schemas. 
+     * @param <T> Base type of schemas. 
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects or a generic 
+     * object
+     */
+    public static <T extends SpecificRecordBase> Serializer<Either<T, GenericRecord>> typedOrGenericAvroDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(schemas);
+
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
+                        x -> new AvroDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
+        AbstractPravegaDeserializer<GenericRecord> genericDeserializer = new AvroGenericDeserlizer(groupId, registryClient, 
+                null, config.getUncompress(), encodingCache);
+        return new MultiplexedAndGenericDeserializer<>(groupId, registryClient,
+                deserializerMap, genericDeserializer, false, config.getUncompress(), encodingCache);
     }
     // endregion
     
@@ -248,7 +279,7 @@ public class SerDeFactory {
      * @param <T> Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied. 
      */
-    public static <T extends GeneratedMessageV3> Serializer<T> multiplexedProtobufSerializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> multiTypedProtobufSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
         SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
@@ -272,7 +303,7 @@ public class SerDeFactory {
      * @param <T> Base type of schemas. 
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects. 
      */
-    public static <T extends GeneratedMessageV3> Serializer<T> multiplexedProtobufDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> multiTypedProtobufDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
         SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
@@ -286,6 +317,31 @@ public class SerDeFactory {
                         x -> new ProtobufDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
         return new MultiplexedDeserializer<>(groupId, registryClient,
                 deserializerMap, false, config.getUncompress(), encodingCache);
+    }
+
+    /**
+     * A multiplexed protobuf Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     * @param config Serializer config. 
+     * @param schemas map of protobuf schemas. 
+     * @param <T> Base type of schemas. 
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects. 
+     */
+    public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericProtobufDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(x -> x.getKey().getSimpleName(),
+                        x -> new ProtobufDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
+        ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, registryClient, null, config.getUncompress(), encodingCache);
+        return new MultiplexedAndGenericDeserializer<>(groupId, registryClient,
+                deserializerMap, genericDeserializer, false, config.getUncompress(), encodingCache);
     }
     //endregion
 
@@ -368,7 +424,7 @@ public class SerDeFactory {
      * @param <T> Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied. 
      */
-    public static <T> Serializer<T> multiplexedJsonSerializer(
+    public static <T> Serializer<T> multiTypedJsonSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
         SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
@@ -392,7 +448,7 @@ public class SerDeFactory {
      * @param <T> Base type of schemas. 
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects. 
      */
-    public static <T> Serializer<T> multiplexedJsonDeserializer(
+    public static <T> Serializer<T> multiTypedJsonDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
         SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
@@ -406,6 +462,32 @@ public class SerDeFactory {
                         x -> new JsonDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
         return new MultiplexedDeserializer<>(groupId, registryClient,
                 deserializerMap, false, config.getUncompress(), encodingCache);
+    }
+    
+    /**
+     * A multiplexed json Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     * @param config Serializer config. 
+     * @param schemas map of json schemas. 
+     * @param <T> Base type of schemas. 
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects. 
+     */
+    public static <T> Serializer<Either<T, JSonGenericObject>> typedOrGenericJsonDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, registryClient);
+
+        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+                .entrySet().stream().collect(Collectors.toMap(x -> x.getValue().getSchemaId(),
+                        x -> new JsonDeserlizer<>(groupId, registryClient, x.getValue(), config.getUncompress(), encodingCache)));
+        JsonGenericDeserlizer genericDeserializer = new JsonGenericDeserlizer(groupId, registryClient, config.getUncompress(), encodingCache);
+        
+        return new MultiplexedAndGenericDeserializer<>(groupId, registryClient,
+                deserializerMap, genericDeserializer, false, config.getUncompress(), encodingCache);
     }
     //endregion
 }

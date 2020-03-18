@@ -27,7 +27,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
@@ -157,7 +157,7 @@ public class MessageBusProducer {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamWriter<SpecificRecordBase> createWriter(String groupId) {
@@ -176,7 +176,7 @@ public class MessageBusProducer {
         map.put(Test1.class, schema1);
         map.put(Test2.class, schema2);
         map.put(Test3.class, schema3);
-        Serializer<SpecificRecordBase> serializer = SerDeFactory.multiplexedAvroSerializer(serializerConfig, map);
+        Serializer<SpecificRecordBase> serializer = SerializerFactory.multiTypedAvroSerializer(serializerConfig, map);
         // endregion
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

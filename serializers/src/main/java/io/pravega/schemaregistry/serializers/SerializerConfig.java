@@ -22,7 +22,7 @@ import java.nio.ByteBuffer;
 import java.util.function.BiFunction;
 
 /**
- * Serializer Config class that is passed to {@link SerDeFactory} for creating serializer. 
+ * Serializer Config class that is passed to {@link SerializerFactory} for creating serializer. 
  */
 @Data
 @Builder

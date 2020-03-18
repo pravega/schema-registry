@@ -30,7 +30,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -143,7 +143,7 @@ public class Writer2WithSnappy {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {
@@ -157,7 +157,7 @@ public class Writer2WithSnappy {
                                                             .build();
 
         AvroSchema<GenericRecord> schema = AvroSchema.of(SCHEMA);
-        Serializer<GenericRecord> serializer = SerDeFactory.avroSerializer(serializerConfig, schema);
+        Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
         // endregion
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

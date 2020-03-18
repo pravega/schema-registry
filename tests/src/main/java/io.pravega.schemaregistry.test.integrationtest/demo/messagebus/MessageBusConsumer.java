@@ -32,7 +32,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
@@ -137,7 +137,7 @@ public class MessageBusConsumer {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
     private EventStreamReader<SpecificRecordBase> createReader(String groupId) {
@@ -164,7 +164,7 @@ public class MessageBusConsumer {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<SpecificRecordBase> deserializer = SerDeFactory.multiplexedAvroDeserializer(serializerConfig, map);
+        Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 

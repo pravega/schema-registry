@@ -71,7 +71,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
         Map<String, String> properties = groupProperties.getProperties();
-        boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerDeFactory.ENCODE));
+        boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
         encodeHeader.set(toEncodeHeader);
         if (registerSchema) {
             // register schema

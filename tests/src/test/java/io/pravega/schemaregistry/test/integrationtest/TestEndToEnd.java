@@ -17,7 +17,7 @@ import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
@@ -106,7 +106,7 @@ public abstract class TestEndToEnd {
         
         client.addGroup(group, SchemaType.Avro,  
                 SchemaValidationRules.of(Compatibility.backward()), 
-                true, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
         assertEquals(client.listGroups().size(), 1);
 
         String myTest = "MyTest";

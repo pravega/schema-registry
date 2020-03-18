@@ -32,7 +32,7 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerDeFactory;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.shared.segment.StreamSegmentNameUtils;
 import lombok.Data;
@@ -159,7 +159,7 @@ public class SQLApp {
         
         SchemaInfo tableSchemaInfo = new SchemaInfo("table", schemaType, tableSchema.toBytes(), map);
         
-        client.addGroup(tableGroupId, schemaType, validationRules, false, Collections.singletonMap(SerDeFactory.ENCODE, Boolean.toString(true)));
+        client.addGroup(tableGroupId, schemaType, validationRules, false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
         client.addSchemaIfAbsent(tableGroupId, tableSchemaInfo);
     }
 
@@ -236,7 +236,7 @@ public class SQLApp {
 
         SchemaWithVersion latestSchema = client.getLatestSchema(groupId, null);
         AvroSchema<GenericRecord> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchema().getSchemaData(), Charsets.UTF_8)));
-        Serializer<GenericRecord> deserializer = SerDeFactory.genericAvroDeserializer(serializerConfig, avroSchema);
+        Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, avroSchema);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
