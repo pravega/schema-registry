@@ -7,24 +7,26 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.sql;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebus;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
+import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
+import io.pravega.client.admin.impl.ReaderGroupManagerImpl;
 import io.pravega.client.admin.impl.StreamManagerImpl;
-import io.pravega.client.stream.EventStreamWriter;
-import io.pravega.client.stream.EventWriterConfig;
+import io.pravega.client.netty.impl.ConnectionFactoryImpl;
+import io.pravega.client.stream.EventRead;
+import io.pravega.client.stream.EventStreamReader;
+import io.pravega.client.stream.ReaderConfig;
+import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.common.Exceptions;
-import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
-import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
@@ -32,10 +34,12 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
-import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type3;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
+import io.pravega.shared.segment.StreamSegmentNameUtils;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -46,35 +50,17 @@ import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.Random;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicInteger;
+import java.util.HashMap;
+import java.util.Map;
 
-public class Writer2WithSnappy {
-    private static final Schema SCHEMA = SchemaBuilder
-            .record("User")
-            .fields()
-            .name("name")
-            .type(Schema.create(Schema.Type.STRING))
-            .noDefault()
-            .name("age")
-            .type(Schema.create(Schema.Type.INT))
-            .noDefault()
-            .name("address")
-            .type(Schema.create(Schema.Type.STRING))
-            .withDefault("homeless")
-            .endRecord();
-    private static final Random RANDOM = new Random();
-
+public class MessageBusConsumer {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamWriter<GenericRecord> writer;
+    private final EventStreamReader<SpecificRecordBase> reader;
 
-    private Writer2WithSnappy(String controllerURI, String registryUri, String scope, String stream) {
+    private MessageBusConsumer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -82,7 +68,7 @@ public class Writer2WithSnappy {
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
         initialize(groupId);
-        this.writer = createWriter(groupId);
+        this.reader = createReader(groupId);
     }
 
     public static void main(String[] args) {
@@ -105,7 +91,7 @@ public class Writer2WithSnappy {
         options.addOption(streamOpt);
 
         CommandLineParser parser = new BasicParser();
-
+        
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd = null;
 
@@ -113,8 +99,8 @@ public class Writer2WithSnappy {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("writer2", options);
-
+            formatter.printHelp("messagebus-consumer", options);
+            
             System.exit(-1);
         }
 
@@ -122,18 +108,27 @@ public class Writer2WithSnappy {
         String registryUri = cmd.getOptionValue("registryUri");
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
-
-        Writer2WithSnappy producer = new Writer2WithSnappy(controllerUri, registryUri, scope, stream);
-
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
-        AtomicInteger integer = new AtomicInteger();
-        Futures.loop(() -> true, () -> {
-            Exceptions.handleInterrupted(() -> Thread.sleep(1000));
-            return producer.produce("snappywriter-" + integer.incrementAndGet(), "address-" + integer.get());
-        }, executor);
+        
+        MessageBusConsumer consumer = new MessageBusConsumer(controllerUri, registryUri, scope, stream);
+        
+        while (true) {
+            EventRead<SpecificRecordBase> event = consumer.consume();
+            if (event.getEvent() != null) {
+                SpecificRecordBase record = event.getEvent();
+                if (record instanceof Type1) {
+                    Type1 Type1 = (Type1) record;
+                    System.err.println("processing record of type Type1: " + Type1);
+                } else if (record instanceof Type2) {
+                    Type2 Type2 = (Type2) record;
+                    System.err.println("processing record of type Type2: " + Type2);
+                } else if (record instanceof Type3) {
+                    Type3 Type3 = (Type3) record;
+                    System.err.println("processing record of type Type3: " + Type3);
+                }
+            }
+        }
     }
-
+    
     private void initialize(String groupId) {
         // create stream
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
@@ -143,34 +138,42 @@ public class Writer2WithSnappy {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamWriter<GenericRecord> createWriter(String groupId) {
+    private EventStreamReader<SpecificRecordBase> createReader(String groupId) {
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Type3.class, Type3.getClassSchema());
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
-                                                            .codec(CodecFactory.snappy())
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        AvroSchema<GenericRecord> schema = AvroSchema.of(SCHEMA);
-        Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
+        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
+        map.put(Type1.class, schema1);
+        map.put(Type2.class, schema2);
+        map.put(Type3.class, schema3);
         // endregion
+
+        // region read into specific schema
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream + System.currentTimeMillis();
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
-        return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        return clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+        // endregion
     }
 
-    private CompletableFuture<Void> produce(String aValue, String bValue) {
-        GenericRecord record = new GenericData.Record(SCHEMA);
-        record.put("name", aValue);
-        record.put("age", RANDOM.nextInt(100));
-        record.put("address", bValue);
-
-        return writer.writeEvent(record);
+    private EventRead<SpecificRecordBase> consume() {
+        return reader.readNextEvent(1000);
     }
 }

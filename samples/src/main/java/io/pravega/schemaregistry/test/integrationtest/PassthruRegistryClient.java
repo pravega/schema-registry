@@ -29,10 +29,10 @@ import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
 
-public class TestRegistryClient implements SchemaRegistryClient {
+public class PassthruRegistryClient implements SchemaRegistryClient {
     private final SchemaRegistryService service;
 
-    public TestRegistryClient(SchemaRegistryService service) {
+    public PassthruRegistryClient(SchemaRegistryService service) {
         this.service = service;
     }
     

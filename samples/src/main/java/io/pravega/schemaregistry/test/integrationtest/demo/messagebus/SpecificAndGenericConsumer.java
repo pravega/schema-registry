@@ -9,10 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest.demo.messagebus;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonParser;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -35,10 +31,14 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
 import io.pravega.shared.segment.StreamSegmentNameUtils;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -49,15 +49,17 @@ import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-public class ReadAsJson {
+public class SpecificAndGenericConsumer {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamReader<GenericRecord> reader;
+    private final EventStreamReader<Either<SpecificRecordBase, GenericRecord>> reader;
 
-    private ReadAsJson(String controllerURI, String registryUri, String scope, String stream) {
+    private SpecificAndGenericConsumer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -96,7 +98,7 @@ public class ReadAsJson {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("to-json-app", options);
+            formatter.printHelp("messagebus-consumer", options);
             
             System.exit(-1);
         }
@@ -106,18 +108,26 @@ public class ReadAsJson {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
         
-        ReadAsJson consumer = new ReadAsJson(controllerUri, registryUri, scope, stream);
+        SpecificAndGenericConsumer consumer = new SpecificAndGenericConsumer(controllerUri, registryUri, scope, stream);
         
         while (true) {
-            EventRead<GenericRecord> event = consumer.consume();
+            EventRead<Either<SpecificRecordBase, GenericRecord>> event = consumer.consume();
             if (event.getEvent() != null) {
-                GenericRecord record = event.getEvent();
-                String json = record.toString();
-                Gson gson = new GsonBuilder().setPrettyPrinting().create();
-                JsonParser jp = new JsonParser();
-                JsonElement je = jp.parse(json);
-                String prettyJsonString = gson.toJson(je);
-                System.err.println(prettyJsonString);
+                Either<SpecificRecordBase, GenericRecord> record = event.getEvent();
+                if (record.isLeft()) {
+                    if (record.getLeft() instanceof Type1) {
+                        Type1 Type1 = (Type1) record.getLeft();
+                        System.err.println("processing record of type Type1: " + Type1);
+                    } else if (record.getLeft() instanceof Type2) {
+                        Type2 Type2 = (Type2) record.getLeft();
+                        System.err.println("processing record of type Type2: " + Type2);
+                    } else {
+                        throw new IllegalArgumentException(" we should not be here ");
+                    }
+                } else {
+                    GenericRecord rec = record.getRight();
+                    System.err.println("processing generic record " + rec);
+                }
             }
         }
     }
@@ -134,7 +144,10 @@ public class ReadAsJson {
                 true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamReader<GenericRecord> createReader(String groupId) {
+    private EventStreamReader<Either<SpecificRecordBase, GenericRecord>> createReader(String groupId) {
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
+
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -142,15 +155,18 @@ public class ReadAsJson {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
+        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
+        map.put(Type1.class, schema1);
+        map.put(Type2.class, schema2);
         // endregion
-        
+
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg-generic" + stream + System.currentTimeMillis();
+        String rg = "rg" + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
+        Serializer<Either<SpecificRecordBase, GenericRecord>> deserializer = SerializerFactory.typedOrGenericAvroDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
@@ -158,7 +174,7 @@ public class ReadAsJson {
         // endregion
     }
 
-    private EventRead<GenericRecord> consume() {
+    private EventRead<Either<SpecificRecordBase, GenericRecord>> consume() {
         return reader.readNextEvent(1000);
     }
 }

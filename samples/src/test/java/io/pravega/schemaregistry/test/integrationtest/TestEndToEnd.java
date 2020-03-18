@@ -98,7 +98,7 @@ public abstract class TestEndToEnd {
     public void testEndToEnd() {
         SchemaStore store = getStore();
         SchemaRegistryService service = new SchemaRegistryService(store, executor);
-        SchemaRegistryClient client = new TestRegistryClient(service);
+        SchemaRegistryClient client = new PassthruRegistryClient(service);
         
         String group = "group";
         

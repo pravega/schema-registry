@@ -137,7 +137,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
 
         service = new SchemaRegistryService(schemaStore, executor);
-        client = new TestRegistryClient(service);
+        client = new PassthruRegistryClient(service);
         random = new Random();
     }
     

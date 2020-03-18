@@ -52,7 +52,6 @@ import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Random;
 import java.util.Scanner;
 
 @Slf4j
@@ -64,7 +63,6 @@ public class EncryptionDemo {
 
     private final SchemaRegistryClient client;
     private final String id;
-    private final Random random;
     private final String scope;
     private final String stream;
     private final String groupId;
@@ -76,7 +74,6 @@ public class EncryptionDemo {
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create("http://localhost:9092"));
         client = RegistryClientFactory.createRegistryClient(config);
         id = Long.toString(System.currentTimeMillis());
-        random = new Random();
         scope = "scope" + id;
         stream = "avroEncryption";
         groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
