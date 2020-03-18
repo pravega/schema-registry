@@ -78,11 +78,12 @@ public class SerializerConfig {
         private boolean autoRegisterSchema = false;
         
         public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+            BiFunction<CodecType, ByteBuffer, ByteBuffer> existing = decode;
             decode = (x, y) -> {
                 if (x.equals(codecType)) {
                     return decoder.apply(y);
                 } else {
-                    return decode.apply(x, y);
+                    return existing.apply(x, y);
                 }
             };
             return this;

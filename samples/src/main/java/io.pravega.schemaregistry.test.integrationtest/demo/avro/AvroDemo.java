@@ -54,7 +54,6 @@ import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Random;
 
 @Slf4j
 public class AvroDemo {
@@ -95,14 +94,12 @@ public class AvroDemo {
 
     private final SchemaRegistryClient client;
     private final String id;
-    private final Random random;
 
-    public AvroDemo() throws Exception {
+    public AvroDemo() {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create("http://localhost:9092"));
         client = RegistryClientFactory.createRegistryClient(config);
         id = Long.toString(System.currentTimeMillis());
-        random = new Random();
     }
     
     public static void main(String[] args) throws Exception {
@@ -224,7 +221,7 @@ public class AvroDemo {
         }
     }
     
-    private void testAvroReflect() throws IOException {
+    private void testAvroReflect() {
         // create stream
         String scope = "scope" + id;
         String stream = "avroreflect";
@@ -288,7 +285,7 @@ public class AvroDemo {
         }
     }
     
-    private void testAvroGenerated() throws IOException {
+    private void testAvroGenerated() {
         // create stream
         String scope = "scope" + id;
         String stream = "avrogenerated";
@@ -351,7 +348,7 @@ public class AvroDemo {
         }
     }
     
-    private void testAvroMultiplexed() throws IOException {
+    private void testAvroMultiplexed() {
         // create stream
         String scope = "scope" + id;
         String stream = "avromultiplexed";

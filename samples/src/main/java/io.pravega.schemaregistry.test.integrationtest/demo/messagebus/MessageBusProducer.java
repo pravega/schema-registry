@@ -27,8 +27,8 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
@@ -47,8 +47,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class MessageBusProducer {
@@ -108,9 +106,7 @@ public class MessageBusProducer {
         String stream = cmd.getOptionValue("stream");
         
         MessageBusProducer producer = new MessageBusProducer(controllerUri, registryUri, scope, stream);
-
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
+        
         AtomicInteger counter = new AtomicInteger();
 
         while (true) {

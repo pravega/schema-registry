@@ -237,7 +237,8 @@ public class ModelHelper {
     public static CodecType encode(io.pravega.schemaregistry.contract.data.CodecType codec) {
         if (codec.equals(io.pravega.schemaregistry.contract.data.CodecType.Custom)) {
             return new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM)
-                                             .customTypeName(codec.getCustomTypeName());
+                                             .customTypeName(codec.getCustomTypeName())
+                                             .properties(codec.getProperties());
         } else {
             return new CodecType().codecType(
                     searchEnum(CodecType.CodecTypeEnum.class, codec.name()));
