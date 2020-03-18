@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.contract.transform;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
@@ -34,6 +35,7 @@ import java.util.stream.Collectors;
  * Provides translation (encode/decode) between the Model classes and its REST representation.
  */
 public class ModelHelper {
+    private static final ObjectMapper MAPPER = new ObjectMapper();
 
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
@@ -53,48 +55,10 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.SchemaValidationRules decode(SchemaValidationRules rules) {
         List<io.pravega.schemaregistry.contract.data.SchemaValidationRule> list = rules.getRules().entrySet().stream().map(rule -> {
-            io.pravega.schemaregistry.contract.data.SchemaValidationRule schemaValidationRule = null;
-            if (rule.getValue().getRule() instanceof LinkedHashMap) {
-                String name = (String) ((LinkedHashMap) rule.getValue().getRule()).get("name");
+            if (rule.getValue().getRule() instanceof Map) {
+                String name = (String) ((Map) rule.getValue().getRule()).get("name");
                 if (name.equals(Compatibility.class.getSimpleName())) {
-                    String policy = (String) ((LinkedHashMap) rule.getValue().getRule()).get("policy");
-                    io.pravega.schemaregistry.contract.data.Compatibility.Type policyType = searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, policy);
-                    switch (policyType) {
-                        case AllowAny:
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.allowAny();
-                            break;
-                        case DenyAll:
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.denyAll();
-                            break;
-                        case Backward:
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backward();
-                            break;
-                        case BackwardTransitive:
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTransitive();
-                            break;
-                        case Forward:
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.forward();
-                            break;
-                        case ForwardTransitive:
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.forwardTransitive();
-                            break;
-                        case BackwardTill:
-                            LinkedHashMap backwardTill = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("backwardTill");
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTill(getVersionInfo(backwardTill));
-                            break;
-                        case ForwardTill:
-                            LinkedHashMap forwardTill = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("forwardTill");
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.forwardTill(getVersionInfo(forwardTill));
-                            break;
-                        case BackwardAndForwardTill:
-                            LinkedHashMap backwardTill2 = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("backwardTill");
-                            LinkedHashMap forwardTill2 = (LinkedHashMap) ((LinkedHashMap) rule.getValue().getRule()).get("forwardTill");
-                            schemaValidationRule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(getVersionInfo(backwardTill2), getVersionInfo(forwardTill2));
-                            break;
-                            default:
-                                throw new IllegalArgumentException();
-                    }
-                    return schemaValidationRule;
+                    return decode(MAPPER.convertValue(rule.getValue().getRule(), Compatibility.class));
                 } else {
                     throw new NotImplementedException("Rule not implemented");
                 }
