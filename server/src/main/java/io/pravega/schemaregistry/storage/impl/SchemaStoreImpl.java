@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.storage.impl;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -134,14 +134,14 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType) {
-        return getGroup(group).thenCompose(grp -> grp.getEncodingId(versionInfo, compressionType));
+    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(String group, VersionInfo versionInfo, CodecType codecType) {
+        return getGroup(group).thenCompose(grp -> grp.getEncodingId(versionInfo, codecType));
     }
 
     @Override
-    public CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CompressionType compressionType, 
+    public CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CodecType codecType, 
                                                           Position etag) {
-        return getGroup(group).thenCompose(grp -> grp.createEncodingId(versionInfo, compressionType, etag));
+        return getGroup(group).thenCompose(grp -> grp.createEncodingId(versionInfo, codecType, etag));
     }
 
     @Override
@@ -150,8 +150,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<CompressionType>> getCompressions(String group) {
-        return getGroup(group).thenCompose(Group::getCompressions);
+    public CompletableFuture<List<CodecType>> getCodecTypes(String group) {
+        return getGroup(group).thenCompose(Group::getCodecTypes);
     }
 
     @Override

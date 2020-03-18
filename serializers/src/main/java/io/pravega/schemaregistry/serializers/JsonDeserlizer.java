@@ -16,7 +16,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import lombok.SneakyThrows;
@@ -32,8 +32,8 @@ class JsonDeserlizer<T> extends AbstractPravegaDeserializer<T> {
 
     JsonDeserlizer(String groupId, SchemaRegistryClient client,
                    JSONSchema<T> schema,
-                   BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
-        super(groupId, client, schema, true, uncompress, encodingCache);
+                   BiFunction<CodecType, ByteBuffer, ByteBuffer> decode, EncodingCache encodingCache) {
+        super(groupId, client, schema, true, decode, encodingCache);
         Preconditions.checkNotNull(schema);
         this.jsonSchema = schema;
         this.objectMapper = new ObjectMapper();

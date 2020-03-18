@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
@@ -34,8 +34,8 @@ public class EncodingInfo   {
   @JsonProperty("versionInfo")
   private VersionInfo versionInfo = null;
 
-  @JsonProperty("compressionType")
-  private CompressionType compressionType = null;
+  @JsonProperty("codecType")
+  private CodecType codecType = null;
 
   public EncodingInfo schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
@@ -75,23 +75,23 @@ public class EncodingInfo   {
     this.versionInfo = versionInfo;
   }
 
-  public EncodingInfo compressionType(CompressionType compressionType) {
-    this.compressionType = compressionType;
+  public EncodingInfo codecType(CodecType codecType) {
+    this.codecType = codecType;
     return this;
   }
 
   /**
-   * Get compressionType
-   * @return compressionType
+   * Get codecType
+   * @return codecType
    **/
-  @JsonProperty("compressionType")
+  @JsonProperty("codecType")
   @ApiModelProperty(value = "")
-  public CompressionType getCompressionType() {
-    return compressionType;
+  public CodecType getCodecType() {
+    return codecType;
   }
 
-  public void setCompressionType(CompressionType compressionType) {
-    this.compressionType = compressionType;
+  public void setCodecType(CodecType codecType) {
+    this.codecType = codecType;
   }
 
 
@@ -106,12 +106,12 @@ public class EncodingInfo   {
     EncodingInfo encodingInfo = (EncodingInfo) o;
     return Objects.equals(this.schemaInfo, encodingInfo.schemaInfo) &&
         Objects.equals(this.versionInfo, encodingInfo.versionInfo) &&
-        Objects.equals(this.compressionType, encodingInfo.compressionType);
+        Objects.equals(this.codecType, encodingInfo.codecType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, versionInfo, compressionType);
+    return Objects.hash(schemaInfo, versionInfo, codecType);
   }
 
 
@@ -122,7 +122,7 @@ public class EncodingInfo   {
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
-    sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
+    sb.append("    codecType: ").append(toIndentedString(codecType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

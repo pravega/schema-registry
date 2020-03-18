@@ -13,7 +13,7 @@ import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.nio.ByteBuffer;
@@ -27,9 +27,9 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     MultiplexedAndGenericDeserializer(String groupId, SchemaRegistryClient client,
                                       Map<String, AbstractPravegaDeserializer<T>> deserializers,
                                       AbstractPravegaDeserializer<G> genericDeserializer,
-                                      boolean skipHeaders, BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress,
+                                      boolean skipHeaders, BiFunction<CodecType, ByteBuffer, ByteBuffer> decode,
                                       EncodingCache encodingCache) {
-        super(groupId, client, null, skipHeaders, uncompress, encodingCache);
+        super(groupId, client, null, skipHeaders, decode, encodingCache);
         // 1. validate each schema
         // 2. ensure all data 
         this.deserializers = deserializers; 

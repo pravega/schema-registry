@@ -13,12 +13,10 @@ import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
-import io.pravega.schemaregistry.contract.data.CompressionType;
-import io.pravega.schemaregistry.contract.data.CompressionTypeRecord;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
-import io.pravega.schemaregistry.contract.data.SchemaTypeRecord;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.storage.impl.group.Log;
@@ -83,7 +81,7 @@ public interface Record {
 
         private final EncodingId encodingId;
         private final VersionInfo versionInfo;
-        private final CompressionType compressionType;
+        private final CodecType codecType;
         
         private static class EncodingRecordBuilder implements ObjectBuilder<EncodingRecord> {
         }
@@ -107,13 +105,13 @@ public interface Record {
             private void write00(EncodingRecord e, RevisionDataOutput target) throws IOException {
                 EncodingIdSerializer.SERIALIZER.serialize(target, e.encodingId);
                 VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
-                CompressionTypeRecord.SERIALIZER.serialize(target, new CompressionTypeRecord(e.compressionType));
+                CodecTypeRecord.SERIALIZER.serialize(target, new CodecTypeRecord(e.codecType));
             }
 
             private void read00(RevisionDataInput source, EncodingRecord.EncodingRecordBuilder b) throws IOException {
                 b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source))
                  .versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source))
-                 .compressionType(CompressionTypeRecord.SERIALIZER.deserialize(source).getCompressionType());
+                 .codecType(CodecTypeRecord.SERIALIZER.deserialize(source).getCodecType());
             }
         }
     }

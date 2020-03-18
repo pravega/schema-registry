@@ -32,9 +32,10 @@ import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -148,7 +149,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     
     @Test
     public void test() throws IOException {
-        testCompression();
+        testCodec();
         testAvroSchemaEvolution();
 
         testAvroReflect();    
@@ -270,10 +271,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // endregion
     }
 
-    private void testCompression() {
+    private void testCodec() {
         // create stream
         String scope = "scope";
-        String stream = "avrocompression";
+        String stream = "avrocodec";
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
@@ -313,12 +314,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         writer.writeEvent(record).join();
         // endregion
 
-        // region writer with compression gzip 
-        Compressor.GZipCompressor gzip = new Compressor.GZipCompressor();
+        // region writer with codec gzip 
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
                                            .autoRegisterSchema(true)
-                                           .compressor(gzip)
+                                           .codec(CodecFactory.gzip())
                                            .registryConfigOrClient(Either.right(client))
                                            .build();
 
@@ -327,18 +327,17 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String bigString = generateBigString(100);
         writer3.writeEvent(new Test1(bigString, 1));
 
-        List<CompressionType> list = client.getCompressions(groupId);
+        List<CodecType> list = client.getCodecs(groupId);
         assertEquals(2, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.GZip)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.None)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
         // endregion
         
-        // region writer with compression snappy
-        Compressor.SnappyCompressor snappy = new Compressor.SnappyCompressor();
+        // region writer with codec snappy
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
                                            .autoRegisterSchema(true)
-                                           .compressor(snappy)
+                                           .codec(CodecFactory.snappy())
                                            .registryConfigOrClient(Either.right(client))
                                            .build();
 
@@ -347,16 +346,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String bigString2 = generateBigString(200);
         writer4.writeEvent(new Test1(bigString2, 1));
 
-        list = client.getCompressions(groupId);
+        list = client.getCodecs(groupId);
         assertEquals(3, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.GZip)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.Snappy)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.None)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Snappy)));
         // endregion
         
         // region reader
-        Compressor.Noop noop = new Compressor.Noop();
-
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
                                            .registryConfigOrClient(Either.right(client))
@@ -377,28 +374,28 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         }
         // endregion
 
-        // region writer with custom compression
-        String mycompression = "mycompression";
-        Compressor myCompressor = new Compressor() {
+        // region writer with custom codec
+        String mycodec = "mycodec";
+        Codec myCodec = new Codec() {
             @Override
-            public CompressionType getCompressionType() {
-                return CompressionType.custom(mycompression);
+            public CodecType getCodecType() {
+                return CodecType.custom(mycodec, Collections.emptyMap());
             }
 
             @Override
-            public ByteBuffer compress(ByteBuffer data) {
+            public ByteBuffer encode(ByteBuffer data) {
                 return data;
             }
 
             @Override
-            public ByteBuffer uncompress(ByteBuffer data) {
+            public ByteBuffer decode(ByteBuffer data) {
                 return data;
             }
         };
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
                                            .autoRegisterSchema(true)
-                                           .compressor(myCompressor)
+                                           .codec(myCodec)
                                            .registryConfigOrClient(Either.right(client))
                                            .build();
 
@@ -408,29 +405,29 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         writer2.writeEvent(new Test1(bigString3, 1)).join();
         // endregion 
 
-        list = client.getCompressions(groupId);
+        list = client.getCodecs(groupId);
         assertEquals(4, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.None)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.GZip)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.Snappy)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CompressionType.Custom) && x.getCustomTypeName().equals(mycompression)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.None)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Snappy)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Custom) && x.getCustomTypeName().equals(mycodec)));
 
-        // region new reader with additional compression
+        // region new reader with additional codec
         reader.close();
-        // add new uncompress for custom serialization
+        // add new decode for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .uncompress((x, y) -> {
+                                                             .decode((x, y) -> {
                                                                  switch (x) {
                                                                      case None:
-                                                                         return noop.uncompress(y);
+                                                                         return CodecFactory.none().decode(y);
                                                                      case GZip:
-                                                                         return gzip.uncompress(y);
+                                                                         return CodecFactory.gzip().decode(y);
                                                                      case Snappy:
-                                                                         return snappy.uncompress(y);
+                                                                         return CodecFactory.snappy().decode(y);
                                                                      case Custom:
-                                                                         if (x.getCustomTypeName().equals(mycompression)) {
-                                                                             return myCompressor.uncompress(y);
+                                                                         if (x.getCustomTypeName().equals(mycodec)) {
+                                                                             return myCodec.decode(y);
                                                                          } else {
                                                                              throw new IllegalArgumentException();
                                                                          }

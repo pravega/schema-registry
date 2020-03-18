@@ -14,8 +14,7 @@ import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
-import io.pravega.schemaregistry.contract.data.CompressionType;
-import io.pravega.schemaregistry.contract.data.CompressionTypeRecord;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.storage.Position;
@@ -323,7 +322,7 @@ public interface IndexRecord {
         public static final Serializer SERIALIZER = new Serializer();
         
         private final VersionInfo versionInfo;
-        private final CompressionType compressionType;
+        private final CodecType codecType;
         
         @SneakyThrows
         @Override
@@ -352,12 +351,12 @@ public interface IndexRecord {
 
             private void write00(EncodingInfoIndex e, RevisionDataOutput target) throws IOException {
                 VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
-                CompressionTypeRecord.SERIALIZER.serialize(target, new CompressionTypeRecord(e.compressionType));
+                CodecTypeRecord.SERIALIZER.serialize(target, new CodecTypeRecord(e.codecType));
             }
 
             private void read00(RevisionDataInput source, EncodingInfoIndex.EncodingInfoIndexBuilder b) throws IOException {
                 b.versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source))
-                 .compressionType(CompressionTypeRecord.SERIALIZER.deserialize(source).getCompressionType());
+                 .codecType(CodecTypeRecord.SERIALIZER.deserialize(source).getCodecType());
             }
         }
     }

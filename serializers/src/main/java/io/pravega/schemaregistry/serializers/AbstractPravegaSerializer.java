@@ -14,7 +14,7 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.common.util.BitConverter;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -40,19 +40,19 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     private final AtomicBoolean encodeHeader;
     private final SchemaRegistryClient client;
     @Getter
-    private final Compressor compressor;
+    private final Codec codec;
     private final boolean registerSchema;
     private final EncodingCache encodingCache;
 
     protected AbstractPravegaSerializer(String groupId,
                                         SchemaRegistryClient client,
                                         SchemaContainer<T> schema,
-                                        Compressor compressor, 
+                                        Codec codec, 
                                         boolean registerSchema,
                                         EncodingCache encodingCache) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
-        Preconditions.checkNotNull(compressor);
+        Preconditions.checkNotNull(codec);
         Preconditions.checkNotNull(encodingCache);
         Preconditions.checkNotNull(schema);
         
@@ -62,7 +62,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         this.encodingCache = encodingCache;
         this.registerSchema = registerSchema;
         this.version = new AtomicReference<>();
-        this.compressor = compressor;
+        this.codec = codec;
         this.encodeHeader = new AtomicBoolean();
         initialize();
     }
@@ -91,7 +91,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         
         if (this.encodeHeader.get()) {
             Preconditions.checkNotNull(schemaInfo);
-            EncodingId encodingId = encodingCache.getEncodingId(schemaInfo, compressor.getCompressionType());
+            EncodingId encodingId = encodingCache.getEncodingId(schemaInfo, codec.getCodecType());
 
             outputStream.write(PROTOCOL);
             BitConverter.writeInt(outputStream, encodingId.getId());
@@ -108,7 +108,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
 
         byte[] array = dataStream.toByteArray();
 
-        ByteBuffer compressed = compressor.compress(ByteBuffer.wrap(array));
+        ByteBuffer compressed = codec.encode(ByteBuffer.wrap(array));
         array = new byte[compressed.remaining()];
         compressed.get(array);
 

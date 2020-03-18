@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.test.integrationtest;
 
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -93,8 +93,8 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
-        return service.getEncodingId(group, version, compressionType).join();
+    public EncodingId getEncodingId(String group, VersionInfo version, CodecType codecType) {
+        return service.getEncodingId(group, version, codecType).join();
     }
 
     @Override
@@ -123,7 +123,7 @@ public class TestRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<CompressionType> getCompressions(String group) {
-        return service.getCompressions(group).join();
+    public List<CodecType> getCodecs(String group) {
+        return service.getCodecTypes(group).join();
     }
 }

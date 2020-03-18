@@ -13,7 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.SneakyThrows;
@@ -24,9 +24,9 @@ import java.util.function.BiFunction;
 public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractPravegaDeserializer<T> {
     private final ProtobufSchema<T> protobufSchema;
     ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
-                       ProtobufSchema<T> schema, BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress,
+                       ProtobufSchema<T> schema, BiFunction<CodecType, ByteBuffer, ByteBuffer> decode,
                        EncodingCache encodingCache) {
-        super(groupId, client, schema, true, uncompress, encodingCache);
+        super(groupId, client, schema, true, decode, encodingCache);
         Preconditions.checkNotNull(schema);
         this.protobufSchema = schema;
     }

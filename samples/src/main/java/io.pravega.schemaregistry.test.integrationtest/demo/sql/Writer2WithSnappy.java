@@ -24,8 +24,8 @@ import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -152,7 +152,7 @@ public class Writer2WithSnappy {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
-                                                            .compressor(new Compressor.SnappyCompressor())
+                                                            .codec(CodecFactory.snappy())
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 

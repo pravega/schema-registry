@@ -9,9 +9,6 @@
  */
 package io.pravega.schemaregistry.test.integrationtest.demo.avro;
 
-import com.google.protobuf.DescriptorProtos;
-import com.google.protobuf.DynamicMessage;
-import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -34,22 +31,12 @@ import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.compression.Compressor;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.serializers.JSonGenericObject;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.test.integrationtest.demo.objects.Address;
-import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser1;
-import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser2;
-import io.pravega.schemaregistry.test.integrationtest.demo.objects.User;
-import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
@@ -64,14 +51,8 @@ import org.apache.avro.specific.SpecificRecordBase;
 
 import java.io.IOException;
 import java.net.URI;
-import java.nio.ByteBuffer;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Random;
 

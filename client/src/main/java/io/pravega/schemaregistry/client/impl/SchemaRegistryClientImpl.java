@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.client.impl;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -26,7 +26,7 @@ import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
@@ -214,11 +214,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
+    public EncodingId getEncodingId(String group, VersionInfo version, CodecType codecType) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("encodings");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
-        getEncodingIdRequest.compressionType(ModelHelper.encode(compressionType))
+        getEncodingIdRequest.codecType(ModelHelper.encode(codecType))
                             .versionInfo(ModelHelper.encode(version));
         Response response = invocationBuilder.put(Entity.entity(getEncodingIdRequest, MediaType.APPLICATION_JSON));
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -373,16 +373,16 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
     
     @Override
-    public List<CompressionType> getCompressions(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("compressions");
+    public List<CodecType> getCodecs(String group) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("codecs");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
-        CompressionsList list = response.readEntity(CompressionsList.class);
+        CodecsList list = response.readEntity(CodecsList.class);
         
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-            return list.getCompressionTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());
+            return list.getCodecTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());
         } else {
-            throw new RuntimeException("Failed to get compressions");
+            throw new RuntimeException("Failed to get codecs");
         }    
     }
 }

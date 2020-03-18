@@ -7,10 +7,11 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.compression;
+package io.pravega.schemaregistry.codec;
 
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import lombok.SneakyThrows;
+import org.xerial.snappy.Snappy;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -18,45 +19,54 @@ import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
-import org.xerial.snappy.Snappy;
 
 /**
- * Compressor interface that defines methods to compress and uncompress data for a given {@link CompressionType}.
- * Currently we only have implementation for {@link CompressionType#None}
+ * Compression factory class for creating codec. 
+ * This has implementation for {@link Codec} for {@link CodecType#None}
  */
-public interface Compressor {
-    CompressionType getCompressionType();
-
-    ByteBuffer compress(ByteBuffer data);
-
-    ByteBuffer uncompress(ByteBuffer data);
+public class CodecFactory {
+    private static final Noop NOOP = new Noop();
+    private static final GZipCodec GZIP_COMPRESSOR = new GZipCodec();
+    private static final SnappyCodec SNAPPY_COMPRESSOR = new SnappyCodec();
     
-    class Noop implements Compressor {
+    public static Codec none() {
+        return NOOP;
+    }
+
+    public static Codec gzip() {
+        return GZIP_COMPRESSOR;
+    }
+
+    public static Codec snappy() {
+        return SNAPPY_COMPRESSOR;
+    }
+
+    private static class Noop implements Codec {
         @Override
-        public CompressionType getCompressionType() {
-            return CompressionType.None;
+        public CodecType getCodecType() {
+            return CodecType.None;
         }
 
         @Override
-        public ByteBuffer compress(ByteBuffer data) {
+        public ByteBuffer encode(ByteBuffer data) {
             return data;
         }
 
         @Override
-        public ByteBuffer uncompress(ByteBuffer data) {
+        public ByteBuffer decode(ByteBuffer data) {
             return data;
         }
     }
 
-    class GZipCompressor implements Compressor {
+    private static class GZipCodec implements Codec {
         @Override
-        public CompressionType getCompressionType() {
-            return CompressionType.GZip;
+        public CodecType getCodecType() {
+            return CodecType.GZip;
         }
 
         @SneakyThrows(IOException.class)
         @Override
-        public ByteBuffer compress(ByteBuffer data) {
+        public ByteBuffer encode(ByteBuffer data) {
             byte[] array = new byte[data.remaining()];
             data.get(array);
 
@@ -70,7 +80,7 @@ public interface Compressor {
 
         @SneakyThrows(IOException.class)
         @Override
-        public ByteBuffer uncompress(ByteBuffer data) {
+        public ByteBuffer decode(ByteBuffer data) {
             byte[] array = new byte[data.remaining()];
             data.get(array);
 
@@ -86,16 +96,16 @@ public interface Compressor {
             return ByteBuffer.wrap(uncompressed);
         }
     }
-    
-    class SnappyCompressor implements Compressor {
+
+    private static class SnappyCodec implements Codec {
         @Override
-        public CompressionType getCompressionType() {
-            return CompressionType.Snappy;
+        public CodecType getCodecType() {
+            return CodecType.Snappy;
         }
 
         @SneakyThrows(IOException.class)
         @Override
-        public ByteBuffer compress(ByteBuffer data) {
+        public ByteBuffer encode(ByteBuffer data) {
             byte[] array = new byte[data.remaining()];
             data.get(array);
 
@@ -105,7 +115,7 @@ public interface Compressor {
 
         @SneakyThrows(IOException.class)
         @Override
-        public ByteBuffer uncompress(ByteBuffer data) {
+        public ByteBuffer decode(ByteBuffer data) {
             byte[] array = new byte[data.remaining()];
             data.get(array);
 
@@ -113,4 +123,5 @@ public interface Compressor {
             return ByteBuffer.wrap(uncompressed);
         }
     }
+
 }

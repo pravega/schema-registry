@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.serializers;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -38,7 +38,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
     private final AtomicReference<SchemaInfo> schemaInfo;
     private final AtomicBoolean encodeHeader;
-    private final BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress;
+    private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decode;
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
     
@@ -46,7 +46,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                                           SchemaRegistryClient client,
                                           @Nullable SchemaContainer<T> schema,
                                           boolean skipHeaders,
-                                          BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, 
+                                          BiFunction<CodecType, ByteBuffer, ByteBuffer> decode, 
                                           EncodingCache encodingCache) {
         this.groupId = groupId;
         this.client = client;
@@ -57,7 +57,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
         }
         this.encodeHeader = new AtomicBoolean();
         this.skipHeaders = skipHeaders;
-        this.uncompress = uncompress;
+        this.decode = decode;
             
         initialize();
     }
@@ -92,7 +92,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     public T deserialize(ByteBuffer data) {
         if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
-            CompressionType compressionType = CompressionType.None;
+            CodecType codecType = CodecType.None;
             if (skipHeaders) {
                 int currentPos = data.position();
                 data.position(currentPos + HEADER_SIZE);
@@ -100,11 +100,11 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                 byte protocol = data.get();
                 EncodingId encodingId = new EncodingId(data.getInt());
                 EncodingInfo encodingInfo = encodingCache.getEncodingInfo(encodingId);
-                compressionType = encodingInfo.getCompression();
+                codecType = encodingInfo.getCodec();
                 writerSchema = encodingInfo.getSchemaInfo();
             }
             
-            ByteBuffer uncompressed = uncompress.apply(compressionType, data);
+            ByteBuffer uncompressed = decode.apply(codecType, data);
             
             if (schemaInfo.get() == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into

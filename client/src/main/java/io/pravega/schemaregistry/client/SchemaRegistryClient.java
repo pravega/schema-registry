@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.client;
 
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -127,7 +127,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets encoding info against the requested encoding Id. 
-     * Encoding Info uniquely identifies a combination of a schemaInfo and compressionType. 
+     * Encoding Info uniquely identifies a combination of a schemaInfo and codecType. 
      * 
      * @param group Name of group. 
      * @param encodingId Encoding id that uniquely identifies a schema within a group. 
@@ -136,14 +136,14 @@ public interface SchemaRegistryClient {
     EncodingInfo getEncodingInfo(String group, EncodingId encodingId);
 
     /**
-     * Gets an encoding id that uniquely identifies a combination of Schema version and compression type. 
+     * Gets an encoding id that uniquely identifies a combination of Schema version and codec type. 
      * 
      * @param group Name of group. 
      * @param version version of schema 
-     * @param compressionType compression type
-     * @return Encoding id for the pair of version and compression type.
+     * @param codecType codec type
+     * @return Encoding id for the pair of version and codec type.
      */
-    EncodingId getEncodingId(String group, VersionInfo version, CompressionType compressionType);
+    EncodingId getEncodingId(String group, VersionInfo version, CodecType codecType);
 
     /**
      * Gets latest schema and version for the group (or objectTypeName, if specified). 
@@ -206,5 +206,5 @@ public interface SchemaRegistryClient {
      * @param group Name of group. 
      * @return List of compressions used for encoding in the group. 
      */
-    List<CompressionType> getCompressions(String group);
+    List<CodecType> getCodecs(String group);
 }

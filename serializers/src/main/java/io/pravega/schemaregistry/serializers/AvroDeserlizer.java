@@ -15,7 +15,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -35,8 +35,8 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
 
     AvroDeserlizer(String groupId, SchemaRegistryClient client,
                    AvroSchema<T> schema,
-                   BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, uncompress, encodingCache);
+                   BiFunction<CodecType, ByteBuffer, ByteBuffer> decode, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decode, encodingCache);
         Preconditions.checkNotNull(schema);
         this.avroSchema = schema;
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {

@@ -17,7 +17,7 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -165,9 +165,9 @@ public class Group<V> {
                 });
     }
     
-    public CompletableFuture<EncodingId> createEncodingId(VersionInfo versionInfo, CompressionType compressionType,
+    public CompletableFuture<EncodingId> createEncodingId(VersionInfo versionInfo, CodecType codecType,
                                                                Position etag) {
-        return generateNewEncodingId(versionInfo, compressionType, etag);
+        return generateNewEncodingId(versionInfo, codecType, etag);
     }
     
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
@@ -188,7 +188,7 @@ public class Group<V> {
                      return CompletableFuture.completedFuture(encodingInfo);
                  }
              }).thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo())
-                .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCompressionType())));
+                .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType())));
     }
 
     public CompletableFuture<SchemaWithVersion> getLatestSchema(boolean sync) {
@@ -217,14 +217,14 @@ public class Group<V> {
                 });
     }
 
-    public CompletableFuture<List<CompressionType>> getCompressions() {
+    public CompletableFuture<List<CodecType>> getCodecTypes() {
         return syncIndex().thenCompose(v -> {
                     Predicate<IndexRecord.IndexKey> encodingInfoPredicate = x -> x instanceof IndexRecord.EncodingInfoIndex;
                     return index.getAllEntries(encodingInfoPredicate)
                                 .thenApply(list -> {
                                     return list.stream().map(x -> {
                                         IndexRecord.EncodingInfoIndex encodingInfoIndex = (IndexRecord.EncodingInfoIndex) x.getKey();
-                                        return encodingInfoIndex.getCompressionType();
+                                        return encodingInfoIndex.getCodecType();
                                     }).distinct().collect(Collectors.toList());
                                 });
                 });
@@ -311,7 +311,7 @@ public class Group<V> {
                                           } else if (x.getRecord() instanceof Record.EncodingRecord) {
                                               Record.EncodingRecord record = (Record.EncodingRecord) x.getRecord();
                                               IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(record.getEncodingId());
-                                              IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(record.getVersionInfo(), record.getCompressionType());
+                                              IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(record.getVersionInfo(), record.getCodecType());
                                               Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
                                               Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
                                               operations.add(idToInfo);
@@ -451,12 +451,12 @@ public class Group<V> {
                                                  }));
     }
 
-    private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CompressionType compressionType, Position position) {
+    private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CodecType codecType, Position position) {
         return getNextEncodingId()
-                .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, compressionType), position)
+                .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, codecType), position)
                         .thenCompose(v -> {
                             IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(id);
-                            IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
+                            IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, codecType);
                             Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
                             Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
                             Operation.GetAndSet latest = new Operation.GetAndSet(new IndexRecord.LatestEncodingIdKey(), 
@@ -466,8 +466,8 @@ public class Group<V> {
                         }).thenApply(v -> id));
     }
 
-    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(VersionInfo versionInfo, CompressionType compressionType) {
-        IndexRecord.EncodingInfoIndex encodingInfoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, compressionType);
+    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(VersionInfo versionInfo, CodecType codecType) {
+        IndexRecord.EncodingInfoIndex encodingInfoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, codecType);
         return index.getRecord(encodingInfoIndex, IndexRecord.EncodingIdIndex.class)
                     .thenCompose(record -> {
                         if (record == null) {

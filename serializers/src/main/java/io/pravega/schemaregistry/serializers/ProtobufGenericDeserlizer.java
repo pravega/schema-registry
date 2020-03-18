@@ -18,7 +18,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.SneakyThrows;
@@ -32,8 +32,8 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
     private final LoadingCache<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
     ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
-                              BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, uncompress, encodingCache);
+                              BiFunction<CodecType, ByteBuffer, ByteBuffer> decode, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decode, encodingCache);
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Descriptors.Descriptor>() {
             @Override
             public Descriptors.Descriptor load(SchemaInfo schemaToUse) throws Exception {

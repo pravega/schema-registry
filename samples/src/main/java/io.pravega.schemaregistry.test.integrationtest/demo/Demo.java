@@ -34,9 +34,10 @@ import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.compression.Compressor;
+import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -294,12 +295,11 @@ public class Demo {
             writer.writeEvent(record).join();
             // endregion
 
-            // region writer with compression gzip 
-            Compressor.GZipCompressor gzip = new Compressor.GZipCompressor();
+            // region writer with codec gzip 
             serializerConfig = SerializerConfig.builder()
                                                .groupId(groupId)
                                                .autoRegisterSchema(true)
-                                               .compressor(gzip)
+                                               .codec(CodecFactory.gzip())
                                                .registryConfigOrClient(Either.right(client))
                                                .build();
 
@@ -308,18 +308,17 @@ public class Demo {
             String bigString = generateBigString(100);
             writer3.writeEvent(new Test1(bigString, 1));
 
-            List<CompressionType> list = client.getCompressions(groupId);
+            List<CodecType> list = client.getCodecs(groupId);
             assert 2 == list.size();
-            assert list.stream().anyMatch(x -> x.equals(CompressionType.None));
-            assert list.stream().anyMatch(x -> x.equals(CompressionType.GZip));
+            assert list.stream().anyMatch(x -> x.equals(CodecType.None));
+            assert list.stream().anyMatch(x -> x.equals(CodecType.GZip));
             // endregion
 
-            // region writer with compression snappy
-            Compressor.SnappyCompressor snappy = new Compressor.SnappyCompressor();
+            // region writer with codec snappy
             serializerConfig = SerializerConfig.builder()
                                                .groupId(groupId)
                                                .autoRegisterSchema(true)
-                                               .compressor(snappy)
+                                               .codec(CodecFactory.snappy())
                                                .registryConfigOrClient(Either.right(client))
                                                .build();
 
@@ -328,16 +327,14 @@ public class Demo {
             String bigString2 = generateBigString(200);
             writer4.writeEvent(new Test1(bigString2, 1));
 
-            list = client.getCompressions(groupId);
+            list = client.getCodecs(groupId);
             assert 3 == list.size();
-            assert list.stream().anyMatch(x -> x.equals(CompressionType.None));
-            assert list.stream().anyMatch(x -> x.equals(CompressionType.GZip));
-            assert list.stream().anyMatch(x -> x.equals(CompressionType.Snappy));
+            assert list.stream().anyMatch(x -> x.equals(CodecType.None));
+            assert list.stream().anyMatch(x -> x.equals(CodecType.GZip));
+            assert list.stream().anyMatch(x -> x.equals(CodecType.Snappy));
             // endregion
 
             // region reader
-            Compressor.Noop noop = new Compressor.Noop();
-
             serializerConfig = SerializerConfig.builder()
                                                .groupId(groupId)
                                                .registryConfigOrClient(Either.right(client))
@@ -358,28 +355,28 @@ public class Demo {
                 }
                 // endregion
 
-                // region writer with custom compression
+                // region writer with custom codec
                 String mycompression = "mycompression";
-                Compressor myCompressor = new Compressor() {
+                Codec myCodec = new Codec() {
                     @Override
-                    public CompressionType getCompressionType() {
-                        return CompressionType.custom(mycompression);
+                    public CodecType getCodecType() {
+                        return CodecType.custom(mycompression, Collections.emptyMap());
                     }
 
                     @Override
-                    public ByteBuffer compress(ByteBuffer data) {
+                    public ByteBuffer encode(ByteBuffer data) {
                         return data;
                     }
 
                     @Override
-                    public ByteBuffer uncompress(ByteBuffer data) {
+                    public ByteBuffer decode(ByteBuffer data) {
                         return data;
                     }
                 };
                 serializerConfig = SerializerConfig.builder()
                                                    .groupId(groupId)
                                                    .autoRegisterSchema(true)
-                                                   .compressor(myCompressor)
+                                                   .codec(myCodec)
                                                    .registryConfigOrClient(Either.right(client))
                                                    .build();
 
@@ -389,29 +386,29 @@ public class Demo {
                 writer2.writeEvent(new Test1(bigString3, 1)).join();
                 // endregion 
 
-                list = client.getCompressions(groupId);
+                list = client.getCodecs(groupId);
                 assert 4 == list.size();
-                assert list.stream().anyMatch(x -> x.equals(CompressionType.None));
-                assert list.stream().anyMatch(x -> x.equals(CompressionType.GZip));
-                assert list.stream().anyMatch(x -> x.equals(CompressionType.Snappy));
-                assert list.stream().anyMatch(x -> x.equals(CompressionType.Custom) && x.getCustomTypeName().equals(mycompression));
+                assert list.stream().anyMatch(x -> x.equals(CodecType.None));
+                assert list.stream().anyMatch(x -> x.equals(CodecType.GZip));
+                assert list.stream().anyMatch(x -> x.equals(CodecType.Snappy));
+                assert list.stream().anyMatch(x -> x.equals(CodecType.Custom) && x.getCustomTypeName().equals(mycompression));
 
-                // region new reader with additional compression
+                // region new reader with additional codec
                 reader.close();
-                // add new uncompress for custom serialization
+                // add new decode for custom serialization
                 SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                                      .groupId(groupId)
-                                                                     .uncompress((x, y) -> {
+                                                                     .decode((x, y) -> {
                                                                          switch (x) {
                                                                              case None:
-                                                                                 return noop.uncompress(y);
+                                                                                 return CodecFactory.none().decode(y);
                                                                              case GZip:
-                                                                                 return gzip.uncompress(y);
+                                                                                 return CodecFactory.gzip().decode(y);
                                                                              case Snappy:
-                                                                                 return snappy.uncompress(y);
+                                                                                 return CodecFactory.snappy().decode(y);
                                                                              case Custom:
                                                                                  if (x.getCustomTypeName().equals(mycompression)) {
-                                                                                     return myCompressor.uncompress(y);
+                                                                                     return myCodec.decode(y);
                                                                                  } else {
                                                                                      throw new IllegalArgumentException();
                                                                                  }

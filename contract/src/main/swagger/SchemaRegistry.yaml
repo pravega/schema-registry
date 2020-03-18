@@ -548,8 +548,8 @@ paths:
             properties:
               versionInfo:
                   $ref: "#/definitions/VersionInfo"
-              compressionType:
-                  $ref: "#/definitions/CompressionType"
+              codecType:
+                  $ref: "#/definitions/CodecType"
       produces:
         - application/json
       responses:
@@ -570,7 +570,7 @@ paths:
         type: string
       - in: path
         name: encodingId
-        description: Encoding id that identifies a unique combination of encoding and compression
+        description: Encoding id that identifies a unique combination of schema and codec
         required: true
         type: integer
         format: int32
@@ -590,7 +590,7 @@ paths:
           description: Group or encoding id with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/compressions:
+  /groups/{groupName}/codecs:
     parameters:
       - in: path
         name: groupName
@@ -600,15 +600,15 @@ paths:
     get:
       tags:
       - "Encoding"
-      operationId: getCompressionsList
+      operationId: getCodecsList
       description: Fetch the properties of an existing Group
       produces:
         - application/json
       responses:
         200:
-          description: Found Compressions
+          description: Found Codecs
           schema:
-            $ref: "#/definitions/CompressionsList"
+            $ref: "#/definitions/CodecsList"
         404:
           description: Group or encoding id with given name not found
         500:
@@ -705,10 +705,10 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/SchemaVersionAndRules"        
-  CompressionType:
+  CodecType:
     type: object
     properties:
-      compressionType:
+      codecType:
         type: string
         enum:
           - None
@@ -717,6 +717,12 @@ definitions:
           - Custom
       customTypeName:
         type: string
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
   EncodingId:
     type: object
     properties:
@@ -730,8 +736,8 @@ definitions:
           $ref: "#/definitions/SchemaInfo"        
       versionInfo:
           $ref: "#/definitions/VersionInfo"        
-      compressionType:
-          $ref: "#/definitions/CompressionType"
+      codecType:
+          $ref: "#/definitions/CodecType"
   Compatibility:
     type: object
     required:
@@ -757,66 +763,6 @@ definitions:
         $ref: "#/definitions/VersionInfo"        
       forwardTill:
         $ref: "#/definitions/VersionInfo"        
-#  AllowAnyRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#  DenyAllRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#  BackwardRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#  BackwardTillRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#      till:  
-#        $ref: "#/definitions/VersionInfo"        
-#  BackwardTransitiveRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#  ForwardRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#  ForwardTillRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
-#      till:  
-#        $ref: "#/definitions/VersionInfo"        
-#  ForwardTransitiveRule:
-#    type: object
-#    required:
-#      - name
-#    properties:
-#      name:
-#        type: string
   SchemaValidationRules:
     type: object
     properties:
@@ -832,33 +778,17 @@ definitions:
       rule:
         oneOf:
           - $ref: '#/definitions/Compatibility'
-#          - $ref: '#/definitions/AllowAnyRule'
-#          - $ref: '#/definitions/DenyAllRule'
-#          - $ref: '#/definitions/BackwardRule'
-#          - $ref: '#/definitions/BackwardTillRule'
-#          - $ref: '#/definitions/BackwardTransitiveRule'
-#          - $ref: '#/definitions/ForwardRule'
-#          - $ref: '#/definitions/ForwardTillRule'
-#          - $ref: '#/definitions/ForwardTransitiveRule'
         discriminator:
           propertyName: name
           mapping:
             allowAnyRule: '#/definitions/Compatibility'
-#            allowAnyRule: '#/definitions/AllowAnyRule'
-#            denyAllRule: '#/definitions/DenyAllRule'
-#            backwardRule: '#/definitions/BackwardRule'
-#            backwardTillRule: '#/definitions/BackwardTillRule'
-#            backwardTransitiveRule: '#/definitions/BackwardTransitiveRule'
-#            forwardRule: '#/definitions/ForwardRule'
-#            forwardTillRule: '#/definitions/ForwardTillRule'
-#            forwardTransitiveRule: '#/definitions/ForwardTransitiveRule'
-  CompressionsList:
+  CodecsList:
     type: object
     properties:
-       compressionTypes:
+       codecTypes:
         type: array
         items:
-          $ref: "#/definitions/CompressionType"
+          $ref: "#/definitions/CodecType"
   Valid:
     type: object
     properties:

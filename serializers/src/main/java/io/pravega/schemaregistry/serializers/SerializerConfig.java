@@ -12,8 +12,9 @@ package io.pravega.schemaregistry.serializers;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.compression.Compressor;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.CodecFactory;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import lombok.Builder;
 import lombok.Data;
@@ -27,9 +28,9 @@ import java.util.function.BiFunction;
 @Data
 @Builder
 public class SerializerConfig {
-    private final static Compressor NOOP = new Compressor.Noop();
-    private final static Compressor GZIP = new Compressor.GZipCompressor();
-    private final static Compressor SNAPPY = new Compressor.SnappyCompressor();
+    private final static Codec NOOP = CodecFactory.none();
+    private final static Codec GZIP = CodecFactory.gzip();
+    private final static Codec SNAPPY = CodecFactory.snappy();
 
     /**
      * Name of the group. 
@@ -47,27 +48,27 @@ public class SerializerConfig {
      */
     private final boolean autoRegisterSchema;
     /**
-     * Compressor to use for compressing events after serializing them. 
+     * Codec to use for compressing events after serializing them. 
      */
-    private final Compressor compressor;
+    private final Codec codec;
     /**
-     * Function that should be applied on serialized data read from stream. This is invoked after reading the {@link CompressionType}
-     * from {@link EncodingInfo} and using the compression type read from it. 
+     * Function that should be applied on serialized data read from stream. This is invoked after reading the {@link CodecType}
+     * from {@link EncodingInfo} and using the codec type read from it. 
      * It should return the uncompressed data back to the deserializer. 
      */
-    private final BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress;
+    private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decode;
     
     public static final class SerializerConfigBuilder {
-        private Compressor compressor = NOOP;
+        private Codec codec = NOOP;
         
-        private BiFunction<CompressionType, ByteBuffer, ByteBuffer> uncompress = (x, y) -> {
+        private BiFunction<CodecType, ByteBuffer, ByteBuffer> decode = (x, y) -> {
             switch (x) {
                 case None:
-                    return NOOP.uncompress(y);
+                    return NOOP.decode(y);
                 case GZip:
-                    return GZIP.uncompress(y);
+                    return GZIP.decode(y);
                 case Snappy:
-                    return SNAPPY.uncompress(y);
+                    return SNAPPY.decode(y);
                 default:
                     throw new IllegalArgumentException();
             }

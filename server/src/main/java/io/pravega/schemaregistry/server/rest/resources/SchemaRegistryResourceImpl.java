@@ -14,12 +14,12 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -270,8 +270,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     public void getOrGenerateEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest,
                                         SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.VersionInfo version = ModelHelper.decode(getEncodingIdRequest.getVersionInfo());
-        CompressionType compressionType = ModelHelper.decode(getEncodingIdRequest.getCompressionType());
-        registryService.getEncodingId(groupName, version, compressionType)
+        CodecType codecType = ModelHelper.decode(getEncodingIdRequest.getCodecType());
+        registryService.getEncodingId(groupName, version, codecType)
                        .thenApply(encodingId -> {
                            EncodingId id = ModelHelper.encode(encodingId);
                            return Response.status(Status.OK).entity(id).build(); })
@@ -386,15 +386,15 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
 
 
     @Override
-    public void getCompressionsList(String groupName, SecurityContext securityContext,
+    public void getCodecsList(String groupName, SecurityContext securityContext,
                                     AsyncResponse asyncResponse) throws NotFoundException {
-        registryService.getCompressions(groupName)
+        registryService.getCodecTypes(groupName)
                        .thenApply(list -> {
-                           CompressionsList compressionsList = new CompressionsList()
-                                   .compressionTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
-                           return Response.status(Status.OK).entity(compressionsList).build(); })
+                           CodecsList codecsList = new CodecsList()
+                                   .codecTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
+                           return Response.status(Status.OK).entity(codecsList).build(); })
                        .exceptionally(exception -> {
-                           log.warn("getCompressionsList failed with exception: ", exception);
+                           log.warn("getCodecsList failed with exception: ", exception);
                            return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
                        .thenApply(response -> {
                            asyncResponse.resume(response);

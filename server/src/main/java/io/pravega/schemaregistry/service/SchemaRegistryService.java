@@ -15,8 +15,8 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.CompressionType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -175,7 +175,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets encoding info against the requested encoding Id.
-     * Encoding Info uniquely identifies a combination of a schemaInfo and compressionType.
+     * Encoding Info uniquely identifies a combination of a schemaInfo and codecType.
      *
      * @param group      Name of group.
      * @param encodingId Encoding id that uniquely identifies a schema within a group.
@@ -186,21 +186,21 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets an encoding id that uniquely identifies a combination of Schema version and compression type.
+     * Gets an encoding id that uniquely identifies a combination of Schema version and codec type.
      *
      * @param group           Name of group.
      * @param version         version of schema
-     * @param compressionType compression type
-     * @return CompletableFuture that holds Encoding id for the pair of version and compression type.
+     * @param codecType codec type
+     * @return CompletableFuture that holds Encoding id for the pair of version and codec type.
      */
-    public CompletableFuture<EncodingId> getEncodingId(String group, VersionInfo version, CompressionType compressionType) {
+    public CompletableFuture<EncodingId> getEncodingId(String group, VersionInfo version, CodecType codecType) {
         return RETRY.runAsync(() -> {
-                 return store.getEncodingId(group, version, compressionType)
+                 return store.getEncodingId(group, version, codecType)
                              .thenCompose(response -> {
                                  if (response.isLeft()) {
                                      return CompletableFuture.completedFuture(response.getLeft());
                                  } else {
-                                     return store.createEncodingId(group, version, compressionType, response.getRight());
+                                     return store.createEncodingId(group, version, codecType, response.getRight());
                                  }
                              });
              }, executor);
@@ -298,8 +298,8 @@ public class SchemaRegistryService {
      * @param group Name of group. 
      * @return CompletableFuture that holds list of compressions used for encoding in the group. 
      */
-    public CompletableFuture<List<CompressionType>> getCompressions(String group) {
-        return store.getCompressions(group);
+    public CompletableFuture<List<CodecType>> getCodecTypes(String group) {
+        return store.getCodecTypes(group);
     }
 
     private CompletableFuture<VersionInfo> getNextVersion(String group, SchemaInfo schema, GroupProperties prop) {

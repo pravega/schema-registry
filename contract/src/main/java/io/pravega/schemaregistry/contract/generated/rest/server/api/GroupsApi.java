@@ -9,7 +9,7 @@ import io.swagger.jaxrs.*;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -142,20 +142,20 @@ public class GroupsApi  {
         return delegate.deleteGroup(groupName,securityContext);
     }
     @GET
-    @Path("/{groupName}/compressions")
+    @Path("/{groupName}/codecs")
     
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CompressionsList.class, tags={ "Encoding", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CodecsList.class, tags={ "Encoding", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Compressions", response = CompressionsList.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Codecs", response = CodecsList.class),
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
-    public Response getCompressionsList(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+    public Response getCodecsList(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getCompressionsList(groupName,securityContext);
+        return delegate.getCodecsList(groupName,securityContext);
     }
     @GET
     @Path("/{groupName}/encodings/{encodingId}")
@@ -169,7 +169,7 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getEncodingInfo(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Encoding id that identifies a unique combination of encoding and compression",required=true) @PathParam("encodingId") Integer encodingId
+,@ApiParam(value = "Encoding id that identifies a unique combination of schema and codec",required=true) @PathParam("encodingId") Integer encodingId
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getEncodingInfo(groupName,encodingId,securityContext);

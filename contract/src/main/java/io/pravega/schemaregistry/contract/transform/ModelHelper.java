@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.contract.transform;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
@@ -113,13 +113,13 @@ public class ModelHelper {
                 backwardTill, forwardTill);
     }
 
-    public static io.pravega.schemaregistry.contract.data.CompressionType decode(CompressionType compressionType) {
-        switch (compressionType.getCompressionType()) {
+    public static io.pravega.schemaregistry.contract.data.CodecType decode(CodecType codecType) {
+        switch (codecType.getCodecType()) {
             case CUSTOM:
-                return io.pravega.schemaregistry.contract.data.CompressionType.custom(compressionType.getCustomTypeName());
+                return io.pravega.schemaregistry.contract.data.CodecType.custom(codecType.getCustomTypeName(), codecType.getProperties());
             default:
                 return searchEnum(
-                        io.pravega.schemaregistry.contract.data.CompressionType.class, compressionType.getCompressionType().name());
+                        io.pravega.schemaregistry.contract.data.CodecType.class, codecType.getCodecType().name());
         }
     }
 
@@ -129,7 +129,7 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
         return new io.pravega.schemaregistry.contract.data.EncodingInfo(decode(encodingInfo.getVersionInfo()), 
-                decode(encodingInfo.getSchemaInfo()), decode(encodingInfo.getCompressionType()));
+                decode(encodingInfo.getSchemaInfo()), decode(encodingInfo.getCodecType()));
     }
 
     public static <T> io.pravega.schemaregistry.contract.data.SchemaWithVersion decode(SchemaWithVersion schemaWithVersion) {
@@ -234,18 +234,18 @@ public class ModelHelper {
         return new EncodingId().encodingId(encodingId.getId());
     }
 
-    public static CompressionType encode(io.pravega.schemaregistry.contract.data.CompressionType compression) {
-        if (compression.equals(io.pravega.schemaregistry.contract.data.CompressionType.Custom)) {
-            return new CompressionType().compressionType(CompressionType.CompressionTypeEnum.CUSTOM)
-                                             .customTypeName(compression.getCustomTypeName());
+    public static CodecType encode(io.pravega.schemaregistry.contract.data.CodecType codec) {
+        if (codec.equals(io.pravega.schemaregistry.contract.data.CodecType.Custom)) {
+            return new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM)
+                                             .customTypeName(codec.getCustomTypeName());
         } else {
-            return new CompressionType().compressionType(
-                    searchEnum(CompressionType.CompressionTypeEnum.class, compression.name()));
+            return new CodecType().codecType(
+                    searchEnum(CodecType.CodecTypeEnum.class, codec.name()));
         }
     }
 
     public static EncodingInfo encode(io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo) {
-        return new EncodingInfo().compressionType(encode(encodingInfo.getCompression()))
+        return new EncodingInfo().codecType(encode(encodingInfo.getCodec()))
                                       .versionInfo(encode(encodingInfo.getVersionInfo()))
                                       .schemaInfo(encode(encodingInfo.getSchemaInfo()));
     }

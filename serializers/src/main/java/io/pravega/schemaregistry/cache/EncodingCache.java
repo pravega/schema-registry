@@ -13,7 +13,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CompressionType;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -44,7 +44,7 @@ public class EncodingCache {
                                                       @Override
                                                       public EncodingId load(final EncodingInfo key) {
                                                           return registryClient.getEncodingId(groupId, key.getVersionInfo(), 
-                                                                  key.getCompression());
+                                                                  key.getCodec());
                                                       }
                                                   });
 
@@ -63,9 +63,9 @@ public class EncodingCache {
     }
 
     @SneakyThrows(ExecutionException.class)
-    public EncodingId getEncodingId(SchemaInfo schemaInfo, CompressionType compressionType) {
+    public EncodingId getEncodingId(SchemaInfo schemaInfo, CodecType codecType) {
         VersionInfo versionInfo = getVersionFromSchema(schemaInfo);
-        return versionCache.get(new EncodingInfo(versionInfo, schemaInfo, compressionType));
+        return versionCache.get(new EncodingInfo(versionInfo, schemaInfo, codecType));
     }
 
     @SneakyThrows(ExecutionException.class)

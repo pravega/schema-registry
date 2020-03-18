@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -24,38 +24,38 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * CompressionsList
+ * CodecsList
  */
 
-public class CompressionsList   {
-  @JsonProperty("compressionTypes")
-  private List<CompressionType> compressionTypes = null;
+public class CodecsList   {
+  @JsonProperty("codecTypes")
+  private List<CodecType> codecTypes = null;
 
-  public CompressionsList compressionTypes(List<CompressionType> compressionTypes) {
-    this.compressionTypes = compressionTypes;
+  public CodecsList codecTypes(List<CodecType> codecTypes) {
+    this.codecTypes = codecTypes;
     return this;
   }
 
-  public CompressionsList addCompressionTypesItem(CompressionType compressionTypesItem) {
-    if (this.compressionTypes == null) {
-      this.compressionTypes = new ArrayList<CompressionType>();
+  public CodecsList addCodecTypesItem(CodecType codecTypesItem) {
+    if (this.codecTypes == null) {
+      this.codecTypes = new ArrayList<CodecType>();
     }
-    this.compressionTypes.add(compressionTypesItem);
+    this.codecTypes.add(codecTypesItem);
     return this;
   }
 
   /**
-   * Get compressionTypes
-   * @return compressionTypes
+   * Get codecTypes
+   * @return codecTypes
    **/
-  @JsonProperty("compressionTypes")
+  @JsonProperty("codecTypes")
   @ApiModelProperty(value = "")
-  public List<CompressionType> getCompressionTypes() {
-    return compressionTypes;
+  public List<CodecType> getCodecTypes() {
+    return codecTypes;
   }
 
-  public void setCompressionTypes(List<CompressionType> compressionTypes) {
-    this.compressionTypes = compressionTypes;
+  public void setCodecTypes(List<CodecType> codecTypes) {
+    this.codecTypes = codecTypes;
   }
 
 
@@ -67,22 +67,22 @@ public class CompressionsList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CompressionsList compressionsList = (CompressionsList) o;
-    return Objects.equals(this.compressionTypes, compressionsList.compressionTypes);
+    CodecsList codecsList = (CodecsList) o;
+    return Objects.equals(this.codecTypes, codecsList.codecTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compressionTypes);
+    return Objects.hash(codecTypes);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CompressionsList {\n");
+    sb.append("class CodecsList {\n");
     
-    sb.append("    compressionTypes: ").append(toIndentedString(compressionTypes)).append("\n");
+    sb.append("    codecTypes: ").append(toIndentedString(codecTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }

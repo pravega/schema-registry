@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CompressionType;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -30,8 +30,8 @@ public class GetEncodingIdRequest   {
   @JsonProperty("versionInfo")
   private VersionInfo versionInfo = null;
 
-  @JsonProperty("compressionType")
-  private CompressionType compressionType = null;
+  @JsonProperty("codecType")
+  private CodecType codecType = null;
 
   public GetEncodingIdRequest versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
@@ -52,23 +52,23 @@ public class GetEncodingIdRequest   {
     this.versionInfo = versionInfo;
   }
 
-  public GetEncodingIdRequest compressionType(CompressionType compressionType) {
-    this.compressionType = compressionType;
+  public GetEncodingIdRequest codecType(CodecType codecType) {
+    this.codecType = codecType;
     return this;
   }
 
   /**
-   * Get compressionType
-   * @return compressionType
+   * Get codecType
+   * @return codecType
    **/
-  @JsonProperty("compressionType")
+  @JsonProperty("codecType")
   @ApiModelProperty(value = "")
-  public CompressionType getCompressionType() {
-    return compressionType;
+  public CodecType getCodecType() {
+    return codecType;
   }
 
-  public void setCompressionType(CompressionType compressionType) {
-    this.compressionType = compressionType;
+  public void setCodecType(CodecType codecType) {
+    this.codecType = codecType;
   }
 
 
@@ -82,12 +82,12 @@ public class GetEncodingIdRequest   {
     }
     GetEncodingIdRequest getEncodingIdRequest = (GetEncodingIdRequest) o;
     return Objects.equals(this.versionInfo, getEncodingIdRequest.versionInfo) &&
-        Objects.equals(this.compressionType, getEncodingIdRequest.compressionType);
+        Objects.equals(this.codecType, getEncodingIdRequest.codecType);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(versionInfo, compressionType);
+    return Objects.hash(versionInfo, codecType);
   }
 
 
@@ -97,7 +97,7 @@ public class GetEncodingIdRequest   {
     sb.append("class GetEncodingIdRequest {\n");
     
     sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
-    sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
+    sb.append("    codecType: ").append(toIndentedString(codecType)).append("\n");
     sb.append("}");
     return sb.toString();
   }

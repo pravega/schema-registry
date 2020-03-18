@@ -19,17 +19,20 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * CompressionType
+ * CodecType
  */
 
-public class CompressionType   {
+public class CodecType   {
   /**
-   * Gets or Sets compressionType
+   * Gets or Sets codecType
    */
-  public enum CompressionTypeEnum {
+  public enum CodecTypeEnum {
     NONE("None"),
     
     SNAPPY("Snappy"),
@@ -40,7 +43,7 @@ public class CompressionType   {
 
     private String value;
 
-    CompressionTypeEnum(String value) {
+    CodecTypeEnum(String value) {
       this.value = value;
     }
 
@@ -51,8 +54,8 @@ public class CompressionType   {
     }
 
     @JsonCreator
-    public static CompressionTypeEnum fromValue(String text) {
-      for (CompressionTypeEnum b : CompressionTypeEnum.values()) {
+    public static CodecTypeEnum fromValue(String text) {
+      for (CodecTypeEnum b : CodecTypeEnum.values()) {
         if (String.valueOf(b.value).equals(text)) {
           return b;
         }
@@ -61,32 +64,35 @@ public class CompressionType   {
     }
   }
 
-  @JsonProperty("compressionType")
-  private CompressionTypeEnum compressionType = null;
+  @JsonProperty("codecType")
+  private CodecTypeEnum codecType = null;
 
   @JsonProperty("customTypeName")
   private String customTypeName = null;
 
-  public CompressionType compressionType(CompressionTypeEnum compressionType) {
-    this.compressionType = compressionType;
+  @JsonProperty("properties")
+  private Map<String, String> properties = null;
+
+  public CodecType codecType(CodecTypeEnum codecType) {
+    this.codecType = codecType;
     return this;
   }
 
   /**
-   * Get compressionType
-   * @return compressionType
+   * Get codecType
+   * @return codecType
    **/
-  @JsonProperty("compressionType")
+  @JsonProperty("codecType")
   @ApiModelProperty(value = "")
-  public CompressionTypeEnum getCompressionType() {
-    return compressionType;
+  public CodecTypeEnum getCodecType() {
+    return codecType;
   }
 
-  public void setCompressionType(CompressionTypeEnum compressionType) {
-    this.compressionType = compressionType;
+  public void setCodecType(CodecTypeEnum codecType) {
+    this.codecType = codecType;
   }
 
-  public CompressionType customTypeName(String customTypeName) {
+  public CodecType customTypeName(String customTypeName) {
     this.customTypeName = customTypeName;
     return this;
   }
@@ -105,6 +111,33 @@ public class CompressionType   {
     this.customTypeName = customTypeName;
   }
 
+  public CodecType properties(Map<String, String> properties) {
+    this.properties = properties;
+    return this;
+  }
+
+  public CodecType putPropertiesItem(String key, String propertiesItem) {
+    if (this.properties == null) {
+      this.properties = new HashMap<String, String>();
+    }
+    this.properties.put(key, propertiesItem);
+    return this;
+  }
+
+  /**
+   * Get properties
+   * @return properties
+   **/
+  @JsonProperty("properties")
+  @ApiModelProperty(value = "")
+  public Map<String, String> getProperties() {
+    return properties;
+  }
+
+  public void setProperties(Map<String, String> properties) {
+    this.properties = properties;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -114,24 +147,26 @@ public class CompressionType   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CompressionType compressionType = (CompressionType) o;
-    return Objects.equals(this.compressionType, compressionType.compressionType) &&
-        Objects.equals(this.customTypeName, compressionType.customTypeName);
+    CodecType codecType = (CodecType) o;
+    return Objects.equals(this.codecType, codecType.codecType) &&
+        Objects.equals(this.customTypeName, codecType.customTypeName) &&
+        Objects.equals(this.properties, codecType.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compressionType, customTypeName);
+    return Objects.hash(codecType, customTypeName, properties);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CompressionType {\n");
+    sb.append("class CodecType {\n");
     
-    sb.append("    compressionType: ").append(toIndentedString(compressionType)).append("\n");
+    sb.append("    codecType: ").append(toIndentedString(codecType)).append("\n");
     sb.append("    customTypeName: ").append(toIndentedString(customTypeName)).append("\n");
+    sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");
     return sb.toString();
   }
