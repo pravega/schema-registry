@@ -225,12 +225,4 @@ public class ModelHelper {
         }
         throw new IllegalArgumentException();
     }
-
-    private static io.pravega.schemaregistry.contract.data.VersionInfo getVersionInfo(LinkedHashMap backwardTill) {
-        String schemaName = (String) backwardTill.get("schemaName");
-        int version = (int) backwardTill.get("version");
-
-        return new io.pravega.schemaregistry.contract.data.VersionInfo(schemaName, version);
-    }
-
 }
