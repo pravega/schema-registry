@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
@@ -210,8 +211,8 @@ public class SerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T extends GeneratedMessageV3> Serializer<T> protobufSerializer(SerializerConfig config, 
-                                                                                  ProtobufSchema<T> schemaData) {
+    public static <T extends Message> Serializer<T> protobufSerializer(SerializerConfig config,
+                                                                       ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
         SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
@@ -222,7 +223,7 @@ public class SerializerFactory {
         return new ProtobufSerializer<>(groupId, registryClient, schemaData, config.getCompressor(),
                 config.isAutoRegisterSchema(), encodingCache);
     }
-
+    
     /**
      * Creates a typed protobuf deserializer for the Schema. The deserializer implementation returned from this method is
      * responsible for interacting with schema registry service and validate the writer schema before using it. 

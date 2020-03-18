@@ -289,7 +289,7 @@ project('serializers') {
     }
 }
 
-project('tests') {
+project('samples') {
     sourceSets {
         test.resources.srcDirs += "$rootDir/resources"
     }
@@ -307,7 +307,7 @@ project('tests') {
     }
 
     javadoc {
-        title = "Tests"
+        title = "Samples"
         dependsOn delombok
         source = delombok.outputDir
         failOnError = false
