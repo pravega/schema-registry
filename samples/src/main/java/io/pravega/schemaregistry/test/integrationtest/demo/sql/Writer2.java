@@ -169,6 +169,7 @@ public class Writer2 {
         record.put("age", RANDOM.nextInt(100));
         record.put("address", bValue);
 
-        return writer.writeEvent(record);
+        return writer.writeEvent(record)
+                .thenAccept(v -> System.out.println(record));
     }
 }

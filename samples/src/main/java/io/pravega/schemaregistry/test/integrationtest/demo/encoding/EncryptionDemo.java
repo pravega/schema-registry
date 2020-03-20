@@ -39,7 +39,7 @@ import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
+import io.pravega.shared.NameUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
@@ -54,6 +54,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
 
+/**
+ * A sample class to demonstrate how a custom encoding can be used. It uses AES algorithm to encrypt and decrypt each event
+ * after it is serialized.  
+ */
 @Slf4j
 public class EncryptionDemo {
     private static final String ALGORITHM = "AES";
@@ -148,7 +152,7 @@ public class EncryptionDemo {
         try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
             String rg = "rg" + stream + System.currentTimeMillis();
             readerGroupManager.createReaderGroup(rg,
-                    ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                    ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
             EventStreamReader<GenericRecord> reader = clientFactory.createReader("r2", rg, deserializer, ReaderConfig.builder().build());
 

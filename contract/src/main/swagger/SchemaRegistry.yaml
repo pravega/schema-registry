@@ -159,8 +159,8 @@ paths:
           description: Updated schema validation policy
         404:
           description: Group with given name not found
-        409:
-          description: Conflict while attempting to update policy. 
+        428:
+          description: Write conflict 
         500:
           description: Internal server error while fetching Group details
   /groups/{groupName}/schemas/schema/{fingerprint}:
@@ -239,6 +239,10 @@ paths:
           description: Group not found
         409:
           description: Incompatible schema
+        417:
+          description: Invalid schema type
+        428:
+          description: Write conflict
         500:
           description: Internal server error while creating a Group
   /groups/{groupName}/schemas/validate:
@@ -655,6 +659,7 @@ definitions:
           - Avro
           - Protobuf
           - Json
+          - Any
           - Custom
       customTypeName:
         type: string  

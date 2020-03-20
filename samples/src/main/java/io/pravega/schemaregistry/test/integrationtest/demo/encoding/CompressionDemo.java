@@ -39,7 +39,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
+import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -52,6 +52,12 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Scanner;
 
+/**
+ * A sample class to demonstrate different kind of compression encodings that can be used with Pravega serializers.
+ * It has samples for gzip, snappy, none and custom encodings. 
+ * This highlights the power of encoding headers with pravega payload where schema registry facilitates clients recording
+ * different encoding schemes used for encoding the data into the header used before the data. 
+ */
 @Slf4j
 public class CompressionDemo {
     private static final Schema SCHEMA1 = SchemaBuilder
@@ -114,7 +120,7 @@ public class CompressionDemo {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroup = "rg" + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(readerGroup,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         reader = clientFactory.createReader("r2", readerGroup, readerDeserializer, ReaderConfig.builder().build());
     }
     

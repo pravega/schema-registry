@@ -40,7 +40,7 @@ import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
+import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
@@ -91,7 +91,7 @@ public class ProtobufDemo {
                     SchemaValidationRules.of(Compatibility.allowAny()),
                     false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders)));
 
-            Path path = Paths.get("tests/resources/proto/protobufTest.pb");
+            Path path = Paths.get("samples/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);
             DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
@@ -115,7 +115,7 @@ public class ProtobufDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String readerGroupName = "rg" + stream;
                 readerGroupManager.createReaderGroup(readerGroupName,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<ProtobufTest.Message1> deserializer = SerializerFactory.protobufDeserializer(serializerConfig, schema);
 
@@ -130,7 +130,7 @@ public class ProtobufDemo {
                 // 1. try without passing the schema. writer schema will be used to read
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
 
@@ -142,7 +142,7 @@ public class ProtobufDemo {
                 // 2. try with passing the schema. reader schema will be used to read
                 String rg3 = "rg3" + encodeHeaders;
                 readerGroupManager.createReaderGroup(rg3,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class.getSimpleName(), descriptorSet);
                 genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, schema2);
@@ -171,7 +171,7 @@ public class ProtobufDemo {
                     SchemaValidationRules.of(Compatibility.allowAny()),
                     true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
-            Path path = Paths.get("tests/resources/proto/protobufTest.pb");
+            Path path = Paths.get("samples/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);
             DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
@@ -203,7 +203,7 @@ public class ProtobufDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String rg = "rg" + stream + System.currentTimeMillis();
                 readerGroupManager.createReaderGroup(rg,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<GeneratedMessageV3> deserializer = SerializerFactory.multiTypedProtobufDeserializer(serializerConfig, map);
 
@@ -223,7 +223,7 @@ public class ProtobufDemo {
                 // region read into writer schema
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
 
@@ -240,7 +240,7 @@ public class ProtobufDemo {
                 // region read using multiplexed and generic record combination
                 String rg3 = "rg3" + stream;
                 readerGroupManager.createReaderGroup(rg3,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map2 = new HashMap<>();
                 // add only two schemas

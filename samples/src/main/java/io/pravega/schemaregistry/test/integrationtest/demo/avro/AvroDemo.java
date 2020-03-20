@@ -32,6 +32,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -40,7 +41,7 @@ import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
+import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -49,12 +50,20 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificRecordBase;
 
-import java.io.IOException;
 import java.net.URI;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Sample class that demonstrates how to use Avro Serializers and Deserializers provided by Schema registry's 
+ * {@link SerializerFactory}.
+ * Avro has multiple deserialization options 
+ * 1. Deserialize into Avro generated java class (schema on read).
+ * 2. Deserialize into {@link GenericRecord} using user supplied schema (schema on read). 
+ * 3. Deserialize into {@link GenericRecord} while retrieving writer schema. 
+ * 4. Multiplexed Deserializer that deserializes data into one of avro generated typed java objects based on {@link SchemaInfo#name}.
+ */
 @Slf4j
 public class AvroDemo {
     private static final Schema SCHEMA1 = SchemaBuilder
@@ -114,6 +123,7 @@ public class AvroDemo {
     }
     
     private void testAvroSchemaEvolution() {
+        System.out.println("demoing avro schema evolution");
         // create stream
         String scope = "scope" + id;
         String stream = "avroevolution";
@@ -123,14 +133,15 @@ public class AvroDemo {
             streamManager.createScope(scope);
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
+            System.out.println("adding new group with: \nschema type = avro\n compatibiity = backward");
+
             SchemaType schemaType = SchemaType.Avro;
             client.addGroup(groupId, schemaType,
                     SchemaValidationRules.of(Compatibility.backward()),
                     true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
 
+            System.out.println("registering schema " + SCHEMA1.toString(true));
             AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
-            AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
-            AvroSchema<GenericRecord> schema3 = AvroSchema.of(SCHEMA3);
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
@@ -148,6 +159,10 @@ public class AvroDemo {
             writer.writeEvent(record).join();
             // endregion
 
+            System.out.println("registering schema with default value for new field:" + SCHEMA2.toString(true));
+
+            AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
+
             // region writer with schema2
             serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
 
@@ -160,9 +175,14 @@ public class AvroDemo {
             // this should throw exception as schema change is not backward compatible.
             boolean exceptionThrown = false;
             try {
-                serializer = SerializerFactory.avroSerializer(serializerConfig, schema3);
+                System.out.println("registering schema " + SCHEMA3.toString(true));
+
+                AvroSchema<GenericRecord> schema3 = AvroSchema.of(SCHEMA3);
+
+                SerializerFactory.avroSerializer(serializerConfig, schema3);
             } catch (Exception ex) {
                 exceptionThrown = true;
+                System.out.println("schema registration failed with " + Exceptions.unwrap(ex));
             }
             // endregion
 
@@ -170,7 +190,9 @@ public class AvroDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String rg = "rg" + stream + System.currentTimeMillis();
                 readerGroupManager.createReaderGroup(rg,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                System.out.println("reading all records into schema2" + SCHEMA2.toString(true));
 
                 AvroSchema<GenericRecord> readSchema = AvroSchema.of(SCHEMA2);
 
@@ -188,15 +210,18 @@ public class AvroDemo {
                 try (ReaderGroupManager readerGroupManager2 = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                     String rg1 = "rg1" + stream;
                     readerGroupManager2.createReaderGroup(rg1,
-                            ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                            ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                    System.out.println("creating new reader to read using schema 3:" + SCHEMA3.toString(true));
 
                     readSchema = AvroSchema.of(SCHEMA3);
 
                     exceptionThrown = false;
                     try {
-                        deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, readSchema);
+                        SerializerFactory.genericAvroDeserializer(serializerConfig, readSchema);
                     } catch (Exception ex) {
                         exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
+                        System.out.println("schema validation failed with " + Exceptions.unwrap(ex));
                     }
                     assert exceptionThrown;
 
@@ -204,16 +229,18 @@ public class AvroDemo {
                     // region read into writer schema
                     String rg2 = "rg2" + stream;
                     readerGroupManager2.createReaderGroup(rg2,
-                            ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                            ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                     deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
                     reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
                     event = reader.readNextEvent(1000);
+                    System.out.println("event read =" + event.getEvent());
                     assert event.getEvent() != null;
 
                     event = reader.readNextEvent(1000);
+                    System.out.println("event read =" + event.getEvent());
                     assert event.getEvent() != null;
                     // endregion
                 }
@@ -257,7 +284,7 @@ public class AvroDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String rg = "rg" + stream + System.currentTimeMillis();
                 readerGroupManager.createReaderGroup(rg,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 AvroSchema<GenericRecord> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
@@ -272,7 +299,7 @@ public class AvroDemo {
                 // region read into writer schema
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -320,7 +347,7 @@ public class AvroDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String rg = "rg" + stream + System.currentTimeMillis();
                 readerGroupManager.createReaderGroup(rg,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
@@ -335,7 +362,7 @@ public class AvroDemo {
                 // region read into writer schema
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<GenericRecord> genericDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -391,7 +418,7 @@ public class AvroDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String rg = "rg" + stream + System.currentTimeMillis();
                 readerGroupManager.createReaderGroup(rg,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
 
@@ -411,7 +438,7 @@ public class AvroDemo {
                 // region read into writer schema
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<GenericRecord> genericDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -428,7 +455,7 @@ public class AvroDemo {
                 // region read using multiplexed and generic record combination
                 String rg3 = "rg3" + stream;
                 readerGroupManager.createReaderGroup(rg3,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map2 = new HashMap<>();
                 // add only two schemas

@@ -7,8 +7,10 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.sql;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebusproto;
 
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.StreamManager;
@@ -18,8 +20,6 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.common.Exceptions;
-import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -28,13 +28,11 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
-import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
+import lombok.SneakyThrows;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -44,33 +42,24 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
-import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Writer1 {
-    private static final Schema SCHEMA = SchemaBuilder
-            .record("User")
-            .fields()
-            .name("name")
-            .type(Schema.create(Schema.Type.STRING))
-            .noDefault()
-            .name("age")
-            .type(Schema.create(Schema.Type.INT))
-            .noDefault()
-            .endRecord();
-    private static final Random RANDOM = new Random();
-    
+public class MessageBusProducerProto {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamWriter<GenericRecord> writer;
+    private final EventStreamWriter<GeneratedMessageV3> writer;
 
-    private Writer1(String controllerURI, String registryUri, String scope, String stream) {
+    private MessageBusProducerProto(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -101,7 +90,7 @@ public class Writer1 {
         options.addOption(streamOpt);
 
         CommandLineParser parser = new BasicParser();
-
+        
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd = null;
 
@@ -109,8 +98,8 @@ public class Writer1 {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("writer1", options);
-
+            formatter.printHelp("messagebusavro-producer", options);
+            
             System.exit(-1);
         }
 
@@ -118,32 +107,69 @@ public class Writer1 {
         String registryUri = cmd.getOptionValue("registryUri");
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
+        
+        MessageBusProducerProto producer = new MessageBusProducerProto(controllerUri, registryUri, scope, stream);
+        
+        AtomicInteger counter = new AtomicInteger();
 
-        Writer1 producer = new Writer1(controllerUri, registryUri, scope, stream);
-
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
-        AtomicInteger integer = new AtomicInteger();
-
-        Futures.loop(() -> true, () -> {
-            Exceptions.handleInterrupted(() -> Thread.sleep(1000));
-            return producer.produce("writer1-" + integer.incrementAndGet());
-        }, executor);
+        while (true) {
+            System.out.println("choose: (1, 2 or 3)");
+            System.out.println("1. ProtobufTest.Message1");
+            System.out.println("2. ProtobufTest.Message2");
+            System.out.println("3. ProtobufTest.Message3");
+            System.out.print("> ");
+            Scanner in = new Scanner(System.in);
+            String s = in.nextLine();
+            try {
+                int choice = Integer.parseInt(s);
+                switch (choice) {
+                    case 1:
+                        ProtobufTest.InternalMessage build = ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val3).build();
+                        ProtobufTest.Message1 type1 = ProtobufTest.Message1.newBuilder().setName("test" + counter.incrementAndGet())
+                                                                           .setInternal(build).build();
+                        producer.produce(type1).join();
+                        System.out.println("Written event:\n" + type1);
+                        break;
+                    case 2:
+                        ProtobufTest.Message2 type2 = ProtobufTest.Message2.newBuilder().setName("test" + counter.incrementAndGet()).setField1(counter.get()).build();
+                        producer.produce(type2).join();
+                        System.out.println("Written event:\n" + type2);
+                        break;
+                    case 3:
+                        ProtobufTest.Message3 type3 = ProtobufTest.Message3.newBuilder().setName("test" + counter.incrementAndGet()).setField1(counter.get()).setField2(counter.get()).build();
+                        producer.produce(type3).join();
+                        System.out.println("Written event:\n" + type3);
+                        break;
+                    default:
+                        System.err.println("invalid choice!");
+                }
+            } catch (NumberFormatException e) {
+                System.err.println("invalid choice!");
+            }
+        }
     }
-
+    
     private void initialize(String groupId) {
         // create stream
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
-        SchemaType schemaType = SchemaType.Avro;
+        SchemaType schemaType = SchemaType.Protobuf;
         client.addGroup(groupId, schemaType,
-                SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
+                SchemaValidationRules.of(Compatibility.allowAny()),
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamWriter<GenericRecord> createWriter(String groupId) {
+    @SneakyThrows
+    private EventStreamWriter<GeneratedMessageV3> createWriter(String groupId) {
+        Path path = Paths.get("samples/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+
+        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofBaseType(ProtobufTest.Message3.class, descriptorSet);
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -152,8 +178,11 @@ public class Writer1 {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        AvroSchema<GenericRecord> schema = AvroSchema.of(SCHEMA);
-        Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
+        Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
+        map.put(ProtobufTest.Message1.class, schema1);
+        map.put(ProtobufTest.Message2.class, schema2);
+        map.put(ProtobufTest.Message3.class, schema3);
+        Serializer<GeneratedMessageV3> serializer = SerializerFactory.multiTypedProtobufSerializer(serializerConfig, map);
         // endregion
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
@@ -161,12 +190,7 @@ public class Writer1 {
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
     }
 
-    private CompletableFuture<Void> produce(String value) {
-        GenericRecord record = new GenericData.Record(SCHEMA);
-        record.put("name", value);
-        record.put("age", RANDOM.nextInt(100));
-
-        return writer.writeEvent(record)
-                .thenAccept(v -> System.out.println("message: " + record));
+    private CompletableFuture<Void> produce(GeneratedMessageV3 event) {
+        return writer.writeEvent(event);
     }
 }

@@ -27,11 +27,9 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     MultiplexedAndGenericDeserializer(String groupId, SchemaRegistryClient client,
                                       Map<String, AbstractPravegaDeserializer<T>> deserializers,
                                       AbstractPravegaDeserializer<G> genericDeserializer,
-                                      boolean skipHeaders, BiFunction<CodecType, ByteBuffer, ByteBuffer> decode,
+                                      BiFunction<CodecType, ByteBuffer, ByteBuffer> decode,
                                       EncodingCache encodingCache) {
-        super(groupId, client, null, skipHeaders, decode, encodingCache);
-        // 1. validate each schema
-        // 2. ensure all data 
+        super(groupId, client, null, false, decode, encodingCache);
         this.deserializers = deserializers; 
         this.genericDeserializer = genericDeserializer;
     }

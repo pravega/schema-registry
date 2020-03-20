@@ -23,6 +23,8 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
@@ -137,7 +139,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         request.setValidationRules(ModelHelper.encode(validationRules));
 
         Response response = invocationBuilder.put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
+        if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
             throw new RuntimeException("Conflict attempting to update the rules. Try again.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to update schema validation rules.");
@@ -179,7 +181,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new RuntimeException("Group not found.");
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-            throw new RuntimeException("Schema is incompatible.");
+            throw new IncompatibleSchemaException("Schema is incompatible.");
+        } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
+            throw new SchemaTypeMismatchException("Schema type is invalid.");
+        } else if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
+            throw new RuntimeException("Write conflict.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to addSchema.");
         }

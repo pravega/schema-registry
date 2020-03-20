@@ -10,6 +10,8 @@
 package io.pravega.schemaregistry.server.rest.resources;
 
 import io.pravega.common.Exceptions;
+import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
@@ -37,8 +39,8 @@ import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.v1.ApiV1;
-import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -134,8 +136,14 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         registryService.updateSchemaValidationRules(groupName, rules)
                        .thenApply(groupProperty -> Response.status(Status.OK).build())
                        .exceptionally(exception -> {
-                           log.warn("updateSchemaValidationRules failed with exception: ", exception);
-                           return Response.status(Status.INTERNAL_SERVER_ERROR).build(); })
+                           if (Exceptions.unwrap(exception) instanceof StoreExceptions.WriteConflictException) {
+                               log.info("addSchemaToGroupIfAbsent write conflict {}", groupName);
+                               return Response.status(Status.PRECONDITION_FAILED).build();
+                           } else {
+                               log.warn("updateSchemaValidationRules failed with exception: ", exception);
+                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                           }
+                       })
                        .thenApply(response -> {
                            asyncResponse.resume(response);
                            return response;
@@ -208,6 +216,12 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                            if (Exceptions.unwrap(exception) instanceof IncompatibleSchemaException) {
                                log.info("addSchemaToGroupIfAbsent incompatible schema {}", groupName);
                                return Response.status(Status.CONFLICT).build();
+                           } else if (Exceptions.unwrap(exception) instanceof SchemaTypeMismatchException) {
+                               log.info("addSchemaToGroupIfAbsent schema type mismatched {}", groupName);
+                               return Response.status(Status.EXPECTATION_FAILED).build();
+                           } else if (Exceptions.unwrap(exception) instanceof StoreExceptions.WriteConflictException) {
+                               log.info("addSchemaToGroupIfAbsent write conflict {}", groupName);
+                               return Response.status(Status.PRECONDITION_FAILED).build();
                            } else {
                                log.warn("addSchemaToGroupIfAbsent failed with exception: ", exception);
                                return Response.status(Status.INTERNAL_SERVER_ERROR).build(); 

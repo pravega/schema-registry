@@ -85,6 +85,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
         
+        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 428, message = "Write conflict", response = Void.class),
+        
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToGroupRequest addSchemaToGroupRequest
@@ -383,7 +387,7 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 409, message = "Conflict while attempting to update policy.", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 428, message = "Write conflict", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response updateSchemaValidationRules(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName

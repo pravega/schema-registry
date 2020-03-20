@@ -38,6 +38,8 @@ public class SchemaType   {
     
     JSON("Json"),
     
+    ANY("Any"),
+    
     CUSTOM("Custom");
 
     private String value;

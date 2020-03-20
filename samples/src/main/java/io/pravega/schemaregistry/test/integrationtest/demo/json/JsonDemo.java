@@ -31,6 +31,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.JSONSchema;
@@ -41,7 +42,7 @@ import io.pravega.schemaregistry.test.integrationtest.demo.objects.Address;
 import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.test.integrationtest.demo.objects.DerivedUser2;
 import io.pravega.schemaregistry.test.integrationtest.demo.objects.User;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
+import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 
 import java.net.URI;
@@ -49,6 +50,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Sample class that demonstrates how to use Json Serializers and Deserializers provided by Schema registry's 
+ * {@link SerializerFactory}.
+ * Avro has multiple deserialization options 
+ * 1. Deserialize into java class (schema on read).
+ * 2. Deserialize into {@link Map} using user supplied schema (schema on read). 
+ * 3. Deserialize into {@link Map} while retrieving writer schema. 
+ * 4. Multiplexed Deserializer that deserializes data into one of java objects based on {@link SchemaInfo#name}.
+ */
 @Slf4j
 public class JsonDemo {
     private final ClientConfig clientConfig;
@@ -74,6 +84,13 @@ public class JsonDemo {
     }
     
     private void testJson(boolean encodeHeaders) {
+        if (encodeHeaders) {
+            System.out.println("testing json WITH headers encoded in the stream payload");
+        } else {
+            System.out.println("testing json WITHOUT headers encoded in the stream payload. " +
+                    "This will use ");
+        }
+        
         // create stream
         String scope = "scope" + id;
         String stream = "json" + encodeHeaders;
@@ -108,7 +125,7 @@ public class JsonDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String readerGroupName = "rg" + stream;
                 readerGroupManager.createReaderGroup(readerGroupName,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<DerivedUser2> deserializer = SerializerFactory.jsonDeserializer(serializerConfig, schema);
 
@@ -122,7 +139,7 @@ public class JsonDemo {
                 // region generic read
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
 
@@ -183,7 +200,7 @@ public class JsonDemo {
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
                 String rg = "rg" + stream;
                 readerGroupManager.createReaderGroup(rg,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<User> deserializer = SerializerFactory.multiTypedJsonDeserializer(serializerConfig, map);
 
@@ -200,7 +217,7 @@ public class JsonDemo {
                 // region read into writer schema
                 String rg2 = "rg2" + stream;
                 readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
 
@@ -215,7 +232,7 @@ public class JsonDemo {
                 // region read using multiplexed and generic record combination
                 String rg3 = "rg3" + stream;
                 readerGroupManager.createReaderGroup(rg3,
-                        ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 Map<Class<? extends User>, JSONSchema<User>> map2 = new HashMap<>();
                 // add only one schema

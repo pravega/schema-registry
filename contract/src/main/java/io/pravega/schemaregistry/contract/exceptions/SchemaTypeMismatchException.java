@@ -7,14 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.service;
+package io.pravega.schemaregistry.contract.exceptions;
 
 /**
- * Exception thrown when a schema fails the {@link io.pravega.schemaregistry.rules.CompatibilityChecker}'s checks for
- * the set compatibility policy. 
+ * Exception thrown when a schema type is different from the group property's schema type. 
  */
-public class IncompatibleSchemaException extends RuntimeException {
-    public IncompatibleSchemaException(String message) {
+public class SchemaTypeMismatchException extends RuntimeException {
+    public SchemaTypeMismatchException(String message) {
         super(message);
     }
 }

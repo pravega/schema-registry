@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.sql;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebusavro;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -18,8 +18,6 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.common.Exceptions;
-import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -29,12 +27,12 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
-import org.apache.avro.Schema;
-import org.apache.avro.SchemaBuilder;
-import org.apache.avro.generic.GenericData;
-import org.apache.avro.generic.GenericRecord;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type3;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -45,32 +43,20 @@ import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
 import java.util.Collections;
-import java.util.Random;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class Writer1 {
-    private static final Schema SCHEMA = SchemaBuilder
-            .record("User")
-            .fields()
-            .name("name")
-            .type(Schema.create(Schema.Type.STRING))
-            .noDefault()
-            .name("age")
-            .type(Schema.create(Schema.Type.INT))
-            .noDefault()
-            .endRecord();
-    private static final Random RANDOM = new Random();
-    
+public class MessageBusProducer {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamWriter<GenericRecord> writer;
+    private final EventStreamWriter<SpecificRecordBase> writer;
 
-    private Writer1(String controllerURI, String registryUri, String scope, String stream) {
+    private MessageBusProducer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -101,7 +87,7 @@ public class Writer1 {
         options.addOption(streamOpt);
 
         CommandLineParser parser = new BasicParser();
-
+        
         HelpFormatter formatter = new HelpFormatter();
         CommandLine cmd = null;
 
@@ -109,8 +95,8 @@ public class Writer1 {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("writer1", options);
-
+            formatter.printHelp("messagebusavro-producer", options);
+            
             System.exit(-1);
         }
 
@@ -118,19 +104,46 @@ public class Writer1 {
         String registryUri = cmd.getOptionValue("registryUri");
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
+        
+        MessageBusProducer producer = new MessageBusProducer(controllerUri, registryUri, scope, stream);
+        
+        AtomicInteger counter = new AtomicInteger();
 
-        Writer1 producer = new Writer1(controllerUri, registryUri, scope, stream);
-
-        ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
-
-        AtomicInteger integer = new AtomicInteger();
-
-        Futures.loop(() -> true, () -> {
-            Exceptions.handleInterrupted(() -> Thread.sleep(1000));
-            return producer.produce("writer1-" + integer.incrementAndGet());
-        }, executor);
+        while (true) {
+            System.out.println("choose: (1, 2 or 3)");
+            System.out.println("1. Type1");
+            System.out.println("2. Type2");
+            System.out.println("3. Type3");
+            System.out.println("> ");
+            Scanner in = new Scanner(System.in);
+            String s = in.nextLine();
+            try {
+                int choice = Integer.parseInt(s);
+                switch (choice) {
+                    case 1:
+                        Type1 type1 = new Type1("Type1", counter.incrementAndGet());
+                        producer.produce(type1).join();
+                        System.out.println("Written event:" + type1);
+                        break;
+                    case 2:
+                        Type2 type2 = new Type2("Type2", counter.incrementAndGet(), "field2");
+                        producer.produce(type2).join();
+                        System.out.println("Written event:" + type2);
+                        break;
+                    case 3:
+                        Type3 type3 = new Type3("Type3", counter.incrementAndGet(), "field2", "field3");
+                        producer.produce(type3).join();
+                        System.out.println("Written event:" + type3);
+                        break;
+                    default:
+                        System.err.println("invalid choice!");
+                }
+            } catch (Exception e) {
+                System.err.println("invalid choice!");
+            }
+        }
     }
-
+    
     private void initialize(String groupId) {
         // create stream
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
@@ -140,10 +153,13 @@ public class Writer1 {
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
+                true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamWriter<GenericRecord> createWriter(String groupId) {
+    private EventStreamWriter<SpecificRecordBase> createWriter(String groupId) {
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Type3.class, Type3.getClassSchema());
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -152,8 +168,11 @@ public class Writer1 {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        AvroSchema<GenericRecord> schema = AvroSchema.of(SCHEMA);
-        Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
+        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
+        map.put(Type1.class, schema1);
+        map.put(Type2.class, schema2);
+        map.put(Type3.class, schema3);
+        Serializer<SpecificRecordBase> serializer = SerializerFactory.multiTypedAvroSerializer(serializerConfig, map);
         // endregion
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
@@ -161,12 +180,7 @@ public class Writer1 {
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
     }
 
-    private CompletableFuture<Void> produce(String value) {
-        GenericRecord record = new GenericData.Record(SCHEMA);
-        record.put("name", value);
-        record.put("age", RANDOM.nextInt(100));
-
-        return writer.writeEvent(record)
-                .thenAccept(v -> System.out.println("message: " + record));
+    private CompletableFuture<Void> produce(SpecificRecordBase event) {
+        return writer.writeEvent(event);
     }
 }

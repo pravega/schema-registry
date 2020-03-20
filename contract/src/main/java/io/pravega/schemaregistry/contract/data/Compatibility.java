@@ -114,5 +114,4 @@ public class Compatibility implements SchemaValidationRule {
 
     public static class CompatibilityBuilder implements ObjectBuilder<Compatibility> {
     }
-
 }

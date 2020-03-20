@@ -26,6 +26,7 @@ public enum SchemaType {
         Avro,
         Protobuf,
         Json,
+        Any,
         Custom;
 
         @Getter

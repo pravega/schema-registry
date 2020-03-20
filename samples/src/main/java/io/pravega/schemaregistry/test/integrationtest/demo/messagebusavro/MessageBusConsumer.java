@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.messagebus;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebusavro;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -31,10 +31,14 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
-import org.apache.avro.generic.GenericRecord;
+import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
+import io.pravega.schemaregistry.test.integrationtest.generated.Type3;
+import io.pravega.shared.NameUtils;
+import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -45,15 +49,17 @@ import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
 import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
-public class GenericConsumer {
+public class MessageBusConsumer {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamReader<GenericRecord> reader;
+    private final EventStreamReader<SpecificRecordBase> reader;
 
-    private GenericConsumer(String controllerURI, String registryUri, String scope, String stream) {
+    private MessageBusConsumer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -92,7 +98,7 @@ public class GenericConsumer {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("messagebus-consumer", options);
+            formatter.printHelp("messagebusavro-consumer", options);
             
             System.exit(-1);
         }
@@ -102,13 +108,22 @@ public class GenericConsumer {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
         
-        GenericConsumer consumer = new GenericConsumer(controllerUri, registryUri, scope, stream);
+        MessageBusConsumer consumer = new MessageBusConsumer(controllerUri, registryUri, scope, stream);
         
         while (true) {
-            EventRead<GenericRecord> event = consumer.consume();
+            EventRead<SpecificRecordBase> event = consumer.consume();
             if (event.getEvent() != null) {
-                GenericRecord record = event.getEvent();
-                System.err.println("processing as generic record: " + record);
+                SpecificRecordBase record = event.getEvent();
+                if (record instanceof Type1) {
+                    Type1 type1 = (Type1) record;
+                    System.err.println("processing record of type Type1: " + type1);
+                } else if (record instanceof Type2) {
+                    Type2 type2 = (Type2) record;
+                    System.err.println("processing record of type Type2: " + type2);
+                } else if (record instanceof Type3) {
+                    Type3 type3 = (Type3) record;
+                    System.err.println("processing record of type Type3: " + type3);
+                }
             }
         }
     }
@@ -125,7 +140,10 @@ public class GenericConsumer {
                 true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamReader<GenericRecord> createReader(String groupId) {
+    private EventStreamReader<SpecificRecordBase> createReader(String groupId) {
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Type3.class, Type3.getClassSchema());
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -133,15 +151,20 @@ public class GenericConsumer {
                                                             .autoRegisterSchema(true)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
+
+        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
+        map.put(Type1.class, schema1);
+        map.put(Type2.class, schema2);
+        map.put(Type3.class, schema3);
         // endregion
 
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
+        Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
@@ -149,7 +172,7 @@ public class GenericConsumer {
         // endregion
     }
 
-    private EventRead<GenericRecord> consume() {
+    private EventRead<SpecificRecordBase> consume() {
         return reader.readNextEvent(1000);
     }
 }

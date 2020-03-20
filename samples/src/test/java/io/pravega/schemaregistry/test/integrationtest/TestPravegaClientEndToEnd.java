@@ -38,13 +38,13 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.JSonGenericObject;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.service.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
@@ -56,7 +56,7 @@ import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test1;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test2;
 import io.pravega.schemaregistry.test.integrationtest.generated.Test3;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
+import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -223,7 +223,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         AvroSchema<GenericRecord> readSchema = AvroSchema.of(SCHEMA2);
 
@@ -241,7 +241,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg1 = "rg1" + stream;
         readerGroupManager.createReaderGroup(rg1, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         readSchema = AvroSchema.of(SCHEMA3);
 
@@ -257,7 +257,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -361,7 +361,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -475,7 +475,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         AvroSchema<GenericRecord> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
@@ -490,7 +490,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -536,7 +536,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
@@ -553,7 +553,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<GenericRecord> genericDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -607,7 +607,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
 
@@ -627,7 +627,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<GenericRecord> genericDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, null);
 
@@ -644,7 +644,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read using multiplexed and generic record combination
         String rg3 = "rg3" + stream;
         readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map2 = new HashMap<>();
         // add only two schemas
@@ -707,7 +707,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroupName = "rg" + stream;
         readerGroupManager.createReaderGroup(readerGroupName, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         Serializer<ProtobufTest.Message1> deserializer = SerializerFactory.protobufDeserializer(serializerConfig, schema);
 
@@ -722,7 +722,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // 1. try without passing the schema. writer schema will be used to read
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
 
@@ -734,7 +734,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // 2. try with passing the schema. reader schema will be used to read
         String rg3 = "rg3" + encodeHeaders;
         readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class.getSimpleName(), descriptorSet);
         genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, schema2);
@@ -793,7 +793,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         Serializer<GeneratedMessageV3> deserializer = SerializerFactory.multiTypedProtobufDeserializer(serializerConfig, map);
 
@@ -813,7 +813,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
 
@@ -830,7 +830,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read using multiplexed and generic record combination
         String rg3 = "rg3" + stream;
         readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map2 = new HashMap<>();
         // add only two schemas
@@ -889,7 +889,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroupName = "rg" + stream;
         readerGroupManager.createReaderGroup(readerGroupName, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
         Serializer<DerivedUser2> deserializer = SerializerFactory.jsonDeserializer(serializerConfig, schema);
 
@@ -903,7 +903,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region generic read
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
 
@@ -962,7 +962,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<User> deserializer = SerializerFactory.multiTypedJsonDeserializer(serializerConfig, map);
 
@@ -979,7 +979,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
 
@@ -994,7 +994,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read using multiplexed and generic record combination
         String rg3 = "rg3" + stream;
         readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Map<Class<? extends User>, JSONSchema<User>> map2 = new HashMap<>();
         // add only one schema

@@ -174,6 +174,7 @@ public class Writer3 {
         record.put("address", bValue);
         record.put("socialSecurity", bValue);
 
-        return writer.writeEvent(record);
+        return writer.writeEvent(record)
+                .thenAccept(v -> System.out.println(record));
     }
 }

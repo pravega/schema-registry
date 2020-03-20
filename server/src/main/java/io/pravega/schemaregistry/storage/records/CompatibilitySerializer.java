@@ -18,9 +18,11 @@ import io.pravega.schemaregistry.contract.data.VersionInfo;
 import java.io.IOException;
 
 public class CompatibilitySerializer extends VersionedSerializer.WithBuilder<Compatibility, Compatibility.CompatibilityBuilder> {
+    public static final CompatibilitySerializer SERIALIZER = new CompatibilitySerializer();
+    
     @Override
     protected Compatibility.CompatibilityBuilder newBuilder() {
-        return null;
+        return Compatibility.builder();
     }
 
     @Override
@@ -47,7 +49,7 @@ public class CompatibilitySerializer extends VersionedSerializer.WithBuilder<Com
             VersionInfoSerializer.SERIALIZER.serialize(target, VersionInfoSerializer.NON_EXISTENT);
         }
     }
-
+    
     private void read00(RevisionDataInput source, Compatibility.CompatibilityBuilder b) throws IOException {
         int ordinal = source.readCompactInt();
         Compatibility.Type compatibilityType = Compatibility.Type.values()[ordinal];

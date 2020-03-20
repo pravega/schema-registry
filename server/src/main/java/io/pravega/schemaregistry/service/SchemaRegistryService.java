@@ -27,6 +27,8 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
 import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
@@ -146,20 +148,25 @@ public class SchemaRegistryService {
         return store.getGroupEtag(group)
                     .thenCompose(etag ->
                             store.getGroupProperties(group)
-                                 .thenCompose(prop -> Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
-                                         e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
-                                         () -> { // Schema doesnt exist. Validate and add it
-                                             return getSchemasForValidation(group, schema, prop)
-                                                     .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
-                                                     .thenCompose(valid -> {
-                                                         if (!valid) {
-                                                             throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
-                                                         }
-                                                         return getNextVersion(group, schema, prop)
-                                                                 .thenCompose(nextVersion ->
-                                                                         store.addSchemaToGroup(group, schema, nextVersion, etag));
-                                                     });
-                                         })));
+                                 .thenCompose(prop -> {
+                                     if (!schema.getSchemaType().equals(prop.getSchemaType()) && !prop.getSchemaType().equals(SchemaType.Any)) {
+                                         throw new SchemaTypeMismatchException(schema.getSchemaType().name());
+                                     }
+                                     return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
+                                             e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                             () -> { // Schema doesnt exist. Validate and add it
+                                                 return getSchemasForValidation(group, schema, prop)
+                                                         .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
+                                                         .thenCompose(valid -> {
+                                                             if (!valid) {
+                                                                 throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
+                                                             }
+                                                             return getNextVersion(group, schema, prop)
+                                                                     .thenCompose(nextVersion ->
+                                                                             store.addSchemaToGroup(group, schema, nextVersion, etag));
+                                                         });
+                                             });
+                                 }));
     }
     
     /**

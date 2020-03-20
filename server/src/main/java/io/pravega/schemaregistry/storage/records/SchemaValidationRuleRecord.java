@@ -27,7 +27,7 @@ public interface SchemaValidationRuleRecord {
         protected void declareSerializers(Builder builder) {
             // Unused values (Do not repurpose!):
             // - 0: Unsupported Serializer.
-            builder.serializer(Compatibility.class, 1, new CompatibilitySerializer());
+            builder.serializer(Compatibility.class, 1, CompatibilitySerializer.SERIALIZER);
         }
 
         /**
@@ -37,9 +37,9 @@ public interface SchemaValidationRuleRecord {
          * @return A new {@link ByteBuffer} wrapping an array that contains the serialization.
          */
         @SneakyThrows(IOException.class)
-        public byte[] toBytes(SchemaValidationRule value) {
+        public ByteBuffer toBytes(SchemaValidationRule value) {
             ByteArraySegment s = serialize(value);
-            return s.getCopy();
+            return ByteBuffer.wrap(s.array(), s.arrayOffset(), s.getLength());
         }
 
         /**
@@ -49,7 +49,7 @@ public interface SchemaValidationRuleRecord {
          * @return A new {@link SchemaValidationRuleRecord} instance from the given serialization.
          */
         @SneakyThrows(IOException.class)
-        public SchemaValidationRule fromBytes(byte[] buffer) {
+        public SchemaValidationRule fromBytes(ByteBuffer buffer) {
             return deserialize(new ByteArraySegment(buffer));
         }
     }

@@ -7,8 +7,11 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.messagebus;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebusproto;
 
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -31,14 +34,12 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.schemas.AvroSchema;
+import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
-import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
-import io.pravega.shared.segment.StreamSegmentNameUtils;
-import org.apache.avro.generic.GenericRecord;
-import org.apache.avro.specific.SpecificRecordBase;
+import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
+import io.pravega.shared.NameUtils;
+import lombok.SneakyThrows;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -48,18 +49,21 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class SpecificAndGenericConsumer {
+public class SpecificAndGenericConsumerProto {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamReader<Either<SpecificRecordBase, GenericRecord>> reader;
+    private final EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> reader;
 
-    private SpecificAndGenericConsumer(String controllerURI, String registryUri, String scope, String stream) {
+    private SpecificAndGenericConsumerProto(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -98,7 +102,7 @@ public class SpecificAndGenericConsumer {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("messagebus-consumer", options);
+            formatter.printHelp("messagebusavro-consumer", options);
             
             System.exit(-1);
         }
@@ -108,24 +112,24 @@ public class SpecificAndGenericConsumer {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
         
-        SpecificAndGenericConsumer consumer = new SpecificAndGenericConsumer(controllerUri, registryUri, scope, stream);
+        SpecificAndGenericConsumerProto consumer = new SpecificAndGenericConsumerProto(controllerUri, registryUri, scope, stream);
         
         while (true) {
-            EventRead<Either<SpecificRecordBase, GenericRecord>> event = consumer.consume();
+            EventRead<Either<GeneratedMessageV3, DynamicMessage>> event = consumer.consume();
             if (event.getEvent() != null) {
-                Either<SpecificRecordBase, GenericRecord> record = event.getEvent();
+                Either<GeneratedMessageV3, DynamicMessage> record = event.getEvent();
                 if (record.isLeft()) {
-                    if (record.getLeft() instanceof Type1) {
-                        Type1 type1 = (Type1) record.getLeft();
-                        System.err.println("processing record of type Type1: " + type1);
-                    } else if (record.getLeft() instanceof Type2) {
-                        Type2 type2 = (Type2) record.getLeft();
-                        System.err.println("processing record of type Type2: " + type2);
+                    if (record.getLeft() instanceof ProtobufTest.Message1) {
+                        ProtobufTest.Message1 type1 = (ProtobufTest.Message1) record.getLeft();
+                        System.err.println("processing record of type ProtobufTest.Message1: " + type1);
+                    } else if (record.getLeft() instanceof ProtobufTest.Message2) {
+                        ProtobufTest.Message2 type2 = (ProtobufTest.Message2) record.getLeft();
+                        System.err.println("processing record of type ProtobufTest.Message2: " + type2);
                     } else {
                         throw new IllegalArgumentException(" we should not be here ");
                     }
                 } else {
-                    GenericRecord rec = record.getRight();
+                    DynamicMessage rec = record.getRight();
                     System.err.println("processing generic record " + rec);
                 }
             }
@@ -140,13 +144,18 @@ public class SpecificAndGenericConsumer {
 
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
-                SchemaValidationRules.of(Compatibility.backward()),
+                SchemaValidationRules.of(Compatibility.allowAny()),
                 true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamReader<Either<SpecificRecordBase, GenericRecord>> createReader(String groupId) {
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
+    @SneakyThrows
+    private EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> createReader(String groupId) {
+        Path path = Paths.get("samples/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+
+        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -155,18 +164,18 @@ public class SpecificAndGenericConsumer {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
-        map.put(Type1.class, schema1);
-        map.put(Type2.class, schema2);
+        Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
+        map.put(ProtobufTest.Message1.class, schema1);
+        map.put(ProtobufTest.Message2.class, schema2);
         // endregion
 
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(StreamSegmentNameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<Either<SpecificRecordBase, GenericRecord>> deserializer = SerializerFactory.typedOrGenericAvroDeserializer(serializerConfig, map);
+        Serializer<Either<GeneratedMessageV3, DynamicMessage>> deserializer = SerializerFactory.typedOrGenericProtobufDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
@@ -174,7 +183,7 @@ public class SpecificAndGenericConsumer {
         // endregion
     }
 
-    private EventRead<Either<SpecificRecordBase, GenericRecord>> consume() {
+    private EventRead<Either<GeneratedMessageV3, DynamicMessage>> consume() {
         return reader.readNextEvent(1000);
     }
 }

@@ -17,6 +17,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -47,7 +48,11 @@ public class SchemaValidationRulesSerializer extends VersionedSerializer.WithBui
         target.writeCompactInt(e.getRules().size());
         for (Map.Entry<String, SchemaValidationRule> rule : e.getRules().entrySet()) {
             target.writeUTF(rule.getKey());
-            target.writeArray(SchemaValidationRuleRecord.SERIALIZER.toBytes(rule.getValue()));
+            ByteBuffer buffer = SchemaValidationRuleRecord.SERIALIZER.toBytes(rule.getValue());
+            byte[] array = new byte[buffer.remaining()];
+            buffer.get(array);
+
+            target.writeArray(array);
         }
     }
 
@@ -58,7 +63,7 @@ public class SchemaValidationRulesSerializer extends VersionedSerializer.WithBui
         for (int i = 0; i < count; i++) {
             String name = source.readUTF();
             byte[] bytes = source.readArray();
-            SchemaValidationRule schemaValidationRule = SchemaValidationRuleRecord.SERIALIZER.fromBytes(bytes);
+            SchemaValidationRule schemaValidationRule = SchemaValidationRuleRecord.SERIALIZER.fromBytes(ByteBuffer.wrap(bytes));
             rules.put(name, schemaValidationRule);
         }
         b.rules(rules);
