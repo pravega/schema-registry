@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.protobuf;
+package io.pravega.schemaregistry.test.integrationtest.demo.serializationformats;
 
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
@@ -34,6 +34,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
@@ -52,6 +53,15 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * Sample class that demonstrates how to use Json Serializers and Deserializers provided by Schema registry's 
+ * {@link SerializerFactory}.
+ * Protobuf has multiple deserialization options 
+ * 1. Deserialize into protobuf generated java class (schema on read).
+ * 2. Deserialize into {@link DynamicMessage} using user supplied schema (schema on read). 
+ * 3. Deserialize into {@link DynamicMessage} while retrieving writer schema. 
+ * 4. Multiplexed Deserializer that deserializes data into one of java objects based on {@link SchemaInfo#name}.
+ */
 @Slf4j
 public class ProtobufDemo {
     private final ClientConfig clientConfig;

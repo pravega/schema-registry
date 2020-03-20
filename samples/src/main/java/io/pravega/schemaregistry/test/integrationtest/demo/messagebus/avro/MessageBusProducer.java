@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.messagebusavro;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebus.avro;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -95,7 +95,7 @@ public class MessageBusProducer {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("messagebusavro-producer", options);
+            formatter.printHelp("avro-producer", options);
             
             System.exit(-1);
         }

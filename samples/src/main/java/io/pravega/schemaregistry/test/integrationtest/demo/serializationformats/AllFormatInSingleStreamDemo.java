@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.demomultipleformatsinsamestream;
+package io.pravega.schemaregistry.test.integrationtest.demo.serializationformats;
 
 import com.google.protobuf.DescriptorProtos;
 import io.pravega.client.ClientConfig;
@@ -210,5 +210,4 @@ public class AllFormatInSingleStreamDemo {
 
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
     }
-
 }

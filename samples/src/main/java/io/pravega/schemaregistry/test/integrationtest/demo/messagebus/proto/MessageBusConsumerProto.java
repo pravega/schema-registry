@@ -7,8 +7,10 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.messagebusavro;
+package io.pravega.schemaregistry.test.integrationtest.demo.messagebus.proto;
 
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -31,14 +33,12 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
-import io.pravega.schemaregistry.test.integrationtest.generated.Type1;
-import io.pravega.schemaregistry.test.integrationtest.generated.Type2;
-import io.pravega.schemaregistry.test.integrationtest.generated.Type3;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest;
 import io.pravega.shared.NameUtils;
-import org.apache.avro.specific.SpecificRecordBase;
+import lombok.SneakyThrows;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -48,18 +48,21 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MessageBusConsumer {
+public class MessageBusConsumerProto {
     private final ClientConfig clientConfig;
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamReader<SpecificRecordBase> reader;
+    private final EventStreamReader<GeneratedMessageV3> reader;
 
-    private MessageBusConsumer(String controllerURI, String registryUri, String scope, String stream) {
+    private MessageBusConsumerProto(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
@@ -98,7 +101,7 @@ public class MessageBusConsumer {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("messagebusavro-consumer", options);
+            formatter.printHelp("avro-consumer", options);
             
             System.exit(-1);
         }
@@ -108,21 +111,21 @@ public class MessageBusConsumer {
         String scope = cmd.getOptionValue("scope");
         String stream = cmd.getOptionValue("stream");
         
-        MessageBusConsumer consumer = new MessageBusConsumer(controllerUri, registryUri, scope, stream);
+        MessageBusConsumerProto consumer = new MessageBusConsumerProto(controllerUri, registryUri, scope, stream);
         
         while (true) {
-            EventRead<SpecificRecordBase> event = consumer.consume();
+            EventRead<GeneratedMessageV3> event = consumer.consume();
             if (event.getEvent() != null) {
-                SpecificRecordBase record = event.getEvent();
-                if (record instanceof Type1) {
-                    Type1 type1 = (Type1) record;
-                    System.err.println("processing record of type Type1: " + type1);
-                } else if (record instanceof Type2) {
-                    Type2 type2 = (Type2) record;
-                    System.err.println("processing record of type Type2: " + type2);
-                } else if (record instanceof Type3) {
-                    Type3 type3 = (Type3) record;
-                    System.err.println("processing record of type Type3: " + type3);
+                GeneratedMessageV3 record = event.getEvent();
+                if (record instanceof ProtobufTest.Message1) {
+                    ProtobufTest.Message1 type1 = (ProtobufTest.Message1) record;
+                    System.err.println("processing record of type Message1: \n" + type1);
+                } else if (record instanceof ProtobufTest.Message2) {
+                    ProtobufTest.Message2 type2 = (ProtobufTest.Message2) record;
+                    System.err.println("processing record of type Message2: \n" + type2);
+                } else if (record instanceof ProtobufTest.Message3) {
+                    ProtobufTest.Message3 type3 = (ProtobufTest.Message3) record;
+                    System.err.println("processing record of type Message3: \n" + type3);
                 }
             }
         }
@@ -134,16 +137,21 @@ public class MessageBusConsumer {
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
-        SchemaType schemaType = SchemaType.Avro;
+        SchemaType schemaType = SchemaType.Protobuf;
         client.addGroup(groupId, schemaType,
-                SchemaValidationRules.of(Compatibility.backward()),
+                SchemaValidationRules.of(Compatibility.allowAny()),
                 true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
     }
 
-    private EventStreamReader<SpecificRecordBase> createReader(String groupId) {
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.of(Type1.class, Type1.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.of(Type2.class, Type2.getClassSchema());
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.of(Type3.class, Type3.getClassSchema());
+    @SneakyThrows
+    private EventStreamReader<GeneratedMessageV3> createReader(String groupId) {
+        Path path = Paths.get("samples/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+
+        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofBaseType(ProtobufTest.Message3.class, descriptorSet);
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -152,10 +160,10 @@ public class MessageBusConsumer {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
-        map.put(Type1.class, schema1);
-        map.put(Type2.class, schema2);
-        map.put(Type3.class, schema3);
+        Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
+        map.put(ProtobufTest.Message1.class, schema1);
+        map.put(ProtobufTest.Message2.class, schema2);
+        map.put(ProtobufTest.Message3.class, schema3);
         // endregion
 
         // region read into specific schema
@@ -164,7 +172,7 @@ public class MessageBusConsumer {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<SpecificRecordBase> deserializer = SerializerFactory.multiTypedAvroDeserializer(serializerConfig, map);
+        Serializer<GeneratedMessageV3> deserializer = SerializerFactory.multiTypedProtobufDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
@@ -172,7 +180,7 @@ public class MessageBusConsumer {
         // endregion
     }
 
-    private EventRead<SpecificRecordBase> consume() {
+    private EventRead<GeneratedMessageV3> consume() {
         return reader.readNextEvent(1000);
     }
 }

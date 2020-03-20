@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.json;
+package io.pravega.schemaregistry.test.integrationtest.demo.serializationformats;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -53,9 +53,9 @@ import java.util.Map;
 /**
  * Sample class that demonstrates how to use Json Serializers and Deserializers provided by Schema registry's 
  * {@link SerializerFactory}.
- * Avro has multiple deserialization options 
+ * This class has multiple deserialization options 
  * 1. Deserialize into java class (schema on read).
- * 2. Deserialize into {@link Map} using user supplied schema (schema on read). 
+ * 2. Deserialize into {@link Map}. No schema. 
  * 3. Deserialize into {@link Map} while retrieving writer schema. 
  * 4. Multiplexed Deserializer that deserializes data into one of java objects based on {@link SchemaInfo#name}.
  */

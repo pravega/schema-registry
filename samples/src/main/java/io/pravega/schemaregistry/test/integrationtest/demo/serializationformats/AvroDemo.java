@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.integrationtest.demo.avro;
+package io.pravega.schemaregistry.test.integrationtest.demo.serializationformats;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
