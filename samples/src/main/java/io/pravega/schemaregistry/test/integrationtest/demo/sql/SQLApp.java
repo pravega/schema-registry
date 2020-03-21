@@ -236,7 +236,7 @@ public class SQLApp {
 
         SchemaWithVersion latestSchema = client.getLatestSchema(groupId, null);
         AvroSchema<GenericRecord> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchema().getSchemaData(), Charsets.UTF_8)));
-        Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig, avroSchema);
+        Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, avroSchema);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 

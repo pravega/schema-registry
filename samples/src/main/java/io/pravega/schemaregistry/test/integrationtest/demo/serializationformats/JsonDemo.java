@@ -141,7 +141,7 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
+                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
                 EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -187,7 +187,7 @@ public class JsonDemo {
             Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();
             map.put(DerivedUser1.class, schema1);
             map.put(DerivedUser2.class, schema2);
-            Serializer<User> serializer = SerializerFactory.multiTypedJsonSerializer(serializerConfig, map);
+            Serializer<User> serializer = SerializerFactory.jsonMultiTypeSerializer(serializerConfig, map);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<User> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -202,7 +202,7 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<User> deserializer = SerializerFactory.multiTypedJsonDeserializer(serializerConfig, map);
+                Serializer<User> deserializer = SerializerFactory.jsonMultiTypeDeserializer(serializerConfig, map);
 
                 EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -219,7 +219,7 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.genericJsonDeserializer(serializerConfig);
+                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
                 EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -239,7 +239,7 @@ public class JsonDemo {
                 map2.put(DerivedUser1.class, schema1);
 
                 Serializer<Either<User, JSonGenericObject>> eitherDeserializer =
-                        SerializerFactory.typedOrGenericJsonDeserializer(serializerConfig, map2);
+                        SerializerFactory.jsonTypedOrGenericDeserializer(serializerConfig, map2);
 
                 EventStreamReader<Either<User, JSonGenericObject>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 

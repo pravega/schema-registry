@@ -172,7 +172,7 @@ public class MessageBusProducer {
         map.put(Type1.class, schema1);
         map.put(Type2.class, schema2);
         map.put(Type3.class, schema3);
-        Serializer<SpecificRecordBase> serializer = SerializerFactory.multiTypedAvroSerializer(serializerConfig, map);
+        Serializer<SpecificRecordBase> serializer = SerializerFactory.avroMultiTypeSerializer(serializerConfig, map);
         // endregion
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

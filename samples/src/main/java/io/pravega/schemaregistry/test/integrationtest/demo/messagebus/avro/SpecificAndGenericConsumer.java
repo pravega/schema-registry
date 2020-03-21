@@ -166,7 +166,7 @@ public class SpecificAndGenericConsumer {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<Either<SpecificRecordBase, GenericRecord>> deserializer = SerializerFactory.typedOrGenericAvroDeserializer(serializerConfig, map);
+        Serializer<Either<SpecificRecordBase, GenericRecord>> deserializer = SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 

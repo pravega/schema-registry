@@ -115,7 +115,7 @@ public class CompressionDemo {
                                                              .registryConfigOrClient(Either.right(client))
                                                              .build();
 
-        Serializer<GenericRecord> readerDeserializer = SerializerFactory.genericAvroDeserializer(serializerConfig2, null);
+        Serializer<GenericRecord> readerDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
 
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroup = "rg" + stream + System.currentTimeMillis();
@@ -139,25 +139,21 @@ public class CompressionDemo {
             String input = null;
             switch (s) {
                 case 1:
-                    System.out.println("supply 'a' for schema" + SCHEMA1.toString(true));
                     in = new Scanner(System.in);
                     input = in.nextLine();
                     demo.writeGzip(input);
                     break;
                 case 2:
-                    System.out.println("supply 'a' for schema" + SCHEMA1.toString(true));
                     in = new Scanner(System.in);
                     input = in.nextLine();
                     demo.writeSnappy(input);
                     break;
                 case 3:
-                    System.out.println("supply 'a' for schema" + SCHEMA1.toString(true));
                     in = new Scanner(System.in);
                     input = in.nextLine();
                     demo.withoutCompression(input);
                     break;
                 case 4:
-                    System.out.println("supply 'a' for schema" + SCHEMA1.toString(true));
                     in = new Scanner(System.in);
                     input = in.nextLine();
                     demo.writeCustom(input);

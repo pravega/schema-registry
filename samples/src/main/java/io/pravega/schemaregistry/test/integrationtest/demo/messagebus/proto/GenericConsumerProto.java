@@ -141,7 +141,7 @@ public class GenericConsumerProto {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<DynamicMessage> deserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
+        Serializer<DynamicMessage> deserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 

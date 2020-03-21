@@ -55,7 +55,7 @@ import java.util.Scanner;
 /**
  * This sample writes objects of all json protobuf and avro formats into a single stream. For this the `schema type` property
  * of the group is set as {@link SchemaType#Any}. 
- * During reads it uses {@link SerializerFactory#anyTypeDeserializer(SerializerConfig)} to deserialize them into generic records 
+ * During reads it uses {@link SerializerFactory#multiFormatGenericDeserializer(SerializerConfig)} to deserialize them into generic records 
  * of each type and the reader returns the common base class {@link Object}. 
  */
 public class AllFormatInSingleStreamDemo {
@@ -143,7 +143,7 @@ public class AllFormatInSingleStreamDemo {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        Serializer<Object> deserializer = SerializerFactory.anyTypeDeserializer(serializerConfig);
+        Serializer<Object> deserializer = SerializerFactory.multiFormatGenericDeserializer(serializerConfig);
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream + System.currentTimeMillis();

@@ -147,7 +147,7 @@ public class EncryptionDemo {
                                                              .registryConfigOrClient(Either.right(client))
                                                              .build();
 
-        Serializer<GenericRecord> deserializer = SerializerFactory.genericAvroDeserializer(serializerConfig2, null);
+        Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
 
         try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
             String rg = "rg" + stream + System.currentTimeMillis();

@@ -182,7 +182,7 @@ public class MessageBusProducerProto {
         map.put(ProtobufTest.Message1.class, schema1);
         map.put(ProtobufTest.Message2.class, schema2);
         map.put(ProtobufTest.Message3.class, schema3);
-        Serializer<GeneratedMessageV3> serializer = SerializerFactory.multiTypedProtobufSerializer(serializerConfig, map);
+        Serializer<GeneratedMessageV3> serializer = SerializerFactory.protobufMultiTypeSerializer(serializerConfig, map);
         // endregion
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

@@ -142,7 +142,7 @@ public class ProtobufDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
+                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -155,7 +155,7 @@ public class ProtobufDemo {
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class.getSimpleName(), descriptorSet);
-                genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, schema2);
+                genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
 
                 reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
@@ -199,7 +199,7 @@ public class ProtobufDemo {
             map.put(ProtobufTest.Message1.class, schema1);
             map.put(ProtobufTest.Message2.class, schema2);
             map.put(ProtobufTest.Message3.class, schema3);
-            Serializer<GeneratedMessageV3> serializer = SerializerFactory.multiTypedProtobufSerializer(serializerConfig, map);
+            Serializer<GeneratedMessageV3> serializer = SerializerFactory.protobufMultiTypeSerializer(serializerConfig, map);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<GeneratedMessageV3> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -215,7 +215,7 @@ public class ProtobufDemo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GeneratedMessageV3> deserializer = SerializerFactory.multiTypedProtobufDeserializer(serializerConfig, map);
+                Serializer<GeneratedMessageV3> deserializer = SerializerFactory.protobufMultiTypeDeserializer(serializerConfig, map);
 
                 EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -235,7 +235,7 @@ public class ProtobufDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.genericProtobufDeserializer(serializerConfig, null);
+                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -258,7 +258,7 @@ public class ProtobufDemo {
                 map2.put(ProtobufTest.Message2.class, schema2);
 
                 Serializer<Either<GeneratedMessageV3, DynamicMessage>> eitherDeserializer =
-                        SerializerFactory.typedOrGenericProtobufDeserializer(serializerConfig, map2);
+                        SerializerFactory.protobufTypedOrGenericDeserializer(serializerConfig, map2);
 
                 EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
