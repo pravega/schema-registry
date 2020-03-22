@@ -34,7 +34,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     private AvroSchema(Schema schema) {
         this.schema = schema;
         this.schemaInfo = new SchemaInfo(
-                schema.getName(),
+                schema.getFullName(),
                 SchemaType.Avro, getSchemaBytes(), ImmutableMap.of());
     }
 
@@ -49,7 +49,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      */
     public static <T> AvroSchema<T> of(Class<T> tClass) {
         Schema schema;
-        if (tClass.isAssignableFrom(SpecificRecordBase.class)) {
+        if (SpecificRecordBase.class.isAssignableFrom(tClass)) {
             schema = SpecificData.get().getSchema(tClass);
         } else {
             schema = ReflectData.get().getSchema(tClass);

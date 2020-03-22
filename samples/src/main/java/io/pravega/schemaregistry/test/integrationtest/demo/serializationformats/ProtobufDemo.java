@@ -154,7 +154,7 @@ public class ProtobufDemo {
                 readerGroupManager.createReaderGroup(rg3,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class.getSimpleName(), descriptorSet);
+                ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
                 genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
 
                 reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());

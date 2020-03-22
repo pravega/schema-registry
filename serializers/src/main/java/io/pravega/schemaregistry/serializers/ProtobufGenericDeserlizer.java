@@ -39,10 +39,13 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
             public Descriptors.Descriptor load(SchemaInfo schemaToUse) throws Exception {
                 DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaToUse.getSchemaData());
                 int count = descriptorSet.getFileCount();
-                DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet
-                        .getFileList().stream().filter(x -> {
-                            return x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(schemaToUse.getName()));
-                                }).findAny().orElseThrow(IllegalArgumentException::new);
+                int nameStart = schemaToUse.getName().lastIndexOf(".");
+                String name = schemaToUse.getName().substring(nameStart + 1);
+                String pckg = nameStart < 0 ? "" : schemaToUse.getName().substring(0, nameStart);
+                DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet.getFileList().stream()
+                        .filter(x -> pckg.startsWith(x.getPackage()) &&
+                                x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)))
+                        .findAny().orElseThrow(IllegalArgumentException::new);
                 
                 Descriptors.FileDescriptor[] dependencyArray = new Descriptors.FileDescriptor[count];
                 for (int i = 0; i < count; i++) {
@@ -54,7 +57,7 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
 
                 Descriptors.FileDescriptor fd = Descriptors.FileDescriptor.buildFrom(mainDescriptor, dependencyArray);
 
-                return fd.getMessageTypes().stream().filter(x -> x.getName().equals(schemaToUse.getName()))
+                return fd.getMessageTypes().stream().filter(x -> x.getName().equals(name))
                                                        .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getName())));
             }
         });

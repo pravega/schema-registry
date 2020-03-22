@@ -101,13 +101,13 @@ public abstract class TestEndToEnd {
         SchemaRegistryClient client = new PassthruRegistryClient(service);
         
         String group = "group";
-        
-        assertEquals(client.listGroups().size(), 0);
+
+        int groupsCount = client.listGroups().size();
         
         client.addGroup(group, SchemaType.Avro,  
                 SchemaValidationRules.of(Compatibility.backward()), 
                 true, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true)));
-        assertEquals(client.listGroups().size(), 1);
+        assertEquals(client.listGroups().size(), groupsCount + 1);
 
         String myTest = "MyTest";
         SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.Avro, 
