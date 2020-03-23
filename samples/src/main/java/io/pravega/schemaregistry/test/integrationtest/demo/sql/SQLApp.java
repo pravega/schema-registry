@@ -39,6 +39,7 @@ import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.util.Utf8;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -58,6 +59,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Scanner;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SQLApp {
@@ -111,8 +113,33 @@ public class SQLApp {
             } else if (tokens[0].toLowerCase().equals("select") && tokens[1].equals("*")) {
                 SQLApp sqlApp = new SQLApp(clientConfig, client);
                 sqlApp.handleSelect(tokens);
+            } else if (tokens[0].toLowerCase().equals("show") && tokens[1].equals("tables")) {
+                SQLApp sqlApp = new SQLApp(clientConfig, client);
+                sqlApp.handleShowTables();
             }
         }
+    }
+
+    private void handleShowTables() {
+        Map<String, GroupProperties> groups = client.listGroups();
+        groups.keySet().stream().filter(x -> x.startsWith("table://"))
+              .forEach(x -> {
+                  String tableName = x.substring("table://".length());
+                  String tableGroupId = getTableGroupId(tableName);
+                  SchemaWithVersion tableSchema = client.getLatestSchema(tableGroupId, null);
+
+                  // read into this table schema
+                  TableSchema schema = TableSchema.fromBytes(tableSchema.getSchema().getSchemaData());
+
+                  System.out.println("Table name: " + tableName);
+
+                  schema.columns.forEach(column -> {
+                      System.out.print(column.name);
+                      System.out.print(":");
+                      System.out.print(column.getColumnType().name());
+                      System.out.println();
+                  });
+              });
     }
 
     private void handleCreateTable(String[] tokens) throws UnsupportedEncodingException {
@@ -165,7 +192,7 @@ public class SQLApp {
 
     @SneakyThrows
     private String getTableGroupId(String tableName) {
-        return URLEncoder.encode("table" + "/" + tableName, Charsets.UTF_8.toString());
+        return URLEncoder.encode("table://" + tableName, Charsets.UTF_8.toString());
     }
 
     List<GenericRecord> handleSelect(String[] tokens) {
@@ -173,6 +200,7 @@ public class SQLApp {
         assert from.toLowerCase().equals("from");
 
         String tableName = tokens[3];
+        
         String tableGroupId = getTableGroupId(tableName);
         SchemaWithVersion tableSchema = client.getLatestSchema(tableGroupId, null);
         Map<String, String> prop = tableSchema.getSchema().getProperties();
@@ -194,8 +222,35 @@ public class SQLApp {
             System.out.print(name);
             System.out.print("|");
         });
-        
-        return printColumns(scope, stream, schema);
+
+        Predicate<GenericRecord> predicate = x -> true;
+        if (tokens.length > 4) {
+            assert tokens[4].equals("where");
+
+            Column c = schema.columns.stream().filter(x -> x.name.equals(tokens[5])).findAny().get();
+            predicate = getPredicate(c, tokens[6], tokens[7]);
+
+        }
+
+        return printColumns(scope, stream, schema, predicate);
+    }
+
+    private Predicate<GenericRecord> getPredicate(Column column, String operator, String value) {
+        Operator op;
+        switch (operator) {
+            case ">":
+                op = new GreaterThan(column, value);
+                break;
+            case "<":
+                op = new LessThan(column, value);
+                break;
+            case "=":
+                op = new EqualTo(column, value);
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+        return op.getPredicate();
     }
 
     private String rightPad(String column) {
@@ -221,7 +276,7 @@ public class SQLApp {
         return builder.toString();
     }
 
-    private List<GenericRecord> printColumns(String scope, String stream, TableSchema tableSchema) {
+    private List<GenericRecord> printColumns(String scope, String stream, TableSchema tableSchema, Predicate<GenericRecord> predicate) {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
 
@@ -245,9 +300,10 @@ public class SQLApp {
         while (true) {
             EventRead<GenericRecord> event = reader.readNextEvent(1000);
             GenericRecord record = event.getEvent();
-            if (record == null) {
+            if (record == null || !predicate.test(record)) {
                 continue;
             }
+            
             System.out.print("|");
             
             tableSchema.columns.forEach(column -> {
@@ -319,5 +375,73 @@ public class SQLApp {
             }
         }
         throw new IllegalArgumentException();
+    }
+
+    private interface Operator {
+        Predicate<GenericRecord> getPredicate();
+    }
+    
+    @Data
+    private static class GreaterThan implements Operator {
+        private final Column column;
+        private final String value;
+
+        @Override
+        public Predicate<GenericRecord> getPredicate() {
+            switch (column.getColumnType()) {
+                case INT:
+                    int intVal = Integer.parseInt(value);
+                    return x -> (int) x.get(column.name) > intVal;
+                case LONG:
+                    long longVal = Long.parseLong(value);
+                    return x -> (long) x.get(column.name) > longVal;
+                case STRING:
+                    default:
+                    throw new IllegalArgumentException();
+            }
+        }
+    }
+
+    @Data
+    private static class LessThan implements Operator {
+        private final Column column;
+        private final String value;
+
+        @Override
+        public Predicate<GenericRecord> getPredicate() {
+            switch (column.getColumnType()) {
+                case INT:
+                    int intVal = Integer.parseInt(value);
+                    return x -> (int) x.get(column.name) < intVal;
+                case LONG:
+                    long longVal = Long.parseLong(value);
+                    return x -> (long) x.get(column.name) < longVal;
+                case STRING:
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
+    }
+
+    @Data
+    private static class EqualTo implements Operator {
+        private final Column column;
+        private final String value;
+
+        @Override
+        public Predicate<GenericRecord> getPredicate() {
+            switch (column.getColumnType()) {
+                case INT:
+                    int intVal = Integer.parseInt(value);
+                    return x -> (int) x.get(column.name) == intVal;
+                case LONG:
+                    long longVal = Long.parseLong(value);
+                    return x -> (long) x.get(column.name) == longVal;
+                case STRING:
+                    return x -> value.equals(((Utf8) x.get(column.name)).toString());
+                default:
+                    throw new IllegalArgumentException();
+            }
+        }
     }
 }

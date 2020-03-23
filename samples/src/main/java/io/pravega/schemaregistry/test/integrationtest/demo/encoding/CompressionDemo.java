@@ -48,8 +48,10 @@ import org.apache.avro.generic.GenericRecordBuilder;
 
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
 /**
@@ -77,15 +79,33 @@ public class CompressionDemo {
         @Override
         public ByteBuffer encode(ByteBuffer data) {
             // left rotate by 1 byte
-            return data;
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+
+            int i; 
+            byte temp = array[0];
+            for (i = 0; i < array.length - 1; i++) {
+                array[i] = array[i + 1];
+            }
+            array[array.length - 1] = temp;
+            return ByteBuffer.wrap(array);
         }
 
         @Override
         public ByteBuffer decode(ByteBuffer data) {
-            // right rotate by 1 byte
-            return data;
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+
+            int i;
+            byte temp = array[array.length - 1];
+            for (i = array.length - 1; i > 0; i--) {
+                array[i] = array[i - 1];
+            }
+            array[0] = temp;
+            return ByteBuffer.wrap(array);
         }
     };
+    private static final Random RANDOM = new Random();
 
     private final ClientConfig clientConfig;
 
@@ -135,41 +155,53 @@ public class CompressionDemo {
             System.out.println("6. Read all");
             System.out.println("7. exit");
             Scanner in = new Scanner(System.in);
-            int s = Integer.parseInt(in.nextLine());
-            String input = null;
-            switch (s) {
-                case 1:
-                    in = new Scanner(System.in);
-                    input = in.nextLine();
-                    demo.writeGzip(input);
-                    break;
-                case 2:
-                    in = new Scanner(System.in);
-                    input = in.nextLine();
-                    demo.writeSnappy(input);
-                    break;
-                case 3:
-                    in = new Scanner(System.in);
-                    input = in.nextLine();
-                    demo.withoutCompression(input);
-                    break;
-                case 4:
-                    in = new Scanner(System.in);
-                    input = in.nextLine();
-                    demo.writeCustom(input);
-                    break;
-                case 5:
-                    demo.printAllCodecs();
-                    break;
-                case 6:
-                    demo.readMessages();
-                    break;
-                case 7:
-                    System.exit(0);
-                    break;
-                default:
-                    System.err.println("invalid choice");
-                    break;
+            int s;
+            try {
+                s = Integer.parseInt(in.nextLine());
+
+                int size;
+                switch (s) {
+                    case 1:
+                        System.out.println("enter size in kb");
+                        in = new Scanner(System.in);
+                        size = Integer.parseInt(in.nextLine());
+
+                        demo.writeGzip(generateBigString(size));
+                        break;
+                    case 2:
+                        System.out.println("enter size in kb");
+                        in = new Scanner(System.in);
+                        size = Integer.parseInt(in.nextLine());
+                        demo.writeSnappy(generateBigString(size));
+                        break;
+                    case 3:
+                        System.out.println("enter size in kb");
+                        in = new Scanner(System.in);
+                        size = Integer.parseInt(in.nextLine());
+                        demo.withoutCompression(generateBigString(size));
+                        break;
+                    case 4:
+                        System.out.println("enter size in kb");
+                        in = new Scanner(System.in);
+                        size = Integer.parseInt(in.nextLine());
+                        demo.writeCustom(generateBigString(size));
+                        break;
+                    case 5:
+                        demo.printAllCodecs();
+                        break;
+                    case 6:
+                        demo.readMessages();
+                        break;
+                    case 7:
+                        System.exit(0);
+                        break;
+                    default:
+                        System.err.println("invalid choice");
+                        break;
+                }
+            } catch (NumberFormatException e) {
+                System.out.println("invalid choice");
+                continue;
             }
         }
     }
@@ -265,7 +297,13 @@ public class CompressionDemo {
         writer.writeEvent(record).join();
 
     }
-    
+
+    private static String generateBigString(int sizeInKb) {
+        byte[] array = new byte[1024 * sizeInKb];
+        RANDOM.nextBytes(array);
+        return Base64.getEncoder().encodeToString(array);
+    }
+
     private void readMessages() {
         EventRead<GenericRecord> event = reader.readNextEvent(1000);
         while (event.isCheckpoint() || event.getEvent() != null) {
