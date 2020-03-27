@@ -32,8 +32,8 @@ class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
     private final LoadingCache<byte[], Schema> knownSchemas;
 
     AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<GenericRecord> schema,
-                          SerializerConfig.Decoder decoder, boolean failOnCodecMismatch, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, decoder, failOnCodecMismatch, encodingCache);
+                          SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decoder, encodingCache);
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {
             @Override
             public Schema load(byte[] schemaData) throws Exception {

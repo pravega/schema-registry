@@ -23,7 +23,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
@@ -48,7 +47,6 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                                           @Nullable SchemaContainer<T> schema,
                                           boolean skipHeaders,
                                           SerializerConfig.Decoder decoder,
-                                          boolean failOnCodecMismatch,
                                           EncodingCache encodingCache) {
         this.groupId = groupId;
         this.client = client;
@@ -61,11 +59,11 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
         this.skipHeaders = skipHeaders;
         this.decoder = decoder;
             
-        initialize(failOnCodecMismatch);
+        initialize();
     }
 
     @Synchronized
-    private void initialize(boolean failOnCodecMismatch) {
+    private void initialize() {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
         Map<String, String> properties = groupProperties.getProperties();
@@ -82,14 +80,6 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
             schemaInfo.set(client.getLatestSchema(groupId, null).getSchema());
         } else {
             log.info("Read using writer schema.");
-        }
-        
-        List<CodecType> codecsInGroup = client.getCodecs(groupId);
-        if (!decoder.getCodecs().containsAll(codecsInGroup)) {
-            log.warn("Not all Codecs are supported by reader. Required codecs = {}", codecsInGroup);
-            if (failOnCodecMismatch) {
-                throw new RuntimeException(String.format("Need all codecs in %s", codecsInGroup.toString()));
-            }
         }
     }
     

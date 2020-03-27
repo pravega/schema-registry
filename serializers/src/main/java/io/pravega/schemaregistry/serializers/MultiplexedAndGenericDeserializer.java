@@ -26,9 +26,8 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
                                       Map<String, AbstractPravegaDeserializer<T>> deserializers,
                                       AbstractPravegaDeserializer<G> genericDeserializer,
                                       SerializerConfig.Decoder decoder,
-                                      boolean failOnCodecMismatch,
                                       EncodingCache encodingCache) {
-        super(groupId, client, null, false, decoder, failOnCodecMismatch, encodingCache);
+        super(groupId, client, null, false, decoder, encodingCache);
         this.deserializers = deserializers; 
         this.genericDeserializer = genericDeserializer;
     }

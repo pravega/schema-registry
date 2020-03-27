@@ -30,8 +30,8 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
     private final LoadingCache<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
     ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
-                              SerializerConfig.Decoder decoder, boolean failOnCodecMismatch, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, decoder, failOnCodecMismatch, encodingCache);
+                              SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decoder, encodingCache);
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Descriptors.Descriptor>() {
             @Override
             public Descriptors.Descriptor load(SchemaInfo schemaToUse) throws Exception {
