@@ -227,6 +227,7 @@ public class CompressionDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
+                                                            .autoRegisterCodec(true)
                                                             .codec(CodecFactory.gzip())
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
@@ -247,6 +248,7 @@ public class CompressionDemo {
                                                             .groupId(groupId)
                                                             .codec(CodecFactory.snappy())
                                                             .autoRegisterSchema(true)
+                                                            .autoRegisterCodec(true)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
@@ -266,6 +268,7 @@ public class CompressionDemo {
                                                             .groupId(groupId)
                                                             .codec(MY_CODEC)
                                                             .autoRegisterSchema(true)
+                                                            .autoRegisterCodec(true)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
@@ -285,6 +288,7 @@ public class CompressionDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
+                                                            .autoRegisterCodec(true)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
         

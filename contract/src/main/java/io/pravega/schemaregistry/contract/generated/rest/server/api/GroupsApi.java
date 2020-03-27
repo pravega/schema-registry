@@ -7,6 +7,7 @@ import io.pravega.schemaregistry.contract.generated.rest.server.api.factories.Gr
 import io.swagger.annotations.ApiParam;
 import io.swagger.jaxrs.*;
 
+import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
@@ -74,6 +75,25 @@ public class GroupsApi  {
    }
 
     @POST
+    @Path("/{groupName}/codecs")
+    @Consumes({ "application/json" })
+    
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codec to group", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
+    public Response addCodec(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "The codec" ,required=true) AddCodec addCodec
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.addCodec(groupName,addCodec,securityContext);
+    }
+    @POST
     @Path("/{groupName}/schemas")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
@@ -85,9 +105,9 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 412, message = "Write conflict", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 428, message = "Write conflict", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
@@ -387,7 +407,7 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 428, message = "Write conflict", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 412, message = "Write conflict", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response updateSchemaValidationRules(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName

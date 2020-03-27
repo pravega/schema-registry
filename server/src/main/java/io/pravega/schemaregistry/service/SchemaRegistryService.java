@@ -309,6 +309,10 @@ public class SchemaRegistryService {
         return store.getCodecTypes(group);
     }
 
+    public CompletableFuture<Void> addCodec(String group, CodecType codecType) {
+        return store.addCodec(group, codecType);
+    }
+
     private CompletableFuture<VersionInfo> getNextVersion(String group, SchemaInfo schema, GroupProperties prop) {
         CompletableFuture<VersionInfo> latest;
         if (prop.isValidateByObjectType()) {

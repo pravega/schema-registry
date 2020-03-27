@@ -126,4 +126,9 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     public List<CodecType> getCodecs(String group) {
         return service.getCodecTypes(group).join();
     }
+
+    @Override
+    public void addCodec(String group, CodecType codecType) {
+        service.addCodec(group, codecType).join();
+    }
 }

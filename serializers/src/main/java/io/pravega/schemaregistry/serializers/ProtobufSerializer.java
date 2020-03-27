@@ -20,8 +20,8 @@ import java.io.OutputStream;
 
 class ProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
     ProtobufSerializer(String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
-                       Codec codec, boolean registerSchema, EncodingCache encodingCache) {
-        super(groupId, client, schema, codec, registerSchema, encodingCache);
+                       Codec codec, boolean registerSchema, boolean registerCodec, EncodingCache encodingCache) {
+        super(groupId, client, schema, codec, registerSchema, registerCodec, encodingCache);
     }
 
     @SneakyThrows

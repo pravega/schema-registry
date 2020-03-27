@@ -75,6 +75,8 @@ public interface SchemaStore {
 
     CompletableFuture<List<CodecType>> getCodecTypes(String group);
 
+    CompletableFuture<Void> addCodec(String group, CodecType codecType);
+
     CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group);
     
     CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);

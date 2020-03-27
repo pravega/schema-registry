@@ -207,4 +207,12 @@ public interface SchemaRegistryClient {
      * @return List of compressions used for encoding in the group. 
      */
     List<CodecType> getCodecs(String group);
+
+    /**
+     * List of compressions used for encoding in the group. 
+     * 
+     * @param group Name of group. 
+     * @param codecType codec type.
+     */
+    void addCodec(String group, CodecType codecType);
 }

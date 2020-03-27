@@ -3,6 +3,7 @@ package io.pravega.schemaregistry.contract.generated.rest.server.api.impl;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.*;
 import io.pravega.schemaregistry.contract.generated.rest.model.*;
 
+import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
@@ -36,6 +37,11 @@ import javax.ws.rs.core.SecurityContext;
 import javax.validation.constraints.*;
 
 public class GroupsApiServiceImpl extends GroupsApiService {
+    @Override
+    public Response addCodec(String groupName, AddCodec addCodec, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
     @Override
     public Response addSchemaToGroupIfAbsent(String groupName, AddSchemaToGroupRequest addSchemaToGroupRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!

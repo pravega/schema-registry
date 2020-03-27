@@ -32,7 +32,8 @@ public class IndexKeySerializer extends VersionedSerializer.MultiType<IndexRecor
                .serializer(IndexRecord.EncodingIdIndex.class, 7, new IndexRecord.EncodingIdIndex.Serializer())
                .serializer(IndexRecord.LatestEncodingIdKey.class, 8, new IndexRecord.LatestEncodingIdKey.Serializer())
                .serializer(IndexRecord.LatestSchemaVersionKey.class, 9, new IndexRecord.LatestSchemaVersionKey.Serializer())
-               .serializer(IndexRecord.LatestSchemaVersionForObjectTypeKey.class, 10, new IndexRecord.LatestSchemaVersionForObjectTypeKey.Serializer());
+               .serializer(IndexRecord.LatestSchemaVersionForObjectTypeKey.class, 10, new IndexRecord.LatestSchemaVersionForObjectTypeKey.Serializer())
+               .serializer(IndexRecord.CodecsKey.class, 11, new IndexRecord.CodecsKey.Serializer());
     }
 
     /**

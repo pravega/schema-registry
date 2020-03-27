@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * Index Records with different implementations for {@link IndexKey} and {@link IndexValue}.
@@ -40,6 +41,7 @@ public interface IndexRecord {
                     .put(GroupPropertyKey.class, WALPositionValue.SERIALIZER)
                     .put(ValidationPolicyKey.class, WALPositionValue.SERIALIZER)
                     .put(SyncdTillKey.class, WALPositionValue.SERIALIZER)
+                    .put(CodecsKey.class, CodecsListValue.SERIALIZER)
                     .put(EncodingIdIndex.class, EncodingInfoIndex.SERIALIZER)
                     .put(EncodingInfoIndex.class, EncodingIdIndex.SERIALIZER)
                     .put(LatestEncodingIdKey.class, LatestEncodingIdValue.SERIALIZER)
@@ -224,6 +226,39 @@ public interface IndexRecord {
 
             private void read00(RevisionDataInput source, VersionInfoKey.VersionInfoKeyBuilder b) throws IOException {
                 b.versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source));
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class CodecsKey implements IndexKey {
+        public static final Serializer SERIALIZER = new Serializer();
+        
+        private static class CodecsKeyBuilder implements ObjectBuilder<CodecsKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<CodecsKey, CodecsKey.CodecsKeyBuilder> {
+            @Override
+            protected CodecsKey.CodecsKeyBuilder newBuilder() {
+                return CodecsKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(CodecsKey e, RevisionDataOutput target) throws IOException {
+            }
+
+            private void read00(RevisionDataInput source, CodecsKey.CodecsKeyBuilder b) throws IOException {
             }
         }
     }
@@ -589,6 +624,51 @@ public interface IndexRecord {
 
             private void read00(RevisionDataInput source, LatestEncodingIdValue.LatestEncodingIdValueBuilder b) throws IOException {
                 b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source));
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class CodecsListValue implements IndexValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final List<CodecType> codecs;
+
+        @SneakyThrows
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class CodecsListValueBuilder implements ObjectBuilder<CodecsListValue> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<CodecsListValue, CodecsListValue.CodecsListValueBuilder> {
+            @Override
+            protected CodecsListValue.CodecsListValueBuilder newBuilder() {
+                return CodecsListValue.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(CodecsListValue e, RevisionDataOutput target) throws IOException {
+                target.writeCollection(e.codecs.stream().map(CodecTypeRecord::new).collect(Collectors.toList()), 
+                        CodecTypeRecord.SERIALIZER::serialize);
+            }
+
+            private void read00(RevisionDataInput source, CodecsListValue.CodecsListValueBuilder b) throws IOException {
+                b.codecs(source.readCollection(CodecTypeRecord.SERIALIZER::deserialize)
+                               .stream().map(CodecTypeRecord::getCodecType).collect(Collectors.toList()));
             }
         }
     }

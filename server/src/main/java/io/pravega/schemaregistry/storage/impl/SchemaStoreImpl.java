@@ -155,6 +155,11 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
+    public CompletableFuture<Void> addCodec(String group, CodecType codecType) {
+        return getGroup(group).thenCompose(grp -> grp.addCodec(codecType));
+    }
+
+    @Override
     public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group) {
         return getGroup(group).thenCompose(Group::getHistory);
     }

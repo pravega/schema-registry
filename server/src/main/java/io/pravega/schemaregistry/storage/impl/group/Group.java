@@ -27,6 +27,7 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.storage.Position;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
@@ -44,6 +45,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Predicate;
@@ -60,6 +62,7 @@ public class Group<V> {
     private static final IndexRecord.SyncdTillKey SYNCD_TILL = new IndexRecord.SyncdTillKey();
     private static final IndexRecord.ValidationPolicyKey VALIDATION_POLICY_INDEX_KEY = new IndexRecord.ValidationPolicyKey();
     private static final IndexRecord.GroupPropertyKey GROUP_PROPERTY_INDEX_KEY = new IndexRecord.GroupPropertyKey();
+    private static final IndexRecord.CodecsKey CODECS_KEY = new IndexRecord.CodecsKey();
     
     private static final Comparator<Index.Entry> VERSION_COMPARATOR = (v1, v2) -> {
         IndexRecord.VersionInfoKey version1 = (IndexRecord.VersionInfoKey) v1.getKey();
@@ -67,8 +70,8 @@ public class Group<V> {
         return Integer.compare(version1.getVersionInfo().getVersion(), version2.getVersionInfo().getVersion());
     };
     private static final HashFunction HASH = Hashing.murmur3_128();
-    private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
-                                                                      .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
+    private static final Retry.RetryAndThrowConditionally WRITE_CONFLICT_RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
+                                                                                      .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
 
     private final Log wal;
 
@@ -218,15 +221,38 @@ public class Group<V> {
     }
 
     public CompletableFuture<List<CodecType>> getCodecTypes() {
-        return syncIndex().thenCompose(v -> {
-                    Predicate<IndexRecord.IndexKey> encodingInfoPredicate = x -> x instanceof IndexRecord.EncodingInfoIndex;
-                    return index.getAllEntries(encodingInfoPredicate)
-                                .thenApply(list -> {
-                                    return list.stream().map(x -> {
-                                        IndexRecord.EncodingInfoIndex encodingInfoIndex = (IndexRecord.EncodingInfoIndex) x.getKey();
-                                        return encodingInfoIndex.getCodecType();
-                                    }).distinct().collect(Collectors.toList());
-                                });
+        return syncIndex().thenCompose(v -> 
+            index.getRecord(CODECS_KEY, IndexRecord.CodecsListValue.class)
+                 .thenApply(codecs -> {
+                     if (codecs == null) {
+                         return Collections.singletonList(CodecType.None);
+                     } else {
+                         return codecs.getCodecs();
+                     }
+                 }));
+    }
+
+    public CompletableFuture<Void> addCodec(CodecType codecType) {
+        // get all codecs. if codec doesnt exist, add it to log. let it get synced to the table. 
+        // generate encoding id will only generate if the codec is already registered.
+        return WRITE_CONFLICT_RETRY.runAsync(() -> syncIndex()
+                .thenCompose(etag -> index.getRecordWithVersion(CODECS_KEY, IndexRecord.CodecsListValue.class)
+                                              .thenCompose(rec -> {
+                                                  if (rec == null || !rec.getValue().getCodecs().contains(codecType)) {
+                                                      return addCodecToLogAndIndex(codecType, etag);
+                                                  } else {
+                                                      return CompletableFuture.completedFuture(null);
+                                                  }
+                                              })), executor);
+    }
+
+    private CompletionStage<Void> addCodecToLogAndIndex(CodecType codecType, Position etag) {
+        return writeToLog(new Record.CodecRecord(codecType), etag)
+                .thenCompose(v -> {
+                    // add to index
+                    IndexRecord.CodecsListValue codecsVal = new IndexRecord.CodecsListValue(Collections.singletonList(codecType));
+                    Operation.AddToList addToList = new Operation.AddToList(CODECS_KEY, codecsVal);
+                    return updateIndex(Collections.singletonList(addToList), new IndexRecord.WALPositionValue(etag));
                 });
     }
 
@@ -322,6 +348,11 @@ public class Group<V> {
                                                       m -> ((IndexRecord.WALPositionValue) m).getPosition().getPosition()
                                                                                              .compareTo(x.getPosition().getPosition()) < 0);
                                               operations.add(getAndSet);
+                                          } else if (x.getRecord() instanceof Record.CodecRecord) {
+                                              Record.CodecRecord record = (Record.CodecRecord) x.getRecord();
+                                              Operation.AddToList addToList = new Operation.AddToList(CODECS_KEY,
+                                                      new IndexRecord.CodecsListValue(Collections.singletonList(record.getCodecType())));
+                                              operations.add(addToList);
                                           }
                                       });
                                       if (!list.isEmpty()) {
@@ -342,8 +373,8 @@ public class Group<V> {
                 futures.add(index.addEntry(((Operation.Add) operation).getKey(), ((Operation.Add) operation).getValue()));
             } else if (operation instanceof Operation.GetAndSet) {
                 Operation.GetAndSet op = (Operation.GetAndSet) operation;
-                futures.add(RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
-                                      .thenCompose(existing -> {
+                futures.add(WRITE_CONFLICT_RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
+                                                                     .thenCompose(existing -> {
                                  if (existing == null) {
                                      return index.addEntry(op.getKey(), op.getValue());
                                  } else if (op.getCondition().test(existing.getValue())) {
@@ -354,8 +385,8 @@ public class Group<V> {
                              }), executor));
             } else if (operation instanceof Operation.AddToList) {
                 Operation.AddToList op = (Operation.AddToList) operation;
-                futures.add(RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
-                                      .thenCompose(existing -> {
+                futures.add(WRITE_CONFLICT_RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
+                                                                     .thenCompose(existing -> {
                               if (existing == null) {
                                   return index.addEntry(op.getKey(), op.getValue());
                               } else if (op.getValue() instanceof IndexRecord.SchemaVersionValue) {
@@ -365,6 +396,14 @@ public class Group<V> {
                                       set.addAll(toAdd.getVersions());
 
                                       IndexRecord.SchemaVersionValue newValue = new IndexRecord.SchemaVersionValue(new ArrayList<>(set));
+                                      return index.updateEntry(op.getKey(), newValue, existing.getVersion());
+                              } else if (op.getValue() instanceof IndexRecord.CodecsListValue) {
+                                      IndexRecord.CodecsListValue existingList = (IndexRecord.CodecsListValue) existing.getValue();
+                                      IndexRecord.CodecsListValue toAdd = (IndexRecord.CodecsListValue) op.getValue();
+                                      Set<CodecType> set = new HashSet<>(existingList.getCodecs());
+                                      set.addAll(toAdd.getCodecs());
+
+                                      IndexRecord.CodecsListValue newValue = new IndexRecord.CodecsListValue(new ArrayList<>(set));
                                       return index.updateEntry(op.getKey(), newValue, existing.getVersion());
                               } else {
                                   return CompletableFuture.completedFuture(null);
@@ -381,7 +420,7 @@ public class Group<V> {
     @SuppressWarnings("unchecked")
     private CompletableFuture<Void> addOrUpdateSyncdTillKey(IndexRecord.WALPositionValue syncdTill,
                                                             Index.Value<IndexRecord.WALPositionValue, V> syncdTillWithVersion) {
-         return RETRY.runAsync(() -> {
+         return WRITE_CONFLICT_RETRY.runAsync(() -> {
             if (syncdTillWithVersion == null) {
                 return index.addEntry(SYNCD_TILL, syncdTill);
             } else {
@@ -452,18 +491,25 @@ public class Group<V> {
     }
 
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CodecType codecType, Position position) {
-        return getNextEncodingId()
-                .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, codecType), position)
-                        .thenCompose(v -> {
-                            IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(id);
-                            IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, codecType);
-                            Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
-                            Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
-                            Operation.GetAndSet latest = new Operation.GetAndSet(new IndexRecord.LatestEncodingIdKey(), 
-                                    new IndexRecord.LatestEncodingIdValue(idIndex.getEncodingId()), 
-                                    x -> ((IndexRecord.LatestEncodingIdValue) x).getEncodingId().getId() < idIndex.getEncodingId().getId()); 
-                            return updateIndex(Lists.newArrayList(idToInfo, infoToId, latest), new IndexRecord.WALPositionValue(position));
-                        }).thenApply(v -> id));
+        return getCodecTypes()
+                .thenCompose(codecs -> {
+                    if (codecs.contains(codecType)) {
+                        return getNextEncodingId()
+                                .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, codecType), position)
+                                        .thenCompose(v -> {
+                                            IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(id);
+                                            IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, codecType);
+                                            Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
+                                            Operation.Add infoToId = new Operation.Add(infoIndex, idIndex);
+                                            Operation.GetAndSet latest = new Operation.GetAndSet(new IndexRecord.LatestEncodingIdKey(),
+                                                    new IndexRecord.LatestEncodingIdValue(idIndex.getEncodingId()),
+                                                    x -> ((IndexRecord.LatestEncodingIdValue) x).getEncodingId().getId() < idIndex.getEncodingId().getId());
+                                            return updateIndex(Lists.newArrayList(idToInfo, infoToId, latest), new IndexRecord.WALPositionValue(position));
+                                        }).thenApply(v -> id));
+                    } else {
+                        throw new CodecNotFoundException(String.format("codec %s not registered", codecType));
+                    }
+                });
     }
 
     public CompletableFuture<Either<EncodingId, Position>> getEncodingId(VersionInfo versionInfo, CodecType codecType) {

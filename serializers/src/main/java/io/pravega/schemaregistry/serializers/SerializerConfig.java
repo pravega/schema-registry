@@ -49,6 +49,13 @@ public class SerializerConfig {
      */
     private final boolean autoRegisterSchema;
     /**
+     * Flag to tell the serializer if the codec should be automatically registered before using the serializer in 
+     * {@link io.pravega.client.stream.EventStreamWriter}. 
+     * It is recommended to register keep this flag as false in production systems and manage codecs used by writers explicitly
+     * so that readers are aware of encodings used. 
+     */
+    private final boolean autoRegisterCodec;
+    /**
      * Codec to use for compressing events after serializing them. 
      */
     private final Codec codec;
@@ -76,6 +83,7 @@ public class SerializerConfig {
         };
         
         private boolean autoRegisterSchema = false;
+        private boolean autoRegisterCodec = false;
         
         public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             BiFunction<CodecType, ByteBuffer, ByteBuffer> existing = this.decoder;

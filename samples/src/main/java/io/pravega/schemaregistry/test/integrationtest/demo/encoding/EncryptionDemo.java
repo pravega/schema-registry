@@ -119,6 +119,7 @@ public class EncryptionDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
+                                                            .autoRegisterCodec(true)
                                                             .codec(myCodec)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
