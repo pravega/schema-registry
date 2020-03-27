@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.common.util.BitConverter;
-import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -36,35 +35,31 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     private final String groupId;
     
     private final SchemaInfo schemaInfo;
-    private final AtomicReference<VersionInfo> version;
+    private final AtomicReference<EncodingId> encodingId;
     private final AtomicBoolean encodeHeader;
     private final SchemaRegistryClient client;
     @Getter
     private final Codec codec;
     private final boolean registerSchema;
     private final boolean registerCodec;
-    private final EncodingCache encodingCache;
 
     protected AbstractPravegaSerializer(String groupId,
                                         SchemaRegistryClient client,
                                         SchemaContainer<T> schema,
                                         Codec codec, 
                                         boolean registerSchema,
-                                        boolean registerCodec,
-                                        EncodingCache encodingCache) {
+                                        boolean registerCodec) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(codec);
-        Preconditions.checkNotNull(encodingCache);
         Preconditions.checkNotNull(schema);
         
         this.groupId = groupId;
         this.client = client;
         this.schemaInfo = schema.getSchemaInfo();
-        this.encodingCache = encodingCache;
         this.registerSchema = registerSchema;
         this.registerCodec = registerCodec;
-        this.version = new AtomicReference<>();
+        this.encodingId = new AtomicReference<>();
         this.codec = codec;
         this.encodeHeader = new AtomicBoolean();
         initialize();
@@ -76,17 +71,18 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         Map<String, String> properties = groupProperties.getProperties();
         boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
         encodeHeader.set(toEncodeHeader);
-        if (registerSchema) {
-            // register schema
-            this.version.compareAndSet(null, 
-                    client.addSchemaIfAbsent(groupId, schemaInfo));
-        } else {
-            // get already registered schema version. If schema is not registered, this will throw an exception. 
-            this.version.compareAndSet(null, encodingCache.getVersionFromSchema(schemaInfo));
-        }
         if (registerCodec) {
             client.addCodec(groupId, codec.getCodecType());
         }
+        VersionInfo version;
+        if (registerSchema) {
+            // register schema
+            version = client.addSchemaIfAbsent(groupId, schemaInfo);
+        } else {
+            // get already registered schema version. If schema is not registered, this will throw an exception. 
+            version = client.getSchemaVersion(groupId, schemaInfo);
+        }
+        encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType()));
     }
     
     @SneakyThrows
@@ -97,10 +93,9 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         
         if (this.encodeHeader.get()) {
             Preconditions.checkNotNull(schemaInfo);
-            EncodingId encodingId = encodingCache.getEncodingId(schemaInfo, codec.getCodecType());
 
             outputStream.write(PROTOCOL);
-            BitConverter.writeInt(outputStream, encodingId.getId());
+            BitConverter.writeInt(outputStream, encodingId.get().getId());
         }
         
         // if schema is not null, pass the schema to the serializer implementation

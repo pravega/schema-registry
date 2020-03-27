@@ -15,10 +15,9 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.IndexedRecord;
@@ -27,7 +26,6 @@ import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 
 import java.nio.ByteBuffer;
-import java.util.function.BiFunction;
 
 class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserializer<T> {
     private final AvroSchema<T> avroSchema;
@@ -35,8 +33,8 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
 
     AvroDeserlizer(String groupId, SchemaRegistryClient client,
                    AvroSchema<T> schema,
-                   BiFunction<CodecType, ByteBuffer, ByteBuffer> decode, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, decode, encodingCache);
+                   SerializerConfig.Decoder decoder, boolean failOnCodecMismatch, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decoder, failOnCodecMismatch, encodingCache);
         Preconditions.checkNotNull(schema);
         this.avroSchema = schema;
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {

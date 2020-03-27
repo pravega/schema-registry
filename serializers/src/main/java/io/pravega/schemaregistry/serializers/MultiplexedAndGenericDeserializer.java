@@ -13,12 +13,10 @@ import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserializer<Either<T, G>> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
@@ -27,9 +25,10 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     MultiplexedAndGenericDeserializer(String groupId, SchemaRegistryClient client,
                                       Map<String, AbstractPravegaDeserializer<T>> deserializers,
                                       AbstractPravegaDeserializer<G> genericDeserializer,
-                                      BiFunction<CodecType, ByteBuffer, ByteBuffer> decode,
+                                      SerializerConfig.Decoder decoder,
+                                      boolean failOnCodecMismatch,
                                       EncodingCache encodingCache) {
-        super(groupId, client, null, false, decode, encodingCache);
+        super(groupId, client, null, false, decoder, failOnCodecMismatch, encodingCache);
         this.deserializers = deserializers; 
         this.genericDeserializer = genericDeserializer;
     }

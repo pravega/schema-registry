@@ -23,10 +23,10 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.BiFunction;
 
 @Slf4j
 abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
@@ -36,9 +36,10 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private final String groupId;
     private final SchemaRegistryClient client;
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
+    // If headers are not encoded, then this will be the latest schema from the registry
     private final AtomicReference<SchemaInfo> schemaInfo;
     private final AtomicBoolean encodeHeader;
-    private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decode;
+    private final SerializerConfig.Decoder decoder;
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
     
@@ -46,7 +47,8 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                                           SchemaRegistryClient client,
                                           @Nullable SchemaContainer<T> schema,
                                           boolean skipHeaders,
-                                          BiFunction<CodecType, ByteBuffer, ByteBuffer> decode, 
+                                          SerializerConfig.Decoder decoder,
+                                          boolean failOnCodecMismatch,
                                           EncodingCache encodingCache) {
         this.groupId = groupId;
         this.client = client;
@@ -57,13 +59,13 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
         }
         this.encodeHeader = new AtomicBoolean();
         this.skipHeaders = skipHeaders;
-        this.decode = decode;
+        this.decoder = decoder;
             
-        initialize();
+        initialize(failOnCodecMismatch);
     }
 
     @Synchronized
-    private void initialize() {
+    private void initialize(boolean failOnCodecMismatch) {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
         Map<String, String> properties = groupProperties.getProperties();
@@ -80,6 +82,14 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
             schemaInfo.set(client.getLatestSchema(groupId, null).getSchema());
         } else {
             log.info("Read using writer schema.");
+        }
+        
+        List<CodecType> codecsInGroup = client.getCodecs(groupId);
+        if (!decoder.getCodecs().containsAll(codecsInGroup)) {
+            log.warn("Not all Codecs are supported by reader. Required codecs = {}", codecsInGroup);
+            if (failOnCodecMismatch) {
+                throw new RuntimeException(String.format("Need all codecs in %s", codecsInGroup.toString()));
+            }
         }
     }
     
@@ -104,7 +114,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                 writerSchema = encodingInfo.getSchemaInfo();
             }
             
-            ByteBuffer uncompressed = decode.apply(codecType, data);
+            ByteBuffer uncompressed = decoder.decode(codecType, data);
             
             if (schemaInfo.get() == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into

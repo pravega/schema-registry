@@ -12,21 +12,19 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.nio.ByteBuffer;
 import java.util.Map;
-import java.util.function.BiFunction;
 
 class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
 
     MultiplexedDeserializer(String groupId, SchemaRegistryClient client,
                             Map<String, AbstractPravegaDeserializer<T>> deserializers,
-                            BiFunction<CodecType, ByteBuffer, ByteBuffer> decode,
+                            SerializerConfig.Decoder decoder, boolean failOnCodecMismatch,
                             EncodingCache encodingCache) {
-        super(groupId, client, null, false, decode, encodingCache);
+        super(groupId, client, null, false, decoder, failOnCodecMismatch, encodingCache);
         this.deserializers = deserializers; 
     }
 

@@ -9,17 +9,21 @@
  */
 package io.pravega.schemaregistry.serializers;
 
-import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 
 import java.nio.ByteBuffer;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
@@ -64,12 +68,29 @@ public class SerializerConfig {
      * from {@link EncodingInfo} and using the codec type read from it. 
      * It should return the uncompressed data back to the deserializer. 
      */
-    private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder;
+    private final Decoder decoder;
+    /**
+     * Tells the deserializer that if supplied decoder codecs do not match group codecs then fail and exit upfront.  
+     */
+    private final boolean failOnCodecMismatch;
     
     public static final class SerializerConfigBuilder {
         private Codec codec = NOOP;
         
-        private BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder = (x, y) -> {
+        private Decoder decoder = new Decoder();
+        
+        private boolean autoRegisterSchema = false;
+        private boolean autoRegisterCodec = false;
+        private boolean failOnCodecMismatch = false;
+        
+        public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+            this.decoder = new Decoder(codecType, decoder);
+            return this;
+        }
+    }
+    
+    static class Decoder {
+        private static final BiFunction<CodecType, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
             switch (x) {
                 case None:
                     return NOOP.decode(y);
@@ -82,19 +103,35 @@ public class SerializerConfig {
             }
         };
         
-        private boolean autoRegisterSchema = false;
-        private boolean autoRegisterCodec = false;
-        
-        public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
-            BiFunction<CodecType, ByteBuffer, ByteBuffer> existing = this.decoder;
+        @Getter(AccessLevel.PACKAGE)
+        private final Set<CodecType> codecs;
+        private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder;
+
+        private Decoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             this.decoder = (x, y) -> {
                 if (x.equals(codecType)) {
                     return decoder.apply(y);
                 } else {
-                    return existing.apply(x, y);
+                    return DEFAULT.apply(x, y);
                 }
             };
-            return this;
+            codecs = new HashSet<>();
+            this.codecs.add(CodecType.None);
+            this.codecs.add(CodecType.GZip);
+            this.codecs.add(CodecType.Snappy);
+            this.codecs.add(codecType);
+        }
+
+        private Decoder() {
+            this.decoder = DEFAULT;
+            codecs = new HashSet<>();
+            this.codecs.add(CodecType.None);
+            this.codecs.add(CodecType.GZip);
+            this.codecs.add(CodecType.Snappy);
+        }
+        
+        ByteBuffer decode(CodecType codecType, ByteBuffer bytes) {
+            return decoder.apply(codecType, bytes);
         }
     }
 }

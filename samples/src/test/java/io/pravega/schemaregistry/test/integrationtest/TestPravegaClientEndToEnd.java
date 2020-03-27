@@ -148,24 +148,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     }
     
     @Test
-    public void test() throws IOException {
-        testCodec();
-        testAvroSchemaEvolution();
-
-        testAvroReflect();    
-        testAvroGenerated();    
-        testAvroMultiplexed();   
-
-        testProtobuf(true);
-        testProtobuf(false);
-        testProtobufMultiplexed();
-
-        testJson(true);
-        testJson(false);
-        testJsonMultiplexed();
-    }
-    
-    private void testAvroSchemaEvolution() {
+    public void testAvroSchemaEvolution() {
         // create stream
         String scope = "scope";
         String stream = "avroevolution";
@@ -174,7 +157,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
                 SchemaValidationRules.of(Compatibility.backward()), 
@@ -197,7 +180,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
-        writer.writeEvent(record);
+        writer.writeEvent(record).join();
         // endregion
         
         // region writer with schema2
@@ -205,7 +188,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
-        writer.writeEvent(record);
+        writer.writeEvent(record).join();
         // endregion
         
         // region writer with schema3
@@ -237,8 +220,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
 
+        reader.close();
         // create new reader, this time with incompatible schema3
-        readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        
         String rg1 = "rg1" + stream;
         readerGroupManager.createReaderGroup(rg1, 
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
@@ -252,8 +236,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
             exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
         }
         assertTrue(exceptionThrown);
-        
+        reader.close();
         // endregion
+        
         // region read into writer schema
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
@@ -268,10 +253,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
+        reader.close();
+        readerGroupManager.close();
         // endregion
     }
 
-    private void testCodec() {
+    @Test
+    public void testCodec() {
         // create stream
         String scope = "scope";
         String stream = "avrocodec";
@@ -280,7 +268,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
@@ -327,7 +315,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         Serializer<Test1> serializer3 = SerializerFactory.avroSerializer(serializerConfig, schema3);
         EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
         String bigString = generateBigString(100);
-        writer3.writeEvent(new Test1(bigString, 1));
+        writer3.writeEvent(new Test1(bigString, 1)).join();
 
         List<CodecType> list = client.getCodecs(groupId);
         assertEquals(2, list.size());
@@ -347,7 +335,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         Serializer<Test1> serializer4 = SerializerFactory.avroSerializer(serializerConfig, schema3);
         EventStreamWriter<Test1> writer4 = clientFactory.createEventWriter(stream, serializer4, EventWriterConfig.builder().build());
         String bigString2 = generateBigString(200);
-        writer4.writeEvent(new Test1(bigString2, 1));
+        writer4.writeEvent(new Test1(bigString2, 1)).join();
 
         list = client.getCodecs(groupId);
         assertEquals(3, list.size());
@@ -415,9 +403,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
         assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Snappy)));
         assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Custom) && x.getCustomTypeName().equals(mycodec)));
+        reader.close();
 
         // region new reader with additional codec
-        reader.close();
         // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
@@ -435,6 +423,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
             event = reader2.readNextEvent(1000);
         }
         // endregion
+
+        writer.close();        
+        writer2.close();        
+        writer3.close();        
+        writer4.close();        
+        reader.close();
+        reader2.close();
+        readerGroupManager.close();
     }
 
     private String generateBigString(int sizeInKb) {
@@ -443,7 +439,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         return Base64.getEncoder().encodeToString(array);
     }
 
-    private void testAvroReflect() throws IOException {
+    @Test
+    public void testAvroReflect() throws IOException {
         // create stream
         String scope = "scope";
         String stream = "avroreflect";
@@ -452,7 +449,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
                 SchemaValidationRules.of(Compatibility.backward()), 
@@ -471,8 +468,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new TestClass("test"));
-
+        writer.writeEvent(new TestClass("test")).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -489,7 +486,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventRead<GenericRecord> event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
-
+        reader.close();
         // endregion
         // region read into writer schema
         String rg2 = "rg2" + stream;
@@ -502,10 +499,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
+        reader.close();
+        readerGroupManager.close();
         // endregion
     }
-    
-    private void testAvroGenerated() throws IOException {
+
+    @Test
+    public void testAvroGenerated() throws IOException {
         // create stream
         String scope = "scope";
         String stream = "avrogenerated";
@@ -514,7 +514,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
                 SchemaValidationRules.of(Compatibility.backward()), 
@@ -532,8 +532,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 1000));
-
+        writer.writeEvent(new Test1("test", 1000)).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -552,7 +552,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event.getEvent());
         assertEquals("test", event.getEvent().getName().toString());
         assertEquals(1000, event.getEvent().getField1());
-
+        reader.close();
         // endregion
         // region read into writer schema
         String rg2 = "rg2" + stream;
@@ -565,10 +565,12 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventRead<GenericRecord> event2 = reader2.readNextEvent(1000);
         assertNotNull(event2.getEvent());
+        readerGroupManager.close();
         // endregion
     }
-    
-    private void testAvroMultiplexed() throws IOException {
+
+    @Test
+    public void testAvroMultiplexed() throws IOException {
         // create stream
         String scope = "scope";
         String stream = "avromultiplexed";
@@ -577,7 +579,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Avro;
         client.addGroup(groupId, schemaType,  
                 SchemaValidationRules.of(Compatibility.backward()), 
@@ -601,10 +603,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<SpecificRecordBase> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 0));
-        writer.writeEvent(new Test2("test", 0, "test"));
-        writer.writeEvent(new Test3("test", 0, "test", "test"));
-
+        writer.writeEvent(new Test1("test", 0)).join();
+        writer.writeEvent(new Test2("test", 0, "test")).join();
+        writer.writeEvent(new Test3("test", 0, "test", "test")).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -669,9 +671,20 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(e1.getEvent().getLeft() instanceof Test2);
         e1 = reader3.readNextEvent(1000);
         assertTrue(e1.getEvent().isRight());
+        
+        reader.close();
+        reader2.close();
+        reader3.close();
+        readerGroupManager.close();
         //endregion
     }
-    
+
+    @Test
+    public void testProtobuf() throws IOException {
+        testProtobuf(true);
+        testProtobuf(false);
+    }
+
     private void testProtobuf(boolean encodeHeaders) throws IOException {
         // create stream
         String scope = "scope";
@@ -681,7 +694,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Protobuf;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
@@ -703,8 +716,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<ProtobufTest.Message1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build());
-
+        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -719,7 +732,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventRead<ProtobufTest.Message1> event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
-
+        reader.close();
         // endregion
         
         // region generic read
@@ -735,6 +748,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventRead<DynamicMessage> event2 = reader2.readNextEvent(1000);
         assertNotNull(event2.getEvent());
 
+        reader2.close();
+        
         // 2. try with passing the schema. reader schema will be used to read
         String rg3 = "rg3" + encodeHeaders;
         readerGroupManager.createReaderGroup(rg3,
@@ -747,10 +762,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         event2 = reader2.readNextEvent(1000);
         assertNotNull(event2.getEvent());
+        
+        reader2.close();
+        readerGroupManager.close();
         // endregion
     }
-    
-    private void testProtobufMultiplexed() throws IOException {
+
+    @Test
+    public void testProtobufMultiplexed() throws IOException {
         // create stream
         String scope = "scope";
         String stream = "protomultiplexed";
@@ -759,7 +778,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Protobuf;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
@@ -787,10 +806,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<GeneratedMessageV3> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build());
-        writer.writeEvent(ProtobufTest.Message2.newBuilder().setName("test").setField1(0).build());
-        writer.writeEvent(ProtobufTest.Message3.newBuilder().setName("test").setField1(0).setField2(1).build());
-
+        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
+        writer.writeEvent(ProtobufTest.Message2.newBuilder().setName("test").setField1(0).build()).join();
+        writer.writeEvent(ProtobufTest.Message3.newBuilder().setName("test").setField1(0).setField2(1).build()).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -813,6 +832,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event.getEvent());
         assertTrue(event.getEvent() instanceof ProtobufTest.Message3);
 
+        reader.close();
         // endregion
         // region read into writer schema
         String rg2 = "rg2" + stream;
@@ -828,7 +848,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         genEvent = reader2.readNextEvent(1000);
         assertNotNull(genEvent.getEvent());
         genEvent = reader2.readNextEvent(1000);
-        assertNotNull(genEvent.getEvent());
+        
+        reader2.close();
         // endregion
 
         // region read using multiplexed and generic record combination
@@ -855,7 +876,16 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message2);
         e1 = reader3.readNextEvent(1000);
         assertTrue(e1.getEvent().isRight());
+        
+        reader3.close();
+        readerGroupManager.close();
         //endregion
+    }
+
+    @Test
+    public void testJson() throws IOException {
+        testJson(true);
+        testJson(false);
     }
 
     private void testJson(boolean encodeHeaders) throws IOException {
@@ -867,7 +897,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Json;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
@@ -885,8 +915,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<DerivedUser2> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new DerivedUser2("name", new Address("street", "city"), 30, "user2"));
-
+        writer.writeEvent(new DerivedUser2("name", new Address("street", "city"), 30, "user2")).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -901,7 +931,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventRead<DerivedUser2> event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
-
+        reader.close();
         // endregion
         
         // region generic read
@@ -923,10 +953,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         } else {
             assertNull(jsonSchema);
         }
+        reader2.close();
+        readerGroupManager.close();
         // endregion
     }
-    
-    private void testJsonMultiplexed() throws IOException {
+
+    @Test
+    public void testJsonMultiplexed() throws IOException {
         // create stream
         String scope = "scope";
         String stream = "jsonmultiplexed";
@@ -935,7 +968,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
+        streamManager.close();
         SchemaType schemaType = SchemaType.Json;
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
@@ -957,9 +990,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
         EventStreamWriter<User> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new DerivedUser2());
-        writer.writeEvent(new DerivedUser1());
-
+        writer.writeEvent(new DerivedUser2()).join();
+        writer.writeEvent(new DerivedUser1()).join();
+        writer.close();
         // endregion
 
         // region read into specific schema
@@ -973,11 +1006,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         EventRead<User> event = reader.readNextEvent(1000);
+        
         assertNotNull(event.getEvent());
         assertTrue(event.getEvent() instanceof DerivedUser2);
         event = reader.readNextEvent(1000);
         assertNotNull(event.getEvent());
         assertTrue(event.getEvent() instanceof DerivedUser1);
+        reader.close();
         // endregion
 
         // region read into writer schema
@@ -993,6 +1028,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(genEvent.getEvent());
         genEvent = reader2.readNextEvent(1000);
         assertNotNull(genEvent.getEvent());
+        reader2.close();
         // endregion
 
         // region read using multiplexed and generic record combination
@@ -1015,6 +1051,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         e1 = reader3.readNextEvent(1000);
         assertTrue(e1.getEvent().isLeft());
         assertTrue(e1.getEvent().getLeft() instanceof DerivedUser1);
+        reader3.close();
+        readerGroupManager.close();
         //endregion
     }
 

@@ -13,61 +13,42 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
-import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.SneakyThrows;
+import lombok.Synchronized;
 
-import javax.annotation.ParametersAreNonnullByDefault;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Local cache for storing schemas that are retrieved from the registry service.  
  */
 public class EncodingCache {
-    private final LoadingCache<SchemaInfo, VersionInfo> schemaCache;
-    private final LoadingCache<EncodingInfo, EncodingId> versionCache;
+    private static final ConcurrentHashMap<String, EncodingCache> GROUP_CACHE_MAP = new ConcurrentHashMap<>();
+    
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
-
-    public EncodingCache(String groupId, SchemaRegistryClient registryClient) {
-        schemaCache = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, VersionInfo>() {
-                                                      @ParametersAreNonnullByDefault
-                                                      @Override
-                                                      public VersionInfo load(final SchemaInfo key) {
-                                                          return registryClient.getSchemaVersion(groupId, key);
-                                                      }
-                                                  });
-        versionCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingInfo, EncodingId>() {
-                                                      @ParametersAreNonnullByDefault
-                                                      @Override
-                                                      public EncodingId load(final EncodingInfo key) {
-                                                          return registryClient.getEncodingId(groupId, key.getVersionInfo(), 
-                                                                  key.getCodec());
-                                                      }
-                                                  });
-
+    
+    private EncodingCache(String groupId, SchemaRegistryClient registryClient) {
         encodingCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
-            public EncodingInfo load(EncodingId key) throws Exception {
+            public EncodingInfo load(EncodingId key) {
                 return registryClient.getEncodingInfo(groupId, key);
             }
         });
-        
     }
-
-    @SneakyThrows(ExecutionException.class)
-    public VersionInfo getVersionFromSchema(SchemaInfo schemaInfo) {
-        return schemaCache.get(schemaInfo);
+    
+    @Synchronized
+    public static EncodingCache getEncodingCacheForGroup(String groupId, SchemaRegistryClient registryClient) {
+        if (GROUP_CACHE_MAP.containsKey(groupId)) {
+            return GROUP_CACHE_MAP.get(groupId);
+        } else {
+            EncodingCache value = new EncodingCache(groupId, registryClient);
+            GROUP_CACHE_MAP.put(groupId, value);
+            return value;
+        }
     }
-
-    @SneakyThrows(ExecutionException.class)
-    public EncodingId getEncodingId(SchemaInfo schemaInfo, CodecType codecType) {
-        VersionInfo versionInfo = getVersionFromSchema(schemaInfo);
-        return versionCache.get(new EncodingInfo(versionInfo, schemaInfo, codecType));
-    }
-
+    
     @SneakyThrows(ExecutionException.class)
     public EncodingInfo getEncodingInfo(EncodingId encodingId) {
         return encodingCache.get(encodingId);
