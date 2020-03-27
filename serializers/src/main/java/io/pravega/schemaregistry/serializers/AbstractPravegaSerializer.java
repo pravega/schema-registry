@@ -41,14 +41,12 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     @Getter
     private final Codec codec;
     private final boolean registerSchema;
-    private final boolean registerCodec;
 
     protected AbstractPravegaSerializer(String groupId,
                                         SchemaRegistryClient client,
                                         SchemaContainer<T> schema,
                                         Codec codec, 
-                                        boolean registerSchema,
-                                        boolean registerCodec) {
+                                        boolean registerSchema) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(codec);
@@ -58,7 +56,6 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         this.client = client;
         this.schemaInfo = schema.getSchemaInfo();
         this.registerSchema = registerSchema;
-        this.registerCodec = registerCodec;
         this.encodingId = new AtomicReference<>();
         this.codec = codec;
         this.encodeHeader = new AtomicBoolean();
@@ -71,9 +68,6 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         Map<String, String> properties = groupProperties.getProperties();
         boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
         encodeHeader.set(toEncodeHeader);
-        if (registerCodec) {
-            client.addCodec(groupId, codec.getCodecType());
-        }
         VersionInfo version;
         if (registerSchema) {
             // register schema
