@@ -23,8 +23,10 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
+import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
@@ -231,6 +233,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new RuntimeException("getEncodingId failed. Either Group or Version does not exist.");
+        } else if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
+            throw new CodecNotFoundException(String.format("Codec %s not registered.", codecType));
         } else {
             throw new RuntimeException("Internal Service error. Failed to get encoding info.");
         }
@@ -396,7 +400,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public void addCodec(String group, CodecType codecType) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("codecs");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        Response response = invocationBuilder.post(Entity.entity(ModelHelper.encode(codecType), MediaType.APPLICATION_JSON));
+        AddCodec addCodec = new AddCodec().codec(ModelHelper.encode(codecType));
+        Response response = invocationBuilder.post(Entity.entity(addCodec, MediaType.APPLICATION_JSON));
 
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             throw new RuntimeException("Failed to add codec");
