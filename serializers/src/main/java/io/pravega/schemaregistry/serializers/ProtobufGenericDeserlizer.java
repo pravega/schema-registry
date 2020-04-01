@@ -24,7 +24,7 @@ import lombok.SneakyThrows;
 import org.apache.commons.lang3.SerializationException;
 
 import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<DynamicMessage> {
     private final LoadingCache<SchemaInfo, Descriptors.Descriptor> knownSchemas;
@@ -64,14 +64,12 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
 
     @SneakyThrows
     @Override
-    protected DynamicMessage deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected DynamicMessage deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkArgument(writerSchemaInfo != null || readerSchemaInfo != null);
         
         SchemaInfo schemaToUse = readerSchemaInfo == null ? writerSchemaInfo : readerSchemaInfo;
         Descriptors.Descriptor messageType = knownSchemas.get(schemaToUse);
 
-        byte[] array = new byte[buffer.remaining()];
-        buffer.get(array);
-        return DynamicMessage.parseFrom(messageType, array);
+        return DynamicMessage.parseFrom(messageType, inputStream);
     }
 }

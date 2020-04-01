@@ -15,7 +15,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 import java.util.Map;
 
 class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserializer<Either<T, G>> {
@@ -33,12 +33,12 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     }
 
     @Override
-    protected Either<T, G> deserialize(ByteBuffer buffer, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+    protected Either<T, G> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
         if (deserializers.containsKey(writerSchema.getName())) {
-            return Either.left(deserializers.get(writerSchema.getName()).deserialize(buffer, writerSchema, readerSchema));
+            return Either.left(deserializers.get(writerSchema.getName()).deserialize(inputStream, writerSchema, readerSchema));
         } else {
-            return Either.right(genericDeserializer.deserialize(buffer, writerSchema, readerSchema));
+            return Either.right(genericDeserializer.deserialize(inputStream, writerSchema, readerSchema));
         }
     }
 }

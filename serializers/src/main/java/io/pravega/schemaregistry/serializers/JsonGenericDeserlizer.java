@@ -22,7 +22,8 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import lombok.SneakyThrows;
 
-import java.nio.ByteBuffer;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -43,13 +44,10 @@ class JsonGenericDeserlizer extends AbstractPravegaDeserializer<JSonGenericObjec
         });
     }
     
-    @SneakyThrows({JsonProcessingException.class, ExecutionException.class})
+    @SneakyThrows({JsonProcessingException.class, ExecutionException.class, IOException.class})
     @Override
-    protected JSonGenericObject deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        byte[] array = new byte[buffer.remaining()];
-        buffer.get(array);
-        String jsonStr = new String(array, Charsets.UTF_8);
-        Map obj = objectMapper.readValue(jsonStr, Map.class);
+    protected JSonGenericObject deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+        Map obj = objectMapper.readValue(inputStream, Map.class);
         JsonSchema schema = writerSchemaInfo == null ? null : knownSchemas.get(writerSchemaInfo.getSchemaData());
         return new JSonGenericObject(obj, schema);
     }

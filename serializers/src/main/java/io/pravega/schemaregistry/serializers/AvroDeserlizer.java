@@ -25,7 +25,7 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.specific.SpecificDatumReader;
 
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserializer<T> {
     private final AvroSchema<T> avroSchema;
@@ -48,15 +48,13 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
 
     @SneakyThrows
     @Override
-    protected T deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
         Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData());
         Schema readerSchema = avroSchema.getSchema();
         
         SpecificDatumReader<T> datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
-        byte[] array = new byte[buffer.remaining()];
-        buffer.get(array);
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(array, null);
+        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         return datumReader.read(null, decoder);
     }
 }

@@ -22,6 +22,8 @@ import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -105,19 +107,26 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
             }
             
             ByteBuffer uncompressed = decoder.decode(codecType, data);
-            
+            byte[] array = new byte[uncompressed.remaining()];
+            uncompressed.get(array);
+
+            InputStream inputStream = new ByteArrayInputStream(array);
             if (schemaInfo.get() == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into
-                return deserialize(uncompressed, writerSchema, writerSchema);
+                return deserialize(inputStream, writerSchema, writerSchema);
             } else {
                 // pass reader schema for schema on read to the underlying implementation
-                return deserialize(uncompressed, writerSchema, schemaInfo.get());
+                return deserialize(inputStream, writerSchema, schemaInfo.get());
             }
         } else {
             // pass reader schema for schema on read to the underlying implementation
-            return deserialize(data, null, schemaInfo.get());
+            byte[] array = new byte[data.remaining()];
+            data.get(array);
+            InputStream inputStream = new ByteArrayInputStream(array);
+
+            return deserialize(inputStream, null, schemaInfo.get());
         }
     }
     
-    protected abstract T deserialize(ByteBuffer buffer, SchemaInfo writerSchema, SchemaInfo readerSchema);
+    protected abstract T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema);
 }

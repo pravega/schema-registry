@@ -11,8 +11,8 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 public interface PravegaDeserializer<T> {
-    T deserialize(ByteBuffer buffer, SchemaInfo writerSchema, SchemaInfo readerSchema);
+    T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema);
 }

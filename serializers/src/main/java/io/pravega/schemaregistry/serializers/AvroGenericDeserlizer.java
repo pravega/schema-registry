@@ -26,7 +26,7 @@ import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 
 import javax.annotation.Nullable;
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
     private final LoadingCache<byte[], Schema> knownSchemas;
@@ -45,16 +45,14 @@ class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
 
     @SneakyThrows
     @Override
-    protected GenericRecord deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected GenericRecord deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
         Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData());
         Schema readerSchema = knownSchemas.get(readerSchemaInfo.getSchemaData());
         
         GenericDatumReader<GenericRecord> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
-        byte[] array = new byte[buffer.remaining()];
-        buffer.get(array);
-
-        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(array, null);
+        
+        BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         return genericDatumReader.read(null, decoder);
     }
 }

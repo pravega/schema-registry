@@ -17,7 +17,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.SneakyThrows;
 
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 
 public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractPravegaDeserializer<T> {
     private final ProtobufSchema<T> protobufSchema;
@@ -31,7 +31,7 @@ public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractPr
 
     @SneakyThrows
     @Override
-    protected T deserialize(ByteBuffer buffer, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        return protobufSchema.getParser().parseFrom(buffer);
+    protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+        return protobufSchema.getParser().parseFrom(inputStream);
     }
 }

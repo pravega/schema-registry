@@ -15,7 +15,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 
-import java.nio.ByteBuffer;
+import java.io.InputStream;
 import java.util.Map;
 
 class MultipleFormatGenericDeserializer extends AbstractPravegaDeserializer<Object> {
@@ -30,8 +30,8 @@ class MultipleFormatGenericDeserializer extends AbstractPravegaDeserializer<Obje
     }
 
     @Override
-    protected Object deserialize(ByteBuffer buffer, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+    protected Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        return genericDeserializers.get(writerSchema.getSchemaType()).deserialize(buffer, writerSchema, readerSchema); 
+        return genericDeserializers.get(writerSchema.getSchemaType()).deserialize(inputStream, writerSchema, readerSchema); 
     }
 }
