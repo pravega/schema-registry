@@ -15,7 +15,6 @@ import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
-import java.util.Base64;
 
 public class IndexKeySerializer extends VersionedSerializer.MultiType<IndexRecord.IndexKey> {
 
@@ -40,25 +39,22 @@ public class IndexKeySerializer extends VersionedSerializer.MultiType<IndexRecor
      * Serializes the given {@link IndexRecord.IndexKey} to a {@link ByteBuffer}.
      *
      * @param value The {@link IndexRecord.IndexKey} to serialize.
-     * @return A base 64 encoding of wrapping an array that contains the serialization.
+     * @return An array that contains the serialized key.
      */
     @SneakyThrows(IOException.class)
-    public String toKeyString(IndexRecord.IndexKey value) {
+    public byte[] toBytes(IndexRecord.IndexKey value) {
         ByteArraySegment s = serialize(value);
-        return value.getClass().getSimpleName() + "_" + Base64.getEncoder().encodeToString(s.getCopy());
+        return s.getCopy();
     }
     
     /**
-     * Deserializes the given base 64 encoded key string into a {@link IndexRecord.IndexKey} instance.
+     * Deserializes the given buffer into a {@link IndexRecord.IndexKey} instance.
      *
-     * @param string string to deserialize into key.
+     * @param buffer buffer to deserialize into key.
      * @return A new {@link IndexRecord.IndexKey} instance from the given serialization.
      */
     @SneakyThrows(IOException.class)
-    public IndexRecord.IndexKey fromString(String string) {
-        String[] tokens = string.split("_");
-        
-        byte[] buffer = Base64.getDecoder().decode(tokens[1]);
+    public IndexRecord.IndexKey fromBytes(byte[] buffer) {
         return deserialize(new ByteArraySegment(buffer));
     }
 }

@@ -30,8 +30,6 @@ public class SchemaType   {
    * Gets or Sets schemaType
    */
   public enum SchemaTypeEnum {
-    NONE("None"),
-    
     AVRO("Avro"),
     
     PROTOBUF("Protobuf"),

@@ -18,10 +18,11 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.group.Group;
-import io.pravega.schemaregistry.storage.impl.group.PravegaLogCache;
 import io.pravega.schemaregistry.storage.impl.group.PravegaLog;
+import io.pravega.schemaregistry.storage.impl.group.PravegaLogCache;
 import io.pravega.schemaregistry.storage.impl.group.PravegaTableIndex;
 import lombok.Data;
+import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
@@ -47,7 +48,7 @@ public class PravegaTableGroups implements Groups<Version> {
     
     @Override
     public CompletableFuture<Group<Version>> getGroup(String groupName) {
-        return withCreateGroupsTableIfAbsent(() -> tableStore.getEntry(tableName, groupName, GroupsValue::fromBytes))
+        return withCreateGroupsTableIfAbsent(() -> tableStore.getEntry(tableName, groupName.getBytes(Charsets.UTF_8), GroupsValue::fromBytes))
                          .thenApply(entry -> {
                        if (!entry.getObject().getState().equals(GroupsValue.State.Active)) {
                            throw new IllegalStateException();
@@ -65,8 +66,8 @@ public class PravegaTableGroups implements Groups<Version> {
         // 4. update groups entry to active
         String id = UUID.randomUUID().toString();
         GroupsValue value = new GroupsValue(id, GroupsValue.State.Creating);
-        return withCreateGroupsTableIfAbsent(() -> tableStore.addNewEntryIfAbsent(tableName, group, value.toBytes()))
-                         .thenCompose(v -> tableStore.getEntry(tableName, group, GroupsValue::fromBytes))
+        return withCreateGroupsTableIfAbsent(() -> tableStore.addNewEntryIfAbsent(tableName, group.getBytes(Charsets.UTF_8), value.toBytes()))
+                         .thenCompose(v -> tableStore.getEntry(tableName, group.getBytes(Charsets.UTF_8), GroupsValue::fromBytes))
                          .thenCompose(entry -> {
                        if (entry.getObject().getState().equals(GroupsValue.State.Creating)) {
                            GroupObj groupObject = getGroupObject(group, entry.getObject());
@@ -80,7 +81,7 @@ public class PravegaTableGroups implements Groups<Version> {
                                              groupProperties.isValidateByObjectType(), groupProperties.getSchemaValidationRules()))
                                      .thenCompose(v -> {
                                          byte[] newValue = new GroupsValue(entry.getObject().getId(), GroupsValue.State.Active).toBytes();
-                                         return tableStore.updateEntry(tableName, group, newValue, entry.getVersion());
+                                         return tableStore.updateEntry(tableName, group.getBytes(Charsets.UTF_8), newValue, entry.getVersion());
                                      })
                               .thenApply(v -> toReturn);
                        } else {
@@ -92,7 +93,7 @@ public class PravegaTableGroups implements Groups<Version> {
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups() {
         // read from groups's table
-        return withCreateGroupsTableIfAbsent(() -> tableStore.getAllKeys(tableName))
+        return withCreateGroupsTableIfAbsent(() -> tableStore.getAllKeys(tableName, x -> new String(x, Charsets.UTF_8)))
                          .thenApply(list -> new ListWithToken<>(list, null));
     }
 
@@ -103,16 +104,16 @@ public class PravegaTableGroups implements Groups<Version> {
         //  2.1 delete index
         //  2.2 delete log
         // 3. delete the groups entry
-        return Futures.exceptionallyExpecting(tableStore.getEntry(tableName, group, GroupsValue::fromBytes)
+        return Futures.exceptionallyExpecting(tableStore.getEntry(tableName, group.getBytes(Charsets.UTF_8), GroupsValue::fromBytes)
                          .thenCompose(entry -> {
                               GroupsValue newValue = new GroupsValue(entry.getObject().getId(), GroupsValue.State.Deleting);
-                              return tableStore.updateEntry(tableName, group, newValue.toBytes(), entry.getVersion())
+                              return tableStore.updateEntry(tableName, group.getBytes(Charsets.UTF_8), newValue.toBytes(), entry.getVersion())
                                                .thenCompose(version -> {
                                                     GroupObj grpObj = getGroupObject(group, newValue);
                                                     return CompletableFuture.allOf(grpObj.getLog().delete(), grpObj.getIndex().delete());
                                                 });
                           })
-                         .thenCompose(v -> tableStore.removeEntry(tableName, group)), 
+                         .thenCompose(v -> tableStore.removeEntry(tableName, group.getBytes(Charsets.UTF_8))), 
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);
     }
 

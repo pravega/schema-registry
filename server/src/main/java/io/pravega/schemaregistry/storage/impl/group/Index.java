@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.storage.impl.group;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
 import lombok.Data;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
@@ -24,7 +23,7 @@ import java.util.function.Predicate;
  * @param <V> Version of index
  */
 public interface Index<V> {
-    CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys();
+    CompletableFuture<List<IndexRecord.IndexKey>> getAllKeys();
 
     CompletableFuture<List<Entry>> getAllEntries();
 

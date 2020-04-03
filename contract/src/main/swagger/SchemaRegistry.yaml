@@ -681,7 +681,6 @@ definitions:
       schemaType:
         type: string
         enum: 
-          - None
           - Avro
           - Protobuf
           - Json

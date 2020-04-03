@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
+import com.google.common.collect.Lists;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
@@ -17,7 +18,6 @@ import lombok.Getter;
 import lombok.Synchronized;
 
 import javax.annotation.concurrent.GuardedBy;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -35,8 +35,8 @@ public class InMemoryIndex implements Index<Integer> {
 
     @Override
     @Synchronized
-    public CompletableFuture<Collection<IndexRecord.IndexKey>> getAllKeys() {
-        return CompletableFuture.completedFuture(index.keySet());
+    public CompletableFuture<List<IndexRecord.IndexKey>> getAllKeys() {
+        return CompletableFuture.completedFuture(Lists.newArrayList(index.keySet()));
     }
 
     @Override
