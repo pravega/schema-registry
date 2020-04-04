@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.contract.exceptions;
 
 /**
- * Exception thrown when a schema type is different from the group property's schema type. 
+ * Exception thrown when server isnt able to find the requested resource. 
  */
 public class NotFoundException extends RuntimeException {
     public NotFoundException(String message) {
