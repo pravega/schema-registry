@@ -105,7 +105,7 @@ allprojects {
         }
     }
     version = getProjectVersion()
-    group = "io.pravega"
+    group = "io.pravega.schemaregistry"
 
     configurations.all {
         resolutionStrategy {
@@ -314,6 +314,14 @@ project('samples') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
+}
+
+task publishAllJars() {
+    dependsOn ':client:publish'
+    dependsOn ':common:publish'
+    dependsOn ':contract:publish'
+    dependsOn ':server:publish'
+    dependsOn ':serializers:publish'
 }
 
 def getProjectVersion() {

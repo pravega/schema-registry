@@ -16,3 +16,5 @@ include 'client',
         'serializers',
         'contract',
         'samples'
+
+enableFeaturePreview('STABLE_PUBLISHING')
