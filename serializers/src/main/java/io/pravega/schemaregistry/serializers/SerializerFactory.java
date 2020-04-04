@@ -600,8 +600,38 @@ public class SerializerFactory {
         return new MultipleFormatGenericDeserializer(groupId, registryClient, map, config.getDecoder(),
                 encodingCache);
     }
-    // endregion
+    
+    /**
+     * A deserializer that can read data where each event could be written with different serialization formats and 
+     * deserializes and converts them to a json string.
+     *
+     * @param config serializer config
+     * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
+     */
+    public static Serializer<String> deserializerAsJsonString(SerializerConfig config) {
+        String groupId = config.getGroupId();
+        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                config.getRegistryConfigOrClient().getRight();
+        failOnCodecMismatch(registryClient, config);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
 
+        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), registryClient,
+                config.getDecoder(), encodingCache);
+        AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, registryClient, null, config.getDecoder(),
+                encodingCache);
+        AbstractPravegaDeserializer avro = new AvroGenericDeserlizer(groupId, registryClient, null, config.getDecoder(),
+                encodingCache);
+
+        Map<SchemaType, AbstractPravegaDeserializer> map = new HashMap<>();
+        map.put(SchemaType.Json, json);
+        map.put(SchemaType.Avro, avro);
+        map.put(SchemaType.Protobuf, protobuf);
+        return new MultipleFormatStringDeserializer(groupId, registryClient, map, config.getDecoder(),
+                encodingCache);
+    }
+    // endregion
+    
     private static void registerCodec(SchemaRegistryClient client, SerializerConfig config) {
         if (config.isAutoRegisterCodec()) {
             client.addCodec(config.getGroupId(), config.getCodec().getCodecType());
