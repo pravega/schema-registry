@@ -24,6 +24,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
+import io.pravega.schemaregistry.contract.exceptions.NotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
@@ -127,7 +128,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Group not found.");
+            throw new NotFoundException("Group not found.");
         } else {
             throw new RuntimeException("Internal error. Failed to get group properties.");
         }
@@ -143,6 +144,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         Response response = invocationBuilder.put(Entity.entity(request, MediaType.APPLICATION_JSON));
         if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
             throw new RuntimeException("Conflict attempting to update the rules. Try again.");
+        } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new NotFoundException("Group not found.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to update schema validation rules.");
         }
@@ -166,6 +169,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         ObjectTypesList objectTypesList = response.readEntity(ObjectTypesList.class);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return objectTypesList.getGroups();
+        } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new NotFoundException("Group not found.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get objectTypes.");
         }    
@@ -181,7 +186,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Group not found.");
+            throw new NotFoundException("Group not found.");
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
             throw new IncompatibleSchemaException("Schema is incompatible.");
         } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
@@ -201,7 +206,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Schema not found.");
+            throw new NotFoundException("Schema not found.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema.");
         }
@@ -215,7 +220,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Encoding not found.");
+            throw new NotFoundException("Encoding not found.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get encoding info.");
         }
@@ -232,7 +237,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("getEncodingId failed. Either Group or Version does not exist.");
+            throw new NotFoundException("getEncodingId failed. Either Group or Version does not exist.");
         } else if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
             throw new CodecNotFoundException(String.format("Codec %s not registered.", codecType));
         } else {
@@ -256,7 +261,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("getLatestSchemaForGroup failed. Either Group or Version does not exist.");
+            throw new NotFoundException("getLatestSchemaForGroup failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get latest schema for group.");
         }
@@ -270,18 +275,15 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("getLatestSchemaForGroup failed. Either Group or Version does not exist.");
+            throw new NotFoundException("getLatestSchemaForGroup failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get latest schema for group.");
         }
     }
 
     private SchemaWithVersion processLatestSchemaResponse(Response response) {
-        if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-            return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class));
-        } else {
-            throw new RuntimeException("Internal Service error. Failed to get encoding info.");
-        }
+        return ModelHelper.decode(response.readEntity(
+                io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class));
     }
 
     @Override
@@ -300,7 +302,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processHistoryResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("getEvolutionHistory failed. Either Group or Version does not exist.");
+            throw new NotFoundException("getEvolutionHistory failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema evolution history for group.");
         }
@@ -314,7 +316,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processHistoryResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("getEvolutionHistory failed. Either Group or Version does not exist.");
+            throw new NotFoundException("getEvolutionHistory failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema evolution history for group.");
         }
@@ -343,7 +345,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Schema not found.");
+            throw new NotFoundException("Schema not found.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema version.");
         }
@@ -360,7 +362,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return response.readEntity(Valid.class).isValid();
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Schema not found.");
+            throw new NotFoundException("Group not found.");
         } else {
             throw new RuntimeException("Internal Service error.");
         }
@@ -376,7 +378,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return response.readEntity(CanRead.class).isCompatible();
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new RuntimeException("Schema not found.");
+            throw new NotFoundException("Schema not found.");
         } else {
             throw new RuntimeException("Internal Service error.");
         }
@@ -391,6 +393,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return list.getCodecTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());
+        } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new NotFoundException("Group not found.");
         } else {
             throw new RuntimeException("Failed to get codecs");
         }    
@@ -404,7 +408,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         Response response = invocationBuilder.post(Entity.entity(addCodec, MediaType.APPLICATION_JSON));
 
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            throw new RuntimeException("Failed to add codec");
-        }
+            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                throw new NotFoundException("Group not found.");
+            } else {
+                throw new RuntimeException("Failed to add codec");
+            }
+        } 
     }
 }
