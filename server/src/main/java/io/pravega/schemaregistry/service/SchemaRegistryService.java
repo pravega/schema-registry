@@ -257,7 +257,7 @@ public class SchemaRegistryService {
         return store.getEncodingInfo(group, encodingId)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return getEncodingInfo {}.", group, r);
+                            log.info("Group {}, return getEncodingInfo {} {}.", group, r.getVersionInfo(), r.getCodec());
                         } else {
                             log.warn("Group {}, get getEncodingInfo for id {} failed with error", e, group, encodingId);
                         }
