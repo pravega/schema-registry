@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
@@ -33,6 +33,7 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.records.IndexRecord;
 import io.pravega.schemaregistry.storage.records.Record;
 import io.pravega.schemaregistry.storage.records.RecordWithPosition;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -52,18 +53,20 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 /**
- * Class that implements all storage logic for a group. 
+ * Class that implements all storage logic for a group.
  * It makes use of two storage primitives, namely an append only write ahead log {@link Log} and an index {@link Index}.
- * The group's state is written into the log and then the index is updated for optimizing the queries. 
- * The source of truth is the log and the index may eventually catches up with the log. 
- * @param <V> Type of version used in the index. 
+ * The group's state is written into the log and then the index is updated for optimizing the queries.
+ * The source of truth is the log and the index may eventually catches up with the log.
+ *
+ * @param <V> Type of version used in the index.
  */
+@Slf4j
 public class Group<V> {
     private static final IndexRecord.SyncdTillKey SYNCD_TILL = new IndexRecord.SyncdTillKey();
     private static final IndexRecord.ValidationPolicyKey VALIDATION_POLICY_INDEX_KEY = new IndexRecord.ValidationPolicyKey();
     private static final IndexRecord.GroupPropertyKey GROUP_PROPERTY_INDEX_KEY = new IndexRecord.GroupPropertyKey();
     private static final IndexRecord.CodecsKey CODECS_KEY = new IndexRecord.CodecsKey();
-    
+
     private static final Comparator<Index.Entry> VERSION_COMPARATOR = (v1, v2) -> {
         IndexRecord.VersionInfoKey version1 = (IndexRecord.VersionInfoKey) v1.getKey();
         IndexRecord.VersionInfoKey version2 = (IndexRecord.VersionInfoKey) v2.getKey();
@@ -73,47 +76,48 @@ public class Group<V> {
     private static final Retry.RetryAndThrowConditionally WRITE_CONFLICT_RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                                       .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
 
+    private final String groupId;
     private final Log wal;
-
     private final Index<V> index;
-    
     private final ScheduledExecutorService executor;
 
-    public Group(Log wal, Index<V> index, ScheduledExecutorService executor) {
+    public Group(String groupId, Log wal, Index<V> index, ScheduledExecutorService executor) {
+        this.groupId = groupId;
         this.wal = wal;
         this.index = index;
         this.executor = executor;
     }
-    
+
     public CompletableFuture<Void> create(SchemaType schemaType, Map<String, String> properties, boolean validateByObjectType, SchemaValidationRules schemaValidationRules) {
         return wal.getCurrentEtag()
                   .thenCompose(pos -> writeToLog(new Record.GroupPropertiesRecord(schemaType, validateByObjectType, properties, schemaValidationRules), pos)
-                  .thenCompose(v -> {
-                      IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
-                      Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
-                      return updateIndex(Lists.newArrayList(addGroupProp), walPosition);
-                  }));
+                          .thenCompose(v -> {
+                              log.info("group {} properties written to log", groupId);
+                              IndexRecord.WALPositionValue walPosition = new IndexRecord.WALPositionValue(pos);
+                              Operation.Add addGroupProp = new Operation.Add(GROUP_PROPERTY_INDEX_KEY, walPosition);
+                              return updateIndex(Lists.newArrayList(addGroupProp), walPosition);
+                          }));
     }
-    
+
     public CompletableFuture<Position> getCurrentEtag() {
         return syncIndex();
     }
-    
+
     public CompletableFuture<ListWithToken<String>> getObjectTypes() {
         return syncIndex().thenCompose(v -> index.getAllKeys())
                           .thenApply(list -> {
-                         List<String> objectTypes = list
-                                 .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)
-                                 .map(x -> ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName())
-                                 .distinct().collect(Collectors.toList());
-                         return new ListWithToken<>(objectTypes, null);
-                     });
+                              List<String> objectTypes = list
+                                      .stream().filter(x -> x instanceof IndexRecord.VersionInfoKey)
+                                      .map(x -> ((IndexRecord.VersionInfoKey) x).getVersionInfo().getSchemaName())
+                                      .distinct().collect(Collectors.toList());
+                              return new ListWithToken<>(objectTypes, null);
+                          });
     }
 
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas() {
         return getSchemasInternal(null, x -> x.getRecord() instanceof Record.SchemaRecord);
     }
-    
+
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(VersionInfo from) {
         IndexRecord.VersionInfoKey versionInfoKey = new IndexRecord.VersionInfoKey(from);
         return index.getRecord(versionInfoKey, IndexRecord.WALPositionValue.class)
@@ -122,8 +126,8 @@ public class Group<V> {
     }
 
     public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String objectTypeName) {
-        return getSchemasInternal(null, 
-                x -> x.getRecord() instanceof Record.SchemaRecord && 
+        return getSchemasInternal(null,
+                x -> x.getRecord() instanceof Record.SchemaRecord &&
                         ((Record.SchemaRecord) x.getRecord()).getSchemaInfo().getName().equals(objectTypeName));
     }
 
@@ -134,20 +138,20 @@ public class Group<V> {
                             x -> x.getRecord() instanceof Record.SchemaRecord &&
                                     ((Record.SchemaRecord) x.getRecord()).getSchemaInfo().getName().equals(objectTypeName)));
     }
-    
+
     public CompletableFuture<SchemaInfo> getSchema(VersionInfo versionInfo) {
         return index.getRecord(new IndexRecord.VersionInfoKey(versionInfo), IndexRecord.WALPositionValue.class)
-                .thenCompose(record -> {
-                    if (record == null) {
-                        return syncIndex().thenCompose(v -> 
-                                index.getRecord(new IndexRecord.VersionInfoKey(versionInfo), IndexRecord.WALPositionValue.class));
-                    } else {
-                        return CompletableFuture.completedFuture(record);
-                    }
-                }).thenCompose(record -> wal.readAt(record.getPosition(), Record.SchemaRecord.class))
+                    .thenCompose(record -> {
+                        if (record == null) {
+                            return syncIndex().thenCompose(v ->
+                                    index.getRecord(new IndexRecord.VersionInfoKey(versionInfo), IndexRecord.WALPositionValue.class));
+                        } else {
+                            return CompletableFuture.completedFuture(record);
+                        }
+                    }).thenCompose(record -> wal.readAt(record.getPosition(), Record.SchemaRecord.class))
                     .thenApply(Record.SchemaRecord::getSchemaInfo);
     }
-    
+
     public CompletableFuture<VersionInfo> getVersion(SchemaInfo schemaInfo) {
         long fingerPrint = getFingerprint(schemaInfo);
         return getVersionInternal(schemaInfo, fingerPrint)
@@ -167,31 +171,31 @@ public class Group<V> {
                     }
                 });
     }
-    
+
     public CompletableFuture<EncodingId> createEncodingId(VersionInfo versionInfo, CodecType codecType,
-                                                               Position etag) {
+                                                          Position etag) {
         return generateNewEncodingId(versionInfo, codecType, etag);
     }
-    
+
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
         IndexRecord.EncodingIdIndex encodingIdIndex = new IndexRecord.EncodingIdIndex(encodingId);
         return index.getRecord(encodingIdIndex, IndexRecord.EncodingInfoIndex.class)
-             .thenCompose(encodingInfo -> {
-                 if (encodingInfo == null) {
-                     return syncIndex()
-                             .thenCompose(v -> index.getRecord(encodingIdIndex, IndexRecord.EncodingInfoIndex.class)
-                                                    .thenApply(info -> {
-                                                        if (info == null) {
-                                                            throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, encodingId.toString());
-                                                        } else {
-                                                            return info;
-                                                        }
-                                                    }));
-                 } else {
-                     return CompletableFuture.completedFuture(encodingInfo);
-                 }
-             }).thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo())
-                .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType())));
+                    .thenCompose(encodingInfo -> {
+                        if (encodingInfo == null) {
+                            return syncIndex()
+                                    .thenCompose(v -> index.getRecord(encodingIdIndex, IndexRecord.EncodingInfoIndex.class)
+                                                           .thenApply(info -> {
+                                                               if (info == null) {
+                                                                   throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, encodingId.toString());
+                                                               } else {
+                                                                   return info;
+                                                               }
+                                                           }));
+                        } else {
+                            return CompletableFuture.completedFuture(encodingInfo);
+                        }
+                    }).thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo())
+                        .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType())));
     }
 
     public CompletableFuture<SchemaWithVersion> getLatestSchema(boolean sync) {
@@ -221,15 +225,15 @@ public class Group<V> {
     }
 
     public CompletableFuture<List<CodecType>> getCodecTypes() {
-        return syncIndex().thenCompose(v -> 
-            index.getRecord(CODECS_KEY, IndexRecord.CodecsListValue.class)
-                 .thenApply(codecs -> {
-                     if (codecs == null) {
-                         return Collections.singletonList(CodecType.None);
-                     } else {
-                         return codecs.getCodecs();
-                     }
-                 }));
+        return syncIndex().thenCompose(v ->
+                index.getRecord(CODECS_KEY, IndexRecord.CodecsListValue.class)
+                     .thenApply(codecs -> {
+                         if (codecs == null) {
+                             return Collections.singletonList(CodecType.None);
+                         } else {
+                             return codecs.getCodecs();
+                         }
+                     }));
     }
 
     public CompletableFuture<Void> addCodec(CodecType codecType) {
@@ -237,13 +241,13 @@ public class Group<V> {
         // generate encoding id will only generate if the codec is already registered.
         return WRITE_CONFLICT_RETRY.runAsync(() -> syncIndex()
                 .thenCompose(etag -> index.getRecordWithVersion(CODECS_KEY, IndexRecord.CodecsListValue.class)
-                                              .thenCompose(rec -> {
-                                                  if (rec == null || !rec.getValue().getCodecs().contains(codecType)) {
-                                                      return addCodecToLogAndIndex(codecType, etag);
-                                                  } else {
-                                                      return CompletableFuture.completedFuture(null);
-                                                  }
-                                              })), executor);
+                                          .thenCompose(rec -> {
+                                              if (rec == null || !rec.getValue().getCodecs().contains(codecType)) {
+                                                  return addCodecToLogAndIndex(codecType, etag);
+                                              } else {
+                                                  return CompletableFuture.completedFuture(null);
+                                              }
+                                          })), executor);
     }
 
     private CompletionStage<Void> addCodecToLogAndIndex(CodecType codecType, Position etag) {
@@ -279,19 +283,21 @@ public class Group<V> {
     }
 
     public CompletableFuture<ListWithToken<SchemaEvolution>> getHistory(String objectTypeName) {
-        return getHistory().thenApply(list -> 
+        return getHistory().thenApply(list ->
                 new ListWithToken<>(list.getList().stream().filter(x -> x.getSchema().getName().equals(objectTypeName)).collect(Collectors.toList()), null));
     }
 
     public CompletableFuture<VersionInfo> addSchemaToGroup(SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag) {
         return getGroupPropertiesRecord()
-            .thenCompose(prop -> addSchema(schemaInfo, versionInfo, prop.isValidateByObjectType(), etag));
+                .thenCompose(prop -> addSchema(schemaInfo, versionInfo, prop.isValidateByObjectType(), etag));
     }
-    
+
     @SuppressWarnings("unchecked")
     public CompletableFuture<Void> updateValidationPolicy(SchemaValidationRules policy, Position etag) {
         return writeToLog(new Record.ValidationRecord(policy), etag)
                 .thenCompose(v -> {
+                    log.info("group {}, new validation policy {} written to log", groupId, policy);
+
                     Operation.GetAndSet getAndSet = new Operation.GetAndSet(new IndexRecord.ValidationPolicyKey(), new IndexRecord.WALPositionValue(etag),
                             x -> etag.getPosition().compareTo(((IndexRecord.WALPositionValue) x).getPosition().getPosition()) > 0);
                     return updateIndex(Collections.singletonList(getAndSet), new IndexRecord.WALPositionValue(etag));
@@ -300,18 +306,18 @@ public class Group<V> {
 
     public CompletableFuture<GroupProperties> getGroupProperties() {
         return syncIndex().thenCompose(v -> {
-                    CompletableFuture<Record.GroupPropertiesRecord> grpPropertiesFuture = getGroupPropertiesRecord();
+            CompletableFuture<Record.GroupPropertiesRecord> grpPropertiesFuture = getGroupPropertiesRecord();
 
-                    CompletableFuture<SchemaValidationRules> rulesFuture = getCurrentValidationRules();
+            CompletableFuture<SchemaValidationRules> rulesFuture = getCurrentValidationRules();
 
-                    return CompletableFuture.allOf(grpPropertiesFuture, rulesFuture)
-                                            .thenApply(x -> {
-                                                Record.GroupPropertiesRecord properties = grpPropertiesFuture.join();
-                                                SchemaValidationRules rules = rulesFuture.join();
-                                                return new GroupProperties(properties.getSchemaType(), rules,
-                                                        properties.isValidateByObjectType(), properties.getProperties());
-                                            });
-                });
+            return CompletableFuture.allOf(grpPropertiesFuture, rulesFuture)
+                                    .thenApply(x -> {
+                                        Record.GroupPropertiesRecord properties = grpPropertiesFuture.join();
+                                        SchemaValidationRules rules = rulesFuture.join();
+                                        return new GroupProperties(properties.getSchemaType(), rules,
+                                                properties.isValidateByObjectType(), properties.getProperties());
+                                    });
+        });
     }
 
     private long getFingerprint(SchemaInfo schemaInfo) {
@@ -365,16 +371,19 @@ public class Group<V> {
                                   });
                     });
     }
-    
+
     private CompletableFuture<Void> updateIndex(List<Operation> operations, IndexRecord.WALPositionValue syncdTill) {
         List<CompletableFuture<Void>> futures = new LinkedList<>();
         operations.forEach(operation -> {
             if (operation instanceof Operation.Add) {
+                log.info("group {}, add entry to index {}", groupId, operation);
                 futures.add(index.addEntry(((Operation.Add) operation).getKey(), ((Operation.Add) operation).getValue()));
             } else if (operation instanceof Operation.GetAndSet) {
                 Operation.GetAndSet op = (Operation.GetAndSet) operation;
-                futures.add(WRITE_CONFLICT_RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
-                                                                     .thenCompose(existing -> {
+                log.info("group {}, add entry to index {}", groupId, operation);
+                futures.add(WRITE_CONFLICT_RETRY.runAsync(() ->
+                        index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
+                             .thenCompose(existing -> {
                                  if (existing == null) {
                                      return index.addEntry(op.getKey(), op.getValue());
                                  } else if (op.getCondition().test(existing.getValue())) {
@@ -382,112 +391,115 @@ public class Group<V> {
                                  } else {
                                      return CompletableFuture.completedFuture(null);
                                  }
-                             }), executor));
+                             }).thenAccept(v -> log.info("group {}, operation {} completed.", groupId, operation)), executor));
             } else if (operation instanceof Operation.AddToList) {
+                log.info("group {}, add entry to list in index {}", groupId, operation);
                 Operation.AddToList op = (Operation.AddToList) operation;
-                futures.add(WRITE_CONFLICT_RETRY.runAsync(() -> index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
-                                                                     .thenCompose(existing -> {
-                              if (existing == null) {
-                                  return index.addEntry(op.getKey(), op.getValue());
-                              } else if (op.getValue() instanceof IndexRecord.SchemaVersionValue) {
-                                      IndexRecord.SchemaVersionValue existingList = (IndexRecord.SchemaVersionValue) existing.getValue();
-                                      IndexRecord.SchemaVersionValue toAdd = (IndexRecord.SchemaVersionValue) op.getValue();
-                                      Set<VersionInfo> set = new HashSet<>(existingList.getVersions());
-                                      set.addAll(toAdd.getVersions());
+                futures.add(WRITE_CONFLICT_RETRY.runAsync(() ->
+                        index.getRecordWithVersion(op.getKey(), IndexRecord.IndexValue.class)
+                             .thenCompose(existing -> {
+                                 if (existing == null) {
+                                     return index.addEntry(op.getKey(), op.getValue());
+                                 } else if (op.getValue() instanceof IndexRecord.SchemaVersionValue) {
+                                     IndexRecord.SchemaVersionValue existingList = (IndexRecord.SchemaVersionValue) existing.getValue();
+                                     IndexRecord.SchemaVersionValue toAdd = (IndexRecord.SchemaVersionValue) op.getValue();
+                                     Set<VersionInfo> set = new HashSet<>(existingList.getVersions());
+                                     set.addAll(toAdd.getVersions());
 
-                                      IndexRecord.SchemaVersionValue newValue = new IndexRecord.SchemaVersionValue(new ArrayList<>(set));
-                                      return index.updateEntry(op.getKey(), newValue, existing.getVersion());
-                              } else if (op.getValue() instanceof IndexRecord.CodecsListValue) {
-                                      IndexRecord.CodecsListValue existingList = (IndexRecord.CodecsListValue) existing.getValue();
-                                      IndexRecord.CodecsListValue toAdd = (IndexRecord.CodecsListValue) op.getValue();
-                                      Set<CodecType> set = new HashSet<>(existingList.getCodecs());
-                                      set.addAll(toAdd.getCodecs());
+                                     IndexRecord.SchemaVersionValue newValue = new IndexRecord.SchemaVersionValue(new ArrayList<>(set));
+                                     return index.updateEntry(op.getKey(), newValue, existing.getVersion());
+                                 } else if (op.getValue() instanceof IndexRecord.CodecsListValue) {
+                                     IndexRecord.CodecsListValue existingList = (IndexRecord.CodecsListValue) existing.getValue();
+                                     IndexRecord.CodecsListValue toAdd = (IndexRecord.CodecsListValue) op.getValue();
+                                     Set<CodecType> set = new HashSet<>(existingList.getCodecs());
+                                     set.addAll(toAdd.getCodecs());
 
-                                      IndexRecord.CodecsListValue newValue = new IndexRecord.CodecsListValue(new ArrayList<>(set));
-                                      return index.updateEntry(op.getKey(), newValue, existing.getVersion());
-                              } else {
-                                  return CompletableFuture.completedFuture(null);
-                              }
-                          }), executor));
+                                     IndexRecord.CodecsListValue newValue = new IndexRecord.CodecsListValue(new ArrayList<>(set));
+                                     return index.updateEntry(op.getKey(), newValue, existing.getVersion());
+                                 } else {
+                                     return CompletableFuture.completedFuture(null);
+                                 }
+                             }).thenAccept(v -> log.info("group {}, operation {} completed.", groupId, operation)), executor));
             }
         });
-        
-        return Futures.allOf(futures)
-                .thenCompose(v -> index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
-                                   .thenCompose(syncdTillWithVersion -> addOrUpdateSyncdTillKey(syncdTill, syncdTillWithVersion)));
+
+        return Futures.allOf(futures).thenCompose(v -> addOrUpdateSyncdTillKey(syncdTill));
     }
 
     @SuppressWarnings("unchecked")
-    private CompletableFuture<Void> addOrUpdateSyncdTillKey(IndexRecord.WALPositionValue syncdTill,
-                                                            Index.Value<IndexRecord.WALPositionValue, V> syncdTillWithVersion) {
-         return WRITE_CONFLICT_RETRY.runAsync(() -> {
-            if (syncdTillWithVersion == null) {
-                return index.addEntry(SYNCD_TILL, syncdTill);
-            } else {
-                Position newPos = syncdTill.getPosition();
-                Position existingPos = syncdTillWithVersion.getValue().getPosition();
-                if (newPos.getPosition().compareTo(existingPos.getPosition()) > 0) {
-                    return index.updateEntry(SYNCD_TILL, syncdTill, syncdTillWithVersion.getVersion());
-                } else {
-                    return CompletableFuture.completedFuture(null);
-                }
-            }
-        }, executor);
+    private CompletableFuture<Void> addOrUpdateSyncdTillKey(IndexRecord.WALPositionValue syncdTill) {
+        return WRITE_CONFLICT_RETRY.runAsync(() -> 
+            index.getRecordWithVersion(SYNCD_TILL, IndexRecord.WALPositionValue.class)
+                 .thenCompose(previous -> {
+                     if (previous == null) {
+                         return index.addEntry(SYNCD_TILL, syncdTill);
+                     } else {
+                         Position newPos = syncdTill.getPosition();
+                         Position existingPos = previous.getValue().getPosition();
+                         if (newPos.getPosition().compareTo(existingPos.getPosition()) > 0) {
+                             return index.updateEntry(SYNCD_TILL, syncdTill, previous.getVersion());
+                         } else {
+                             return CompletableFuture.completedFuture(null);
+                         }
+                     }
+                 }).thenAccept(v -> log.info("group {}, index sync'd till {}.", groupId, syncdTill)), executor);
     }
-    
+
     private CompletableFuture<Void> writeToLog(Record record, Position etag) {
         return Futures.toVoid(wal.writeToLog(record, etag));
     }
 
     private CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, VersionInfo next, boolean validateByObjectType, Position etag) {
         return writeToLog(new Record.SchemaRecord(schemaInfo, next), etag)
-                            .thenCompose(v -> {
-                                Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(next), new IndexRecord.WALPositionValue(etag));
-                                
-                                Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(schemaInfo)),
-                                        new IndexRecord.SchemaVersionValue(Collections.singletonList(next)));
+                .thenCompose(v -> {
+                    log.info("group {}, new schema {} written to log", groupId, next);
 
-                                IndexRecord.IndexKey key;
-                                if (validateByObjectType) {
-                                    key = new IndexRecord.LatestSchemaVersionForObjectTypeKey(schemaInfo.getName());
-                                } else {
-                                    key = new IndexRecord.LatestSchemaVersionKey();
-                                }
-                                Operation.GetAndSet getAndSet = new Operation.GetAndSet(key, 
-                                        new IndexRecord.LatestSchemaVersionValue(next), 
-                                        x -> ((IndexRecord.LatestSchemaVersionValue) x).getVersion().getVersion() < next.getVersion());
-                                
-                                return updateIndex(Lists.newArrayList(add, addToList, getAndSet), new IndexRecord.WALPositionValue(etag))
-                                        .thenApply(x -> next);
-                            });
+                    Operation.Add add = new Operation.Add(new IndexRecord.VersionInfoKey(next), new IndexRecord.WALPositionValue(etag));
+
+                    Operation.AddToList addToList = new Operation.AddToList(new IndexRecord.SchemaInfoKey(getFingerprint(schemaInfo)),
+                            new IndexRecord.SchemaVersionValue(Collections.singletonList(next)));
+
+                    IndexRecord.IndexKey key;
+                    if (validateByObjectType) {
+                        key = new IndexRecord.LatestSchemaVersionForObjectTypeKey(schemaInfo.getName());
+                    } else {
+                        key = new IndexRecord.LatestSchemaVersionKey();
+                    }
+                    Operation.GetAndSet getAndSet = new Operation.GetAndSet(key,
+                            new IndexRecord.LatestSchemaVersionValue(next),
+                            x -> ((IndexRecord.LatestSchemaVersionValue) x).getVersion().getVersion() < next.getVersion());
+
+                    return updateIndex(Lists.newArrayList(add, addToList, getAndSet), new IndexRecord.WALPositionValue(etag))
+                            .thenApply(x -> next);
+                });
     }
 
     public CompletableFuture<VersionInfo> getLatestVersion(boolean sync) {
         IndexRecord.LatestSchemaVersionKey key = new IndexRecord.LatestSchemaVersionKey();
 
-        CompletableFuture<Position> syncFuture = sync ? syncIndex() : CompletableFuture.completedFuture(null); 
+        CompletableFuture<Position> syncFuture = sync ? syncIndex() : CompletableFuture.completedFuture(null);
         return syncFuture.thenCompose(v -> index.getRecord(key, IndexRecord.LatestSchemaVersionValue.class)
-                .thenApply(rec -> {
-                    if (rec == null) {
-                        return null;
-                    } else {
-                        return rec.getVersion();
-                    }
-                }));
+                                                .thenApply(rec -> {
+                                                    if (rec == null) {
+                                                        return null;
+                                                    } else {
+                                                        return rec.getVersion();
+                                                    }
+                                                }));
     }
-    
+
     public CompletableFuture<VersionInfo> getLatestVersion(String objectTypeName, boolean sync) {
         IndexRecord.LatestSchemaVersionForObjectTypeKey key = new IndexRecord.LatestSchemaVersionForObjectTypeKey(objectTypeName);
 
         CompletableFuture<Position> syncFuture = sync ? syncIndex() : CompletableFuture.completedFuture(null);
         return syncFuture.thenCompose(v -> index.getRecord(key, IndexRecord.LatestSchemaVersionValue.class)
-                                                 .thenApply(rec -> {
-                                                     if (rec == null) {
-                                                         return null;
-                                                     } else {
-                                                         return rec.getVersion();
-                                                     }
-                                                 }));
+                                                .thenApply(rec -> {
+                                                    if (rec == null) {
+                                                        return null;
+                                                    } else {
+                                                        return rec.getVersion();
+                                                    }
+                                                }));
     }
 
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CodecType codecType, Position position) {
@@ -497,6 +509,8 @@ public class Group<V> {
                         return getNextEncodingId()
                                 .thenCompose(id -> writeToLog(new Record.EncodingRecord(id, versionInfo, codecType), position)
                                         .thenCompose(v -> {
+                                            log.info("group {}, new encoding id {} written to log", groupId, id);
+
                                             IndexRecord.EncodingIdIndex idIndex = new IndexRecord.EncodingIdIndex(id);
                                             IndexRecord.EncodingInfoIndex infoIndex = new IndexRecord.EncodingInfoIndex(versionInfo, codecType);
                                             Operation.Add idToInfo = new Operation.Add(idIndex, infoIndex);
@@ -528,18 +542,18 @@ public class Group<V> {
     private CompletableFuture<EncodingId> getNextEncodingId() {
         IndexRecord.LatestEncodingIdKey key = new IndexRecord.LatestEncodingIdKey();
         return index.getRecord(key, IndexRecord.LatestEncodingIdValue.class)
-             .thenApply(rec -> {
-                 if (rec == null) {
-                     return new EncodingId(0);
-                 } else {
-                     return new EncodingId(rec.getEncodingId().getId() + 1);
-                 }
-             });
+                    .thenApply(rec -> {
+                        if (rec == null) {
+                            return new EncodingId(0);
+                        } else {
+                            return new EncodingId(rec.getEncodingId().getId() + 1);
+                        }
+                    });
     }
-    
+
     private CompletableFuture<Record.GroupPropertiesRecord> getGroupPropertiesRecord() {
         return index.getRecord(GROUP_PROPERTY_INDEX_KEY, IndexRecord.WALPositionValue.class)
-             .thenCompose(record -> wal.readAt(record.getPosition(), Record.GroupPropertiesRecord.class));
+                    .thenCompose(record -> wal.readAt(record.getPosition(), Record.GroupPropertiesRecord.class));
     }
 
     private CompletableFuture<SchemaValidationRules> getCurrentValidationRules() {

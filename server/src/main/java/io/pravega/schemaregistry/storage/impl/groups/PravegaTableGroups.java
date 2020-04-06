@@ -120,7 +120,7 @@ public class PravegaTableGroups implements Groups<Version> {
     private GroupObj getGroupObject(String groupName, GroupsValue value) {
         PravegaLog log = new PravegaLog(groupName, value.getId(), clientConfig, logCache, executor);
         PravegaTableIndex index = new PravegaTableIndex(groupName, value.getId(), tableStore);
-        Group<Version> group = new Group<>(log, index, executor);
+        Group<Version> group = new Group<>(groupName, log, index, executor);
         return new GroupObj(group, log, index);
     }
 

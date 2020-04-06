@@ -55,7 +55,7 @@ public class InMemoryGroups implements Groups<Integer> {
             return CompletableFuture.completedFuture(false);
         }
         Group<Integer> grp = groups.computeIfAbsent(group, 
-                x -> new Group<>(walFactory.get(), kvFactory.get(), executor));
+                x -> new Group<>(group, walFactory.get(), kvFactory.get(), executor));
         return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isValidateByObjectType(), 
                 groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }

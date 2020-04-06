@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.service;
 
@@ -34,6 +34,7 @@ import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -45,8 +46,9 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
 /**
- * Schema registry service backend. 
+ * Schema registry service backend.
  */
+@Slf4j
 public class SchemaRegistryService {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                        .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
@@ -67,12 +69,16 @@ public class SchemaRegistryService {
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
     public CompletableFuture<MapWithToken<String, GroupProperties>> listGroups(String continuationToken) {
+        log.info("List groups called");
         return store.listGroups(ContinuationToken.parse(continuationToken))
                     .thenCompose(reply -> {
                         ContinuationToken token = reply.getToken();
                         List<String> list = reply.getList();
                         return Futures.allOfWithResults(list.stream().collect(Collectors.toMap(x -> x, store::getGroupProperties)))
-                                      .thenApply(groups -> new MapWithToken<>(groups, token));
+                                      .thenApply(groups -> {
+                                          log.info("Returning groups {}", groups);
+                                          return new MapWithToken<>(groups, token);
+                                      });
                     });
     }
 
@@ -88,9 +94,21 @@ public class SchemaRegistryService {
         Preconditions.checkNotNull(groupProperties.getSchemaType());
         Preconditions.checkNotNull(groupProperties.getSchemaValidationRules());
         Preconditions.checkArgument(validateRules(groupProperties.getSchemaType(), groupProperties.getSchemaValidationRules()));
-        return store.createGroup(group, groupProperties);
+        log.info("create group called for {}", group);
+        return store.createGroup(group, groupProperties)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            if (r) {
+                                log.info("Group {} created successfully.", group);
+                            } else {
+                                log.info("Group {} exists.", group);
+                            }
+                        } else {
+                            log.warn("create group {} request failed with error", e, group);
+                        }
+                    });
     }
-    
+
     /**
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
@@ -103,7 +121,16 @@ public class SchemaRegistryService {
      * @return CompletableFuture which holds group properties upon completion.
      */
     public CompletableFuture<GroupProperties> getGroupProperties(String group) {
-        return store.getGroupProperties(group);
+        log.info("getGroupProperties called for group {}.", group);
+        return store.getGroupProperties(group)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {} properties.", group);
+                        } else {
+                            log.warn("getGroupProperties for group {} request failed with error", e, group);
+                        }
+                    });
+
     }
 
     /**
@@ -114,8 +141,17 @@ public class SchemaRegistryService {
      * @return CompletableFuture which is completed when validation policy update completes.
      */
     public CompletableFuture<Void> updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
+        log.info("updateSchemaValidationRules called for group {}. New validation rules {}", group, validationRules);
+
         return store.getGroupEtag(group)
-                    .thenCompose(pos -> store.updateValidationRules(group, pos, validationRules));
+                    .thenCompose(pos -> store.updateValidationRules(group, pos, validationRules))
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {} updateSchemaValidationRules successful.", group);
+                        } else {
+                            log.warn("getGroupProperties for group {} request failed with error", e, group);
+                        }
+                    });
     }
 
     /**
@@ -126,7 +162,16 @@ public class SchemaRegistryService {
      * @return CompletableFuture which holds list of object types upon completion.
      */
     public CompletableFuture<ListWithToken<String>> getObjectTypes(String group, ContinuationToken token) {
-        return store.listObjectTypes(group, token);
+        log.info("getObjectTypes called for group {}. New validation rules {}", group);
+
+        return store.listObjectTypes(group, token)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {} getObjectTypes {}.", group, r.getList());
+                        } else {
+                            log.warn("getObjectTypes for group {} request failed with error", e, group);
+                        }
+                    });
     }
 
     /**
@@ -141,6 +186,8 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds versionInfo which uniquely identifies where the schema is added in the group.
      */
     public CompletableFuture<VersionInfo> addSchemaIfAbsent(String group, SchemaInfo schema) {
+        log.info("addSchemaIfAbsent called for group {}. schema {}", schema.getName());
+
         // 1. get group policy
         // 2. get checker for schema type.
         // validate schema against group policy + rules on schema
@@ -166,9 +213,16 @@ public class SchemaRegistryService {
                                                                              store.addSchemaToGroup(group, schema, nextVersion, etag));
                                                          });
                                              });
-                                 }));
+                                 }))
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, schema {} added successfully.", group, schema.getName());
+                        } else {
+                            log.warn("Group {}, schema {} add failed with error", e, group);
+                        }
+                    });
     }
-    
+
     /**
      * Gets schema corresponding to the version.
      *
@@ -177,7 +231,16 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
     public CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo version) {
-        return store.getSchema(group, version);
+        log.info("Group {}, get schema for version {} .", group, version);
+
+        return store.getSchema(group, version)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, return schema for verison {}.", group, version);
+                        } else {
+                            log.warn("Group {}, get schema version {} failed with error", e, group, version);
+                        }
+                    });
     }
 
     /**
@@ -189,28 +252,46 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Encoding info corresponding to the encoding id.
      */
     public CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId) {
-        return store.getEncodingInfo(group, encodingId);
+        log.info("Group {}, getEncodingInfo {} .", group, encodingId);
+
+        return store.getEncodingInfo(group, encodingId)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, return getEncodingInfo {}.", group, r);
+                        } else {
+                            log.warn("Group {}, get getEncodingInfo for id {} failed with error", e, group, encodingId);
+                        }
+                    });
     }
 
     /**
      * Gets an encoding id that uniquely identifies a combination of Schema version and codec type.
      *
-     * @param group           Name of group.
-     * @param version         version of schema
+     * @param group     Name of group.
+     * @param version   version of schema
      * @param codecType codec type
      * @return CompletableFuture that holds Encoding id for the pair of version and codec type.
      */
     public CompletableFuture<EncodingId> getEncodingId(String group, VersionInfo version, CodecType codecType) {
+        log.info("Group {}, getEncodingId for {} {}.", group, version, codecType);
+
         return RETRY.runAsync(() -> {
-                 return store.getEncodingId(group, version, codecType)
-                             .thenCompose(response -> {
-                                 if (response.isLeft()) {
-                                     return CompletableFuture.completedFuture(response.getLeft());
-                                 } else {
-                                     return store.createEncodingId(group, version, codecType, response.getRight());
-                                 }
-                             });
-             }, executor);
+            return store.getEncodingId(group, version, codecType)
+                        .thenCompose(response -> {
+                            if (response.isLeft()) {
+                                return CompletableFuture.completedFuture(response.getLeft());
+                            } else {
+                                return store.createEncodingId(group, version, codecType, response.getRight());
+                            }
+                        });
+        }, executor)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, getEncodingId for {} {}. returning {}.", group, version, codecType, r);
+                        } else {
+                            log.warn("Group {}, getEncodingId for {} {} failed with error", e, group, version, codecType);
+                        }
+                    });
     }
 
     /**
@@ -218,15 +299,31 @@ public class SchemaRegistryService {
      * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypename needs to be supplied to
      * get the latest schema for the object type.
      *
-     * @param group    Name of group.
+     * @param group          Name of group.
      * @param objectTypeName Object type.
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
     public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String objectTypeName) {
+        log.info("Group {}, getLatestSchema for {}.", group, objectTypeName);
+
         if (objectTypeName == null) {
-            return store.getLatestSchema(group, true);
+            return store.getLatestSchema(group, true)
+                        .whenComplete((r, e) -> {
+                            if (e == null) {
+                                log.info("Group {}, getLatestSchema = {}.", group, r.getVersion());
+                            } else {
+                                log.warn("Group {}, getLatestSchema failed with error", e, group);
+                            }
+                        });
         } else {
-            return store.getLatestSchema(group, objectTypeName, true);
+            return store.getLatestSchema(group, objectTypeName, true)
+                        .whenComplete((r, e) -> {
+                            if (e == null) {
+                                log.info("Group {}, object type = {}, getLatestSchema = {}.", group, objectTypeName, r.getVersion());
+                            } else {
+                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, objectTypeName);
+                            }
+                        });
         }
     }
 
@@ -236,15 +333,32 @@ public class SchemaRegistryService {
      * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name.
      * The order in the list matches the order in which schemas were evolved within the group.
      *
-     * @param group    Name of group.
+     * @param group          Name of group.
      * @param objectTypeName Object type.
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
     public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
+        log.info("Group {}, getGroupEvolutionHistory for {}.", group, objectTypeName);
+
         if (objectTypeName != null) {
-            return store.getGroupHistoryForObjectType(group, objectTypeName).thenApply(ListWithToken::getList);
+            return store.getGroupHistoryForObjectType(group, objectTypeName).thenApply(ListWithToken::getList)
+                        .whenComplete((r, e) -> {
+                            if (e == null) {
+                                log.info("Group {}, object type = {}, history size = {}.", group, objectTypeName, r.size());
+                            } else {
+                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, objectTypeName);
+                            }
+                        });
         } else {
-            return store.getGroupHistory(group).thenApply(ListWithToken::getList);
+            return store.getGroupHistory(group).thenApply(ListWithToken::getList)
+                        .whenComplete((r, e) -> {
+                            if (e == null) {
+                                log.info("Group {}, history size = {}.", group, r.size());
+                            } else {
+                                log.warn("Group {}, getLatestSchema failed with error", e, group);
+                            }
+                        });
+
         }
     }
 
@@ -258,59 +372,115 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds VersionInfo corresponding to schema.
      */
     public CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schema) {
-        return store.getSchemaVersion(group, schema);
+        log.info("Group {}, getSchemaVersion for {}.", group, schema.getName());
+
+        return store.getSchemaVersion(group, schema)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, version = {}.", group, r);
+                        } else {
+                            log.warn("Group {}, getSchemaVersion failed with error", e, group);
+                        }
+                    });
     }
 
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * If {@link GroupProperties#validateByObjectType} is set, the validation is performed against schemas with same 
+     * If {@link GroupProperties#validateByObjectType} is set, the validation is performed against schemas with same
      * object type identified by {@link SchemaInfo#name}.
      *
-     * @param group Name of group. 
-     * @param schema Schema to check for validity. 
-     * @return True if it satisfies validation checks, false otherwise. 
+     * @param group  Name of group.
+     * @param schema Schema to check for validity.
+     * @return True if it satisfies validation checks, false otherwise.
      */
     public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema) {
+        log.info("Group {}, validateSchema for {}.", group, schema.getName());
+
         return store.getGroupProperties(group)
                     .thenCompose(prop -> getSchemasForValidation(group, schema, prop)
-                            .thenApply(schemas -> checkCompatibility(schema, prop, schemas)));
+                            .thenApply(schemas -> checkCompatibility(schema, prop, schemas)))
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, validateSchema response = {}.", group, r);
+                        } else {
+                            log.warn("Group {}, validateSchema failed with error", e, group);
+                        }
+                    });
     }
 
     /**
-     * Checks whether given schema can be used to read data written by schemas active in the group. 
-     * 
-     * @param group Name of the group.
-     * @param schema Schema to check for ability to read. 
-     * @return True if schema can be used for reading subject to compatibility policy, false otherwise.  
+     * Checks whether given schema can be used to read data written by schemas active in the group.
+     *
+     * @param group  Name of the group.
+     * @param schema Schema to check for ability to read.
+     * @return True if schema can be used for reading subject to compatibility policy, false otherwise.
      */
     public CompletableFuture<Boolean> canRead(String group, SchemaInfo schema) {
+        log.info("Group {}, canRead for {}.", group, schema.getName());
+
         return store.getGroupProperties(group)
                     .thenCompose(prop -> getSchemasForValidation(group, schema, prop)
-                            .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)));
-    }
-    
-    /**
-     * Deletes group.  
-     * @param group Name of group. 
-     * @return CompletableFuture which is completed when group is deleted. 
-     */
-    public CompletableFuture<Void> deleteGroup(String group) {
-        return store.deleteGroup(group);
+                            .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)))
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, canRead response = {}.", group, r);
+                        } else {
+                            log.warn("Group {}, canRead failed with error", e, group);
+                        }
+                    });
     }
 
     /**
-     * List of compressions used for encoding in the group. 
+     * Deletes group.
      *
-     * @param group Name of group. 
-     * @return CompletableFuture that holds list of compressions used for encoding in the group. 
+     * @param group Name of group.
+     * @return CompletableFuture which is completed when group is deleted.
+     */
+    public CompletableFuture<Void> deleteGroup(String group) {
+        log.info("Group {}, deleteGroup.", group);
+
+        return store.deleteGroup(group)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, group deleted", group);
+                        } else {
+                            log.warn("Group {}, group delete failed with error", e, group);
+                        }
+                    });
+    }
+
+    /**
+     * List of compressions used for encoding in the group.
+     *
+     * @param group Name of group.
+     * @return CompletableFuture that holds list of compressions used for encoding in the group.
      */
     public CompletableFuture<List<CodecType>> getCodecTypes(String group) {
-        return store.getCodecTypes(group);
+        log.info("Group {}, getCodecTypes.", group);
+
+        return store.getCodecTypes(group)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, codecs = {}", group, r);
+                        } else {
+                            log.warn("Group {}, getcodecs failed with error", e, group);
+                        }
+                    });
     }
 
     public CompletableFuture<Void> addCodec(String group, CodecType codecType) {
-        return store.addCodec(group, codecType);
+        log.info("Group {}, addCodec {}.", group, codecType);
+
+        return store.addCodec(group, codecType)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, addCodec {} successful", group, codecType);
+                        } else {
+                            log.warn("Group {}, addCodec {} failed with error", e, group, codecType);
+                        }
+                    });
+
     }
 
     private CompletableFuture<VersionInfo> getNextVersion(String group, SchemaInfo schema, GroupProperties prop) {
@@ -336,12 +506,12 @@ public class SchemaRegistryService {
             case Protobuf:
             case Json:
             case Custom:
-                return newRules.getRules().size() == 1 && 
+                return newRules.getRules().size() == 1 &&
                         newRules.getRules().entrySet().stream().allMatch(x -> {
                             return x.getValue() instanceof Compatibility && (
                                     ((Compatibility) x.getValue()).getCompatibility().equals(Compatibility.Type.AllowAny) ||
-                                    ((Compatibility) x.getValue()).getCompatibility().equals(Compatibility.Type.DenyAll));
-                        }); 
+                                            ((Compatibility) x.getValue()).getCompatibility().equals(Compatibility.Type.DenyAll));
+                        });
         }
         return true;
     }
@@ -349,9 +519,9 @@ public class SchemaRegistryService {
     private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String group, SchemaInfo schema, GroupProperties groupProperties) {
         CompletableFuture<List<SchemaWithVersion>> schemasFuture;
         boolean fetchAll = groupProperties.getSchemaValidationRules().getRules().values().stream()
-                                          .anyMatch(x -> x instanceof Compatibility 
-                                                  && (((Compatibility) x).getCompatibility().equals(Compatibility.Type.BackwardTransitive) 
-                                                  || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.ForwardTransitive) 
+                                          .anyMatch(x -> x instanceof Compatibility
+                                                  && (((Compatibility) x).getCompatibility().equals(Compatibility.Type.BackwardTransitive)
+                                                  || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.ForwardTransitive)
                                                   || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.FullTransitive)));
 
         if (fetchAll) {
@@ -370,15 +540,15 @@ public class SchemaRegistryService {
                                                       || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.BackwardAndForwardTill)))
                                               .map(x -> {
                                                   Compatibility compatibility = (Compatibility) x;
-                                                          if (compatibility.getCompatibility().equals(Compatibility.Type.BackwardTill)) {
-                                                              return compatibility.getBackwardTill();
-                                                          } else if (compatibility.getCompatibility().equals(Compatibility.Type.ForwardTill)) {
-                                                              return compatibility.getForwardTill();
-                                                          } else {
-                                                              return compatibility.getBackwardTill().getVersion() < compatibility.getForwardTill().getVersion() ?
-                                                                      compatibility.getBackwardTill() : compatibility.getForwardTill();        
-                                                          }
-                                                      }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
+                                                  if (compatibility.getCompatibility().equals(Compatibility.Type.BackwardTill)) {
+                                                      return compatibility.getBackwardTill();
+                                                  } else if (compatibility.getCompatibility().equals(Compatibility.Type.ForwardTill)) {
+                                                      return compatibility.getForwardTill();
+                                                  } else {
+                                                      return compatibility.getBackwardTill().getVersion() < compatibility.getForwardTill().getVersion() ?
+                                                              compatibility.getBackwardTill() : compatibility.getForwardTill();
+                                                  }
+                                              }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
                 if (groupProperties.isValidateByObjectType()) {
                     schemasFuture = store.listSchemasByObjectType(group, schema.getName(), till, null)
@@ -397,7 +567,7 @@ public class SchemaRegistryService {
                 }
             }
         }
-        
+
         return schemasFuture;
     }
 
