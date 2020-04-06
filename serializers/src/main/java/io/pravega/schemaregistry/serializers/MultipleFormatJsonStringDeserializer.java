@@ -23,14 +23,14 @@ import org.apache.avro.generic.GenericRecord;
 import java.io.InputStream;
 import java.util.Map;
 
-class MultipleFormatStringDeserializer extends AbstractPravegaDeserializer<String> {
+class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<String> {
     private final Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers;
     private final ObjectMapper objectMapper = new ObjectMapper();
     
-    MultipleFormatStringDeserializer(String groupId, SchemaRegistryClient client,
-                                     Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers,
-                                     SerializerConfig.Decoder decoder,
-                                     EncodingCache encodingCache) {
+    MultipleFormatJsonStringDeserializer(String groupId, SchemaRegistryClient client,
+                                         Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers,
+                                         SerializerConfig.Decoder decoder,
+                                         EncodingCache encodingCache) {
         super(groupId, client, null, false, decoder, encodingCache);
         this.genericDeserializers = genericDeserializers;
     }

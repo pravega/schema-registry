@@ -627,7 +627,7 @@ public class SerializerFactory {
         map.put(SchemaType.Json, json);
         map.put(SchemaType.Avro, avro);
         map.put(SchemaType.Protobuf, protobuf);
-        return new MultipleFormatStringDeserializer(groupId, registryClient, map, config.getDecoder(),
+        return new MultipleFormatJsonStringDeserializer(groupId, registryClient, map, config.getDecoder(),
                 encodingCache);
     }
     // endregion

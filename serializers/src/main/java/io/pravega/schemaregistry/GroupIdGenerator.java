@@ -28,6 +28,7 @@ public class GroupIdGenerator {
                 Preconditions.checkNotNull(args);
                 Preconditions.checkArgument(args.length == 2);
                 StringBuilder qualifiedNameBuilder = new StringBuilder();
+                qualifiedNameBuilder.append("Group://");
                 for (String arg : args) {
                     qualifiedNameBuilder.append(arg);
                     qualifiedNameBuilder.append("/");
