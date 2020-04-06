@@ -59,7 +59,7 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
 
     @Override
     public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
-        service.updateSchemaValidationRules(group, validationRules).join();
+        service.updateSchemaValidationRules(group, validationRules, null).join();
     }
 
     @Override

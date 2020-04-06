@@ -29,6 +29,9 @@ public class UpdateValidationRulesPolicyRequest   {
   @JsonProperty("validationRules")
   private SchemaValidationRules validationRules = null;
 
+  @JsonProperty("previousRules")
+  private SchemaValidationRules previousRules = null;
+
   public UpdateValidationRulesPolicyRequest validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
@@ -48,6 +51,25 @@ public class UpdateValidationRulesPolicyRequest   {
     this.validationRules = validationRules;
   }
 
+  public UpdateValidationRulesPolicyRequest previousRules(SchemaValidationRules previousRules) {
+    this.previousRules = previousRules;
+    return this;
+  }
+
+  /**
+   * Get previousRules
+   * @return previousRules
+   **/
+  @JsonProperty("previousRules")
+  @ApiModelProperty(value = "")
+  public SchemaValidationRules getPreviousRules() {
+    return previousRules;
+  }
+
+  public void setPreviousRules(SchemaValidationRules previousRules) {
+    this.previousRules = previousRules;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -58,12 +80,13 @@ public class UpdateValidationRulesPolicyRequest   {
       return false;
     }
     UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest = (UpdateValidationRulesPolicyRequest) o;
-    return Objects.equals(this.validationRules, updateValidationRulesPolicyRequest.validationRules);
+    return Objects.equals(this.validationRules, updateValidationRulesPolicyRequest.validationRules) &&
+        Objects.equals(this.previousRules, updateValidationRulesPolicyRequest.previousRules);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(validationRules);
+    return Objects.hash(validationRules, previousRules);
   }
 
 
@@ -73,6 +96,7 @@ public class UpdateValidationRulesPolicyRequest   {
     sb.append("class UpdateValidationRulesPolicyRequest {\n");
     
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
+    sb.append("    previousRules: ").append(toIndentedString(previousRules)).append("\n");
     sb.append("}");
     return sb.toString();
   }

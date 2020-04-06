@@ -84,8 +84,6 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not found", response = Void.class),
-        
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addCodec(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "The codec" ,required=true) AddCodec addCodec
@@ -104,8 +102,6 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Write conflict", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
         
@@ -306,6 +302,8 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
         
+        @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not registered", response = Void.class),
+        
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getOrGenerateEncodingId(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
@@ -407,7 +405,7 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Write conflict", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 409, message = "Write conflict", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response updateSchemaValidationRules(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName

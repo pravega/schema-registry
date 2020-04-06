@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.client.impl;
 
@@ -16,17 +16,18 @@ import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
-import io.pravega.schemaregistry.contract.exceptions.NotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.contract.exceptions.NotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
+import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
@@ -66,7 +67,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public SchemaRegistryClientImpl(URI uri) {
         this.uri = uri;
     }
-    
+
     @Override
     public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByObjectType, Map<String, String> properties) {
         WebTarget webTarget = client.target(uri).path("v1/groups");
@@ -112,7 +113,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         }
 
         GroupsList entity = response.readEntity(GroupsList.class);
-        return entity.getGroups().stream().collect(Collectors.toMap(x -> x.getGroupName(), 
+        return entity.getGroups().stream().collect(Collectors.toMap(x -> x.getGroupName(),
                 x -> {
                     SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
                     SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
@@ -138,15 +139,15 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group);
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
-        UpdateValidationRulesPolicyRequest request = new UpdateValidationRulesPolicyRequest();
-        request.setValidationRules(ModelHelper.encode(validationRules));
+        UpdateValidationRulesPolicyRequest request = new UpdateValidationRulesPolicyRequest()
+                .validationRules(ModelHelper.encode(validationRules));
 
         Response response = invocationBuilder.put(Entity.entity(request, MediaType.APPLICATION_JSON));
-        if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
-            throw new RuntimeException("Conflict attempting to update the rules. Try again.");
+        if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
+            throw new PreconditionFailedException("Conflict attempting to update the rules. Try again.");
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new NotFoundException("Group not found.");
-        } else {
+        } else if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             throw new RuntimeException("Internal Service error. Failed to update schema validation rules.");
         }
     }
@@ -173,7 +174,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             throw new NotFoundException("Group not found.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get objectTypes.");
-        }    
+        }
     }
 
     @Override
@@ -191,8 +192,6 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             throw new IncompatibleSchemaException("Schema is incompatible.");
         } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
             throw new SchemaTypeMismatchException("Schema type is invalid.");
-        } else if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
-            throw new RuntimeException("Write conflict.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to addSchema.");
         }
@@ -294,7 +293,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             return getEvolutionHistoryByObjectType(group, objectTypeName);
         }
     }
-    
+
     private List<SchemaEvolution> getEvolutionHistory(String group) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("versions");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
@@ -354,7 +353,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public boolean validateSchema(String group, SchemaInfo schema) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("validate");
-        
+
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ValidateRequest validateRequest = new ValidateRequest()
                 .schemaInfo(ModelHelper.encode(schema));
@@ -383,21 +382,21 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             throw new RuntimeException("Internal Service error.");
         }
     }
-    
+
     @Override
     public List<CodecType> getCodecs(String group) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("codecs");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         CodecsList list = response.readEntity(CodecsList.class);
-        
+
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return list.getCodecTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new NotFoundException("Group not found.");
         } else {
-            throw new RuntimeException("Failed to get codecs");
-        }    
+            throw new RuntimeException("Failed to get codecs. Internal server error.");
+        }
     }
 
     @Override
@@ -407,12 +406,10 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         AddCodec addCodec = new AddCodec().codec(ModelHelper.encode(codecType));
         Response response = invocationBuilder.post(Entity.entity(addCodec, MediaType.APPLICATION_JSON));
 
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new NotFoundException("Group not found.");
-            } else {
-                throw new RuntimeException("Failed to add codec");
-            }
-        } 
+        if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new NotFoundException("Group not found.");
+        } else if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+            throw new RuntimeException("Failed to add codec. Internal server error.");
+        }
     }
 }

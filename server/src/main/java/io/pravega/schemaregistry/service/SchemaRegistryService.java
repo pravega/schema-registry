@@ -29,6 +29,7 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
+import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
 import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
@@ -134,24 +135,38 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Update group's schema validation policy.
+     * Update group's schema validation policy. If previous rules are sent, a conditional update is performed. 
      *
      * @param group           Name of group.
      * @param validationRules New validation rules for the group.
+     * @param previousRules  Previous rules validation rules for the group. If null, unconditional update is performed.
      * @return CompletableFuture which is completed when validation policy update completes.
      */
-    public CompletableFuture<Void> updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
+    public CompletableFuture<Void> updateSchemaValidationRules(String group, SchemaValidationRules validationRules, 
+                                                               SchemaValidationRules previousRules) {
         log.info("updateSchemaValidationRules called for group {}. New validation rules {}", group, validationRules);
-
-        return store.getGroupEtag(group)
-                    .thenCompose(pos -> store.updateValidationRules(group, pos, validationRules))
-                    .whenComplete((r, e) -> {
-                        if (e == null) {
-                            log.info("Group {} updateSchemaValidationRules successful.", group);
-                        } else {
-                            log.warn("getGroupProperties for group {} request failed with error", e, group);
-                        }
-                    });
+        return RETRY.runAsync(() -> store.getGroupEtag(group)
+                                .thenCompose(pos -> {
+                                    if (previousRules == null) {
+                                        return store.updateValidationRules(group, pos, validationRules);
+                                    } else {
+                                        return store.getGroupProperties(group)
+                                             .thenCompose(prop -> {
+                                                 if (previousRules.equals(prop.getSchemaValidationRules())) {
+                                                     return store.updateValidationRules(group, pos, validationRules);
+                                                 } else {
+                                                     throw new PreconditionFailedException("Conditional update failed");
+                                                 }
+                                             });
+                                    }
+                                })
+                                .whenComplete((r, e) -> {
+                                    if (e == null) {
+                                        log.info("Group {} updateSchemaValidationRules successful.", group);
+                                    } else {
+                                        log.warn("getGroupProperties for group {} request failed with error", e, group);
+                                    }
+                                }), executor);
     }
 
     /**
@@ -192,7 +207,7 @@ public class SchemaRegistryService {
         // 2. get checker for schema type.
         // validate schema against group policy + rules on schema
         // 3. conditionally update the schema
-        return store.getGroupEtag(group)
+        return RETRY.runAsync(() -> store.getGroupEtag(group)
                     .thenCompose(etag ->
                             store.getGroupProperties(group)
                                  .thenCompose(prop -> {
@@ -213,7 +228,7 @@ public class SchemaRegistryService {
                                                                              store.addSchemaToGroup(group, schema, nextVersion, etag));
                                                          });
                                              });
-                                 }))
+                                 })), executor)
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.info("Group {}, schema {} added successfully.", group, schema.getName());

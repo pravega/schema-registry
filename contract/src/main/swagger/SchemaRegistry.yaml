@@ -154,12 +154,15 @@ paths:
             properties:
               validationRules:
                   $ref: "#/definitions/SchemaValidationRules"
+              previousRules:
+                  $ref: "#/definitions/SchemaValidationRules"
+                  nullable: true
       responses:
         200:
           description: Updated schema validation policy
         404:
           description: Group with given name not found
-        412:
+        409:
           description: Write conflict 
         500:
           description: Internal server error while fetching Group details
@@ -239,8 +242,6 @@ paths:
           description: Group not found
         409:
           description: Incompatible schema
-        412:
-          description: Write conflict
         417:
           description: Invalid schema type
         500:
@@ -563,6 +564,8 @@ paths:
             $ref: "#/definitions/EncodingId"
         404:
           description: Group or encoding id with given name not found
+        412:
+          description: Codec not registered
         500:
           description: Internal server error while fetching Group details
   /groups/{groupName}/encodings/{encodingId}:
@@ -639,8 +642,6 @@ paths:
           description: Successfully added codec to group
         404: 
           description: Group not found
-        412:
-          description: Codec not found
         500:
           description: Internal server error while creating a Group
 definitions:

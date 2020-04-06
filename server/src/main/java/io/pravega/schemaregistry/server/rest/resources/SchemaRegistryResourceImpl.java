@@ -16,6 +16,7 @@ import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
@@ -42,7 +43,6 @@ import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundExce
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.v1.ApiV1;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
-import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -138,11 +138,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     @Override
     public void updateSchemaValidationRules(String groupName, UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         SchemaValidationRules rules = ModelHelper.decode(updateValidationRulesPolicyRequest.getValidationRules());
-        registryService.updateSchemaValidationRules(groupName, rules)
+        SchemaValidationRules previousRules = updateValidationRulesPolicyRequest.getPreviousRules() == null ?
+                null : ModelHelper.decode(updateValidationRulesPolicyRequest.getPreviousRules());
+        registryService.updateSchemaValidationRules(groupName, rules, previousRules)
                        .thenApply(groupProperty -> Response.status(Status.OK).build())
                        .exceptionally(exception -> {
-                           if (Exceptions.unwrap(exception) instanceof StoreExceptions.WriteConflictException) {
-                               log.info("addSchemaToGroupIfAbsent write conflict {}", groupName);
+                           if (Exceptions.unwrap(exception) instanceof PreconditionFailedException) {
+                               log.info("updateSchemaValidationRules write conflict {}", groupName);
                                return Response.status(Status.PRECONDITION_REQUIRED).build();
                            } else {
                                log.warn("updateSchemaValidationRules failed with exception: ", exception);
@@ -231,9 +233,6 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                            } else if (Exceptions.unwrap(exception) instanceof SchemaTypeMismatchException) {
                                log.info("addSchemaToGroupIfAbsent schema type mismatched {}", groupName);
                                return Response.status(Status.EXPECTATION_FAILED).build();
-                           } else if (Exceptions.unwrap(exception) instanceof StoreExceptions.WriteConflictException) {
-                               log.info("addSchemaToGroupIfAbsent write conflict {}", groupName);
-                               return Response.status(Status.PRECONDITION_FAILED).build();
                            } else {
                                log.warn("addSchemaToGroupIfAbsent failed with exception: ", exception);
                                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
@@ -310,7 +309,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                        })
                        .exceptionally(exception -> {
                            if (Exceptions.unwrap(exception) instanceof CodecNotFoundException) {
-                               log.info("addCodec failed Codec Not Found {}", groupName);
+                               log.info("getOrGenerateEncodingId failed Codec Not Found {}", groupName);
                                return Response.status(Status.PRECONDITION_FAILED).build();
                            } else {
                                log.warn("getOrGenerateEncodingId failed with exception: ", exception);
