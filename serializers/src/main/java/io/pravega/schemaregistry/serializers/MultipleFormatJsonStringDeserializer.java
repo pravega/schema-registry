@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.serializers;
 
@@ -26,7 +26,7 @@ import java.util.Map;
 class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<String> {
     private final Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers;
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     MultipleFormatJsonStringDeserializer(String groupId, SchemaRegistryClient client,
                                          Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers,
                                          SerializerConfig.Decoder decoder,
@@ -38,7 +38,7 @@ class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<S
     @Override
     protected String deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        return toJsonString(genericDeserializers.get(writerSchema.getSchemaType()).deserialize(inputStream, writerSchema, readerSchema)); 
+        return toJsonString(genericDeserializers.get(writerSchema.getSchemaType()).deserialize(inputStream, writerSchema, readerSchema));
     }
 
     @SneakyThrows
@@ -46,7 +46,7 @@ class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<S
         if (deserialize instanceof GenericRecord) {
             return deserialize.toString();
         } else if (deserialize instanceof DynamicMessage) {
-            com.google.protobuf.util.JsonFormat.Printer printer = JsonFormat.printer();
+            JsonFormat.Printer printer = JsonFormat.printer().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
             return printer.print((DynamicMessage) deserialize);
         } else if (deserialize instanceof JSonGenericObject) {
             Map myobject = ((JSonGenericObject) deserialize).getObject();

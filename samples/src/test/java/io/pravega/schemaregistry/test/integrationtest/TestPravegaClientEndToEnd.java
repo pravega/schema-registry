@@ -736,7 +736,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // endregion
         
         // region generic read
-        // 1. try without passing the schema. writer schema will be used to read
+        // 1. try without passing the schema. writer schema will be used to read for encoding header and latest schema will be used for non encoded header
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
@@ -764,8 +764,23 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event2.getEvent());
         
         reader2.close();
-        readerGroupManager.close();
         // endregion
+
+        if (encodeHeaders) {
+            String rg4 = "rg4" + encodeHeaders;
+            readerGroupManager.createReaderGroup(rg4,
+                    ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+            Serializer<String> jsonDes = SerializerFactory.deserializerAsJsonString(serializerConfig);
+
+            EventStreamReader<String> jsonReader = clientFactory.createReader("r1", rg4, jsonDes, ReaderConfig.builder().build());
+
+            EventRead<String> jsonEvent = jsonReader.readNextEvent(1000);
+            assertNotNull(jsonEvent.getEvent());
+
+            jsonReader.close();
+        }
+        readerGroupManager.close();
     }
 
     @Test
