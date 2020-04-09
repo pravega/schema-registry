@@ -6,12 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.schemas;
 
-include 'client',
-        'common',
-        'contract',
-        'serializers'
-        
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+
+/**
+ * Interface for container class for schemas for different serialization formats. 
+ * 
+ * @param <T> Type of object. 
+ */
+public interface SchemaContainer<T> {
+    SchemaInfo getSchemaInfo();
+}

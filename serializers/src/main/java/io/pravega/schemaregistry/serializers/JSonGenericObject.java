@@ -6,12 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.serializers;
 
-include 'client',
-        'common',
-        'contract',
-        'serializers'
-        
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import lombok.Data;
+
+import java.util.Map;
+
+@Data
+public class JSonGenericObject {
+    private final Map object;
+    private final JsonSchema jsonSchema;
+}

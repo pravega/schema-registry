@@ -194,3 +194,29 @@ def getProjectVersion() {
     }
     return ver
 }
+
+project('serializers') {
+    dependencies {
+        compile project(':common')
+        compile project(':client')
+        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
+        compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
+        compile group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
+        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
+        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
+        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+    }
+
+    javadoc {
+        title = "Serializers"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+}
