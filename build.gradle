@@ -56,8 +56,6 @@ allprojects {
             //These are compile time only dependencies needed accross all targets. Lombok uses them and may generate strange errors if they are missing.
             compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
             testCompile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
-            compileOnly group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
-            testCompile group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
             compileOnly 'org.projectlombok:lombok:' + lombokVersion
             
             testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
@@ -107,7 +105,7 @@ allprojects {
         }
     }
     version = getProjectVersion()
-    group = "io.pravega"
+    group = "io.pravega.schemaregistry"
 
     configurations.all {
         resolutionStrategy {
@@ -121,6 +119,68 @@ allprojects {
             force "com.fasterxml.jackson.core:jackson-databind:" + jacksonVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
         }
+    }
+}
+
+project('common') {
+    dependencies {
+        compile group: 'commons-io', name: 'commons-io', version: commonsioVersion
+        compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+        compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
+        //Do NOT add any additional dependencies here.
+    }
+
+    javadoc {
+        title = "Common Libraries"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+        options.addBooleanOption("Xdoclint:none", true)
+    }
+}
+
+project('client') {
+    dependencies {
+        compile project(':common')
+        compile project(':contract')
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+    }
+
+    javadoc {
+        title = "Registry Client"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+}
+
+project('contract') {
+    dependencies {
+        compile project(':common')
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        compile group: 'javax.servlet', name: 'javax.servlet-api', version: javaxServletApiVersion
+        compile(group: 'io.swagger', name : 'swagger-jersey2-jaxrs', version :swaggerJersey2JaxrsVersion) {
+            exclude group: 'com.google.guava', module: 'guava'
+        }
+        compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
+        compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
+        compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+
+    }
+
+    javadoc {
+        title = "Registry Contract"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
     }
 }
 

@@ -6,11 +6,14 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.contract.exceptions;
 
-include 'client',
-        'common',
-        'contract'
-        
+/**
+ * Exception thrown when server isnt able to find the requested resource. 
+ */
+public class NotFoundException extends RuntimeException {
+    public NotFoundException(String message) {
+        super(message);
+    }
+}

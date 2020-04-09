@@ -6,11 +6,14 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.contract.exceptions;
 
-include 'client',
-        'common',
-        'contract'
-        
+/**
+ * Exception thrown when a schema type is different from the group property's schema type. 
+ */
+public class SchemaTypeMismatchException extends RuntimeException {
+    public SchemaTypeMismatchException(String message) {
+        super(message);
+    }
+}
