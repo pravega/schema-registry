@@ -6,13 +6,12 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.storage;
 
-include 'client',
-        'common',
-        'contract',
-        'serializers',
-        'server'
-        
+public class ContinuationToken {
+    public static ContinuationToken parse(String token) {
+        // TODO: parse string to token
+        return null;
+    }
+}

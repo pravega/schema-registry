@@ -6,13 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry;
 
-include 'client',
-        'common',
-        'contract',
-        'serializers',
-        'server'
-        
+import io.pravega.schemaregistry.storage.ContinuationToken;
+import lombok.Data;
+
+import java.util.Map;
+
+@Data
+public class MapWithToken<K, V> {
+    private final Map<K, V> map;
+    private final ContinuationToken token;
+}

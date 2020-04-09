@@ -6,13 +6,19 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.storage.records;
 
-include 'client',
-        'common',
-        'contract',
-        'serializers',
-        'server'
-        
+import io.pravega.schemaregistry.storage.Position;
+import lombok.Data;
+
+@Data
+public class InMemoryPosition implements Position<Long> {
+
+    private final long position;
+
+    @Override
+    public Long getPosition() {
+        return position;
+    }
+}
