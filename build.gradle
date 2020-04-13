@@ -270,6 +270,33 @@ project('server') {
     }
 }
 
+project('samples') {
+    sourceSets {
+        test.resources.srcDirs += "$rootDir/resources"
+    }
+
+    dependencies {
+        compile project(':common')
+        compile project(':contract')
+        compile project(':client')
+        compile project(':server')
+        compile project(':serializers')
+        compile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
+
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+    }
+
+    javadoc {
+        title = "Samples"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = false
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+}
+
 task publishAllJars() {
     dependsOn ':client:publish'
     dependsOn ':common:publish'

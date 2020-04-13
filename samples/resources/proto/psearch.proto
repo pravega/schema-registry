@@ -1,0 +1,23 @@
+syntax = "proto3";
+package io.pravega.schemaregistry.test.integrationtest.generated;
+
+message Taxi {
+    double total_amount = 1;
+    double improvement_surcharge = 2;
+    double tolls_amount = 3;
+    string pickup_datetime = 4;
+    string dropoff_datetime = 5;
+    string trip_type = 6;
+    int32 passenger_count = 7;
+    string rate_code_id = 8;
+    repeated double pickup_location = 9;
+    repeated double dropoff_location = 10;
+    double fare_amount = 11;
+    double extra = 12;
+    double trip_distance = 13;
+    double tip_amount = 14;
+    string store_and_fwd_flag = 15;
+    string payment_type = 16;
+    double mta_tax = 17;
+    string vendor_id = 18;
+}
