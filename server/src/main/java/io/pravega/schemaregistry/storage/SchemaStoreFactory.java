@@ -14,7 +14,7 @@ import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
-import io.pravega.schemaregistry.storage.impl.groups.PravegaTableGroups;
+import io.pravega.schemaregistry.storage.impl.groups.PravegaKVGroups;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -28,6 +28,6 @@ public class SchemaStoreFactory {
     
     public static SchemaStore createPravegaStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
         TableStore tableStore = new TableStore(clientConfig, GrpcAuthHelper.getDisabledAuthHelper(), executor);
-        return new SchemaStoreImpl<>(new PravegaTableGroups(clientConfig, tableStore, executor));
+        return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor));
     }
 }

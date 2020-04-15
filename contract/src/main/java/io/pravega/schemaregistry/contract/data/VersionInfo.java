@@ -25,6 +25,7 @@ import lombok.Data;
 public class VersionInfo {
     private final String schemaName;
     private final int version;
+    private final int ordinal;
 
     public static class VersionInfoBuilder implements ObjectBuilder<VersionInfo> {
     }

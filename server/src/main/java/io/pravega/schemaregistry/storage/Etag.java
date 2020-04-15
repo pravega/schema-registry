@@ -7,18 +7,12 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.records;
+package io.pravega.schemaregistry.storage;
 
-import io.pravega.schemaregistry.storage.Position;
-import lombok.Data;
-
-@Data
-public class InMemoryPosition implements Position<Long> {
-
-    private final long position;
-
-    @Override
-    public Long getPosition() {
-        return position;
-    }
+/**
+ * Pointer to a group entity etag where any record has been written. 
+ * @param <T> Type of position. 
+ */
+public interface Etag<T> {
+    T etag();
 }

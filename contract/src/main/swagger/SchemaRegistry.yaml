@@ -713,6 +713,9 @@ definitions:
       version:
         type: integer
         format: int32
+      ordinal:
+        type: integer
+        format: int32
   SchemaWithVersion:
     type: object
     properties:

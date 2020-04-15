@@ -21,7 +21,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.storage.ContinuationToken;
-import io.pravega.schemaregistry.storage.Position;
+import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.Group;
@@ -55,7 +55,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Position> getGroupEtag(String group) {
+    public CompletableFuture<Etag> getGroupEtag(String group) {
         return getGroup(group).thenCompose(Group::getCurrentEtag);
     }
 
@@ -65,7 +65,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> updateValidationRules(String group, Position etag, SchemaValidationRules policy) {
+    public CompletableFuture<Void> updateValidationRules(String group, Etag etag, SchemaValidationRules policy) {
         return getGroup(group)
                 .thenCompose(grp -> grp.updateValidationPolicy(policy, etag));
     }
@@ -83,7 +83,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
 
     @Override
     public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, VersionInfo from, ContinuationToken token) {
-        return getGroup(group).thenCompose(grp -> grp.getSchemas(from));
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(from.getOrdinal()));
     }
 
     @Override
@@ -95,7 +95,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     @Override
     public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
                                                                                       VersionInfo from, ContinuationToken token) {
-        return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName, from));
+        return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName, from.getOrdinal()));
     }
 
     @Override
@@ -104,28 +104,18 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, boolean sync) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(sync));
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group) {
+        return getGroup(group).thenCompose(Group::getLatestSchema);
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName, boolean sync) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(objectTypeName, sync));
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName) {
+        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(objectTypeName));
     }
-
+    
     @Override
-    public CompletableFuture<VersionInfo> getLatestVersion(String group, boolean sync) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestVersion(sync));
-    }
-
-    @Override
-    public CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName, boolean sync) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestVersion(objectTypeName, sync));
-    }
-
-    @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag) {
-        return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, versionInfo, etag));
+    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
+        return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, prop, etag));
     }
 
     @Override
@@ -134,13 +124,13 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Either<EncodingId, Position>> getEncodingId(String group, VersionInfo versionInfo, CodecType codecType) {
+    public CompletableFuture<Either<EncodingId, Etag>> getEncodingId(String group, VersionInfo versionInfo, CodecType codecType) {
         return getGroup(group).thenCompose(grp -> grp.getEncodingId(versionInfo, codecType));
     }
 
     @Override
     public CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CodecType codecType, 
-                                                          Position etag) {
+                                                          Etag etag) {
         return getGroup(group).thenCompose(grp -> grp.createEncodingId(versionInfo, codecType, etag));
     }
 

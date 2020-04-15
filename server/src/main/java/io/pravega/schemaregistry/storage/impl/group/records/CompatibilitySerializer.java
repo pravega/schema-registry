@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.records;
+package io.pravega.schemaregistry.storage.impl.group.records;
 
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
@@ -38,27 +38,29 @@ public class CompatibilitySerializer extends VersionedSerializer.WithBuilder<Com
 
     private void write00(Compatibility e, RevisionDataOutput target) throws IOException {
         target.writeCompactInt(e.getCompatibility().ordinal());
+        target.writeBoolean(e.getBackwardTill() != null);
         if (e.getBackwardTill() != null) {
             VersionInfoSerializer.SERIALIZER.serialize(target, e.getBackwardTill());
-        } else {
-            VersionInfoSerializer.SERIALIZER.serialize(target, VersionInfoSerializer.NON_EXISTENT);
         }
+        target.writeBoolean(e.getForwardTill() != null);
         if (e.getForwardTill() != null) {
             VersionInfoSerializer.SERIALIZER.serialize(target, e.getForwardTill());
-        } else {
-            VersionInfoSerializer.SERIALIZER.serialize(target, VersionInfoSerializer.NON_EXISTENT);
-        }
+        } 
     }
     
     private void read00(RevisionDataInput source, Compatibility.CompatibilityBuilder b) throws IOException {
         int ordinal = source.readCompactInt();
         Compatibility.Type compatibilityType = Compatibility.Type.values()[ordinal];
         b.compatibility(compatibilityType);
-        VersionInfo backwardTillRecord = VersionInfoSerializer.SERIALIZER.deserialize(source);
-        VersionInfo backwardTill = backwardTillRecord.equals(VersionInfoSerializer.NON_EXISTENT) ? null : backwardTillRecord;
-        b.backwardTill(backwardTill);
-        VersionInfo forwardTillRecord = VersionInfoSerializer.SERIALIZER.deserialize(source);
-        VersionInfo forwardTill = forwardTillRecord.equals(VersionInfoSerializer.NON_EXISTENT) ? null : forwardTillRecord;
-        b.forwardTill(forwardTill);
+        boolean backwardTillSpecified = source.readBoolean();
+        if (backwardTillSpecified) {
+            VersionInfo backwardTillRecord = VersionInfoSerializer.SERIALIZER.deserialize(source);
+            b.backwardTill(backwardTillRecord);
+        }
+        boolean forwardTillSpecified = source.readBoolean();
+        if (forwardTillSpecified) {
+            VersionInfo forwardTillRecord = VersionInfoSerializer.SERIALIZER.deserialize(source);
+            b.forwardTill(forwardTillRecord);
+        }
     }
 }

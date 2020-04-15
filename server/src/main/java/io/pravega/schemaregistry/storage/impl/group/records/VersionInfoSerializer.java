@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.storage.records;
+package io.pravega.schemaregistry.storage.impl.group.records;
 
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
@@ -24,7 +24,6 @@ import java.io.IOException;
  */
 public class VersionInfoSerializer extends VersionedSerializer.WithBuilder<VersionInfo, VersionInfo.VersionInfoBuilder> {
     public static final VersionInfoSerializer SERIALIZER = new VersionInfoSerializer();
-    public static final VersionInfo NON_EXISTENT = new VersionInfo("", -1);
     
     @Override
     protected VersionInfo.VersionInfoBuilder newBuilder() {
@@ -44,10 +43,12 @@ public class VersionInfoSerializer extends VersionedSerializer.WithBuilder<Versi
     private void write00(VersionInfo e, RevisionDataOutput target) throws IOException {
         target.writeUTF(e.getSchemaName());
         target.writeInt(e.getVersion());
+        target.writeInt(e.getOrdinal());
     }
 
     private void read00(RevisionDataInput source, VersionInfo.VersionInfoBuilder b) throws IOException {
         b.schemaName(source.readUTF())
-         .version(source.readInt());
+         .version(source.readInt())
+         .ordinal(source.readInt());
     }
 }

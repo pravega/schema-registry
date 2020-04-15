@@ -12,10 +12,8 @@ package io.pravega.schemaregistry.storage.impl.groups;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.impl.group.Group;
-import io.pravega.schemaregistry.storage.impl.group.InMemoryIndex;
-import io.pravega.schemaregistry.storage.impl.group.InMemoryLog;
-import io.pravega.schemaregistry.storage.impl.group.Index;
-import io.pravega.schemaregistry.storage.impl.group.Log;
+import io.pravega.schemaregistry.storage.impl.group.InMemoryGroupTable;
+import io.pravega.schemaregistry.storage.impl.group.GroupTable;
 import lombok.Synchronized;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -32,14 +30,12 @@ import java.util.function.Supplier;
 public class InMemoryGroups implements Groups<Integer> {
     @GuardedBy("$lock")
     private final Map<String, Group<Integer>> groups = new HashMap<>();
-    private final Supplier<Log> walFactory;
-    private final Supplier<Index<Integer>> kvFactory;
+    private final Supplier<GroupTable<Integer>> kvFactory;
     private final ScheduledExecutorService executor;
 
     public InMemoryGroups(ScheduledExecutorService executor) {
         this.executor = executor;
-        this.walFactory = InMemoryLog::new;
-        this.kvFactory = InMemoryIndex::new;
+        this.kvFactory = InMemoryGroupTable::new;
     }
 
     @Synchronized
@@ -55,7 +51,7 @@ public class InMemoryGroups implements Groups<Integer> {
             return CompletableFuture.completedFuture(false);
         }
         Group<Integer> grp = groups.computeIfAbsent(group, 
-                x -> new Group<>(group, walFactory.get(), kvFactory.get(), executor));
+                x -> new Group<>(group, kvFactory.get(), executor));
         return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isValidateByObjectType(), 
                 groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }

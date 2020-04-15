@@ -289,7 +289,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         // region writer with schema1
         Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
-
+        
         EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
         writer.writeEvent(record).join();

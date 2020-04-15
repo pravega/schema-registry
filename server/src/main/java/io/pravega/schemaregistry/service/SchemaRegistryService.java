@@ -28,8 +28,8 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
-import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
+import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
 import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
@@ -223,9 +223,7 @@ public class SchemaRegistryService {
                                                              if (!valid) {
                                                                  throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
                                                              }
-                                                             return getNextVersion(group, schema, prop)
-                                                                     .thenCompose(nextVersion ->
-                                                                             store.addSchemaToGroup(group, schema, nextVersion, etag));
+                                                             return store.addSchemaToGroup(group, schema, prop, etag);
                                                          });
                                              });
                                  })), executor)
@@ -322,7 +320,7 @@ public class SchemaRegistryService {
         log.info("Group {}, getLatestSchema for {}.", group, objectTypeName);
 
         if (objectTypeName == null) {
-            return store.getLatestSchema(group, true)
+            return store.getLatestSchema(group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
                                 log.info("Group {}, getLatestSchema = {}.", group, r.getVersion());
@@ -331,7 +329,7 @@ public class SchemaRegistryService {
                             }
                         });
         } else {
-            return store.getLatestSchema(group, objectTypeName, true)
+            return store.getLatestSchema(group, objectTypeName)
                         .whenComplete((r, e) -> {
                             if (e == null) {
                                 log.info("Group {}, object type = {}, getLatestSchema = {}.", group, objectTypeName, r.getVersion());
@@ -497,21 +495,7 @@ public class SchemaRegistryService {
                     });
 
     }
-
-    private CompletableFuture<VersionInfo> getNextVersion(String group, SchemaInfo schema, GroupProperties prop) {
-        CompletableFuture<VersionInfo> latest;
-        if (prop.isValidateByObjectType()) {
-            String objectTypeName = schema.getName();
-            latest = store.getLatestVersion(group, objectTypeName, false);
-        } else {
-            latest = store.getLatestVersion(group, false);
-        }
-        return latest.thenApply(latestVersion -> {
-            int next = latestVersion == null ? 0 : latestVersion.getVersion() + 1;
-            return new VersionInfo(schema.getName(), next);
-        });
-    }
-
+    
     private boolean validateRules(SchemaType schemaType, SchemaValidationRules newRules) {
         Preconditions.checkNotNull(newRules);
 
@@ -574,10 +558,10 @@ public class SchemaRegistryService {
                 }
             } else {
                 if (groupProperties.isValidateByObjectType()) {
-                    schemasFuture = store.getLatestSchema(group, schema.getName(), false)
+                    schemasFuture = store.getLatestSchema(group, schema.getName())
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {
-                    schemasFuture = store.getLatestSchema(group, false)
+                    schemasFuture = store.getLatestSchema(group)
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 }
             }

@@ -35,11 +35,11 @@ public interface SchemaStore {
 
     CompletableFuture<Void> deleteGroup(String group);
 
-    CompletableFuture<Position> getGroupEtag(String group);
+    CompletableFuture<Etag> getGroupEtag(String group);
 
     CompletableFuture<GroupProperties> getGroupProperties(String group);
     
-    CompletableFuture<Void> updateValidationRules(String group, Position etag, SchemaValidationRules policy);
+    CompletableFuture<Void> updateValidationRules(String group, Etag etag, SchemaValidationRules policy);
 
     CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token);
     
@@ -55,21 +55,17 @@ public interface SchemaStore {
     
     CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
 
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, boolean sync);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName, boolean sync);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName);
     
-    CompletableFuture<VersionInfo> getLatestVersion(String group, boolean sync);
-    
-    CompletableFuture<VersionInfo> getLatestVersion(String group, String objectTypeName, boolean sync);
-
-    CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, VersionInfo versionInfo, Position etag);
+    CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 
-    CompletableFuture<Either<EncodingId, Position>> getEncodingId(String group, VersionInfo versionInfo, CodecType codecType);
+    CompletableFuture<Either<EncodingId, Etag>> getEncodingId(String group, VersionInfo versionInfo, CodecType codecType);
     
-    CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CodecType codecType, Position etag);
+    CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CodecType codecType, Etag etag);
 
     CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId);
 
