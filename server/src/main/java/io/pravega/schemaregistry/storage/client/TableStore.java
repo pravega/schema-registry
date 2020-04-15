@@ -31,6 +31,7 @@ import io.pravega.controller.server.WireCommandFailedException;
 import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
 import io.pravega.controller.store.host.HostStoreException;
 import io.pravega.controller.store.stream.PravegaTablesStoreHelper;
+import io.pravega.controller.store.stream.StoreException;
 import io.pravega.controller.util.RetryHelper;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.Data;
@@ -50,6 +51,9 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+
+import static io.pravega.controller.server.WireCommandFailedException.Reason.ConnectionDropped;
+import static io.pravega.controller.server.WireCommandFailedException.Reason.ConnectionFailed;
 
 /**
  * Wrapper class over {@link PravegaTablesStoreHelper}. Its implementation abstracts the caller classes from the library
@@ -83,7 +87,7 @@ public class TableStore {
         log.debug("create table called for table: {}", tableName);
 
         return Futures.toVoid(withRetries(() -> segmentHelper.createTableSegment(tableName, authToken.get(), RequestTag.NON_EXISTENT_ID),
-                () -> String.format("create table: %s", tableName)))
+                () -> String.format("create table: %s", tableName), tableName))
                       .whenCompleteAsync((r, e) -> {
                           if (e != null) {
                               log.warn("create table {} threw exception", tableName, e);
@@ -97,7 +101,7 @@ public class TableStore {
         log.debug("delete table called for table: {}", tableName);
         return withRetries(() -> segmentHelper.deleteTableSegment(
                 tableName, mustBeEmpty, authToken.get(), RequestTag.NON_EXISTENT_ID),
-                () -> String.format("delete table: %s", tableName))
+                () -> String.format("delete table: %s", tableName), tableName)
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataContainerNotFoundException) {
                         return null;
@@ -140,7 +144,7 @@ public class TableStore {
             return segmentHelper.updateTableEntries(tableName, entries, authHelper.retrieveMasterToken(), RequestTag.NON_EXISTENT_ID)
                                 .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
                                                        .collect(Collectors.toList()));
-        }, () -> String.format("update entries : %s", tableName));
+        }, () -> String.format("update entries : %s", tableName), tableName, true);
     }
 
     public <T> CompletableFuture<Version.VersionedRecord<T>> getEntry(String tableName, byte[] key, Function<byte[], T> fromBytes) {
@@ -162,7 +166,7 @@ public class TableStore {
         CompletableFuture<List<Version.VersionedRecord<byte[]>>> result = new CompletableFuture<>();
         String message = "get entries for table: %s";
         withRetries(() -> segmentHelper.readTable(tableName, keys, authToken.get(), RequestTag.NON_EXISTENT_ID),
-                () -> String.format(message, tableName))
+                () -> String.format(message, tableName), tableName)
                 .thenApplyAsync(x -> {
                     return x.stream().map(y -> {
                         KeyVersion version = y.getKey().getVersion();
@@ -193,7 +197,7 @@ public class TableStore {
         List<TableKey<byte[]>> keys = Collections.singletonList(new TableKeyImpl<>(key, null));
         return withRetries(() -> segmentHelper.removeTableKeys(
                 tableName, keys, authToken.get(), RequestTag.NON_EXISTENT_ID),
-                () -> String.format("remove entry: key: %s table: %s", key, tableName))
+                () -> String.format("remove entry: key: %s table: %s", key, tableName), tableName)
                 .thenAcceptAsync(v -> log.trace("entry for key {} removed from table {}", key, tableName), executor)
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException) {
@@ -261,7 +265,7 @@ public class TableStore {
 
         return withRetries(() ->
                         segmentHelper.readTableKeys(tableName, limit, IteratorState.fromBytes(continuationToken), authToken.get(), RequestTag.NON_EXISTENT_ID),
-                () -> String.format("get keys paginated for table: %s", tableName))
+                () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApplyAsync(result -> {
                     List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(x.getKey()))
                                           .collect(Collectors.toList());
@@ -276,7 +280,7 @@ public class TableStore {
         log.trace("get entries paginated called for : {}", tableName);
         return withRetries(() -> segmentHelper.readTableEntries(tableName, limit,
                 IteratorState.fromBytes(continuationToken), authToken.get(), RequestTag.NON_EXISTENT_ID),
-                () -> String.format("get entries paginated for table: %s", tableName))
+                () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApplyAsync(result -> {
                     List<Map.Entry<K, Version.VersionedRecord<T>>> items = result.getItems().stream().map(x -> {
                         T deserialized = fromBytesValue.apply(x.getValue());
@@ -288,7 +292,8 @@ public class TableStore {
                 }, executor);
     }
 
-    private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier) {
+    private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier, 
+                                                                   String tableName, boolean throwOriginalOnCfe) {
         return () -> CompletableFuture.completedFuture(null).thenComposeAsync(v -> future.get(), executor).exceptionally(t -> {
             String errorMessage = errorMessageSupplier.get();
             Throwable cause = Exceptions.unwrap(t);
@@ -298,15 +303,20 @@ public class TableStore {
                 switch (wcfe.getReason()) {
                     case ConnectionDropped:
                     case ConnectionFailed:
+                        toThrow = throwOriginalOnCfe ? wcfe :
+                                StoreException.create(StoreException.Type.CONNECTION_ERROR, wcfe, errorMessage);
+                        hostStore.invalidateCache(tableName);
+                        break;
                     case UnknownHost:
                         toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, wcfe, errorMessage);
+                        hostStore.invalidateCache(tableName);
                         break;
                     case AuthFailed:
                         authToken.set(authHelper.retrieveMasterToken());
                         toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, wcfe, errorMessage);
                         break;
                     case SegmentDoesNotExist:
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, wcfe, errorMessage);
+                        toThrow = StoreExceptions.create(StoreExceptions.Type.DATA_CONTAINER_NOT_FOUND, wcfe, errorMessage);
                         break;
                     case TableKeyDoesNotExist:
                         toThrow = StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, wcfe, errorMessage);
@@ -329,21 +339,31 @@ public class TableStore {
         });
     }
 
-    private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage) {
-        return RetryHelper.withRetriesAsync(exceptionalCallback(futureSupplier, errorMessage),
-                e -> {
-                    Throwable unwrap = Exceptions.unwrap(e);
-                    return unwrap instanceof StoreExceptions.StoreConnectionException;
-                }, numOfRetries, executor)
+    private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage, String tableName) {
+        return withRetries(futureSupplier, errorMessage, tableName, false);
+    }
+    
+        private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage,
+                                                     String tableName, boolean throwOriginalOnCfe) {
+        return RetryHelper.withRetriesAsync(exceptionalCallback(futureSupplier, errorMessage, tableName, throwOriginalOnCfe),
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.StoreConnectionException, numOfRetries, executor)
                           .exceptionally(e -> {
                               Throwable t = Exceptions.unwrap(e);
                               if (t instanceof RetriesExhaustedException) {
                                   throw new CompletionException(t.getCause());
                               } else {
-                                  throw new CompletionException(t);
+                                  Throwable unwrap = Exceptions.unwrap(e);
+                                  if (unwrap instanceof WireCommandFailedException &&
+                                          (((WireCommandFailedException) unwrap).getReason().equals(ConnectionDropped) ||
+                                                  ((WireCommandFailedException) unwrap).getReason().equals(ConnectionFailed))) {
+                                      throw new CompletionException(StoreException.create(StoreException.Type.CONNECTION_ERROR,
+                                              errorMessage.get()));
+                                  } else {
+                                      throw new CompletionException(unwrap);
+                                  }
                               }
                           });
-    }
+        }
 
     @Data
     private static class TableCacheKey<K> {

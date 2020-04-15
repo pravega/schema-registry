@@ -17,6 +17,7 @@ import io.pravega.client.stream.impl.ControllerImpl;
 import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.common.cluster.Host;
 import io.pravega.controller.store.host.HostControllerStore;
+import io.pravega.controller.store.host.HostStoreException;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -28,11 +29,11 @@ import java.util.concurrent.ScheduledExecutorService;
  * This is a temporary implementation to directly query controller for table segment's location. 
  * Whenever table client is released, replace this class with table client.  
  */
-public class HostStoreImpl implements HostControllerStore {
+class HostStoreImpl implements HostControllerStore {
     private final ControllerImpl controller;
     private final LoadingCache<String, Host> cache;
 
-    public HostStoreImpl(ClientConfig clientConfig, ScheduledExecutorService executor) {
+    HostStoreImpl(ClientConfig clientConfig, ScheduledExecutorService executor) {
         controller = new ControllerImpl(ControllerImplConfig.builder().clientConfig(clientConfig).build(), executor);
         cache = CacheBuilder.newBuilder().build(new CacheLoader<String, Host>() {
             @Override
@@ -66,10 +67,14 @@ public class HostStoreImpl implements HostControllerStore {
     @SneakyThrows
     @Override
     public Host getHostForTableSegment(String tableName) {
-        return cache.get(tableName);
+        try {
+            return cache.get(tableName);
+        } catch (Exception e) {
+            throw new HostStoreException("Failed to contact controller");
+        }
     }
     
-    public void invalidateCache(String tableName) {
+    void invalidateCache(String tableName) {
         cache.invalidate(tableName);
     }
 }
