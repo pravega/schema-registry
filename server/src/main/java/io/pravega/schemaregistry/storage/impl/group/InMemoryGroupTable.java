@@ -100,13 +100,20 @@ public class InMemoryGroupTable implements GroupTable<Integer> {
     @SuppressWarnings("unchecked")
     @Synchronized
     public <T extends TableRecords.TableValue> CompletableFuture<T> getEntry(TableRecords.TableKey key, Class<T> tClass) {
+        return getEntryWithVersion(key, tClass).thenApply(Value::getValue);
+    }
+
+    @Override
+    @SuppressWarnings("unchecked")
+    @Synchronized
+    public <T extends TableRecords.TableValue> CompletableFuture<Value<T, Integer>> getEntryWithVersion(TableRecords.TableKey key, Class<T> tClass) {
         if (!table.containsKey(key)) {
-            return CompletableFuture.completedFuture(null);
+            return CompletableFuture.completedFuture(new Value<>(null, null));
         }
 
-        Value<TableRecords.TableValue, Integer> value = table.get(key);
+        Value<? extends TableRecords.TableValue, Integer> value = table.get(key);
         if (tClass.isAssignableFrom(value.getValue().getClass())) {
-            return CompletableFuture.completedFuture((T) value.getValue());
+            return CompletableFuture.completedFuture(new Value<>((T) value.getValue(), value.getVersion()));
         } else {
             return Futures.failedFuture(new IllegalArgumentException());
         }
@@ -118,20 +125,10 @@ public class InMemoryGroupTable implements GroupTable<Integer> {
         return Futures.allOfWithResults(keys.stream().map(x -> getEntry(x, tClass)).collect(Collectors.toList()));
     }
 
-    @Override
-    @SuppressWarnings("unchecked")
     @Synchronized
-    public <T extends TableRecords.TableValue> CompletableFuture<Value<T, Integer>> getEntryWithVersion(TableRecords.TableKey key, Class<T> tClass) {
-        if (!table.containsKey(key)) {
-            return CompletableFuture.completedFuture(null);
-        }
-
-        Value<? extends TableRecords.TableValue, Integer> value = table.get(key);
-        if (tClass.isAssignableFrom(value.getValue().getClass())) {
-            return CompletableFuture.completedFuture(new Value<>((T) value.getValue(), value.getVersion()));
-        } else {
-            return Futures.failedFuture(new IllegalArgumentException());
-        }
+    @Override
+    public <T extends TableRecords.TableValue> CompletableFuture<List<Value<T, Integer>>> getEntriesWithVersion(List<? extends TableRecords.TableKey> keys, Class<T> tClass) {
+        return Futures.allOfWithResults(keys.stream().map(x -> getEntryWithVersion(x, tClass)).collect(Collectors.toList()));
     }
 
     @Override

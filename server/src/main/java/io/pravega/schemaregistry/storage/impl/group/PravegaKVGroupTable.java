@@ -107,10 +107,16 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
 
     @Override
     public <T extends TableRecords.TableValue> CompletableFuture<T> getEntry(TableRecords.TableKey key, Class<T> tClass) {
+        return getEntryWithVersion(key, tClass)
+                .thenApply(Value::getValue);
+    }
+
+    @Override
+    public <T extends TableRecords.TableValue> CompletableFuture<Value<T, Version>> getEntryWithVersion(TableRecords.TableKey key, Class<T> tClass) {
         if (IMMUTABLE_RECORDS.contains(key.getClass())) {
             Version.VersionedRecord<T> cachedValue = tablesStore.getCachedRecord(tableName, key, tClass);
             if (cachedValue != null) {
-                return CompletableFuture.completedFuture(cachedValue.getRecord());
+                return CompletableFuture.completedFuture(new Value<>(cachedValue.getRecord(), cachedValue.getVersion()));
             }
         }
         return Futures.exceptionallyExpecting(
@@ -120,26 +126,21 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
                                if (IMMUTABLE_RECORDS.contains(key.getClass())) {
                                    tablesStore.cacheRecord(tableName, key, new Version.VersionedRecord<>(typedRecord, entry.getVersion()));
                                }
-                               return typedRecord;
+                               return new Value<>(typedRecord, entry.getVersion());
                            }),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
-                null);
-    }
-
-    @Override
-    public <T extends TableRecords.TableValue> CompletableFuture<Value<T, Version>> getEntryWithVersion(TableRecords.TableKey key, Class<T> tClass) {
-        return Futures.exceptionallyExpecting(tablesStore.getEntry(tableName, KEY_SERIALIZER.toBytes(key), x -> TableRecords.fromBytes(key.getClass(), x, tClass))
-                                                         .thenApply(entry -> {
-                                                             T t = getTypedRecord(tClass, entry.getRecord());
-                                                             return new Value<>(t, entry.getVersion());
-                                                         }),
-                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
-                null);
+                new Value<>(null, null));
     }
 
     @Override
     public <T extends TableRecords.TableValue> CompletableFuture<List<T>> getEntries(List<? extends TableRecords.TableKey> keys, Class<T> tClass) {
-        List<T> result = new ArrayList<>(keys.size());
+        return getEntriesWithVersion(keys, tClass)
+                .thenApply(entry -> entry.stream().map(Value::getValue).collect(Collectors.toList()));
+    }
+
+    @Override
+    public <T extends TableRecords.TableValue> CompletableFuture<List<Value<T, Version>>> getEntriesWithVersion(List<? extends TableRecords.TableKey> keys, Class<T> tClass) {
+        List<Value<T, Version>> result = new ArrayList<>(keys.size());
         
         List<TableRecords.TableKey> nonCachedKeys = new LinkedList<>();
         Map<TableRecords.TableKey, Integer> nonCachedKeysIndex = new HashMap<>();
@@ -149,7 +150,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
             if (IMMUTABLE_RECORDS.contains(key.getClass())) {
                 Version.VersionedRecord<T> record = tablesStore.getCachedRecord(tableName, key, tClass);
                 if (record != null) {
-                    result.set(i, record.getRecord());
+                    result.set(i, new Value<>(record.getRecord(), record.getVersion()));
                 } 
             } 
             if (result.get(i) == null) {
@@ -166,11 +167,14 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
                                   Version.VersionedRecord<byte[]> versionedRecord = values.get(i);
                                   if (!versionedRecord.getVersion().equals(Version.NON_EXISTENT)) {
                                       T value = TableRecords.fromBytes(key.getClass(), versionedRecord.getRecord(), tClass);
+                                      Version version = versionedRecord.getVersion();
                                       if (IMMUTABLE_RECORDS.contains(key.getClass())) {
                                           tablesStore.cacheRecord(tableName, key, new Version.VersionedRecord<>(value, versionedRecord.getVersion()));
                                       }
 
-                                      result.set(index, value);
+                                      result.set(index, new Value<>(value, version));
+                                  } else {
+                                      result.set(index, new Value<>(null, null));
                                   }
                               }
                               return result;

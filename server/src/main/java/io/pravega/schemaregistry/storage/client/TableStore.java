@@ -57,7 +57,7 @@ import static io.pravega.controller.server.WireCommandFailedException.Reason.Con
 
 /**
  * Wrapper class over {@link PravegaTablesStoreHelper}. Its implementation abstracts the caller classes from the library
- * used for interacting with pravega tables. 
+ * used for interacting with pravega tables.
  */
 @Slf4j
 public class TableStore {
@@ -135,7 +135,7 @@ public class TableStore {
     public CompletableFuture<List<Version>> updateEntries(String tableName, Map<byte[], Map.Entry<byte[], Version>> batch) {
         return withRetries(() -> {
             List<TableEntry<byte[], byte[]>> entries = batch.entrySet().stream().map(x -> {
-                KeyVersion version = x.getValue().getValue() == null ? KeyVersion.NO_VERSION :
+                KeyVersion version = x.getValue().getValue() == null ? KeyVersion.NOT_EXISTS :
                         new KeyVersionImpl(x.getValue().getValue().getVersion());
 
                 return new TableEntryImpl<>(new TableKeyImpl<>(x.getKey(), version), x.getValue().getKey());
@@ -148,15 +148,11 @@ public class TableStore {
     }
 
     public <T> CompletableFuture<Version.VersionedRecord<T>> getEntry(String tableName, byte[] key, Function<byte[], T> fromBytes) {
-        return getEntries(tableName, Collections.singletonList(key))
+        return getEntries(tableName, Collections.singletonList(key), true)
                 .thenApply(records -> {
                     Version.VersionedRecord<byte[]> value = records.get(0);
                     return new Version.VersionedRecord<>(fromBytes.apply(value.getRecord()), value.getVersion());
                 });
-    }
-    
-    public CompletableFuture<List<Version.VersionedRecord<byte[]>>> getEntries(String tableName, List<byte[]> tableKeys) {
-        return getEntries(tableName, tableKeys, true);
     }
     
     public CompletableFuture<List<Version.VersionedRecord<byte[]>>> getEntries(String tableName, List<byte[]> tableKeys, boolean throwOnNotFound) {
@@ -239,11 +235,12 @@ public class TableStore {
 
     /**
      * Api to read cached value for the specified key from the requested table.
-     * @param table name of table.
-     * @param key key to query.
+     *
+     * @param table  name of table.
+     * @param key    key to query.
      * @param tClass class of object type to deserialize into.
-     * @param <K> Type of key.
-     * @param <T> Type of object to deserialize the response into.
+     * @param <K>    Type of key.
+     * @param <T>    Type of object to deserialize the response into.
      * @return Returns a completableFuture which when completed will have the deserialized value with its store key version.
      */
     @SuppressWarnings("unchecked")
@@ -252,13 +249,13 @@ public class TableStore {
     }
 
     public <K, T> void cacheRecord(String table, K key, Version.VersionedRecord<T> value) {
-        cache.put(new TableCacheKey<>(table, key), value);    
+        cache.put(new TableCacheKey<>(table, key), value);
     }
 
     public <K, T> void invalidateCache(String table, K key) {
-        cache.invalidate(new TableCacheKey<>(table, key));    
+        cache.invalidate(new TableCacheKey<>(table, key));
     }
-    
+
     private <K> CompletableFuture<Map.Entry<ByteBuf, List<K>>> getKeysPaginated(String tableName, ByteBuf continuationToken, int limit,
                                                                                 Function<byte[], K> fromByteKey) {
         log.trace("get keys paginated called for : {}", tableName);
@@ -292,7 +289,7 @@ public class TableStore {
                 }, executor);
     }
 
-    private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier, 
+    private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier,
                                                                    String tableName, boolean throwOriginalOnCfe) {
         return () -> CompletableFuture.completedFuture(null).thenComposeAsync(v -> future.get(), executor).exceptionally(t -> {
             String errorMessage = errorMessageSupplier.get();
@@ -342,9 +339,9 @@ public class TableStore {
     private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage, String tableName) {
         return withRetries(futureSupplier, errorMessage, tableName, false);
     }
-    
-        private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage,
-                                                     String tableName, boolean throwOriginalOnCfe) {
+
+    private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage,
+                                                 String tableName, boolean throwOriginalOnCfe) {
         return RetryHelper.withRetriesAsync(exceptionalCallback(futureSupplier, errorMessage, tableName, throwOriginalOnCfe),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.StoreConnectionException, numOfRetries, executor)
                           .exceptionally(e -> {
@@ -363,7 +360,7 @@ public class TableStore {
                                   }
                               }
                           });
-        }
+    }
 
     @Data
     private static class TableCacheKey<K> {

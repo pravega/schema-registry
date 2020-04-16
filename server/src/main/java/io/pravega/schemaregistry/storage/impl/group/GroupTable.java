@@ -34,6 +34,8 @@ public interface GroupTable<V> {
     <T extends TableRecords.TableValue> CompletableFuture<Value<T, V>> getEntryWithVersion(TableRecords.TableKey key, Class<T> tClass);
 
     <T extends TableRecords.TableValue> CompletableFuture<List<T>> getEntries(List<? extends TableRecords.TableKey> keys, Class<T> tClass);
+    
+    <T extends TableRecords.TableValue> CompletableFuture<List<Value<T, V>>> getEntriesWithVersion(List<? extends TableRecords.TableKey> keys, Class<T> tClass);
 
     CompletableFuture<List<TableRecords.TableKey>> getAllKeys();
 

@@ -211,13 +211,13 @@ public class Group<V> {
                                  return rec.getVersion();
                              }
                          })
-                .thenCompose(versionInfo -> {
-                    if (versionInfo != null) {
-                        return getSchema(versionInfo).thenApply(schema -> new SchemaWithVersion(schema, versionInfo));
-                    } else {
-                        return CompletableFuture.completedFuture(null);
-                    }
-                });
+                         .thenCompose(versionInfo -> {
+                             if (versionInfo != null) {
+                                 return getSchema(versionInfo).thenApply(schema -> new SchemaWithVersion(schema, versionInfo));
+                             } else {
+                                 return CompletableFuture.completedFuture(null);
+                             }
+                         });
     }
 
     public CompletableFuture<List<CodecType>> getCodecTypes() {
@@ -235,24 +235,24 @@ public class Group<V> {
         // get all codecs. if codec doesnt exist, add it to log. let it get synced to the table. 
         // generate encoding id will only generate if the codec is already registered.
         return WRITE_CONFLICT_RETRY.runAsync(() -> getCurrentEtag()
-                .thenCompose(etag -> groupTable.getEntry(CODECS_KEY, TableRecords.CodecsListValue.class)
+                .thenCompose(etag -> groupTable.getEntryWithVersion(CODECS_KEY, TableRecords.CodecsListValue.class)
                                                .thenCompose(rec -> addCodec(codecType, etag, rec))), executor);
     }
 
-    private CompletionStage<Void> addCodec(CodecType codecType, Etag etag, TableRecords.CodecsListValue rec) {
-        if (rec == null || !rec.getCodecs().contains(codecType)) {
+    private CompletionStage<Void> addCodec(CodecType codecType, Etag etag, GroupTable.Value<TableRecords.CodecsListValue, V> rec) {
+        if (rec.getValue() == null || !rec.getValue().getCodecs().contains(codecType)) {
             List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
             entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
-
+            V version = rec.getVersion();
             List<CodecType> codecs;
-            if (rec == null) {
+            if (rec.getValue() == null) {
                 codecs = Collections.singletonList(codecType);
             } else {
-                codecs = new LinkedList<>(rec.getCodecs());
+                codecs = new LinkedList<>(rec.getValue().getCodecs());
                 codecs.add(codecType);
             }
             TableRecords.CodecsListValue updated = new TableRecords.CodecsListValue(codecs);
-            entries.add(new AbstractMap.SimpleEntry<>(CODECS_KEY, new GroupTable.Value<>(updated, null)));
+            entries.add(new AbstractMap.SimpleEntry<>(CODECS_KEY, new GroupTable.Value<>(updated, version)));
 
             return groupTable.updateEntries(entries);
         } else {
@@ -292,28 +292,31 @@ public class Group<V> {
             keys.add(OBJECTS_TYPE_KEY);
         }
 
-        return groupTable.getEntries(keys, TableRecords.TableValue.class).thenCompose(values -> {
-            TableRecords.LatestSchemaVersionValue latest = (TableRecords.LatestSchemaVersionValue) values.get(0);
-            TableRecords.SchemaVersionValue schemaIndex = (TableRecords.SchemaVersionValue) values.get(1);
+        return groupTable.getEntriesWithVersion(keys, TableRecords.TableValue.class).thenCompose(values -> {
+            TableRecords.LatestSchemaVersionValue latest = (TableRecords.LatestSchemaVersionValue) values.get(0).getValue();
+            V latestVersion = values.get(0).getVersion();
+            TableRecords.SchemaVersionValue schemaIndex = (TableRecords.SchemaVersionValue) values.get(1).getValue();
+            V schemaIndexVersion = values.get(1).getVersion();
             int nextOrdinal = latest == null ? 0 : latest.getVersion().getOrdinal() + 1;
             int nextVersion;
+
             if (prop.isValidateByObjectType()) {
-                TableRecords.LatestSchemaVersionValue objectLatestVersion = (TableRecords.LatestSchemaVersionValue) values.get(2);
+                TableRecords.LatestSchemaVersionValue objectLatestVersion = (TableRecords.LatestSchemaVersionValue) values.get(2).getValue();
                 nextVersion = objectLatestVersion == null ? 0 : objectLatestVersion.getVersion().getVersion() + 1;
             } else {
                 nextVersion = nextOrdinal;
             }
             VersionInfo next = new VersionInfo(schemaInfo.getName(), nextVersion, nextOrdinal);
-            
+
             List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new LinkedList<>();
             // 0. etag
             entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
-            // 1. version info key
+            // 1. version info key. add
             entries.add(new AbstractMap.SimpleEntry<>(new TableRecords.VersionKey(next.getOrdinal()),
                     new GroupTable.Value<>(new TableRecords.SchemaRecord(schemaInfo, next, prop.getSchemaValidationRules()), null)));
 
-            // 2. schema info key
+            // 2. schema info key. update
             List<VersionInfo> versions;
             if (schemaIndex == null) {
                 versions = Collections.singletonList(next);
@@ -322,22 +325,25 @@ public class Group<V> {
                 versions.add(next);
             }
             entries.add(new AbstractMap.SimpleEntry<>(schemaInfoKey,
-                    new GroupTable.Value<>(new TableRecords.SchemaVersionValue(versions), null)));
+                    new GroupTable.Value<>(new TableRecords.SchemaVersionValue(versions), schemaIndexVersion)));
 
             // 3. latest schema version
             entries.add(new AbstractMap.SimpleEntry<>(LATEST_SCHEMA_VERSION_KEY,
-                    new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), null)));
+                    new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), latestVersion)));
 
             if (prop.isValidateByObjectType()) {
                 // 3.1 latest for object type
+                V objectLatestVersionVersion = values.get(2).getVersion();
                 entries.add(new AbstractMap.SimpleEntry<>(new TableRecords.LatestSchemaVersionForObjectTypeKey(
                         schemaInfo.getName()),
-                        new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), null)));
+                        new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), objectLatestVersionVersion)));
             }
 
             // 4. object types list
             if (prop.isValidateByObjectType()) {
-                TableRecords.ObjectTypesListValue objectTypes = (TableRecords.ObjectTypesListValue) values.get(3);
+                TableRecords.ObjectTypesListValue objectTypes = (TableRecords.ObjectTypesListValue) values.get(3).getValue();
+                V objectTypesVersion = values.get(3).getVersion();
+
                 List<String> list = objectTypes == null ? new ArrayList<>() :
                         Lists.newArrayList(objectTypes.getObjectTypes());
                 if (!list.contains(schemaInfo.getName())) {
@@ -345,20 +351,27 @@ public class Group<V> {
                 }
                 entries.add(new AbstractMap.SimpleEntry<>(OBJECTS_TYPE_KEY,
                         new GroupTable.Value<>(
-                                new TableRecords.ObjectTypesListValue(list), null)));
+                                new TableRecords.ObjectTypesListValue(list), objectTypesVersion)));
             }
             return groupTable.updateEntries(entries).thenApply(v -> next);
         });
     }
 
     public CompletableFuture<Void> updateValidationPolicy(SchemaValidationRules policy, Etag etag) {
-        List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
-        entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+        return groupTable.getEntryWithVersion(VALIDATION_POLICY_KEY, TableRecords.ValidationRecord.class)
+                         .thenCompose(entry -> {
+                             if (entry.getValue().getValidationRules().equals(policy)) {
+                                 return CompletableFuture.completedFuture(null);
+                             } else {
+                                 List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
+                                 entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
-        TableRecords.ValidationRecord updated = new TableRecords.ValidationRecord(policy);
-        entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(updated, null)));
+                                 TableRecords.ValidationRecord updated = new TableRecords.ValidationRecord(policy);
+                                 entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(updated, entry.getVersion())));
 
-        return groupTable.updateEntries(entries);
+                                 return groupTable.updateEntries(entries);
+                             }
+                         });
     }
 
     public CompletableFuture<GroupProperties> getGroupProperties() {
@@ -376,27 +389,32 @@ public class Group<V> {
     private long getFingerprint(SchemaInfo schemaInfo) {
         return HASH.hashBytes(schemaInfo.getSchemaData()).asLong();
     }
-    
+
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CodecType codecType, Etag etag) {
         return getCodecTypes()
                 .thenCompose(codecs -> {
                     if (codecs.contains(codecType)) {
-                        return getNextEncodingId()
-                                .thenCompose(nextEncodingId -> {
-                                    List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new LinkedList<>();
+                        TableRecords.LatestEncodingIdKey key = new TableRecords.LatestEncodingIdKey();
+                        return groupTable.getEntryWithVersion(key, TableRecords.LatestEncodingIdValue.class).thenCompose(current -> {
+                            EncodingId nextEncodingId = current.getValue() == null ? new EncodingId(0) :
+                                    new EncodingId(current.getValue().getEncodingId().getId() + 1);                                    
+                            V encodingIdVersion = current.getVersion();
 
-                                    entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+                            List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new LinkedList<>();
 
-                                    TableRecords.EncodingIdRecord idIndex = new TableRecords.EncodingIdRecord(nextEncodingId);
-                                    TableRecords.EncodingInfoRecord infoIndex = new TableRecords.EncodingInfoRecord(versionInfo, codecType);
+                            entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
-                                    entries.add(new AbstractMap.SimpleEntry<>(idIndex, new GroupTable.Value<>(infoIndex, null)));
-                                    entries.add(new AbstractMap.SimpleEntry<>(infoIndex, new GroupTable.Value<>(idIndex, null)));
-                                    entries.add(new AbstractMap.SimpleEntry<>(LATEST_ENCODING_ID_KEY,
-                                            new GroupTable.Value<>(new TableRecords.LatestEncodingIdValue(nextEncodingId), null)));
-                                    return groupTable.updateEntries(entries)
-                                                     .thenApply(v -> nextEncodingId);
-                                });
+                            TableRecords.EncodingIdRecord idIndex = new TableRecords.EncodingIdRecord(nextEncodingId);
+                            TableRecords.EncodingInfoRecord infoIndex = new TableRecords.EncodingInfoRecord(versionInfo, codecType);
+                            // add new entries for encoding id and info
+                            entries.add(new AbstractMap.SimpleEntry<>(idIndex, new GroupTable.Value<>(infoIndex, null)));
+                            entries.add(new AbstractMap.SimpleEntry<>(infoIndex, new GroupTable.Value<>(idIndex, null)));
+                            // update
+                            entries.add(new AbstractMap.SimpleEntry<>(LATEST_ENCODING_ID_KEY,
+                                    new GroupTable.Value<>(new TableRecords.LatestEncodingIdValue(nextEncodingId), encodingIdVersion)));
+                            return groupTable.updateEntries(entries)
+                                             .thenApply(v -> nextEncodingId);
+                        });
                     } else {
                         throw new CodecNotFoundException(String.format("codec %s not registered", codecType));
                     }
@@ -411,18 +429,6 @@ public class Group<V> {
                                  return getCurrentEtag().thenApply(Either::right);
                              } else {
                                  return CompletableFuture.completedFuture(Either.left(record.getEncodingId()));
-                             }
-                         });
-    }
-
-    private CompletableFuture<EncodingId> getNextEncodingId() {
-        TableRecords.LatestEncodingIdKey key = new TableRecords.LatestEncodingIdKey();
-        return groupTable.getEntry(key, TableRecords.LatestEncodingIdValue.class)
-                         .thenApply(rec -> {
-                             if (rec == null) {
-                                 return new EncodingId(0);
-                             } else {
-                                 return new EncodingId(rec.getEncodingId().getId() + 1);
                              }
                          });
     }
