@@ -59,11 +59,16 @@ import java.util.stream.Collectors;
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private static final HashFunction HASH = Hashing.murmur3_128();
-    private final Client client = ClientBuilder.newClient(new ClientConfig());
+    private final Client client;
     private final URI uri;
 
     public SchemaRegistryClientImpl(URI uri) {
+        this(uri, ClientBuilder.newClient(new ClientConfig()));
+    }
+
+    SchemaRegistryClientImpl(URI uri, Client client) {
         this.uri = uri;
+        this.client = client;
     }
 
     @Override
