@@ -56,8 +56,6 @@ allprojects {
             //These are compile time only dependencies needed accross all targets. Lombok uses them and may generate strange errors if they are missing.
             compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
             testCompile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
-            compileOnly group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
-            testCompile group: 'net.jcip', name: 'jcip-annotations', version: jcipAnnotationsVersion
             compileOnly 'org.projectlombok:lombok:' + lombokVersion
             
             testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
@@ -107,7 +105,7 @@ allprojects {
         }
     }
     version = getProjectVersion()
-    group = "io.pravega"
+    group = "io.pravega.schemaregistry"
 
     configurations.all {
         resolutionStrategy {
