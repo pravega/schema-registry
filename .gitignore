@@ -20,7 +20,5 @@ out/
 .metadata/
 .recommenders/
 *.log
-*.log.gz
-*.tmp
 .nb-gradle
 .nb-gradle-properties
