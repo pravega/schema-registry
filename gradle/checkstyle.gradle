@@ -20,7 +20,8 @@ plugins.withId('checkstyle') {
     plugins.withId('java') {
         checkstyle {
             // Exclude generated code from Checkstyle checks
-            checkstyleMain.exclude '**/io.pravega.rest/generated/**'
+            checkstyleMain.exclude '**/io.pravega.schemaregistry.contract/generated/**'
+            checkstyleMain.exclude '**/io.pravega.schemaregistry.tests.integrationtest/generated/**'
         }
     }
 }

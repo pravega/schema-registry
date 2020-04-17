@@ -1,6 +1,9 @@
 <FindBugsFilter>
     <Match> <!-- generated code -->
-        <Package name="io.pravega.schemaregistry.server.rest.generated" />
+        <Package name="io.pravega.schemaregistry.contract.generated" />
+    </Match>
+    <Match> <!-- generated code -->
+        <Package name="io.pravega.schemaregistry.test.integrationtest.generated" />
     </Match>
     <Match> <!-- does not work well with futures -->
         <Bug pattern="NP_NONNULL_PARAM_VIOLATION" />

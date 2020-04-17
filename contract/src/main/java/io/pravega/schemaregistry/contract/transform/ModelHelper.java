@@ -61,6 +61,8 @@ public class ModelHelper {
                 } else {
                     throw new NotImplementedException("Rule not implemented");
                 }
+            } else if (rule.getValue().getRule() instanceof Compatibility) {
+                return decode((Compatibility) rule.getValue().getRule());
             } else {
                 throw new IllegalArgumentException("Rule not supported");
             }
