@@ -9,12 +9,11 @@
  */
 package io.pravega.schemaregistry.schemas;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
-import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -81,7 +80,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> of(String schemaString) {
         ObjectMapper objectMapper = new ObjectMapper();
-        ObjectSchema schema = objectMapper.readValue(schemaString, ObjectSchema.class);  
+        JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);  
         return new JSONSchema<>(schema, schemaString, Object.class);
     }
     

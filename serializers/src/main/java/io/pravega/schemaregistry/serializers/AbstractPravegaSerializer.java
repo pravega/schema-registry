@@ -71,7 +71,7 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         VersionInfo version;
         if (registerSchema) {
             // register schema
-            version = client.addSchemaIfAbsent(groupId, schemaInfo);
+            version = client.registerSchema(groupId, schemaInfo);
         } else {
             // get already registered schema version. If schema is not registered, this will throw an exception. 
             version = client.getSchemaVersion(groupId, schemaInfo);

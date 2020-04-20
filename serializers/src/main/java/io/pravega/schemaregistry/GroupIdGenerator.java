@@ -10,8 +10,6 @@
 package io.pravega.schemaregistry;
 
 import com.google.common.base.Preconditions;
-import lombok.AccessLevel;
-import lombok.AllArgsConstructor;
 import lombok.SneakyThrows;
 
 import java.net.URLEncoder;
