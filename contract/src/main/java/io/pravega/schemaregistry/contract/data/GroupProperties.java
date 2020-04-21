@@ -21,7 +21,7 @@ import java.util.Map;
  * 
  * {@link GroupProperties#schemaType} identifies the serialization format and schema type used to describe the schema.
  * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
- * {@link GroupProperties#validateByObjectType} that specifies if schemas have validation rules applied for schemas that share the 
+ * {@link GroupProperties#validateByObjectType} specifies that if schemas have validation rules applied for schemas that share the 
  * same {@link SchemaInfo#name} which represents the object type. This ensures that the registry can support scenarios like 
  * event sourcing, or message bus where different types of events could be written to the same
  * stream. The users can register new versions of each distinct type of schema, and the registry will check for compatibility 
@@ -50,5 +50,10 @@ public class GroupProperties {
         private SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.fullTransitive());
         private boolean validateByObjectType = false;
         private Map<String, String> properties = Collections.emptyMap();
+
+        public GroupPropertiesBuilder compatibility(Compatibility compatibility) {
+            this.schemaValidationRules = SchemaValidationRules.of(compatibility);
+            return this;
+        }
     }
 }

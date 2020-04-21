@@ -171,7 +171,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo registerSchema(String group, SchemaInfo schema) {
+    public VersionInfo addSchema(String group, SchemaInfo schema) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();

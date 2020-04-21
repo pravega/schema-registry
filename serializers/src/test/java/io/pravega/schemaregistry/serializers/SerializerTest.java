@@ -16,12 +16,12 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
-import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
@@ -32,6 +32,7 @@ import io.pravega.schemaregistry.testobjs.DerivedUser2;
 import io.pravega.schemaregistry.testobjs.generated.ProtobufTest;
 import io.pravega.schemaregistry.testobjs.generated.Test1;
 import io.pravega.schemaregistry.testobjs.generated.Test2;
+import io.pravega.test.common.AssertExtensions;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.junit.Test;
@@ -45,11 +46,11 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.mock;
+import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.*;
 
 public class SerializerTest {
     @Test
@@ -62,8 +63,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1);
-        doAnswer(x -> new GroupProperties(SchemaType.Any, SchemaValidationRules.of(Compatibility.backward()), false,
-                Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true))))
+        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
@@ -132,8 +132,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1);
-        doAnswer(x -> new GroupProperties(SchemaType.Any, SchemaValidationRules.of(Compatibility.backward()), false,
-                Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true))))
+        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
@@ -197,8 +196,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1);
-        doAnswer(x -> new GroupProperties(SchemaType.Any, SchemaValidationRules.of(Compatibility.backward()), false,
-                Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true))))
+        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
@@ -269,9 +267,8 @@ public class SerializerTest {
         VersionInfo versionInfo1 = new VersionInfo("avro", 0);
         VersionInfo versionInfo2 = new VersionInfo("proto", 1);
         VersionInfo versionInfo3 = new VersionInfo("json", 2);
-        
-        doAnswer(x -> new GroupProperties(SchemaType.Any, SchemaValidationRules.of(Compatibility.backward()), false,
-                Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(true))))
+
+        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
@@ -303,5 +300,89 @@ public class SerializerTest {
         assertTrue(deserialized instanceof DynamicMessage);
         deserialized = deserializer.deserialize(serializedJson);
         assertTrue(deserialized instanceof JSonGenericObject);
+
+        Serializer<String> jsonStringDeserializer = SerializerFactory.deserializerAsJsonString(config);
+        serializedAvro.position(0);
+        String jsonString = jsonStringDeserializer.deserialize(serializedAvro);
+        assertNotNull(jsonString);
+        serializedProto.position(0);
+        jsonString = jsonStringDeserializer.deserialize(serializedProto);
+        assertNotNull(jsonString);
+        serializedJson.position(0);
+        jsonString = jsonStringDeserializer.deserialize(serializedJson);
+        assertNotNull(jsonString);
+    }
+
+    @Test
+    public void testNoEncodingProto() throws IOException {
+        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+        ProtobufSchema<ProtobufTest.Message2> schema1 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
+
+        VersionInfo versionInfo1 = new VersionInfo("name", 0);
+        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
+                                     .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
+                .when(client).getGroupProperties(anyString());
+        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchema(anyString(), any());
+        doAnswer(x -> true).when(client).canRead(anyString(), any());
+
+        Serializer<ProtobufTest.Message2> serializer = SerializerFactory.protobufSerializer(config, schema1);
+        verify(client, never()).getEncodingId(anyString(), any(), any());
+        
+        ProtobufTest.Message2 message = ProtobufTest.Message2.newBuilder().setName("name").setField1(1).build();
+        ByteBuffer serialized = serializer.serialize(message);
+
+        Serializer<ProtobufTest.Message2> deserializer = SerializerFactory.protobufDeserializer(config, schema1);
+        verify(client, never()).getEncodingInfo(anyString(), any());
+
+        ProtobufTest.Message2 deserialized = deserializer.deserialize(serialized);
+        assertEquals(deserialized, message);
+
+        serialized = serializer.serialize(message);
+        AssertExtensions.assertThrows(IllegalArgumentException.class, () -> SerializerFactory.protobufGenericDeserializer(config, null));
+
+        SchemaInfo latestSchema = client.getLatestSchema("groupId", null).getSchema();
+        ProtobufSchema<DynamicMessage> schemaDynamic = ProtobufSchema.of(latestSchema.getName(), descriptorSet);
+        Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(config, schemaDynamic);
+        
+        DynamicMessage generic = genericDeserializer.deserialize(serialized);
+        assertEquals(generic.getAllFields().size(), 2);
+    }
+    
+    @Test
+    public void testNoEncodingJson() throws IOException {
+        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
+
+        VersionInfo versionInfo1 = new VersionInfo("name", 0);
+        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
+                .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
+                .when(client).getGroupProperties(anyString());
+        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchema(anyString(), any());
+        doAnswer(x -> true).when(client).canRead(anyString(), any());
+
+        Serializer<DerivedUser1> serializer = SerializerFactory.jsonSerializer(config, schema1);
+        verify(client, never()).getEncodingId(anyString(), any(), any());
+        DerivedUser1 user1 = new DerivedUser1("user", new Address("street", "city"), 2, "user1");
+        ByteBuffer serialized = serializer.serialize(user1);
+
+        Serializer<DerivedUser1> deserializer = SerializerFactory.jsonDeserializer(config, schema1);
+        verify(client, never()).getEncodingInfo(anyString(), any());
+        DerivedUser1 deserialized = deserializer.deserialize(serialized);
+        assertEquals(deserialized, user1);
+        
+        serialized = serializer.serialize(user1);
+
+        Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+
+        JSonGenericObject generic = genericDeserializer.deserialize(serialized);
+        assertNotNull(generic.getObject());
+        assertNull(generic.getJsonSchema());
     }
 }

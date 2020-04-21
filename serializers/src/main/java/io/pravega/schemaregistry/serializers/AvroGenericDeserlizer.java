@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.serializers;
 
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
@@ -29,16 +28,15 @@ import javax.annotation.Nullable;
 import java.io.InputStream;
 
 class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
-    private final LoadingCache<byte[], Schema> knownSchemas;
+    private final LoadingCache<SchemaInfo, Schema> knownSchemas;
 
     AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<GenericRecord> schema,
                           SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);
-        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {
+        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Schema>() {
             @Override
-            public Schema load(byte[] schemaData) throws Exception {
-                String schemaString = new String(schemaData, Charsets.UTF_8);
-                return new Schema.Parser().parse(schemaString);
+            public Schema load(SchemaInfo schemaInfo) throws Exception {
+                return AvroSchema.from(schemaInfo).getSchema();
             }
         });
     }
@@ -47,8 +45,8 @@ class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
     @Override
     protected GenericRecord deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData());
-        Schema readerSchema = knownSchemas.get(readerSchemaInfo.getSchemaData());
+        Schema writerSchema = knownSchemas.get(writerSchemaInfo);
+        Schema readerSchema = knownSchemas.get(readerSchemaInfo);
         
         GenericDatumReader<GenericRecord> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
         

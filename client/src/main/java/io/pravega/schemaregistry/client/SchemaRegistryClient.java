@@ -91,15 +91,13 @@ public interface SchemaRegistryClient {
     /**
      * Registers schema to the group. If group is configured with {@link GroupProperties#validateByObjectType} then 
      * the {@link SchemaInfo#name} is used for validating against existing group schemas that share the same name. 
-     * Schema validation rules that are sent to the registry should be a super set of Validation rules set in 
-     * {@link GroupProperties#schemaValidationRules}
      * 
      * @param groupId Id for the group. 
      * @param schema Schema to add. 
      *              
      * @return versionInfo which uniquely identifies where the schema is added in the group.   
      */
-    VersionInfo registerSchema(String groupId, SchemaInfo schema);
+    VersionInfo addSchema(String groupId, SchemaInfo schema);
 
     /**
      * Gets schema corresponding to the version. 
@@ -168,7 +166,7 @@ public interface SchemaRegistryClient {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group  
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * This api performs exactly the same validations as {@link SchemaRegistryClient#registerSchema(String, SchemaInfo)}
+     * This api performs exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
      * but without registering the schema. This is primarily to be used during schema development phase to validate that 
      * the changes to schema are in compliance with validation rules for the group.  
      * 

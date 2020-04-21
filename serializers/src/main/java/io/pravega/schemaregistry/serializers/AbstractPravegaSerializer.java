@@ -66,17 +66,20 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
         Map<String, String> properties = groupProperties.getProperties();
-        boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
+        boolean toEncodeHeader = !properties.containsKey(SerializerFactory.ENCODE) ||
+                Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
         encodeHeader.set(toEncodeHeader);
         VersionInfo version;
         if (registerSchema) {
             // register schema
-            version = client.registerSchema(groupId, schemaInfo);
+            version = client.addSchema(groupId, schemaInfo);
         } else {
             // get already registered schema version. If schema is not registered, this will throw an exception. 
             version = client.getSchemaVersion(groupId, schemaInfo);
         }
-        encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType()));
+        if (toEncodeHeader) {
+            encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType()));
+        }
     }
     
     @SneakyThrows

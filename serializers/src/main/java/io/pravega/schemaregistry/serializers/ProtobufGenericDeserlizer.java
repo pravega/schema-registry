@@ -32,10 +32,13 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
     ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
                               SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);
+        Preconditions.checkArgument(isEncodeHeader() || schema != null);
+        
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Descriptors.Descriptor>() {
             @Override
             public Descriptors.Descriptor load(SchemaInfo schemaToUse) throws Exception {
-                DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaToUse.getSchemaData());
+                DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getDescriptorProto();
+                
                 int count = descriptorSet.getFileCount();
                 int nameStart = schemaToUse.getName().lastIndexOf(".");
                 String name = schemaToUse.getName().substring(nameStart + 1);
@@ -59,7 +62,6 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
                                                        .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getName())));
             }
         });
-
     }
 
     @SneakyThrows
