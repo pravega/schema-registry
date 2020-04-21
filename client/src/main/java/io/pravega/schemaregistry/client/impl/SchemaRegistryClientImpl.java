@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.client.impl;
@@ -59,15 +59,20 @@ import java.util.stream.Collectors;
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private static final HashFunction HASH = Hashing.murmur3_128();
-    private final Client client = ClientBuilder.newClient(new ClientConfig());
+    private final Client client;
     private final URI uri;
 
     public SchemaRegistryClientImpl(URI uri) {
+        this(uri, ClientBuilder.newClient(new ClientConfig()));
+    }
+
+    SchemaRegistryClientImpl(URI uri, Client client) {
         this.uri = uri;
+        this.client = client;
     }
 
     @Override
-    public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByObjectType, Map<String, String> properties) {
+    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateByObjectType, Map<String, String> properties) {
         WebTarget webTarget = client.target(uri).path("v1/groups");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
@@ -77,7 +82,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
                                                              .properties(properties).validateByObjectType(validateByObjectType)
-                                                             .groupName(group)
+                                                             .groupName(groupId)
                                                              .validationRules(compatibility);
         Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -120,8 +125,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public GroupProperties getGroupProperties(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group);
+    public GroupProperties getGroupProperties(String groupId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(groupId);
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -166,7 +171,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo addSchemaIfAbsent(String group, SchemaInfo schema) {
+    public VersionInfo addSchema(String group, SchemaInfo schema) {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();

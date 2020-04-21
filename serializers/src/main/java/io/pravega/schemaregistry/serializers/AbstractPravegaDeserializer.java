@@ -27,7 +27,6 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
 abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
@@ -38,7 +37,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private final SchemaRegistryClient client;
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
     // If headers are not encoded, then this will be the latest schema from the registry
-    private final AtomicReference<SchemaInfo> schemaInfo;
+    private final SchemaInfo schemaInfo;
     private final AtomicBoolean encodeHeader;
     private final SerializerConfig.Decoder decoder;
     private final boolean skipHeaders;
@@ -53,10 +52,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
         this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
-        this.schemaInfo = new AtomicReference<>();
-        if (schema != null) {
-            schemaInfo.set(schema.getSchemaInfo());
-        }
+        this.schemaInfo = schema == null ? null : schema.getSchemaInfo();
         this.encodeHeader = new AtomicBoolean();
         this.skipHeaders = skipHeaders;
         this.decoder = decoder;
@@ -69,19 +65,19 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
         Map<String, String> properties = groupProperties.getProperties();
-        boolean toEncodeHeader = Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
+        boolean toEncodeHeader = !properties.containsKey(SerializerFactory.ENCODE) ||
+                Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
         this.encodeHeader.set(toEncodeHeader);
 
-        if (schemaInfo.get() != null) {
+        if (schemaInfo != null) {
             log.info("Validate caller supplied schema.");
-            if (!client.canRead(groupId, schemaInfo.get())) {
-                throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.get().getName());
+            if (!client.canRead(groupId, schemaInfo)) {
+                throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.getName());
             }
-        } else if (!this.encodeHeader.get()) {
-            log.info("Retrieving latest schema from the registry for reads.");
-            schemaInfo.set(client.getLatestSchema(groupId, null).getSchema());
         } else {
-            log.info("Read using writer schema.");
+            if (!this.encodeHeader.get()) {
+                log.warn("No reader schema is supplied and stream does not have encoding headers.");
+            }
         }
     }
     
@@ -111,12 +107,12 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
             uncompressed.get(array);
 
             InputStream inputStream = new ByteArrayInputStream(array);
-            if (schemaInfo.get() == null) { // deserialize into writer schema
+            if (schemaInfo == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into
                 return deserialize(inputStream, writerSchema, writerSchema);
             } else {
                 // pass reader schema for schema on read to the underlying implementation
-                return deserialize(inputStream, writerSchema, schemaInfo.get());
+                return deserialize(inputStream, writerSchema, schemaInfo);
             }
         } else {
             // pass reader schema for schema on read to the underlying implementation
@@ -124,9 +120,13 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
             data.get(array);
             InputStream inputStream = new ByteArrayInputStream(array);
 
-            return deserialize(inputStream, null, schemaInfo.get());
+            return deserialize(inputStream, null, schemaInfo);
         }
     }
     
     protected abstract T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema);
+    
+    boolean isEncodeHeader() {
+        return encodeHeader.get();
+    }
 }

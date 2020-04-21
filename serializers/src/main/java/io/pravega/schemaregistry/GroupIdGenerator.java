@@ -21,6 +21,9 @@ import java.nio.charset.StandardCharsets;
  * URL encoder.
  */
 public class GroupIdGenerator {
+    private GroupIdGenerator() {
+    }
+
     @SneakyThrows
     public static String getGroupId(Type type, String... args) {
         switch (type) {
@@ -28,7 +31,7 @@ public class GroupIdGenerator {
                 Preconditions.checkNotNull(args);
                 Preconditions.checkArgument(args.length == 2);
                 StringBuilder qualifiedNameBuilder = new StringBuilder();
-                qualifiedNameBuilder.append("Group://");
+                qualifiedNameBuilder.append("pravega://");
                 for (String arg : args) {
                     qualifiedNameBuilder.append(arg);
                     qualifiedNameBuilder.append("/");

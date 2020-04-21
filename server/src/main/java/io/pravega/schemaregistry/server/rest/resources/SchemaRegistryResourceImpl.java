@@ -221,7 +221,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                                          SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(addSchemaRequest.getSchemaInfo());
 
-        registryService.addSchemaIfAbsent(groupName, schemaInfo)
+        registryService.addSchema(groupName, schemaInfo)
                        .thenApply(versionInfo -> {
                            VersionInfo version = ModelHelper.encode(versionInfo);
                            return Response.status(Status.OK).entity(version).build();

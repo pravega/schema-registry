@@ -20,7 +20,9 @@ import java.util.stream.Collectors;
 
 /**
  * Schema validation rules that are applied for checking if a schema is valid. 
- * This contains a set of rules. The schema will be compared against one or more existing schemas in the group by applying the rule. 
+ * This contains a set of rules {@link SchemaValidationRule}. Currently the only rule that is supported is {@link Compatibility}.
+ * The schema will be compared against one or more existing schemas in the group by checking it for satisfying each of the 
+ * rules. 
  */
 @Data
 @Builder

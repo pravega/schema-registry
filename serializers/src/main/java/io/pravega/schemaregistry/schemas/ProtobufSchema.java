@@ -103,5 +103,19 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
 
         return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
     }
+
+    /**
+     * Method to generate protobuf schema of generic type {@link DynamicMessage} from schemaInfo {@link SchemaInfo}.
+     *
+     * @param schemaInfo              Schema Info
+     * @return {@link ProtobufSchema} with generic type {@link DynamicMessage} that captures protobuf schema.
+     */
+    @SneakyThrows
+    @SuppressWarnings("unchecked")
+    public static ProtobufSchema<DynamicMessage> from(SchemaInfo schemaInfo) {
+        DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+
+        return new ProtobufSchema<>(schemaInfo.getName(), null, fileDescriptorSet);
+    }
 }
 

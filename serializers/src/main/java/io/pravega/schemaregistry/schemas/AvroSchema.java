@@ -58,23 +58,6 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     }
 
     /**
-     * It is same as {@link #of(Class)} except that it generates an AvroSchema typed as {@link SpecificRecordBase}. 
-     * 
-     * This is useful for supplying a map of Avro schemas for multiplexed serializers and deserializers. 
-     * 
-     * @param tClass Class whose schema should be used.
-     * @param schema Schema to use. 
-     * @param <T> Type of class whose schema is to be used. 
-     * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
-     */
-    public static <T> AvroSchema<SpecificRecordBase> of(Class<T> tClass, Schema schema) {
-        Preconditions.checkArgument(SpecificRecordBase.class.isAssignableFrom(tClass));
-        Preconditions.checkArgument(SpecificData.get().getSchema(tClass).equals(schema));
-        
-        return new AvroSchema<>(schema);
-    }
-
-    /**
      * Method to create a typed AvroSchema of type {@link GenericRecord} from the given schema. 
      *
      * @param schema Schema to use. 
@@ -83,7 +66,35 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     public static AvroSchema<GenericRecord> of(Schema schema) {
         return new AvroSchema<>(schema);
     }
-    
+
+    /**
+     * It is same as {@link #of(Class)} except that it generates an AvroSchema typed as {@link SpecificRecordBase}. 
+     *
+     * This is useful for supplying a map of Avro schemas for multiplexed serializers and deserializers. 
+     *
+     * @param tClass Class whose schema should be used.
+     * @param <T> Type of class whose schema is to be used. 
+     * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
+     */
+    public static <T extends SpecificRecordBase> AvroSchema<T> ofBaseType(Class<? extends T> tClass) {
+        Preconditions.checkArgument(SpecificRecordBase.class.isAssignableFrom(tClass));
+
+        return new AvroSchema<>(SpecificData.get().getSchema(tClass));
+    }
+
+    /**
+     * Method to create a typed AvroSchema of type {@link GenericRecord} from schema info. 
+     *
+     * @param schemainfo Schema info object that has schema data in binary form.  
+     * @return Returns an AvroSchema with {@link GenericRecord} type. 
+     */
+    public static AvroSchema<GenericRecord> from(SchemaInfo schemainfo) {
+        String schemaString = new String(schemainfo.getSchemaData(), Charsets.UTF_8);
+        Schema schema = new Schema.Parser().parse(schemaString);
+
+        return new AvroSchema<>(schema);
+    }
+
     private byte[] getSchemaBytes() {
         return schema.toString().getBytes(Charsets.UTF_8);
     }

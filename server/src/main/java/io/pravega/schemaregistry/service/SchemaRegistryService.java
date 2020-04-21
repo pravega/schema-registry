@@ -200,8 +200,8 @@ public class SchemaRegistryService {
      * @param schema Schema to add.
      * @return CompletableFuture that holds versionInfo which uniquely identifies where the schema is added in the group.
      */
-    public CompletableFuture<VersionInfo> addSchemaIfAbsent(String group, SchemaInfo schema) {
-        log.info("addSchemaIfAbsent called for group {}. schema {}", schema.getName());
+    public CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schema) {
+        log.info("addSchema called for group {}. schema {}", schema.getName());
 
         // 1. get group policy
         // 2. get checker for schema type.
