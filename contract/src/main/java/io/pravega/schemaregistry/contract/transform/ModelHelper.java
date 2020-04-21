@@ -112,9 +112,9 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
-        return new io.pravega.schemaregistry.contract.data.GroupProperties(decode(groupProperties.getSchemaType()),
-                decode(groupProperties.getSchemaValidationRules()), groupProperties.isValidateByObjectType(),
-                groupProperties.getProperties());
+        return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
+        .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).validateByObjectType(groupProperties.isValidateByObjectType())
+                .properties(groupProperties.getProperties()).build();
     }
     // endregion
 

@@ -9,8 +9,11 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -35,9 +38,17 @@ import java.util.Map;
  * of schemas in conformance with schema validation rules. 
  */
 @Data
+@Builder
+@AllArgsConstructor
 public class GroupProperties {
     private final SchemaType schemaType;
     private final SchemaValidationRules schemaValidationRules;
     private final boolean validateByObjectType;
     private final Map<String, String> properties;
+
+    public static final class GroupPropertiesBuilder {
+        private SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.fullTransitive());
+        private boolean validateByObjectType = false;
+        private Map<String, String> properties = Collections.emptyMap();
+    }
 }
