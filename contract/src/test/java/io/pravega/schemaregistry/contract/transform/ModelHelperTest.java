@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.transform;
@@ -86,8 +86,8 @@ public class ModelHelperTest {
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0),
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1));
         io.pravega.schemaregistry.contract.data.SchemaValidationRules schemaValidationRules = io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(rule);
-        io.pravega.schemaregistry.contract.data.GroupProperties prop = new io.pravega.schemaregistry.contract.data.GroupProperties(
-                schemaType, schemaValidationRules, true, Collections.emptyMap());
+        io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties.builder()
+                .schemaType(schemaType).schemaValidationRules(schemaValidationRules).validateByObjectType(true).properties(Collections.emptyMap()).build();
         io.pravega.schemaregistry.contract.data.CodecType codecType = io.pravega.schemaregistry.contract.data.CodecType.custom("codec", Collections.emptyMap());
 
         // encode test

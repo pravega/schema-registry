@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.transform;
@@ -112,9 +112,9 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
-        return new io.pravega.schemaregistry.contract.data.GroupProperties(decode(groupProperties.getSchemaType()),
-                decode(groupProperties.getSchemaValidationRules()), groupProperties.isValidateByObjectType(),
-                groupProperties.getProperties());
+        return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
+        .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).validateByObjectType(groupProperties.isValidateByObjectType())
+                .properties(groupProperties.getProperties()).build();
     }
     // endregion
 
