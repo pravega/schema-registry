@@ -15,6 +15,7 @@ import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import lombok.Data;
 import lombok.SneakyThrows;
 import lombok.Synchronized;
 
@@ -26,7 +27,7 @@ import java.util.concurrent.ExecutionException;
  * Local cache for storing schemas that are retrieved from the registry service.  
  */
 public class EncodingCache {
-    private static final Map<String, EncodingCache> GROUP_CACHE_MAP = new HashMap<>();
+    private static final Map<Key, EncodingCache> GROUP_CACHE_MAP = new HashMap<>();
     
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
     
@@ -46,12 +47,19 @@ public class EncodingCache {
 
     @Synchronized
     public static EncodingCache getEncodingCacheForGroup(String groupId, SchemaRegistryClient registryClient) {
-        if (GROUP_CACHE_MAP.containsKey(groupId)) {
-            return GROUP_CACHE_MAP.get(groupId);
+        Key key = new Key(registryClient, groupId);
+        if (GROUP_CACHE_MAP.containsKey(key)) {
+            return GROUP_CACHE_MAP.get(key);
         } else {
             EncodingCache value = new EncodingCache(groupId, registryClient);
-            GROUP_CACHE_MAP.put(groupId, value);
+            GROUP_CACHE_MAP.put(key, value);
             return value;
         }
+    }
+    
+    @Data
+    private static class Key {
+        private final SchemaRegistryClient client;
+        private final String groupId;
     }
 }
