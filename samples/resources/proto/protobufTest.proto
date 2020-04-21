@@ -1,5 +1,5 @@
 syntax = "proto3";
-package io.pravega.schemaregistry.test.integrationtest.generated;
+package io.pravega.schemaregistry.test.samples.generated;
 
 message InternalMessage {
     enum Values {

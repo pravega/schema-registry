@@ -112,14 +112,14 @@ public abstract class TestEndToEnd {
         SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.Avro, 
                 schema1.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
-        client.registerSchema(group, schemaInfo);
+        client.addSchema(group, schemaInfo);
 
         // attempt to add an existing schema
-        client.registerSchema(group, schemaInfo);
+        client.addSchema(group, schemaInfo);
 
         SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.Avro,
                 schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
-        client.registerSchema(group, schemaInfo2);
+        client.addSchema(group, schemaInfo2);
 
         client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()));
 
@@ -127,7 +127,7 @@ public abstract class TestEndToEnd {
                 schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-        CompletableFuture.supplyAsync(() -> client.registerSchema(group, schemaInfo3))
+        CompletableFuture.supplyAsync(() -> client.addSchema(group, schemaInfo3))
                          .exceptionally(e -> {
                              exceptionRef.set(Exceptions.unwrap(e));
                              return null;
@@ -138,7 +138,7 @@ public abstract class TestEndToEnd {
         String myTest2 = "MyTest2";
         SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.Avro,
                 schemaTest2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
-        client.registerSchema(group, schemaInfo4);
+        client.addSchema(group, schemaInfo4);
 
         List<String> objectTypes = client.getObjectTypes(group);
         assertEquals(objectTypes.size(), 2);

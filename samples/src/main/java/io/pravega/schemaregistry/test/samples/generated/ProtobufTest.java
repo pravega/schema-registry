@@ -15,25 +15,28 @@ public final class ProtobufTest {
         (com.google.protobuf.ExtensionRegistryLite) registry);
   }
   public interface InternalMessageOrBuilder extends
-      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage)
+      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.samples.generated.InternalMessage)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+     * @return The enum numeric value on the wire for value.
      */
     int getValueValue();
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+     * @return The value.
      */
     io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values getValue();
   }
   /**
-   * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage}
+   * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.InternalMessage}
    */
   public  static final class InternalMessage extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage)
+      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.samples.generated.InternalMessage)
       InternalMessageOrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use InternalMessage.newBuilder() to construct.
     private InternalMessage(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -43,16 +46,27 @@ public final class ProtobufTest {
     }
 
     @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new InternalMessage();
+    }
+
+    @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      return this.unknownFields;
     }
     private InternalMessage(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      int mutable_bitField0_ = 0;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -61,16 +75,17 @@ public final class ProtobufTest {
             case 0:
               done = true;
               break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
             case 8: {
               int rawValue = input.readEnum();
 
               value_ = rawValue;
+              break;
+            }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
               break;
             }
           }
@@ -81,23 +96,25 @@ public final class ProtobufTest {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
+        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_descriptor;
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_fieldAccessorTable
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder.class);
     }
 
     /**
-     * Protobuf enum {@code io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values}
+     * Protobuf enum {@code io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values}
      */
     public enum Values
         implements com.google.protobuf.ProtocolMessageEnum {
@@ -147,6 +164,8 @@ public final class ProtobufTest {
       }
 
       /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
        * @deprecated Use {@link #forNumber(int)} instead.
        */
       @java.lang.Deprecated
@@ -154,6 +173,10 @@ public final class ProtobufTest {
         return forNumber(value);
       }
 
+      /**
+       * @param value The numeric wire value of the corresponding enum entry.
+       * @return The enum associated with the given numeric wire value.
+       */
       public static Values forNumber(int value) {
         switch (value) {
           case 0: return val1;
@@ -209,26 +232,30 @@ public final class ProtobufTest {
         this.value = value;
       }
 
-      // @@protoc_insertion_point(enum_scope:io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values)
+      // @@protoc_insertion_point(enum_scope:io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values)
     }
 
     public static final int VALUE_FIELD_NUMBER = 1;
     private int value_;
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+     * @return The enum numeric value on the wire for value.
      */
     public int getValueValue() {
       return value_;
     }
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+     * @return The value.
      */
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values getValue() {
+      @SuppressWarnings("deprecation")
       io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values result = io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values.valueOf(value_);
       return result == null ? io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values.UNRECOGNIZED : result;
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -238,13 +265,16 @@ public final class ProtobufTest {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (value_ != io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values.val1.getNumber()) {
         output.writeEnum(1, value_);
       }
+      unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -254,11 +284,11 @@ public final class ProtobufTest {
         size += com.google.protobuf.CodedOutputStream
           .computeEnumSize(1, value_);
       }
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -269,9 +299,9 @@ public final class ProtobufTest {
       }
       io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage other = (io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage) obj;
 
-      boolean result = true;
-      result = result && value_ == other.value_;
-      return result;
+      if (value_ != other.value_) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
     }
 
     @java.lang.Override
@@ -280,7 +310,7 @@ public final class ProtobufTest {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + VALUE_FIELD_NUMBER;
       hash = (53 * hash) + value_;
       hash = (29 * hash) + unknownFields.hashCode();
@@ -288,6 +318,17 @@ public final class ProtobufTest {
       return hash;
     }
 
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -347,6 +388,7 @@ public final class ProtobufTest {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -354,6 +396,7 @@ public final class ProtobufTest {
     public static Builder newBuilder(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -366,25 +409,26 @@ public final class ProtobufTest {
       return builder;
     }
     /**
-     * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage}
+     * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.InternalMessage}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage)
+        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.samples.generated.InternalMessage)
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessageOrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_fieldAccessorTable
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder.class);
       }
 
-      // Construct using io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest.InternalMessage.newBuilder()
+      // Construct using io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -399,6 +443,7 @@ public final class ProtobufTest {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         value_ = 0;
@@ -406,15 +451,18 @@ public final class ProtobufTest {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_descriptor;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage getDefaultInstanceForType() {
         return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.getDefaultInstance();
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage build() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage result = buildPartial();
         if (!result.isInitialized()) {
@@ -423,6 +471,7 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage buildPartial() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage result = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage(this);
         result.value_ = value_;
@@ -430,32 +479,39 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
-        return (Builder) super.clone();
+        return super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
+          java.lang.Object value) {
+        return super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
+        return super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
+        return super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage) {
           return mergeFrom((io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage)other);
@@ -470,14 +526,17 @@ public final class ProtobufTest {
         if (other.value_ != 0) {
           setValueValue(other.getValueValue());
         }
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -498,13 +557,16 @@ public final class ProtobufTest {
 
       private int value_ = 0;
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+       * @return The enum numeric value on the wire for value.
        */
       public int getValueValue() {
         return value_;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+       * @param value The enum numeric value on the wire for value to set.
+       * @return This builder for chaining.
        */
       public Builder setValueValue(int value) {
         value_ = value;
@@ -512,14 +574,18 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+       * @return The value.
        */
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values getValue() {
+        @SuppressWarnings("deprecation")
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values result = io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values.valueOf(value_);
         return result == null ? io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values.UNRECOGNIZED : result;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+       * @param value The value to set.
+       * @return This builder for chaining.
        */
       public Builder setValue(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Values value) {
         if (value == null) {
@@ -531,7 +597,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage.Values value = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage.Values value = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearValue() {
         
@@ -539,21 +606,23 @@ public final class ProtobufTest {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.mergeUnknownFields(unknownFields);
       }
 
 
-      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage)
+      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.samples.generated.InternalMessage)
     }
 
-    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage)
+    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.samples.generated.InternalMessage)
     private static final io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage DEFAULT_INSTANCE;
     static {
       DEFAULT_INSTANCE = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage();
@@ -565,11 +634,12 @@ public final class ProtobufTest {
 
     private static final com.google.protobuf.Parser<InternalMessage>
         PARSER = new com.google.protobuf.AbstractParser<InternalMessage>() {
+      @java.lang.Override
       public InternalMessage parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new InternalMessage(input, extensionRegistry);
+        return new InternalMessage(input, extensionRegistry);
       }
     };
 
@@ -582,6 +652,7 @@ public final class ProtobufTest {
       return PARSER;
     }
 
+    @java.lang.Override
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -589,39 +660,44 @@ public final class ProtobufTest {
   }
 
   public interface Message1OrBuilder extends
-      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.integrationtest.generated.Message1)
+      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.samples.generated.Message1)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
+     * @return Whether the internal field is set.
      */
     boolean hasInternal();
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
+     * @return The internal.
      */
     io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage getInternal();
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
      */
     io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessageOrBuilder getInternalOrBuilder();
 
     /**
-     * <code>optional string name = 2;</code>
+     * <code>string name = 2;</code>
+     * @return The name.
      */
     java.lang.String getName();
     /**
-     * <code>optional string name = 2;</code>
+     * <code>string name = 2;</code>
+     * @return The bytes for name.
      */
     com.google.protobuf.ByteString
         getNameBytes();
   }
   /**
-   * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.Message1}
+   * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.Message1}
    */
   public  static final class Message1 extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.integrationtest.generated.Message1)
+      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.samples.generated.Message1)
       Message1OrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Message1.newBuilder() to construct.
     private Message1(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
@@ -631,16 +707,27 @@ public final class ProtobufTest {
     }
 
     @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new Message1();
+    }
+
+    @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      return this.unknownFields;
     }
     private Message1(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      int mutable_bitField0_ = 0;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -649,12 +736,6 @@ public final class ProtobufTest {
             case 0:
               done = true;
               break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder subBuilder = null;
               if (internal_ != null) {
@@ -674,6 +755,13 @@ public final class ProtobufTest {
               name_ = s;
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -682,17 +770,19 @@ public final class ProtobufTest {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
+        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_descriptor;
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_fieldAccessorTable
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1.Builder.class);
     }
@@ -700,19 +790,21 @@ public final class ProtobufTest {
     public static final int INTERNAL_FIELD_NUMBER = 1;
     private io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage internal_;
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
+     * @return Whether the internal field is set.
      */
     public boolean hasInternal() {
       return internal_ != null;
     }
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
+     * @return The internal.
      */
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage getInternal() {
       return internal_ == null ? io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.getDefaultInstance() : internal_;
     }
     /**
-     * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+     * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
      */
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessageOrBuilder getInternalOrBuilder() {
       return getInternal();
@@ -721,7 +813,8 @@ public final class ProtobufTest {
     public static final int NAME_FIELD_NUMBER = 2;
     private volatile java.lang.Object name_;
     /**
-     * <code>optional string name = 2;</code>
+     * <code>string name = 2;</code>
+     * @return The name.
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -736,7 +829,8 @@ public final class ProtobufTest {
       }
     }
     /**
-     * <code>optional string name = 2;</code>
+     * <code>string name = 2;</code>
+     * @return The bytes for name.
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -753,6 +847,7 @@ public final class ProtobufTest {
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -762,6 +857,7 @@ public final class ProtobufTest {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (internal_ != null) {
@@ -770,8 +866,10 @@ public final class ProtobufTest {
       if (!getNameBytes().isEmpty()) {
         com.google.protobuf.GeneratedMessageV3.writeString(output, 2, name_);
       }
+      unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -784,11 +882,11 @@ public final class ProtobufTest {
       if (!getNameBytes().isEmpty()) {
         size += com.google.protobuf.GeneratedMessageV3.computeStringSize(2, name_);
       }
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -799,15 +897,15 @@ public final class ProtobufTest {
       }
       io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 other = (io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1) obj;
 
-      boolean result = true;
-      result = result && (hasInternal() == other.hasInternal());
+      if (hasInternal() != other.hasInternal()) return false;
       if (hasInternal()) {
-        result = result && getInternal()
-            .equals(other.getInternal());
+        if (!getInternal()
+            .equals(other.getInternal())) return false;
       }
-      result = result && getName()
-          .equals(other.getName());
-      return result;
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
     }
 
     @java.lang.Override
@@ -816,7 +914,7 @@ public final class ProtobufTest {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       if (hasInternal()) {
         hash = (37 * hash) + INTERNAL_FIELD_NUMBER;
         hash = (53 * hash) + getInternal().hashCode();
@@ -828,6 +926,17 @@ public final class ProtobufTest {
       return hash;
     }
 
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -887,6 +996,7 @@ public final class ProtobufTest {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -894,6 +1004,7 @@ public final class ProtobufTest {
     public static Builder newBuilder(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -906,25 +1017,26 @@ public final class ProtobufTest {
       return builder;
     }
     /**
-     * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.Message1}
+     * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.Message1}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.integrationtest.generated.Message1)
+        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.samples.generated.Message1)
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1OrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_fieldAccessorTable
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1.Builder.class);
       }
 
-      // Construct using io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest.Message1.newBuilder()
+      // Construct using io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -939,6 +1051,7 @@ public final class ProtobufTest {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         if (internalBuilder_ == null) {
@@ -952,15 +1065,18 @@ public final class ProtobufTest {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_descriptor;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 getDefaultInstanceForType() {
         return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1.getDefaultInstance();
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 build() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 result = buildPartial();
         if (!result.isInitialized()) {
@@ -969,6 +1085,7 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 buildPartial() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 result = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1(this);
         if (internalBuilder_ == null) {
@@ -981,32 +1098,39 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
-        return (Builder) super.clone();
+        return super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
+          java.lang.Object value) {
+        return super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
+        return super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
+        return super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1) {
           return mergeFrom((io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1)other);
@@ -1025,14 +1149,17 @@ public final class ProtobufTest {
           name_ = other.name_;
           onChanged();
         }
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1051,17 +1178,19 @@ public final class ProtobufTest {
         return this;
       }
 
-      private io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage internal_ = null;
+      private io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage internal_;
       private com.google.protobuf.SingleFieldBuilderV3<
           io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessageOrBuilder> internalBuilder_;
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
+       * @return Whether the internal field is set.
        */
       public boolean hasInternal() {
         return internalBuilder_ != null || internal_ != null;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
+       * @return The internal.
        */
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage getInternal() {
         if (internalBuilder_ == null) {
@@ -1071,7 +1200,7 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       public Builder setInternal(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage value) {
         if (internalBuilder_ == null) {
@@ -1087,7 +1216,7 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       public Builder setInternal(
           io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder builderForValue) {
@@ -1101,7 +1230,7 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       public Builder mergeInternal(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage value) {
         if (internalBuilder_ == null) {
@@ -1119,7 +1248,7 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       public Builder clearInternal() {
         if (internalBuilder_ == null) {
@@ -1133,7 +1262,7 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder getInternalBuilder() {
         
@@ -1141,7 +1270,7 @@ public final class ProtobufTest {
         return getInternalFieldBuilder().getBuilder();
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessageOrBuilder getInternalOrBuilder() {
         if (internalBuilder_ != null) {
@@ -1152,7 +1281,7 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional .io.pravega.schemaregistry.test.integrationtest.generated.InternalMessage internal = 1;</code>
+       * <code>.io.pravega.schemaregistry.test.samples.generated.InternalMessage internal = 1;</code>
        */
       private com.google.protobuf.SingleFieldBuilderV3<
           io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessage.Builder, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.InternalMessageOrBuilder> 
@@ -1170,7 +1299,8 @@ public final class ProtobufTest {
 
       private java.lang.Object name_ = "";
       /**
-       * <code>optional string name = 2;</code>
+       * <code>string name = 2;</code>
+       * @return The name.
        */
       public java.lang.String getName() {
         java.lang.Object ref = name_;
@@ -1185,7 +1315,8 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional string name = 2;</code>
+       * <code>string name = 2;</code>
+       * @return The bytes for name.
        */
       public com.google.protobuf.ByteString
           getNameBytes() {
@@ -1201,7 +1332,9 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional string name = 2;</code>
+       * <code>string name = 2;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
        */
       public Builder setName(
           java.lang.String value) {
@@ -1214,7 +1347,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional string name = 2;</code>
+       * <code>string name = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearName() {
         
@@ -1223,7 +1357,9 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional string name = 2;</code>
+       * <code>string name = 2;</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
        */
       public Builder setNameBytes(
           com.google.protobuf.ByteString value) {
@@ -1236,21 +1372,23 @@ public final class ProtobufTest {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.mergeUnknownFields(unknownFields);
       }
 
 
-      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.integrationtest.generated.Message1)
+      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.samples.generated.Message1)
     }
 
-    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.integrationtest.generated.Message1)
+    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.samples.generated.Message1)
     private static final io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 DEFAULT_INSTANCE;
     static {
       DEFAULT_INSTANCE = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1();
@@ -1262,11 +1400,12 @@ public final class ProtobufTest {
 
     private static final com.google.protobuf.Parser<Message1>
         PARSER = new com.google.protobuf.AbstractParser<Message1>() {
+      @java.lang.Override
       public Message1 parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Message1(input, extensionRegistry);
+        return new Message1(input, extensionRegistry);
       }
     };
 
@@ -1279,6 +1418,7 @@ public final class ProtobufTest {
       return PARSER;
     }
 
+    @java.lang.Override
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message1 getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -1286,51 +1426,65 @@ public final class ProtobufTest {
   }
 
   public interface Message2OrBuilder extends
-      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.integrationtest.generated.Message2)
+      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.samples.generated.Message2)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The name.
      */
     java.lang.String getName();
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
      */
     com.google.protobuf.ByteString
         getNameBytes();
 
     /**
-     * <code>optional int32 field1 = 2;</code>
+     * <code>int32 field1 = 2;</code>
+     * @return The field1.
      */
     int getField1();
   }
   /**
-   * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.Message2}
+   * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.Message2}
    */
   public  static final class Message2 extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.integrationtest.generated.Message2)
+      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.samples.generated.Message2)
       Message2OrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Message2.newBuilder() to construct.
     private Message2(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Message2() {
       name_ = "";
-      field1_ = 0;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new Message2();
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      return this.unknownFields;
     }
     private Message2(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      int mutable_bitField0_ = 0;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -1339,12 +1493,6 @@ public final class ProtobufTest {
             case 0:
               done = true;
               break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               java.lang.String s = input.readStringRequireUtf8();
 
@@ -1356,6 +1504,13 @@ public final class ProtobufTest {
               field1_ = input.readInt32();
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1364,17 +1519,19 @@ public final class ProtobufTest {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
+        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_descriptor;
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_fieldAccessorTable
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2.Builder.class);
     }
@@ -1382,7 +1539,8 @@ public final class ProtobufTest {
     public static final int NAME_FIELD_NUMBER = 1;
     private volatile java.lang.Object name_;
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The name.
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -1397,7 +1555,8 @@ public final class ProtobufTest {
       }
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -1416,13 +1575,15 @@ public final class ProtobufTest {
     public static final int FIELD1_FIELD_NUMBER = 2;
     private int field1_;
     /**
-     * <code>optional int32 field1 = 2;</code>
+     * <code>int32 field1 = 2;</code>
+     * @return The field1.
      */
     public int getField1() {
       return field1_;
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -1432,6 +1593,7 @@ public final class ProtobufTest {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getNameBytes().isEmpty()) {
@@ -1440,8 +1602,10 @@ public final class ProtobufTest {
       if (field1_ != 0) {
         output.writeInt32(2, field1_);
       }
+      unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -1454,11 +1618,11 @@ public final class ProtobufTest {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(2, field1_);
       }
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -1469,12 +1633,12 @@ public final class ProtobufTest {
       }
       io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 other = (io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2) obj;
 
-      boolean result = true;
-      result = result && getName()
-          .equals(other.getName());
-      result = result && (getField1()
-          == other.getField1());
-      return result;
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (getField1()
+          != other.getField1()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
     }
 
     @java.lang.Override
@@ -1483,7 +1647,7 @@ public final class ProtobufTest {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + NAME_FIELD_NUMBER;
       hash = (53 * hash) + getName().hashCode();
       hash = (37 * hash) + FIELD1_FIELD_NUMBER;
@@ -1493,6 +1657,17 @@ public final class ProtobufTest {
       return hash;
     }
 
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -1552,6 +1727,7 @@ public final class ProtobufTest {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -1559,6 +1735,7 @@ public final class ProtobufTest {
     public static Builder newBuilder(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -1571,25 +1748,26 @@ public final class ProtobufTest {
       return builder;
     }
     /**
-     * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.Message2}
+     * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.Message2}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.integrationtest.generated.Message2)
+        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.samples.generated.Message2)
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2OrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_fieldAccessorTable
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2.Builder.class);
       }
 
-      // Construct using io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest.Message2.newBuilder()
+      // Construct using io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -1604,6 +1782,7 @@ public final class ProtobufTest {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         name_ = "";
@@ -1613,15 +1792,18 @@ public final class ProtobufTest {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_descriptor;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 getDefaultInstanceForType() {
         return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2.getDefaultInstance();
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 build() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 result = buildPartial();
         if (!result.isInitialized()) {
@@ -1630,6 +1812,7 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 buildPartial() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 result = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2(this);
         result.name_ = name_;
@@ -1638,32 +1821,39 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
-        return (Builder) super.clone();
+        return super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
+          java.lang.Object value) {
+        return super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
+        return super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
+        return super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2) {
           return mergeFrom((io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2)other);
@@ -1682,14 +1872,17 @@ public final class ProtobufTest {
         if (other.getField1() != 0) {
           setField1(other.getField1());
         }
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -1710,7 +1903,8 @@ public final class ProtobufTest {
 
       private java.lang.Object name_ = "";
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @return The name.
        */
       public java.lang.String getName() {
         java.lang.Object ref = name_;
@@ -1725,7 +1919,8 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @return The bytes for name.
        */
       public com.google.protobuf.ByteString
           getNameBytes() {
@@ -1741,7 +1936,9 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
        */
       public Builder setName(
           java.lang.String value) {
@@ -1754,7 +1951,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearName() {
         
@@ -1763,7 +1961,9 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
        */
       public Builder setNameBytes(
           com.google.protobuf.ByteString value) {
@@ -1779,13 +1979,16 @@ public final class ProtobufTest {
 
       private int field1_ ;
       /**
-       * <code>optional int32 field1 = 2;</code>
+       * <code>int32 field1 = 2;</code>
+       * @return The field1.
        */
       public int getField1() {
         return field1_;
       }
       /**
-       * <code>optional int32 field1 = 2;</code>
+       * <code>int32 field1 = 2;</code>
+       * @param value The field1 to set.
+       * @return This builder for chaining.
        */
       public Builder setField1(int value) {
         
@@ -1794,7 +1997,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional int32 field1 = 2;</code>
+       * <code>int32 field1 = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearField1() {
         
@@ -1802,21 +2006,23 @@ public final class ProtobufTest {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.mergeUnknownFields(unknownFields);
       }
 
 
-      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.integrationtest.generated.Message2)
+      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.samples.generated.Message2)
     }
 
-    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.integrationtest.generated.Message2)
+    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.samples.generated.Message2)
     private static final io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 DEFAULT_INSTANCE;
     static {
       DEFAULT_INSTANCE = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2();
@@ -1828,11 +2034,12 @@ public final class ProtobufTest {
 
     private static final com.google.protobuf.Parser<Message2>
         PARSER = new com.google.protobuf.AbstractParser<Message2>() {
+      @java.lang.Override
       public Message2 parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Message2(input, extensionRegistry);
+        return new Message2(input, extensionRegistry);
       }
     };
 
@@ -1845,6 +2052,7 @@ public final class ProtobufTest {
       return PARSER;
     }
 
+    @java.lang.Override
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message2 getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -1852,57 +2060,71 @@ public final class ProtobufTest {
   }
 
   public interface Message3OrBuilder extends
-      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.integrationtest.generated.Message3)
+      // @@protoc_insertion_point(interface_extends:io.pravega.schemaregistry.test.samples.generated.Message3)
       com.google.protobuf.MessageOrBuilder {
 
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The name.
      */
     java.lang.String getName();
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
      */
     com.google.protobuf.ByteString
         getNameBytes();
 
     /**
-     * <code>optional int32 field1 = 2;</code>
+     * <code>int32 field1 = 2;</code>
+     * @return The field1.
      */
     int getField1();
 
     /**
-     * <code>optional int32 field2 = 3;</code>
+     * <code>int32 field2 = 3;</code>
+     * @return The field2.
      */
     int getField2();
   }
   /**
-   * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.Message3}
+   * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.Message3}
    */
   public  static final class Message3 extends
       com.google.protobuf.GeneratedMessageV3 implements
-      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.integrationtest.generated.Message3)
+      // @@protoc_insertion_point(message_implements:io.pravega.schemaregistry.test.samples.generated.Message3)
       Message3OrBuilder {
+  private static final long serialVersionUID = 0L;
     // Use Message3.newBuilder() to construct.
     private Message3(com.google.protobuf.GeneratedMessageV3.Builder<?> builder) {
       super(builder);
     }
     private Message3() {
       name_ = "";
-      field1_ = 0;
-      field2_ = 0;
+    }
+
+    @java.lang.Override
+    @SuppressWarnings({"unused"})
+    protected java.lang.Object newInstance(
+        UnusedPrivateParameter unused) {
+      return new Message3();
     }
 
     @java.lang.Override
     public final com.google.protobuf.UnknownFieldSet
     getUnknownFields() {
-      return com.google.protobuf.UnknownFieldSet.getDefaultInstance();
+      return this.unknownFields;
     }
     private Message3(
         com.google.protobuf.CodedInputStream input,
         com.google.protobuf.ExtensionRegistryLite extensionRegistry)
         throws com.google.protobuf.InvalidProtocolBufferException {
       this();
-      int mutable_bitField0_ = 0;
+      if (extensionRegistry == null) {
+        throw new java.lang.NullPointerException();
+      }
+      com.google.protobuf.UnknownFieldSet.Builder unknownFields =
+          com.google.protobuf.UnknownFieldSet.newBuilder();
       try {
         boolean done = false;
         while (!done) {
@@ -1911,12 +2133,6 @@ public final class ProtobufTest {
             case 0:
               done = true;
               break;
-            default: {
-              if (!input.skipField(tag)) {
-                done = true;
-              }
-              break;
-            }
             case 10: {
               java.lang.String s = input.readStringRequireUtf8();
 
@@ -1933,6 +2149,13 @@ public final class ProtobufTest {
               field2_ = input.readInt32();
               break;
             }
+            default: {
+              if (!parseUnknownField(
+                  input, unknownFields, extensionRegistry, tag)) {
+                done = true;
+              }
+              break;
+            }
           }
         }
       } catch (com.google.protobuf.InvalidProtocolBufferException e) {
@@ -1941,17 +2164,19 @@ public final class ProtobufTest {
         throw new com.google.protobuf.InvalidProtocolBufferException(
             e).setUnfinishedMessage(this);
       } finally {
+        this.unknownFields = unknownFields.build();
         makeExtensionsImmutable();
       }
     }
     public static final com.google.protobuf.Descriptors.Descriptor
         getDescriptor() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_descriptor;
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_descriptor;
     }
 
+    @java.lang.Override
     protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
         internalGetFieldAccessorTable() {
-      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_fieldAccessorTable
+      return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_fieldAccessorTable
           .ensureFieldAccessorsInitialized(
               io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3.Builder.class);
     }
@@ -1959,7 +2184,8 @@ public final class ProtobufTest {
     public static final int NAME_FIELD_NUMBER = 1;
     private volatile java.lang.Object name_;
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The name.
      */
     public java.lang.String getName() {
       java.lang.Object ref = name_;
@@ -1974,7 +2200,8 @@ public final class ProtobufTest {
       }
     }
     /**
-     * <code>optional string name = 1;</code>
+     * <code>string name = 1;</code>
+     * @return The bytes for name.
      */
     public com.google.protobuf.ByteString
         getNameBytes() {
@@ -1993,7 +2220,8 @@ public final class ProtobufTest {
     public static final int FIELD1_FIELD_NUMBER = 2;
     private int field1_;
     /**
-     * <code>optional int32 field1 = 2;</code>
+     * <code>int32 field1 = 2;</code>
+     * @return The field1.
      */
     public int getField1() {
       return field1_;
@@ -2002,13 +2230,15 @@ public final class ProtobufTest {
     public static final int FIELD2_FIELD_NUMBER = 3;
     private int field2_;
     /**
-     * <code>optional int32 field2 = 3;</code>
+     * <code>int32 field2 = 3;</code>
+     * @return The field2.
      */
     public int getField2() {
       return field2_;
     }
 
     private byte memoizedIsInitialized = -1;
+    @java.lang.Override
     public final boolean isInitialized() {
       byte isInitialized = memoizedIsInitialized;
       if (isInitialized == 1) return true;
@@ -2018,6 +2248,7 @@ public final class ProtobufTest {
       return true;
     }
 
+    @java.lang.Override
     public void writeTo(com.google.protobuf.CodedOutputStream output)
                         throws java.io.IOException {
       if (!getNameBytes().isEmpty()) {
@@ -2029,8 +2260,10 @@ public final class ProtobufTest {
       if (field2_ != 0) {
         output.writeInt32(3, field2_);
       }
+      unknownFields.writeTo(output);
     }
 
+    @java.lang.Override
     public int getSerializedSize() {
       int size = memoizedSize;
       if (size != -1) return size;
@@ -2047,11 +2280,11 @@ public final class ProtobufTest {
         size += com.google.protobuf.CodedOutputStream
           .computeInt32Size(3, field2_);
       }
+      size += unknownFields.getSerializedSize();
       memoizedSize = size;
       return size;
     }
 
-    private static final long serialVersionUID = 0L;
     @java.lang.Override
     public boolean equals(final java.lang.Object obj) {
       if (obj == this) {
@@ -2062,14 +2295,14 @@ public final class ProtobufTest {
       }
       io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 other = (io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3) obj;
 
-      boolean result = true;
-      result = result && getName()
-          .equals(other.getName());
-      result = result && (getField1()
-          == other.getField1());
-      result = result && (getField2()
-          == other.getField2());
-      return result;
+      if (!getName()
+          .equals(other.getName())) return false;
+      if (getField1()
+          != other.getField1()) return false;
+      if (getField2()
+          != other.getField2()) return false;
+      if (!unknownFields.equals(other.unknownFields)) return false;
+      return true;
     }
 
     @java.lang.Override
@@ -2078,7 +2311,7 @@ public final class ProtobufTest {
         return memoizedHashCode;
       }
       int hash = 41;
-      hash = (19 * hash) + getDescriptorForType().hashCode();
+      hash = (19 * hash) + getDescriptor().hashCode();
       hash = (37 * hash) + NAME_FIELD_NUMBER;
       hash = (53 * hash) + getName().hashCode();
       hash = (37 * hash) + FIELD1_FIELD_NUMBER;
@@ -2090,6 +2323,17 @@ public final class ProtobufTest {
       return hash;
     }
 
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data);
+    }
+    public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return PARSER.parseFrom(data, extensionRegistry);
+    }
     public static io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
@@ -2149,6 +2393,7 @@ public final class ProtobufTest {
           .parseWithIOException(PARSER, input, extensionRegistry);
     }
 
+    @java.lang.Override
     public Builder newBuilderForType() { return newBuilder(); }
     public static Builder newBuilder() {
       return DEFAULT_INSTANCE.toBuilder();
@@ -2156,6 +2401,7 @@ public final class ProtobufTest {
     public static Builder newBuilder(io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 prototype) {
       return DEFAULT_INSTANCE.toBuilder().mergeFrom(prototype);
     }
+    @java.lang.Override
     public Builder toBuilder() {
       return this == DEFAULT_INSTANCE
           ? new Builder() : new Builder().mergeFrom(this);
@@ -2168,25 +2414,26 @@ public final class ProtobufTest {
       return builder;
     }
     /**
-     * Protobuf type {@code io.pravega.schemaregistry.test.integrationtest.generated.Message3}
+     * Protobuf type {@code io.pravega.schemaregistry.test.samples.generated.Message3}
      */
     public static final class Builder extends
         com.google.protobuf.GeneratedMessageV3.Builder<Builder> implements
-        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.integrationtest.generated.Message3)
+        // @@protoc_insertion_point(builder_implements:io.pravega.schemaregistry.test.samples.generated.Message3)
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3OrBuilder {
       public static final com.google.protobuf.Descriptors.Descriptor
           getDescriptor() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_descriptor;
       }
 
+      @java.lang.Override
       protected com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
           internalGetFieldAccessorTable() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_fieldAccessorTable
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_fieldAccessorTable
             .ensureFieldAccessorsInitialized(
                 io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3.class, io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3.Builder.class);
       }
 
-      // Construct using io.pravega.schemaregistry.test.integrationtest.generated.ProtobufTest.Message3.newBuilder()
+      // Construct using io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3.newBuilder()
       private Builder() {
         maybeForceBuilderInitialization();
       }
@@ -2201,6 +2448,7 @@ public final class ProtobufTest {
                 .alwaysUseFieldBuilders) {
         }
       }
+      @java.lang.Override
       public Builder clear() {
         super.clear();
         name_ = "";
@@ -2212,15 +2460,18 @@ public final class ProtobufTest {
         return this;
       }
 
+      @java.lang.Override
       public com.google.protobuf.Descriptors.Descriptor
           getDescriptorForType() {
-        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_descriptor;
+        return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_descriptor;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 getDefaultInstanceForType() {
         return io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3.getDefaultInstance();
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 build() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 result = buildPartial();
         if (!result.isInitialized()) {
@@ -2229,6 +2480,7 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 buildPartial() {
         io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 result = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3(this);
         result.name_ = name_;
@@ -2238,32 +2490,39 @@ public final class ProtobufTest {
         return result;
       }
 
+      @java.lang.Override
       public Builder clone() {
-        return (Builder) super.clone();
+        return super.clone();
       }
+      @java.lang.Override
       public Builder setField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.setField(field, value);
+          java.lang.Object value) {
+        return super.setField(field, value);
       }
+      @java.lang.Override
       public Builder clearField(
           com.google.protobuf.Descriptors.FieldDescriptor field) {
-        return (Builder) super.clearField(field);
+        return super.clearField(field);
       }
+      @java.lang.Override
       public Builder clearOneof(
           com.google.protobuf.Descriptors.OneofDescriptor oneof) {
-        return (Builder) super.clearOneof(oneof);
+        return super.clearOneof(oneof);
       }
+      @java.lang.Override
       public Builder setRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          int index, Object value) {
-        return (Builder) super.setRepeatedField(field, index, value);
+          int index, java.lang.Object value) {
+        return super.setRepeatedField(field, index, value);
       }
+      @java.lang.Override
       public Builder addRepeatedField(
           com.google.protobuf.Descriptors.FieldDescriptor field,
-          Object value) {
-        return (Builder) super.addRepeatedField(field, value);
+          java.lang.Object value) {
+        return super.addRepeatedField(field, value);
       }
+      @java.lang.Override
       public Builder mergeFrom(com.google.protobuf.Message other) {
         if (other instanceof io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3) {
           return mergeFrom((io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3)other);
@@ -2285,14 +2544,17 @@ public final class ProtobufTest {
         if (other.getField2() != 0) {
           setField2(other.getField2());
         }
+        this.mergeUnknownFields(other.unknownFields);
         onChanged();
         return this;
       }
 
+      @java.lang.Override
       public final boolean isInitialized() {
         return true;
       }
 
+      @java.lang.Override
       public Builder mergeFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
@@ -2313,7 +2575,8 @@ public final class ProtobufTest {
 
       private java.lang.Object name_ = "";
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @return The name.
        */
       public java.lang.String getName() {
         java.lang.Object ref = name_;
@@ -2328,7 +2591,8 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @return The bytes for name.
        */
       public com.google.protobuf.ByteString
           getNameBytes() {
@@ -2344,7 +2608,9 @@ public final class ProtobufTest {
         }
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @param value The name to set.
+       * @return This builder for chaining.
        */
       public Builder setName(
           java.lang.String value) {
@@ -2357,7 +2623,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @return This builder for chaining.
        */
       public Builder clearName() {
         
@@ -2366,7 +2633,9 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional string name = 1;</code>
+       * <code>string name = 1;</code>
+       * @param value The bytes for name to set.
+       * @return This builder for chaining.
        */
       public Builder setNameBytes(
           com.google.protobuf.ByteString value) {
@@ -2382,13 +2651,16 @@ public final class ProtobufTest {
 
       private int field1_ ;
       /**
-       * <code>optional int32 field1 = 2;</code>
+       * <code>int32 field1 = 2;</code>
+       * @return The field1.
        */
       public int getField1() {
         return field1_;
       }
       /**
-       * <code>optional int32 field1 = 2;</code>
+       * <code>int32 field1 = 2;</code>
+       * @param value The field1 to set.
+       * @return This builder for chaining.
        */
       public Builder setField1(int value) {
         
@@ -2397,7 +2669,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional int32 field1 = 2;</code>
+       * <code>int32 field1 = 2;</code>
+       * @return This builder for chaining.
        */
       public Builder clearField1() {
         
@@ -2408,13 +2681,16 @@ public final class ProtobufTest {
 
       private int field2_ ;
       /**
-       * <code>optional int32 field2 = 3;</code>
+       * <code>int32 field2 = 3;</code>
+       * @return The field2.
        */
       public int getField2() {
         return field2_;
       }
       /**
-       * <code>optional int32 field2 = 3;</code>
+       * <code>int32 field2 = 3;</code>
+       * @param value The field2 to set.
+       * @return This builder for chaining.
        */
       public Builder setField2(int value) {
         
@@ -2423,7 +2699,8 @@ public final class ProtobufTest {
         return this;
       }
       /**
-       * <code>optional int32 field2 = 3;</code>
+       * <code>int32 field2 = 3;</code>
+       * @return This builder for chaining.
        */
       public Builder clearField2() {
         
@@ -2431,21 +2708,23 @@ public final class ProtobufTest {
         onChanged();
         return this;
       }
+      @java.lang.Override
       public final Builder setUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.setUnknownFields(unknownFields);
       }
 
+      @java.lang.Override
       public final Builder mergeUnknownFields(
           final com.google.protobuf.UnknownFieldSet unknownFields) {
-        return this;
+        return super.mergeUnknownFields(unknownFields);
       }
 
 
-      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.integrationtest.generated.Message3)
+      // @@protoc_insertion_point(builder_scope:io.pravega.schemaregistry.test.samples.generated.Message3)
     }
 
-    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.integrationtest.generated.Message3)
+    // @@protoc_insertion_point(class_scope:io.pravega.schemaregistry.test.samples.generated.Message3)
     private static final io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 DEFAULT_INSTANCE;
     static {
       DEFAULT_INSTANCE = new io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3();
@@ -2457,11 +2736,12 @@ public final class ProtobufTest {
 
     private static final com.google.protobuf.Parser<Message3>
         PARSER = new com.google.protobuf.AbstractParser<Message3>() {
+      @java.lang.Override
       public Message3 parsePartialFrom(
           com.google.protobuf.CodedInputStream input,
           com.google.protobuf.ExtensionRegistryLite extensionRegistry)
           throws com.google.protobuf.InvalidProtocolBufferException {
-          return new Message3(input, extensionRegistry);
+        return new Message3(input, extensionRegistry);
       }
     };
 
@@ -2474,6 +2754,7 @@ public final class ProtobufTest {
       return PARSER;
     }
 
+    @java.lang.Override
     public io.pravega.schemaregistry.test.samples.generated.ProtobufTest.Message3 getDefaultInstanceForType() {
       return DEFAULT_INSTANCE;
     }
@@ -2481,25 +2762,25 @@ public final class ProtobufTest {
   }
 
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_descriptor;
+    internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_fieldAccessorTable;
+      internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_descriptor;
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_fieldAccessorTable;
+      internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_descriptor;
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_fieldAccessorTable;
+      internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_fieldAccessorTable;
   private static final com.google.protobuf.Descriptors.Descriptor
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_descriptor;
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_descriptor;
   private static final 
     com.google.protobuf.GeneratedMessageV3.FieldAccessorTable
-      internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_fieldAccessorTable;
+      internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_fieldAccessorTable;
 
   public static com.google.protobuf.Descriptors.FileDescriptor
       getDescriptor() {
@@ -2509,54 +2790,46 @@ public final class ProtobufTest {
       descriptor;
   static {
     java.lang.String[] descriptorData = {
-      "\n\022protobufTest.proto\0228io.pravega.schemar" +
-      "egistry.test.integrationtest.generated\"\244" +
-      "\001\n\017InternalMessage\022_\n\005value\030\001 \001(\0162P.io.p" +
-      "ravega.schemaregistry.test.integrationte" +
-      "st.generated.InternalMessage.Values\"0\n\006V" +
-      "alues\022\010\n\004val1\020\000\022\010\n\004val2\020\001\022\010\n\004val3\020\002\022\010\n\004v" +
-      "al4\020\003\"u\n\010Message1\022[\n\010internal\030\001 \001(\0132I.io" +
-      ".pravega.schemaregistry.test.integration" +
-      "test.generated.InternalMessage\022\014\n\004name\030\002" +
-      " \001(\t\"(\n\010Message2\022\014\n\004name\030\001 \001(\t\022\016\n\006field1",
-      "\030\002 \001(\005\"8\n\010Message3\022\014\n\004name\030\001 \001(\t\022\016\n\006fiel" +
-      "d1\030\002 \001(\005\022\016\n\006field2\030\003 \001(\005b\006proto3"
+      "\n\022protobufTest.proto\0220io.pravega.schemar" +
+      "egistry.test.samples.generated\"\234\001\n\017Inter" +
+      "nalMessage\022W\n\005value\030\001 \001(\0162H.io.pravega.s" +
+      "chemaregistry.test.samples.generated.Int" +
+      "ernalMessage.Values\"0\n\006Values\022\010\n\004val1\020\000\022" +
+      "\010\n\004val2\020\001\022\010\n\004val3\020\002\022\010\n\004val4\020\003\"m\n\010Message" +
+      "1\022S\n\010internal\030\001 \001(\0132A.io.pravega.schemar" +
+      "egistry.test.samples.generated.InternalM" +
+      "essage\022\014\n\004name\030\002 \001(\t\"(\n\010Message2\022\014\n\004name" +
+      "\030\001 \001(\t\022\016\n\006field1\030\002 \001(\005\"8\n\010Message3\022\014\n\004na" +
+      "me\030\001 \001(\t\022\016\n\006field1\030\002 \001(\005\022\016\n\006field2\030\003 \001(\005" +
+      "b\006proto3"
     };
-    com.google.protobuf.Descriptors.FileDescriptor.InternalDescriptorAssigner assigner =
-        new com.google.protobuf.Descriptors.FileDescriptor.    InternalDescriptorAssigner() {
-          public com.google.protobuf.ExtensionRegistry assignDescriptors(
-              com.google.protobuf.Descriptors.FileDescriptor root) {
-            descriptor = root;
-            return null;
-          }
-        };
-    com.google.protobuf.Descriptors.FileDescriptor
+    descriptor = com.google.protobuf.Descriptors.FileDescriptor
       .internalBuildGeneratedFileFrom(descriptorData,
         new com.google.protobuf.Descriptors.FileDescriptor[] {
-        }, assigner);
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_descriptor =
+        });
+    internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_descriptor =
       getDescriptor().getMessageTypes().get(0);
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_fieldAccessorTable = new
+    internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_io_pravega_schemaregistry_test_integrationtest_generated_InternalMessage_descriptor,
+        internal_static_io_pravega_schemaregistry_test_samples_generated_InternalMessage_descriptor,
         new java.lang.String[] { "Value", });
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_descriptor =
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_descriptor =
       getDescriptor().getMessageTypes().get(1);
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_fieldAccessorTable = new
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message1_descriptor,
+        internal_static_io_pravega_schemaregistry_test_samples_generated_Message1_descriptor,
         new java.lang.String[] { "Internal", "Name", });
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_descriptor =
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_descriptor =
       getDescriptor().getMessageTypes().get(2);
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_fieldAccessorTable = new
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message2_descriptor,
+        internal_static_io_pravega_schemaregistry_test_samples_generated_Message2_descriptor,
         new java.lang.String[] { "Name", "Field1", });
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_descriptor =
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_descriptor =
       getDescriptor().getMessageTypes().get(3);
-    internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_fieldAccessorTable = new
+    internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_fieldAccessorTable = new
       com.google.protobuf.GeneratedMessageV3.FieldAccessorTable(
-        internal_static_io_pravega_schemaregistry_test_integrationtest_generated_Message3_descriptor,
+        internal_static_io_pravega_schemaregistry_test_samples_generated_Message3_descriptor,
         new java.lang.String[] { "Name", "Field1", "Field2", });
   }
 

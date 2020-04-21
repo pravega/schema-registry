@@ -31,7 +31,7 @@ public class CacheTest {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         String groupId = "groupId";
         EncodingId encodingId = new EncodingId(0);
-        EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", 0),
+        EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", 0, 0),
                 new SchemaInfo("name", SchemaType.Avro, new byte[0], Collections.emptyMap()), CodecFactory.snappy().getCodecType());
         doAnswer(x -> encodingInfo).when(client).getEncodingInfo(eq(groupId), eq(encodingId));
         EncodingCache cache = EncodingCache.getEncodingCacheForGroup(groupId, client);

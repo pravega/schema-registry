@@ -66,7 +66,7 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo registerSchema(String group, SchemaInfo schema) {
+    public VersionInfo addSchema(String group, SchemaInfo schema) {
         return service.addSchema(group, schema).join();
     }
 
