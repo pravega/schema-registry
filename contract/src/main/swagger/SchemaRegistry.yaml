@@ -358,18 +358,6 @@ paths:
       - "Schema"
       operationId: getSchemaFromVersion
       description: Fetch the properties of an existing Group
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: GetSchemaFromVersionRequest
-          description: Get schema corresponding to the version
-          required: true
-          schema:
-            type: object
-            properties:
-              versionInfo:
-                  $ref: "#/definitions/VersionInfo"
       produces:
         - application/json
       responses:
@@ -455,52 +443,6 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions/{versionId}:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: objectTypeName
-        description: Object type
-        required: true
-        type: string
-      - in: path
-        name: versionId
-        description: version id
-        required: true
-        type: integer
-        format: int32
-    get:
-      tags:
-      - "Schema"
-      operationId: getSchemaFromVersionForObjectType
-      description: Fetch the properties of an existing Group
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: GetSchemaForObjectTypeByVersionRequest
-          description: Get schema corresponding to the version
-          required: true
-          schema:
-            type: object
-            properties:
-              versionInfo:
-                  $ref: "#/definitions/VersionInfo"
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Schema corresponding to the version
-          schema:
-            $ref: "#/definitions/SchemaInfo"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details  
   /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions/latest:
     parameters:
       - in: path

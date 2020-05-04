@@ -11,8 +11,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupReques
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
@@ -108,12 +106,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getSchemaFromVersion(String groupName, String versionId, GetSchemaFromVersionRequest getSchemaFromVersionRequest, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response getSchemaFromVersionForObjectType(String groupName, String objectTypeName, Integer versionId, GetSchemaForObjectTypeByVersionRequest getSchemaForObjectTypeByVersionRequest, SecurityContext securityContext) throws NotFoundException {
+    public Response getSchemaFromVersion(String groupName, String versionId, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

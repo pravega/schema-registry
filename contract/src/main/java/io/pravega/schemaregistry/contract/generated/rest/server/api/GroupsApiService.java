@@ -13,8 +13,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupReques
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
@@ -51,8 +49,7 @@ public abstract class GroupsApiService {
     public abstract Response getObjectTypeSchemas(String groupName,String objectTypeName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getObjectTypes(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getOrGenerateEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemaFromVersion(String groupName,String versionId,GetSchemaFromVersionRequest getSchemaFromVersionRequest,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemaFromVersionForObjectType(String groupName,String objectTypeName,Integer versionId,GetSchemaForObjectTypeByVersionRequest getSchemaForObjectTypeByVersionRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaFromVersion(String groupName,String versionId,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaValidationRules(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaVersion(String groupName,Long fingerprint,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;
     public abstract Response listGroups(SecurityContext securityContext) throws NotFoundException;
