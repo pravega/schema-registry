@@ -177,7 +177,7 @@ public class ModelHelper {
     }
 
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
-        return new VersionInfo().objectType(versionInfo.getObjectType()).version(versionInfo.getVersion());
+        return new VersionInfo().objectType(versionInfo.getObjectType()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
     }
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {
