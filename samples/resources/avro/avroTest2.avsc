@@ -1,0 +1,10 @@
+{
+   "namespace": "io.pravega.schemaregistry.test.integrationtest.generated",
+   "type": "record",
+   "name": "Type2",
+   "fields": [
+      {"name": "c", "type": "string"},
+      {"name": "d", "type": "int"},
+      {"name": "e", "type": "string"}
+   ]
+}

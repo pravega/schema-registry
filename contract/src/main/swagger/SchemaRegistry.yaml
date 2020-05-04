@@ -1,0 +1,781 @@
+#
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Description of the Pravega Schema Registry APIs.
+
+swagger: "2.0"
+info:
+  description: "REST APIs for Pravega Schema Registry."
+  version: "0.0.1"
+  title: Pravega Schema Registry APIs
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+basePath: "/v1"
+tags:
+- name: "Group"
+  description: "Group related APIs"
+- name: "Schema"
+  description: "Schema related APIs"
+- name: "Encoding"
+  description: "Encoding related APIs"
+schemes:
+  - http
+paths:
+  /groups:
+    get:
+      tags:
+      - "Group"
+      operationId: listGroups
+      description: List all groups
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of all groups
+          schema:
+            $ref: "#/definitions/GroupsList"
+        500:
+          description: Internal server error while fetching the list of Groups
+    post:
+      tags:
+      - "Group"
+      operationId: createGroup
+      description: Create a new Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CreateGroupRequest
+          description: The Group configuration
+          required: true
+          schema:
+            type: object
+            properties:
+              groupName:
+                type: string
+              schemaType:
+                  $ref: "#/definitions/SchemaType"
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
+              properties:
+                type: object
+                additionalProperties:
+                  type: string
+                  minLength: 0
+                  maxLength: 40
+              validateByObjectType:
+                type: boolean
+      responses:
+        201:
+          description: Successfully added group
+        409:
+          description: Group with given name already exists
+        500:
+          description: Internal server error while creating a Group
+  /groups/{groupName}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getGroupProperties
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group properties
+          schema:
+            $ref: "#/definitions/GroupProperties"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    delete:
+      tags:
+      - "Group"
+      operationId: deleteGroup
+      description: Delete a Group
+      responses:
+        204:
+          description: Successfully deleted the Group
+        404:
+          description: Group not found
+        500:
+          description: Internal server error while deleting the Group
+  /groups/{groupName}/rules:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemaValidationRules
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group schema validation rules
+          schema:
+            $ref: "#/definitions/SchemaValidationRules"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    put:
+      tags:
+      - "Group"
+      operationId: updateSchemaValidationRules
+      description: update schema validation rules of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: UpdateValidationRulesPolicyRequest
+          description: update group policy
+          required: true
+          schema:
+            type: object
+            properties:
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
+              previousRules:
+                  $ref: "#/definitions/SchemaValidationRules"
+                  nullable: true
+      responses:
+        200:
+          description: Updated schema validation policy
+        404:
+          description: Group with given name not found
+        409:
+          description: Write conflict 
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/schema/{fingerprint}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: fingerprint
+        description: schema fingerprint
+        required: true
+        type: integer
+        format: int64
+    post:
+      tags:
+      - "Schema"
+      operationId: getSchemaVersion
+      description: Get the version for the schema if it is registered.
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetSchemaVersion
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema version
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    post:
+      tags:
+      - "Schema"
+      operationId: addSchemaToGroupIfAbsent
+      description: adds a new schema to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: AddSchemaToGroupRequest
+          description: Add new schema to group
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully added schema to the group
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Group not found
+        409:
+          description: Incompatible schema
+        417:
+          description: Invalid schema type
+        500:
+          description: Internal server error while creating a Group
+  /groups/{groupName}/schemas/validate:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    post:
+      tags:
+      - "Schema"
+      operationId: validate
+      description: check if given schema is compatible with schemas in the registry for current policy setting. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: ValidateRequest
+          description: Checks if schema is valid with respect to supplied validation rules
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema is valid
+          valid:
+             $ref: "#/definitions/Valid"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/canRead:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    post:
+      tags:
+      - "Schema"
+      operationId: canRead
+      description: check if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CanReadRequest
+          description: Checks if schema can be used to read the data in the stream based on compatibility rules. 
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema can be used to read
+          canRead:
+             $ref: "#/definitions/CanRead"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/versions:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getGroupSchemas
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/versions/{version}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: version
+        description: version ordinal
+        required: true
+        type: integer
+        format: int32
+    get:
+      tags:
+      - "Schema"
+      operationId: getSchemaFromVersion
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details  
+  /groups/{groupName}/schemas/versions/latest:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getLatestGroupSchema
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group properties
+          schema:
+            $ref: "#/definitions/SchemaWithVersion"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/objectTypes:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getObjectTypes
+      description: Fetch all objectTypes under a Group. This api will return schema types.  
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of objectTypes under the group
+          schema:
+            $ref: "#/definitions/ObjectTypesList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: objectTypeName
+        description: Object type
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getObjectTypeSchemas
+      description: Fetch all schemas registered with the given schema name
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group of specified schema type
+          schema:
+            $ref: "#/definitions/SchemaList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions/latest:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: objectTypeName
+        description: Object type 
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getLatestSchemaForObjectType
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found latest schema in objectType
+          schema:
+            $ref: "#/definitions/SchemaWithVersion"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/encodings:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    put:
+      tags:
+      - "Encoding"
+      operationId: getOrGenerateEncodingId
+      description: Fetch the properties of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetEncodingIdRequest
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              versionInfo:
+                  $ref: "#/definitions/VersionInfo"
+              codecType:
+                  $ref: "#/definitions/CodecType"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Encoding
+          schema:
+            $ref: "#/definitions/EncodingId"
+        404:
+          description: Group or encoding id with given name not found
+        412:
+          description: Codec not registered
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/encodings/{encodingId}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: encodingId
+        description: Encoding id that identifies a unique combination of schema and codec
+        required: true
+        type: integer
+        format: int32
+    get:
+      tags:
+      - "Encoding"
+      operationId: getEncodingInfo
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Encoding
+          schema:
+            $ref: "#/definitions/EncodingInfo"
+        404:
+          description: Group or encoding id with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/codecs:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Encoding"
+      operationId: getCodecsList
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Codecs
+          schema:
+            $ref: "#/definitions/CodecsList"
+        404:
+          description: Group or encoding id with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    post:
+      tags:
+      - "Group"
+      operationId: addCodec
+      description: Adds a new codec to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: AddCodec
+          description: The codec
+          required: true
+          schema:
+            type: object
+            properties:
+              codec:
+                  $ref: "#/definitions/CodecType"
+      responses:
+        201:
+          description: Successfully added codec to group
+        404: 
+          description: Group not found
+        500:
+          description: Internal server error while creating a Group
+definitions:
+  GroupsList:
+    type: object
+    properties:
+      groups:
+        type: array
+        items:
+          $ref: "#/definitions/GroupProperties"
+  ObjectTypesList:
+    type: object
+    properties:
+      objectTypes:
+        type: array
+        items:
+          type: string
+  GroupProperties:
+    type: object
+    properties:
+      groupName:
+        type: string
+      schemaValidationRules:
+          $ref: "#/definitions/SchemaValidationRules"
+      schemaType:
+          $ref: "#/definitions/SchemaType"
+      validateByObjectType:
+          type: boolean
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
+  SchemaType:
+    type: object
+    properties:
+      schemaType:
+        type: string
+        enum: 
+          - Avro
+          - Protobuf
+          - Json
+          - Any
+          - Custom
+      customTypeName:
+        type: string  
+  SchemaInfo:
+    type: object
+    properties:
+      schemaName:
+        type: string
+      objectType:
+        type: string
+      schemaType:
+          $ref: "#/definitions/SchemaType"
+      schemaData:
+        type: string
+        format: binary
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
+  VersionInfo:
+    type: object
+    properties:
+      objectType:
+        type: string
+      version:
+        type: integer
+        format: int32
+      ordinal:
+        type: integer
+        format: int32
+  SchemaWithVersion:
+    type: object
+    properties:
+      schemaInfo:
+        $ref: "#/definitions/SchemaInfo"
+      version:
+        $ref: "#/definitions/VersionInfo"
+  SchemaVersionAndRules:
+    type: object
+    properties:
+      schemaInfo:
+        $ref: "#/definitions/SchemaInfo"
+      version:
+        $ref: "#/definitions/VersionInfo"
+      validationRules:
+        $ref: "#/definitions/SchemaValidationRules"
+  SchemaList:
+    type: object
+    properties:
+      schemas:
+        type: array
+        items:
+          $ref: "#/definitions/SchemaVersionAndRules"        
+  CodecType:
+    type: object
+    properties:
+      codecType:
+        type: string
+        enum:
+          - None
+          - Snappy
+          - Gzip
+          - Custom
+      customTypeName:
+        type: string
+      properties:
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
+  EncodingId:
+    type: object
+    properties:
+      encodingId:
+        type: integer
+        format: int32
+  EncodingInfo:
+    type: object
+    properties:
+      schemaInfo:
+          $ref: "#/definitions/SchemaInfo"        
+      versionInfo:
+          $ref: "#/definitions/VersionInfo"        
+      codecType:
+          $ref: "#/definitions/CodecType"
+  Compatibility:
+    type: object
+    required:
+      - name
+    properties:
+      name:
+        type: string
+      policy:
+        type: string
+        enum:
+          - AllowAny
+          - DenyAll
+          - Backward
+          - Forward
+          - ForwardTransitive
+          - BackwardTransitive
+          - BackwardTill
+          - ForwardTill
+          - BackwardAndForwardTill
+          - Full
+          - FullTransitive
+      backwardTill:
+        $ref: "#/definitions/VersionInfo"        
+      forwardTill:
+        $ref: "#/definitions/VersionInfo"        
+  SchemaValidationRules:
+    type: object
+    properties:
+      rules:
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/SchemaValidationRule"
+  SchemaValidationRule:
+    type: object
+    required:
+      - rule
+    properties:
+      rule:
+        oneOf:
+          - $ref: '#/definitions/Compatibility'
+        discriminator:
+          propertyName: name
+          mapping:
+            Compatibility: '#/definitions/Compatibility'
+  CodecsList:
+    type: object
+    properties:
+       codecTypes:
+        type: array
+        items:
+          $ref: "#/definitions/CodecType"
+  Valid:
+    type: object
+    properties:
+      valid:
+        type: boolean
+  CanRead:
+    type: object
+    properties:
+      compatible:
+        type: boolean
+          
