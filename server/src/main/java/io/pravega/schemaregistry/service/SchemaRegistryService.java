@@ -240,18 +240,18 @@ public class SchemaRegistryService {
      * Gets schema corresponding to the version.
      *
      * @param group   Name of group.
-     * @param version Version which uniquely identifies schema within a group.
+     * @param versionOrdinal Version which uniquely identifies schema within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo version) {
-        log.info("Group {}, get schema for version {} .", group, version);
+    public CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal) {
+        log.info("Group {}, get schema for version {} .", group, versionOrdinal);
 
-        return store.getSchema(group, version)
+        return store.getSchema(group, versionOrdinal)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return schema for verison {}.", group, version);
+                            log.info("Group {}, return schema for verison {}.", group, versionOrdinal);
                         } else {
-                            log.warn("Group {}, get schema version {} failed with error", e, group, version);
+                            log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
                         }
                     });
     }

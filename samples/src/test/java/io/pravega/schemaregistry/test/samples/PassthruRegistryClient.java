@@ -72,7 +72,7 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
 
     @Override
     public SchemaInfo getSchema(String group, VersionInfo version) {
-        return service.getSchema(group, version).join();
+        return service.getSchema(group, version.getOrdinal()).join();
     }
 
     @Override

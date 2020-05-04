@@ -146,8 +146,8 @@ public class Group<V> {
                 });
     }
 
-    public CompletableFuture<SchemaInfo> getSchema(VersionInfo versionInfo) {
-        return groupTable.getEntry(new TableRecords.VersionKey(versionInfo.getOrdinal()), TableRecords.SchemaRecord.class)
+    public CompletableFuture<SchemaInfo> getSchema(int versionOrdinal) {
+        return groupTable.getEntry(new TableRecords.VersionKey(versionOrdinal), TableRecords.SchemaRecord.class)
                          .thenApply(TableRecords.SchemaRecord::getSchemaInfo);
     }
 
@@ -179,7 +179,7 @@ public class Group<V> {
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
         TableRecords.EncodingIdRecord encodingIdIndex = new TableRecords.EncodingIdRecord(encodingId);
         return groupTable.getEntry(encodingIdIndex, TableRecords.EncodingInfoRecord.class)
-                         .thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo())
+                         .thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo().getOrdinal())
                                  .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType())));
     }
 
@@ -194,7 +194,7 @@ public class Group<V> {
                          })
                          .thenCompose(versionInfo -> {
                              if (versionInfo != null) {
-                                 return getSchema(versionInfo).thenApply(schema -> new SchemaWithVersion(schema, versionInfo));
+                                 return getSchema(versionInfo.getOrdinal()).thenApply(schema -> new SchemaWithVersion(schema, versionInfo));
                              } else {
                                  return CompletableFuture.completedFuture(null);
                              }
@@ -213,7 +213,7 @@ public class Group<V> {
                          })
                          .thenCompose(versionInfo -> {
                              if (versionInfo != null) {
-                                 return getSchema(versionInfo).thenApply(schema -> new SchemaWithVersion(schema, versionInfo));
+                                 return getSchema(versionInfo.getOrdinal()).thenApply(schema -> new SchemaWithVersion(schema, versionInfo));
                              } else {
                                  return CompletableFuture.completedFuture(null);
                              }
@@ -440,7 +440,7 @@ public class Group<V> {
             return iterator.hasNext() && found.get() == null;
         }, () -> {
             VersionInfo version = iterator.next();
-            return getSchema(version)
+            return getSchema(version.getOrdinal())
                     .thenAccept(schema -> {
                         if (Arrays.equals(schema.getSchemaData(), toFind.getSchemaData()) && schema.getName().equals(toFind.getName())) {
                             found.set(version);

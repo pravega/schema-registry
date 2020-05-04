@@ -99,8 +99,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo) {
-        return getGroup(group).thenCompose(grp -> grp.getSchema(versionInfo));
+    public CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal) {
+        return getGroup(group).thenCompose(grp -> grp.getSchema(versionOrdinal));
     }
 
     @Override

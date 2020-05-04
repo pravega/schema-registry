@@ -18,8 +18,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.ObjectTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaForObjectTypeByVersionRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaFromVersionRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
@@ -211,26 +209,7 @@ public final class ApiV1 {
                 throws NotFoundException;
 
         @GET
-        @Path("/{groupName}/objectTypes/{objectTypeName}/schemas/versions/{versionId}")
-        @Consumes({"application/json"})
-        @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags = {"Schema", })
-        @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
-
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        void getSchemaFromVersionForObjectType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                               @ApiParam(value = "Object type", required = true) @PathParam("objectTypeName") String objectTypeName,
-                                               @ApiParam(value = "version id", required = true) @PathParam("versionId") Integer versionId,
-                                               @ApiParam(value = "Get schema corresponding to the version", required = true) GetSchemaForObjectTypeByVersionRequest getSchemaForObjectTypeByVersionRequest,
-                                               @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
-                throws NotFoundException;
-
-        @GET
         @Path("/{groupName}/schemas/versions/{versionId}")
-        @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
@@ -239,7 +218,6 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                   @ApiParam(value = "Group name", required = true) @PathParam("versionId") String versionId,
-                                  @ApiParam(value = "Get schema corresponding to the version", required = true) GetSchemaFromVersionRequest getSchemaFromVersionRequest,
                                   @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 

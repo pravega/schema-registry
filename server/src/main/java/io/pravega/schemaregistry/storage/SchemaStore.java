@@ -53,7 +53,7 @@ public interface SchemaStore {
     CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
                                                                                 VersionInfo from, ContinuationToken token);
     
-    CompletableFuture<SchemaInfo> getSchema(String group, VersionInfo versionInfo);
+    CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal);
 
     CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
