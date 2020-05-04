@@ -39,8 +39,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         this.parser = parser;
         this.descriptorProto = fileDescriptorSet;
-        this.schemaInfo = new SchemaInfo(name, SchemaType.Protobuf, 
-                getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(name, name, SchemaType.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
     
     private byte[] getSchemaBytes() {

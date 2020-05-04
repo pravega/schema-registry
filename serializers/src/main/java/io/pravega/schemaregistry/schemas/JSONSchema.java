@@ -45,9 +45,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     private JSONSchema(JsonSchema schema, String schemaString, Class<T> tClass, Class<? extends T> tDerivedClass) {
         this.schemaString = schemaString;
         String schemaId = schema.getId() == null ? "" : schema.getId();
-        this.schemaInfo = new SchemaInfo(
-                schemaId,
-                SchemaType.Json, getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(schemaId, schemaId, SchemaType.Json, getSchemaBytes(), ImmutableMap.of());
         this.tClass = tClass;
         this.tDerivedClass = tDerivedClass;
         this.schema = schema;

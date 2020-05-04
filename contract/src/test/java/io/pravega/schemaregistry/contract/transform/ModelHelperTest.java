@@ -61,7 +61,7 @@ public class ModelHelperTest {
         assertEquals(codecType.getCustomTypeName(), "custom");
 
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(version);
-        assertEquals(versionInfo.getSchemaName(), version.getSchemaName());
+        assertEquals(versionInfo.getObjectType(), version.getSchemaName());
         assertEquals(versionInfo.getVersion(), version.getVersion().intValue());
         
         io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo = ModelHelper.decode(new EncodingInfo().schemaInfo(schema).versionInfo(version).codecType(codec));
@@ -80,7 +80,7 @@ public class ModelHelperTest {
     public void testEncode() {
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = io.pravega.schemaregistry.contract.data.SchemaType.custom("custom");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                "name", schemaType, new byte[0], Collections.emptyMap());
+                "name", "objecttype", schemaType, new byte[0], Collections.emptyMap());
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 1);
         io.pravega.schemaregistry.contract.data.Compatibility rule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 0),
@@ -93,7 +93,7 @@ public class ModelHelperTest {
         // encode test
         VersionInfo version = ModelHelper.encode(versionInfo);
         assertEquals(version.getVersion().intValue(), versionInfo.getVersion());
-        assertEquals(version.getSchemaName(), versionInfo.getSchemaName());
+        assertEquals(version.getSchemaName(), versionInfo.getObjectType());
         
         SchemaType type = ModelHelper.encode(schemaType);
         assertEquals(type.getSchemaType(), SchemaType.SchemaTypeEnum.CUSTOM);

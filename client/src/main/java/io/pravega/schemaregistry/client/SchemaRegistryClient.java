@@ -37,7 +37,7 @@ public interface SchemaRegistryClient {
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
      * @param validateByObjectType Property to describe whether group should have schema compatibility checks performed by object types. 
-     *                            Object Types are uniquely identified by {@link SchemaInfo#name}. 
+     *                            Object Types are uniquely identified by {@link SchemaInfo#objectType}. 
      * @param properties          Map of properties. Example properties could include flag to indicate whether client should
      *                            encode registry service generated encoding id with payload. 
      * @return True indicates if the group was added successfully, false if it exists. 
@@ -64,7 +64,7 @@ public interface SchemaRegistryClient {
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#validateByObjectType} that specifies if schemas should be exclusively validated against 
-     * schemas that have the same {@link SchemaInfo#name}. 
+     * schemas that have the same {@link SchemaInfo#objectType}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
      * 
      * @param groupId Id for the group.
@@ -81,7 +81,7 @@ public interface SchemaRegistryClient {
     void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules);
     
     /**
-     * Gets list of object types registered under the group. ObjectTypes are identified by {@link SchemaInfo#name}
+     * Gets list of object types registered under the group. ObjectTypes are identified by {@link SchemaInfo#objectType}
      * 
      * @param groupId Id for the group. 
      * @return List of objectTypes within the group.   
@@ -90,7 +90,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Registers schema to the group. If group is configured with {@link GroupProperties#validateByObjectType} then 
-     * the {@link SchemaInfo#name} is used for validating against existing group schemas that share the same name. 
+     * the {@link SchemaInfo#objectType} is used for validating against existing group schemas that share the same name. 
      * 
      * @param groupId Id for the group. 
      * @param schema Schema to add. 
@@ -143,7 +143,7 @@ public interface SchemaRegistryClient {
     /**
      * Gets all schemas with corresponding versions for the group (or objectTypeName, if specified). 
      * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypeName name needs to be supplied to 
-     * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name. 
+     * get the latest schema for the objectTypeName. {@link SchemaInfo#objectType} is used as the objectTypeName name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
      * @param groupId Id for the group.
@@ -154,7 +154,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByObjectType}
-     * the version will contain the schemaName taken from the {@link SchemaInfo#name}. 
+     * the version will contain the objectType taken from the {@link SchemaInfo#objectType}. 
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      * 
      * @param groupId Id for the group. 

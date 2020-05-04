@@ -637,10 +637,10 @@ definitions:
     properties:
       schemaName:
         type: string
-      schemaType:
-          $ref: "#/definitions/SchemaType"
       objectType:
         type: string
+      schemaType:
+          $ref: "#/definitions/SchemaType"
       schemaData:
         type: string
         format: binary
