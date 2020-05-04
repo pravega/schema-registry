@@ -653,7 +653,7 @@ definitions:
   VersionInfo:
     type: object
     properties:
-      schemaName:
+      objectType:
         type: string
       version:
         type: integer

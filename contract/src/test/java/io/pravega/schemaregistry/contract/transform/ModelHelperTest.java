@@ -34,7 +34,7 @@ public class ModelHelperTest {
         SchemaValidationRules rules = new SchemaValidationRules().rules(Collections.emptyMap());
         SchemaInfo schema = new SchemaInfo()
                 .schemaName("a").schemaType(type).schemaData(new byte[0]).properties(Collections.emptyMap());
-        VersionInfo version = new VersionInfo().schemaName("a").version(1).ordinal(1);
+        VersionInfo version = new VersionInfo().objectType("a").version(1).ordinal(1);
         Compatibility compatibility = new Compatibility().name(Compatibility.class.getSimpleName())
                                                          .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL).backwardTill(version).forwardTill(version);
         CodecType codec = new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM).customTypeName("custom");
@@ -61,7 +61,7 @@ public class ModelHelperTest {
         assertEquals(codecType.getCustomTypeName(), "custom");
 
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(version);
-        assertEquals(versionInfo.getObjectType(), version.getSchemaName());
+        assertEquals(versionInfo.getObjectType(), version.getObjectType());
         assertEquals(versionInfo.getVersion(), version.getVersion().intValue());
         
         io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo = ModelHelper.decode(new EncodingInfo().schemaInfo(schema).versionInfo(version).codecType(codec));
@@ -93,7 +93,7 @@ public class ModelHelperTest {
         // encode test
         VersionInfo version = ModelHelper.encode(versionInfo);
         assertEquals(version.getVersion().intValue(), versionInfo.getVersion());
-        assertEquals(version.getSchemaName(), versionInfo.getObjectType());
+        assertEquals(version.getObjectType(), versionInfo.getObjectType());
         
         SchemaType type = ModelHelper.encode(schemaType);
         assertEquals(type.getSchemaType(), SchemaType.SchemaTypeEnum.CUSTOM);
