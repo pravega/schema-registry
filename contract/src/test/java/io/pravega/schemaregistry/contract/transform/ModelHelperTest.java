@@ -34,7 +34,7 @@ public class ModelHelperTest {
         SchemaValidationRules rules = new SchemaValidationRules().rules(Collections.emptyMap());
         SchemaInfo schema = new SchemaInfo()
                 .schemaName("a").schemaType(type).schemaData(new byte[0]).properties(Collections.emptyMap());
-        VersionInfo version = new VersionInfo().schemaName("a").version(1);
+        VersionInfo version = new VersionInfo().schemaName("a").version(1).ordinal(1);
         Compatibility compatibility = new Compatibility().name(Compatibility.class.getSimpleName())
                                                          .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL).backwardTill(version).forwardTill(version);
         CodecType codec = new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM).customTypeName("custom");
@@ -81,10 +81,10 @@ public class ModelHelperTest {
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = io.pravega.schemaregistry.contract.data.SchemaType.custom("custom");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.data.SchemaInfo(
                 "name", schemaType, new byte[0], Collections.emptyMap());
-        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0);
+        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 1);
         io.pravega.schemaregistry.contract.data.Compatibility rule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(
-                new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0),
-                new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1));
+                new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 0),
+                new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1, 1));
         io.pravega.schemaregistry.contract.data.SchemaValidationRules schemaValidationRules = io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(rule);
         io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties.builder()
                 .schemaType(schemaType).schemaValidationRules(schemaValidationRules).validateByObjectType(true).properties(Collections.emptyMap()).build();

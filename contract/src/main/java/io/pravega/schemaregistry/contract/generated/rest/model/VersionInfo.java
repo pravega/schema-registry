@@ -31,6 +31,9 @@ public class VersionInfo   {
   @JsonProperty("version")
   private Integer version = null;
 
+  @JsonProperty("ordinal")
+  private Integer ordinal = null;
+
   public VersionInfo schemaName(String schemaName) {
     this.schemaName = schemaName;
     return this;
@@ -69,6 +72,25 @@ public class VersionInfo   {
     this.version = version;
   }
 
+  public VersionInfo ordinal(Integer ordinal) {
+    this.ordinal = ordinal;
+    return this;
+  }
+
+  /**
+   * Get ordinal
+   * @return ordinal
+   **/
+  @JsonProperty("ordinal")
+  @ApiModelProperty(value = "")
+  public Integer getOrdinal() {
+    return ordinal;
+  }
+
+  public void setOrdinal(Integer ordinal) {
+    this.ordinal = ordinal;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -80,12 +102,13 @@ public class VersionInfo   {
     }
     VersionInfo versionInfo = (VersionInfo) o;
     return Objects.equals(this.schemaName, versionInfo.schemaName) &&
-        Objects.equals(this.version, versionInfo.version);
+        Objects.equals(this.version, versionInfo.version) &&
+        Objects.equals(this.ordinal, versionInfo.ordinal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaName, version);
+    return Objects.hash(schemaName, version, ordinal);
   }
 
 
@@ -96,6 +119,7 @@ public class VersionInfo   {
     
     sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    ordinal: ").append(toIndentedString(ordinal)).append("\n");
     sb.append("}");
     return sb.toString();
   }

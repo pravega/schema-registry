@@ -89,7 +89,7 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
-        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion());
+        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion(), versionInfo.getOrdinal());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
