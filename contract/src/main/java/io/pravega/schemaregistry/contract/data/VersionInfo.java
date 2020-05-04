@@ -16,7 +16,8 @@ import lombok.Data;
 
 /**
  * Object that captures the version of a schema within a group.
- * {@link VersionInfo#objectType} schema name is same as {@link SchemaInfo#objectType} which represents the object type. 
+ * {@link VersionInfo#objectType} object type is same as {@link SchemaInfo#objectType} which represents the object type 
+ * for which the version is computed. 
  * {@link VersionInfo#version} the registry assigned monotonically increasing version number for the schema for specific object type.
  * The version number is per object type, so schema name and version number forms a unique pair. 
  * {@link VersionInfo#ordinal} Absolute ordinal of the schema for all schemas in the group. This uniquely identifies the 
