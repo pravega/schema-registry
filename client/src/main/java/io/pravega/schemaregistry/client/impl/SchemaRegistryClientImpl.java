@@ -162,7 +162,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         Response response = invocationBuilder.get();
         ObjectTypesList objectTypesList = response.readEntity(ObjectTypesList.class);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-            return objectTypesList.getGroups();
+            return objectTypesList.getObjectTypes();
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new NotFoundException("Group not found.");
         } else {

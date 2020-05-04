@@ -49,7 +49,7 @@ public abstract class GroupsApiService {
     public abstract Response getObjectTypeSchemas(String groupName,String objectTypeName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getObjectTypes(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getOrGenerateEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemaFromVersion(String groupName,String versionId,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaFromVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaValidationRules(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaVersion(String groupName,Long fingerprint,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;
     public abstract Response listGroups(SecurityContext securityContext) throws NotFoundException;

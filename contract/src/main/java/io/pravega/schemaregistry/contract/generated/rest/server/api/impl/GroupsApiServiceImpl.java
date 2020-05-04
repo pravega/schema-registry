@@ -106,7 +106,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getSchemaFromVersion(String groupName, String versionId, SecurityContext securityContext) throws NotFoundException {
+    public Response getSchemaFromVersion(String groupName, Integer version, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
