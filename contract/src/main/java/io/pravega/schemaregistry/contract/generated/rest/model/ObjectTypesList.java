@@ -27,34 +27,34 @@ import javax.validation.constraints.*;
  */
 
 public class ObjectTypesList   {
-  @JsonProperty("groups")
-  private List<String> groups = null;
+  @JsonProperty("objectTypes")
+  private List<String> objectTypes = null;
 
-  public ObjectTypesList groups(List<String> groups) {
-    this.groups = groups;
+  public ObjectTypesList objectTypes(List<String> objectTypes) {
+    this.objectTypes = objectTypes;
     return this;
   }
 
-  public ObjectTypesList addGroupsItem(String groupsItem) {
-    if (this.groups == null) {
-      this.groups = new ArrayList<String>();
+  public ObjectTypesList addObjectTypesItem(String objectTypesItem) {
+    if (this.objectTypes == null) {
+      this.objectTypes = new ArrayList<String>();
     }
-    this.groups.add(groupsItem);
+    this.objectTypes.add(objectTypesItem);
     return this;
   }
 
   /**
-   * Get groups
-   * @return groups
+   * Get objectTypes
+   * @return objectTypes
    **/
-  @JsonProperty("groups")
+  @JsonProperty("objectTypes")
   @ApiModelProperty(value = "")
-  public List<String> getGroups() {
-    return groups;
+  public List<String> getObjectTypes() {
+    return objectTypes;
   }
 
-  public void setGroups(List<String> groups) {
-    this.groups = groups;
+  public void setObjectTypes(List<String> objectTypes) {
+    this.objectTypes = objectTypes;
   }
 
 
@@ -67,12 +67,12 @@ public class ObjectTypesList   {
       return false;
     }
     ObjectTypesList objectTypesList = (ObjectTypesList) o;
-    return Objects.equals(this.groups, objectTypesList.groups);
+    return Objects.equals(this.objectTypes, objectTypesList.objectTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(objectTypes);
   }
 
 
@@ -81,7 +81,7 @@ public class ObjectTypesList   {
     StringBuilder sb = new StringBuilder();
     sb.append("class ObjectTypesList {\n");
     
-    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    objectTypes: ").append(toIndentedString(objectTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }

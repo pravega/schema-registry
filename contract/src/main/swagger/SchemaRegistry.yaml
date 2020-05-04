@@ -341,7 +341,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/versions/{versionId}:
+  /groups/{groupName}/schemas/versions/{version}:
     parameters:
       - in: path
         name: groupName
@@ -349,10 +349,11 @@ paths:
         required: true
         type: string
       - in: path
-        name: versionId
-        description: Group name
+        name: version
+        description: version ordinal
         required: true
-        type: string
+        type: integer
+        format: int32
     get:
       tags:
       - "Schema"
@@ -597,7 +598,7 @@ definitions:
   ObjectTypesList:
     type: object
     properties:
-      groups:
+      objectTypes:
         type: array
         items:
           type: string
@@ -638,6 +639,8 @@ definitions:
         type: string
       schemaType:
           $ref: "#/definitions/SchemaType"
+      objectType:
+        type: string
       schemaData:
         type: string
         format: binary

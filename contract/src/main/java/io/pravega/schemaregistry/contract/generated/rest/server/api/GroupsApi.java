@@ -310,7 +310,7 @@ public class GroupsApi  {
         return delegate.getOrGenerateEncodingId(groupName,getEncodingIdRequest,securityContext);
     }
     @GET
-    @Path("/{groupName}/schemas/versions/{versionId}")
+    @Path("/{groupName}/schemas/versions/{version}")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags={ "Schema", })
@@ -321,10 +321,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSchemaFromVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Group name",required=true) @PathParam("versionId") String versionId
+,@ApiParam(value = "version ordinal",required=true) @PathParam("version") Integer version
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersion(groupName,versionId,securityContext);
+        return delegate.getSchemaFromVersion(groupName,version,securityContext);
     }
     @GET
     @Path("/{groupName}/rules")
