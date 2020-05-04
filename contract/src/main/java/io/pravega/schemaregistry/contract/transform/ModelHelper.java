@@ -182,7 +182,7 @@ public class ModelHelper {
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {
         return new SchemaInfo().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData())
-                               .schemaName(schemaInfo.getName()).schemaType(encode(schemaInfo.getSchemaType()));
+                               .schemaName(schemaInfo.getName()).schemaType(encode(schemaInfo.getSchemaType())).objectType(schemaInfo.getObjectType());
     }
 
     public static SchemaType encode(io.pravega.schemaregistry.contract.data.SchemaType schemaType) {
