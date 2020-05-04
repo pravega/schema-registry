@@ -61,8 +61,8 @@ public class SerializerTest {
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
         AvroSchema<Test2> schema2 = AvroSchema.of(Test2.class);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0);
-        VersionInfo versionInfo2 = new VersionInfo("name", 1);
+        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
@@ -130,8 +130,8 @@ public class SerializerTest {
         ProtobufSchema<ProtobufTest.Message2> schema1 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
         ProtobufSchema<ProtobufTest.Message3> schema2 = ProtobufSchema.of(ProtobufTest.Message3.class, descriptorSet);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0);
-        VersionInfo versionInfo2 = new VersionInfo("name", 1);
+        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
@@ -194,8 +194,8 @@ public class SerializerTest {
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
         JSONSchema<DerivedUser2> schema2 = JSONSchema.of(DerivedUser2.class);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0);
-        VersionInfo versionInfo2 = new VersionInfo("name", 1);
+        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
@@ -264,9 +264,9 @@ public class SerializerTest {
         ProtobufSchema<ProtobufTest.Message2> schema2 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
         JSONSchema<DerivedUser1> schema3 = JSONSchema.of(DerivedUser1.class);
 
-        VersionInfo versionInfo1 = new VersionInfo("avro", 0);
-        VersionInfo versionInfo2 = new VersionInfo("proto", 1);
-        VersionInfo versionInfo3 = new VersionInfo("json", 2);
+        VersionInfo versionInfo1 = new VersionInfo("avro", 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("proto", 1, 1);
+        VersionInfo versionInfo3 = new VersionInfo("json", 2, 2);
 
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
@@ -322,7 +322,7 @@ public class SerializerTest {
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
         ProtobufSchema<ProtobufTest.Message2> schema1 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0);
+        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
                                      .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
                 .when(client).getGroupProperties(anyString());
@@ -359,7 +359,7 @@ public class SerializerTest {
         SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0);
+        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
                 .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
                 .when(client).getGroupProperties(anyString());
