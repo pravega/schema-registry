@@ -25,7 +25,7 @@ import javax.validation.constraints.*;
  */
 
 public class VersionInfo   {
-  @JsonProperty("schemaName")
+  @JsonProperty("objectType")
   private String schemaName = null;
 
   @JsonProperty("version")
@@ -40,10 +40,10 @@ public class VersionInfo   {
   }
 
   /**
-   * Get schemaName
-   * @return schemaName
+   * Get objectType
+   * @return objectType
    **/
-  @JsonProperty("schemaName")
+  @JsonProperty("objectType")
   @ApiModelProperty(value = "")
   public String getSchemaName() {
     return schemaName;
@@ -117,7 +117,7 @@ public class VersionInfo   {
     StringBuilder sb = new StringBuilder();
     sb.append("class VersionInfo {\n");
     
-    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
+    sb.append("    objectType: ").append(toIndentedString(schemaName)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("    ordinal: ").append(toIndentedString(ordinal)).append("\n");
     sb.append("}");
