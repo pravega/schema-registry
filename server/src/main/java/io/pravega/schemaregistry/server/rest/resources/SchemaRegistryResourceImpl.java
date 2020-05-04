@@ -343,18 +343,18 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getSchemaFromVersion(String groupName, String versionId, 
+    public void getSchemaFromVersion(String groupName, Integer version, 
                                      SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("Get schema from version {} called for group {}", versionId, groupName);
-        registryService.getSchema(groupName, Integer.parseInt(versionId))
+        log.info("Get schema from version {} called for group {}", version, groupName);
+        registryService.getSchema(groupName, version)
                        .thenApply(schemaWithVersion -> {
                            SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
-                           log.info("Schema for version {} for group {} found.", versionId, groupName);
+                           log.info("Schema for version {} for group {} found.", version, groupName);
                            return Response.status(Status.OK).entity(schema).build();
                        })
                        .exceptionally(exception -> {
                            if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                               log.warn("Group {} or version {} not found", groupName, versionId);
+                               log.warn("Group {} or version {} not found", groupName, version);
                                return Response.status(Status.NOT_FOUND).build();
                            }
                            log.warn("getSchemaFromVersion failed with exception: ", exception);
@@ -453,7 +453,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         log.info("getObjectTypes called for group {} ", groupName);
         registryService.getObjectTypes(groupName, null)
                        .thenApply(objectTypes -> {
-                           ObjectTypesList objectTypesList = new ObjectTypesList().groups(objectTypes.getList());
+                           ObjectTypesList objectTypesList = new ObjectTypesList().objectTypes(objectTypes.getList());
                            log.info("Found object types {} for group {} ", objectTypesList, groupName);
                            return Response.status(Status.OK).entity(objectTypesList).build();
                        })

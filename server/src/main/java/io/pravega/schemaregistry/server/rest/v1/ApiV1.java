@@ -209,7 +209,7 @@ public final class ApiV1 {
                 throws NotFoundException;
 
         @GET
-        @Path("/{groupName}/schemas/versions/{versionId}")
+        @Path("/{groupName}/schemas/versions/{version}")
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = SchemaInfo.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
@@ -217,7 +217,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                  @ApiParam(value = "Group name", required = true) @PathParam("versionId") String versionId,
+                                  @ApiParam(value = "Group name", required = true) @PathParam("versionId") Integer versionId,
                                   @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse)
                 throws NotFoundException;
 
