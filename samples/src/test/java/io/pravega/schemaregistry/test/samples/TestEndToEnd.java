@@ -109,7 +109,7 @@ public abstract class TestEndToEnd {
         assertEquals(client.listGroups().size(), groupsCount + 1);
 
         String myTest = "MyTest";
-        SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.Avro, 
+        SchemaInfo schemaInfo = new SchemaInfo(myTest, myTest, SchemaType.Avro, 
                 schema1.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         client.addSchema(group, schemaInfo);
@@ -117,13 +117,13 @@ public abstract class TestEndToEnd {
         // attempt to add an existing schema
         client.addSchema(group, schemaInfo);
 
-        SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.Avro,
+        SchemaInfo schemaInfo2 = new SchemaInfo(myTest, myTest, SchemaType.Avro,
                 schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
         client.addSchema(group, schemaInfo2);
 
         client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()));
 
-        SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SchemaType.Avro,
+        SchemaInfo schemaInfo3 = new SchemaInfo(myTest, myTest, SchemaType.Avro,
                 schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
         AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
@@ -136,7 +136,7 @@ public abstract class TestEndToEnd {
         assertTrue(exceptionRef.get() instanceof IncompatibleSchemaException);
         
         String myTest2 = "MyTest2";
-        SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.Avro,
+        SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, myTest2, SchemaType.Avro,
                 schemaTest2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
         client.addSchema(group, schemaInfo4);
 

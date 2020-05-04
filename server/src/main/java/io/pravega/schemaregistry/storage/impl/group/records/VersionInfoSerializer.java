@@ -41,13 +41,13 @@ public class VersionInfoSerializer extends VersionedSerializer.WithBuilder<Versi
     }
 
     private void write00(VersionInfo e, RevisionDataOutput target) throws IOException {
-        target.writeUTF(e.getSchemaName());
+        target.writeUTF(e.getObjectType());
         target.writeInt(e.getVersion());
         target.writeInt(e.getOrdinal());
     }
 
     private void read00(RevisionDataInput source, VersionInfo.VersionInfoBuilder b) throws IOException {
-        b.schemaName(source.readUTF())
+        b.objectType(source.readUTF())
          .version(source.readInt())
          .ordinal(source.readInt());
     }

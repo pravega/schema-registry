@@ -39,8 +39,8 @@ public class ModelHelper {
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = decode(schemaInfo.getSchemaType());
-        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), schemaType, schemaInfo.getSchemaData(),
-                ImmutableMap.copyOf(schemaInfo.getProperties()));
+        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), schemaInfo.getObjectType(), 
+                schemaType, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaType decode(SchemaType schemaType) {
@@ -177,7 +177,7 @@ public class ModelHelper {
     }
 
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
-        return new VersionInfo().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
+        return new VersionInfo().schemaName(versionInfo.getObjectType()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
     }
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {

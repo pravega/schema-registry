@@ -33,6 +33,9 @@ public class SchemaInfo   {
   @JsonProperty("schemaName")
   private String schemaName = null;
 
+  @JsonProperty("objectType")
+  private String objectType = null;
+
   @JsonProperty("schemaType")
   private SchemaType schemaType = null;
 
@@ -59,6 +62,25 @@ public class SchemaInfo   {
 
   public void setSchemaName(String schemaName) {
     this.schemaName = schemaName;
+  }
+
+  public SchemaInfo objectType(String objectType) {
+    this.objectType = objectType;
+    return this;
+  }
+
+  /**
+   * Get objectType
+   * @return objectType
+   **/
+  @JsonProperty("objectType")
+  @ApiModelProperty(value = "")
+  public String getObjectType() {
+    return objectType;
+  }
+
+  public void setObjectType(String objectType) {
+    this.objectType = objectType;
   }
 
   public SchemaInfo schemaType(SchemaType schemaType) {
@@ -137,14 +159,15 @@ public class SchemaInfo   {
     }
     SchemaInfo schemaInfo = (SchemaInfo) o;
     return Objects.equals(this.schemaName, schemaInfo.schemaName) &&
-        Objects.equals(this.schemaType, schemaInfo.schemaType) && 
+        Objects.equals(this.objectType, schemaInfo.objectType) &&
+        Objects.equals(this.schemaType, schemaInfo.schemaType) &&
         Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
         Objects.equals(this.properties, schemaInfo.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaName, schemaType, schemaData, properties);
+    return Objects.hash(schemaName, objectType, schemaType, schemaData, properties);
   }
 
 
@@ -154,6 +177,7 @@ public class SchemaInfo   {
     sb.append("class SchemaInfo {\n");
     
     sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
+    sb.append("    objectType: ").append(toIndentedString(objectType)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    schemaData: ").append(toIndentedString(schemaData)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
