@@ -30,7 +30,7 @@ import javax.validation.constraints.*;
  */
 
 public class SchemaInfo   {
-  @JsonProperty("objectType")
+  @JsonProperty("schemaName")
   private String schemaName = null;
 
   @JsonProperty("objectType")
@@ -51,10 +51,10 @@ public class SchemaInfo   {
   }
 
   /**
-   * Get objectType
-   * @return objectType
+   * Get schemaName
+   * @return schemaName
    **/
-  @JsonProperty("objectType")
+  @JsonProperty("schemaName")
   @ApiModelProperty(value = "")
   public String getSchemaName() {
     return schemaName;
@@ -176,7 +176,7 @@ public class SchemaInfo   {
     StringBuilder sb = new StringBuilder();
     sb.append("class SchemaInfo {\n");
     
-    sb.append("    objectType: ").append(toIndentedString(schemaName)).append("\n");
+    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
     sb.append("    objectType: ").append(toIndentedString(objectType)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    schemaData: ").append(toIndentedString(schemaData)).append("\n");
