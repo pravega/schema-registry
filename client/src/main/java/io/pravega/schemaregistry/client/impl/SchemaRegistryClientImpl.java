@@ -192,7 +192,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @Override
     public SchemaInfo getSchema(String group, VersionInfo version) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("versions").path(Integer.toString(version.getVersion()));
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("versions").path(Integer.toString(version.getOrdinal()));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
