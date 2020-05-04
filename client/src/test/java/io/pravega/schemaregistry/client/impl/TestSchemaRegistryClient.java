@@ -48,7 +48,7 @@ public class TestSchemaRegistryClient {
         // add group
         // 1. success response code
         doReturn(response).when(invocation).post(any());
-        doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
+        doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         boolean addGroup = client.addGroup("grp1", SchemaType.Avro, SchemaValidationRules.of(Compatibility.backward()), true, Collections.emptyMap());
         assertTrue(addGroup);
         
