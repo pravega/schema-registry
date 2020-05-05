@@ -85,7 +85,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
         Response response = invocationBuilder.post(Entity.entity(request, MediaType.APPLICATION_JSON));
-        if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+        if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
             return true;
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
             return false;
@@ -177,7 +177,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
         addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
         Response response = invocationBuilder.post(Entity.entity(addSchemaToGroupRequest, MediaType.APPLICATION_JSON));
-        if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+        if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new NotFoundException("Group not found.");
@@ -401,7 +401,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
         if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new NotFoundException("Group not found.");
-        } else if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+        } else if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Failed to add codec. Internal server error.");
         }
     }
