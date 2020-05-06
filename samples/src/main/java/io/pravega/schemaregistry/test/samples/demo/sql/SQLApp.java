@@ -192,7 +192,7 @@ public class SQLApp {
 
     @SneakyThrows
     private String getTableGroupId(String tableName) {
-        return URLEncoder.encode("table://" + tableName, Charsets.UTF_8.toString());
+        return "table://" + tableName;
     }
 
     List<GenericRecord> handleSelect(String[] tokens) {

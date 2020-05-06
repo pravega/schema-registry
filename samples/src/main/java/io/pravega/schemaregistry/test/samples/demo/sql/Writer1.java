@@ -141,6 +141,7 @@ public class Writer1 {
         client.addGroup(groupId, schemaType,
                 SchemaValidationRules.of(Compatibility.backward()),
                 false, Collections.emptyMap());
+        client.getGroupProperties(groupId);
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {
