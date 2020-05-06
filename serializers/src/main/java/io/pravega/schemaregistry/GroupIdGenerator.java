@@ -12,9 +12,6 @@ package io.pravega.schemaregistry;
 import com.google.common.base.Preconditions;
 import lombok.SneakyThrows;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 /**
  * Defines strategies for generating groupId for stream. 
  * Currently there is only one naming strategy that uses streams fully qualified scoped stream name and encodes it using
@@ -36,7 +33,7 @@ public class GroupIdGenerator {
                     qualifiedNameBuilder.append(arg);
                     qualifiedNameBuilder.append("/");
                 }
-                return URLEncoder.encode(qualifiedNameBuilder.toString(), StandardCharsets.UTF_8.toString());
+                return qualifiedNameBuilder.toString();
             default:
                 throw new IllegalArgumentException();
         }
