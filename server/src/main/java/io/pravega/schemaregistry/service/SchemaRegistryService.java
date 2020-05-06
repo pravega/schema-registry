@@ -273,7 +273,7 @@ public class SchemaRegistryService {
         return store.getSchema(group, versionOrdinal)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return schema for verison {}.", group, versionOrdinal);
+                            log.info("Group {}, return schema for version {}.", group, versionOrdinal);
                         } else {
                             log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
                         }
