@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.client.impl;
 
+import com.google.common.base.Charsets;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -42,6 +43,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
+import lombok.SneakyThrows;
 import org.glassfish.jersey.client.ClientConfig;
 
 import javax.annotation.Nullable;
@@ -53,6 +55,7 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -95,8 +98,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void removeGroup(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group);
+    public void removeGroup(String groupId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.delete();
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
@@ -126,7 +129,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @Override
     public GroupProperties getGroupProperties(String groupId) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(groupId);
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -139,8 +142,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group);
+    public void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         UpdateValidationRulesPolicyRequest request = new UpdateValidationRulesPolicyRequest()
                 .validationRules(ModelHelper.encode(validationRules));
@@ -156,8 +159,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<String> getObjectTypes(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("objectTypes");
+    public List<String> getObjectTypes(String groupId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("objectTypes");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         ObjectTypesList objectTypesList = response.readEntity(ObjectTypesList.class);
@@ -171,8 +174,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo addSchema(String group, SchemaInfo schema) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas");
+    public VersionInfo addSchema(String groupId, SchemaInfo schema) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
         addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
@@ -191,8 +194,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaInfo getSchema(String group, VersionInfo version) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("versions").path(Integer.toString(version.getOrdinal()));
+    public SchemaInfo getSchema(String groupId, VersionInfo version) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas").path("versions").path(Integer.toString(version.getOrdinal()));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -205,8 +208,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public EncodingInfo getEncodingInfo(String group, EncodingId encodingId) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("encodings").path(Integer.toString(encodingId.getId()));
+    public EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("encodings").path(Integer.toString(encodingId.getId()));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -219,8 +222,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public EncodingId getEncodingId(String group, VersionInfo version, CodecType codecType) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("encodings");
+    public EncodingId getEncodingId(String groupId, VersionInfo version, CodecType codecType) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("encodings");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
         getEncodingIdRequest.codecType(ModelHelper.encode(codecType))
@@ -238,16 +241,16 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaWithVersion getLatestSchema(String group, @Nullable String objectTypeName) {
+    public SchemaWithVersion getLatestSchema(String groupId, @Nullable String objectTypeName) {
         if (objectTypeName == null) {
-            return getLatestSchemaForGroup(group);
+            return getLatestSchemaForGroup(groupId);
         } else {
-            return getLatestSchemaByObjectType(group, objectTypeName);
+            return getLatestSchemaByObjectType(groupId, objectTypeName);
         }
     }
 
-    private SchemaWithVersion getLatestSchemaForGroup(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("versions").path("latest");
+    private SchemaWithVersion getLatestSchemaForGroup(String groupId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas").path("versions").path("latest");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -259,8 +262,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         }
     }
 
-    private SchemaWithVersion getLatestSchemaByObjectType(String group, String objectTypeName) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group)
+    private SchemaWithVersion getLatestSchemaByObjectType(String groupId, String objectTypeName) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId))
                                     .path("objectTypes").path(objectTypeName).path("schemas").path("versions").path("latest");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
@@ -279,16 +282,16 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
+    public List<SchemaEvolution> getGroupEvolutionHistory(String groupId, @Nullable String objectTypeName) {
         if (objectTypeName == null) {
-            return getEvolutionHistory(group);
+            return getEvolutionHistory(groupId);
         } else {
-            return getEvolutionHistoryByObjectType(group, objectTypeName);
+            return getEvolutionHistoryByObjectType(groupId, objectTypeName);
         }
     }
 
-    private List<SchemaEvolution> getEvolutionHistory(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("versions");
+    private List<SchemaEvolution> getEvolutionHistory(String groupId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas").path("versions");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -300,8 +303,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         }
     }
 
-    private List<SchemaEvolution> getEvolutionHistoryByObjectType(String group, String objectTypeName) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("objectTypes").path(objectTypeName)
+    private List<SchemaEvolution> getEvolutionHistoryByObjectType(String groupId, String objectTypeName) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("objectTypes").path(objectTypeName)
                                     .path("schemas").path("versions");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
@@ -324,10 +327,10 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public VersionInfo getSchemaVersion(String group, SchemaInfo schema) {
+    public VersionInfo getSchemaVersion(String groupId, SchemaInfo schema) {
         long fingerprint = HASH.hashBytes(schema.getSchemaData()).asLong();
 
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas/schema").path(Long.toString(fingerprint));
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas/schema").path(Long.toString(fingerprint));
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
@@ -344,8 +347,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean validateSchema(String group, SchemaInfo schema) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("validate");
+    public boolean validateSchema(String groupId, SchemaInfo schema) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas").path("validate");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         ValidateRequest validateRequest = new ValidateRequest()
@@ -361,8 +364,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean canRead(String group, SchemaInfo schema) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("schemas").path("canRead");
+    public boolean canRead(String groupId, SchemaInfo schema) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas").path("canRead");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         CanReadRequest request = new CanReadRequest().schemaInfo(ModelHelper.encode(schema));
@@ -377,8 +380,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<CodecType> getCodecs(String group) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("codecs");
+    public List<CodecType> getCodecs(String groupId) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("codecs");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.get();
         CodecsList list = response.readEntity(CodecsList.class);
@@ -393,8 +396,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void addCodec(String group, CodecType codecType) {
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(group).path("codecs");
+    public void addCodec(String groupId, CodecType codecType) {
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("codecs");
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         AddCodec addCodec = new AddCodec().codec(ModelHelper.encode(codecType));
         Response response = invocationBuilder.post(Entity.entity(addCodec, MediaType.APPLICATION_JSON));
@@ -404,5 +407,10 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         } else if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
             throw new RuntimeException("Failed to add codec. Internal server error.");
         }
+    }
+
+    @SneakyThrows
+    private String encodeGroupId(String groupId) {
+        return URLEncoder.encode(groupId, Charsets.UTF_8.toString());
     }
 }

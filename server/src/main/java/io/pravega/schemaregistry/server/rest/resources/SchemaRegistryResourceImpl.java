@@ -50,8 +50,6 @@ import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import java.io.UnsupportedEncodingException;
-import java.net.URLDecoder;
-import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
 import static javax.ws.rs.core.Response.Status;
@@ -99,7 +97,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         GroupProperties properties = new GroupProperties(
                 schemaType, validationRules, createGroupRequest.isValidateByObjectType(), createGroupRequest.getProperties());
-        String groupName = URLDecoder.decode(createGroupRequest.getGroupName(), StandardCharsets.UTF_8.toString());
+        String groupName = createGroupRequest.getGroupName();
         registryService.createGroup(groupName, properties)
                        .thenApply(createStatus -> {
                            if (!createStatus) {
