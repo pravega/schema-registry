@@ -254,12 +254,14 @@ project('server') {
         compile project(':contract')
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
         compile group: 'io.pravega', name: 'pravega-controller', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
         compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
 
     javadoc {
