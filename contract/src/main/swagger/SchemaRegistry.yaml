@@ -110,8 +110,6 @@ paths:
       responses:
         204:
           description: Successfully deleted the Group
-        404:
-          description: Group not found
         500:
           description: Internal server error while deleting the Group
   /groups/{groupName}/rules:

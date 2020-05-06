@@ -151,8 +151,6 @@ public class GroupsApi  {
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 204, message = "Successfully deleted the Group", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
-        
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class) })
     public Response deleteGroup(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@Context SecurityContext securityContext)
