@@ -52,7 +52,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedList;
