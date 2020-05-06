@@ -154,7 +154,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                                return Response.status(Status.NOT_FOUND).build();
                            } else if (Exceptions.unwrap(exception) instanceof PreconditionFailedException) {
                                log.warn("updateSchemaValidationRules write conflict {}", groupName);
-                               return Response.status(Status.PRECONDITION_REQUIRED).build();
+                               return Response.status(Status.CONFLICT).build();
                            } else {
                                log.warn("updateSchemaValidationRules failed with exception: ", exception);
                                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
@@ -195,7 +195,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         registryService.deleteGroup(groupName)
                        .thenApply(status -> {
                            log.info("Group {} deleted", groupName);
-                           return Response.status(Status.OK).build();
+                           return Response.status(Status.NO_CONTENT).build();
                        })
                        .exceptionally(exception -> {
                            log.warn("deleteGroup failed with exception: ", exception);
