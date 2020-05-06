@@ -222,7 +222,7 @@ project('server') {
     applicationName = "schema-registry"
     mainClassName = "io.pravega.schemaregistry.service.Main"
     applicationDefaultJvmArgs = ["-server", "-Xms128m", "-XX:+HeapDumpOnOutOfMemoryError",
-                                 "-Dconfig.file=PRAVEGA_APP_HOME/conf/schemaregistry.config.properties",
+                                 "-Dconfig.file=PRAVEGA_APP_HOME/conf/schema-registry.config.properties",
                                  "-Dlogback.configurationFile=PRAVEGA_APP_HOME/conf/logback.xml",
                                  "-Dlog.dir=PRAVEGA_APP_HOME/logs",
                                  "-Dlog.name=schemaregistry"]
