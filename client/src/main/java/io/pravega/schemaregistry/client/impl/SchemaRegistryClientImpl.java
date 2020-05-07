@@ -102,7 +102,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId));
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
         Response response = invocationBuilder.delete();
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+        if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
             throw new RuntimeException("Internal Service error. Failed to remove the group.");
         }
     }
