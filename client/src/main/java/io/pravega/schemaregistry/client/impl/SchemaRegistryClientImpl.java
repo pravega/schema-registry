@@ -10,8 +10,6 @@
 package io.pravega.schemaregistry.client.impl;
 
 import com.google.common.base.Charsets;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -61,7 +59,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
-    private static final HashFunction HASH = Hashing.murmur3_128();
     private final Client client;
     private final URI uri;
 
@@ -328,9 +325,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @Override
     public VersionInfo getSchemaVersion(String groupId, SchemaInfo schema) {
-        long fingerprint = HASH.hashBytes(schema.getSchemaData()).asLong();
-
-        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas/schema").path(Long.toString(fingerprint));
+        WebTarget webTarget = client.target(uri).path("v1/groups").path(encodeGroupId(groupId)).path("schemas/versions/schema");
 
         Invocation.Builder invocationBuilder = webTarget.request(MediaType.APPLICATION_JSON);
 
