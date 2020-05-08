@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.client.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
@@ -40,8 +41,8 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
-import io.pravega.schemaregistry.contract.generated.rest.server.api.GroupsApi;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
+import io.pravega.schemaregistry.contract.v1.ApiV1;
 import lombok.SneakyThrows;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.proxy.WebResourceFactory;
@@ -57,18 +58,16 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
-    private final Client client;
-    private final URI uri;
-    private final GroupsApi proxy;
+    private final ApiV1.GroupsApi proxy;
 
     public SchemaRegistryClientImpl(URI uri) {
-        this(uri, ClientBuilder.newClient(new ClientConfig()));
+        Client client = ClientBuilder.newClient(new ClientConfig());
+        this.proxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(uri));
     }
 
-    SchemaRegistryClientImpl(URI uri, Client client) {
-        this.uri = uri;
-        this.client = client;
-        this.proxy = WebResourceFactory.newResource(GroupsApi.class, client.target(uri));
+    @VisibleForTesting
+    SchemaRegistryClientImpl(ApiV1.GroupsApi proxy) {
+        this.proxy = proxy;
     }
 
     @SneakyThrows
