@@ -15,15 +15,11 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
+import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.test.common.AssertExtensions;
 import org.junit.Test;
 
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.util.Collections;
 import java.util.Map;
 
@@ -34,20 +30,14 @@ import static org.mockito.Mockito.*;
 public class TestSchemaRegistryClient {
     @Test
     public void testGroup() {
-        Client jerseyClient = mock(Client.class);
-        WebTarget webTarget = mock(WebTarget.class);
-        Invocation.Builder invocation = mock(Invocation.Builder.class);
+        ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
 
-        doReturn(webTarget).when(jerseyClient).target(any(URI.class));
-        doReturn(webTarget).when(webTarget).path(anyString());
-        doReturn(invocation).when(webTarget).request(MediaType.APPLICATION_JSON);
-
-        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(URI.create("http://localhost:9092"), jerseyClient);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         
         // add group
         // 1. success response code
-        doReturn(response).when(invocation).post(any());
+        doReturn(response).when(proxy).createGroup(any(), any());
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         boolean addGroup = client.addGroup("grp1", SchemaType.Avro, SchemaValidationRules.of(Compatibility.backward()), true, Collections.emptyMap());
         assertTrue(addGroup);
@@ -61,10 +51,9 @@ public class TestSchemaRegistryClient {
                 () -> client.addGroup("grp1", SchemaType.Avro, SchemaValidationRules.of(Compatibility.backward()), true, Collections.emptyMap()),
                 e -> e instanceof RuntimeException);
         reset(response);
-        reset(invocation);
         
         // list groups
-        doReturn(response).when(invocation).get();
+        doReturn(response).when(proxy).listGroups(any());
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         GroupProperties mygroup = new GroupProperties().groupName("mygroup").properties(Collections.emptyMap())
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
@@ -81,6 +70,5 @@ public class TestSchemaRegistryClient {
         assertEquals(groups.get("mygroup").getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
 
         reset(response);
-        reset(invocation);
     }
 }
