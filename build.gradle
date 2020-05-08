@@ -143,6 +143,8 @@ project('client') {
     dependencies {
         compile project(':common')
         compile project(':contract')
+        compile group: 'org.glassfish.jersey.ext', name: 'jersey-proxy-client', version: jerseyVersion
+        compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
