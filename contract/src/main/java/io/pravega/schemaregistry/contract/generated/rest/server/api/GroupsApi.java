@@ -341,7 +341,7 @@ public class GroupsApi  {
         return delegate.getSchemaValidationRules(groupName,securityContext);
     }
     @POST
-    @Path("/{groupName}/schemas/schema/{fingerprint}")
+    @Path("/{groupName}/schemas/versions/schema")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags={ "Schema", })
@@ -352,11 +352,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "schema fingerprint",required=true) @PathParam("fingerprint") Long fingerprint
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetSchemaVersion getSchemaVersion
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaVersion(groupName,fingerprint,getSchemaVersion,securityContext);
+        return delegate.getSchemaVersion(groupName,getSchemaVersion,securityContext);
     }
     @GET
     
