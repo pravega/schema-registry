@@ -81,7 +81,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
 
-        Response response = proxy.createGroup(request, null);
+        Response response = proxy.createGroup(request);
         if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
             return true;
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
@@ -94,7 +94,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public void removeGroup(String groupId) {
-        Response response = proxy.deleteGroup(groupId, null);
+        Response response = proxy.deleteGroup(groupId);
         if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
             throw new RuntimeException("Internal Service error. Failed to remove the group.");
         }
@@ -103,7 +103,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public Map<String, GroupProperties> listGroups() {
-        Response response = proxy.listGroups(null);
+        Response response = proxy.listGroups();
         if (response.getStatus() != Response.Status.OK.getStatusCode()) {
             throw new RuntimeException("Internal Service error. Failed to list groups.");
         }
@@ -120,7 +120,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public GroupProperties getGroupProperties(String groupId) {
-        Response response = proxy.getGroupProperties(groupId, null);
+        Response response = proxy.getGroupProperties(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -136,7 +136,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         UpdateValidationRulesPolicyRequest request = new UpdateValidationRulesPolicyRequest()
                 .validationRules(ModelHelper.encode(validationRules));
 
-        Response response = proxy.updateSchemaValidationRules(groupId, request, null);
+        Response response = proxy.updateSchemaValidationRules(groupId, request);
         if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
             throw new PreconditionFailedException("Conflict attempting to update the rules. Try again.");
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -149,7 +149,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public List<String> getObjectTypes(String groupId) {
-        Response response = proxy.getObjectTypes(groupId, null);
+        Response response = proxy.getObjectTypes(groupId);
         ObjectTypesList objectTypesList = response.readEntity(ObjectTypesList.class);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return objectTypesList.getObjectTypes();
@@ -165,7 +165,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public VersionInfo addSchema(String groupId, SchemaInfo schema) {
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
         addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
-        Response response = proxy.addSchemaToGroupIfAbsent(groupId, addSchemaToGroupRequest, null);
+        Response response = proxy.addSchemaToGroupIfAbsent(groupId, addSchemaToGroupRequest);
         if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -182,7 +182,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public SchemaInfo getSchema(String groupId, VersionInfo version) {
-        Response response = proxy.getSchemaFromVersion(groupId, version.getOrdinal(), null);
+        Response response = proxy.getSchemaFromVersion(groupId, version.getOrdinal());
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -195,7 +195,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId) {
-        Response response = proxy.getEncodingInfo(groupId, encodingId.getId(), null);
+        Response response = proxy.getEncodingInfo(groupId, encodingId.getId());
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -211,7 +211,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
         getEncodingIdRequest.codecType(ModelHelper.encode(codecType))
                             .versionInfo(ModelHelper.encode(version));
-        Response response = proxy.getOrGenerateEncodingId(groupId, getEncodingIdRequest, null);
+        Response response = proxy.getOrGenerateEncodingId(groupId, getEncodingIdRequest);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -234,7 +234,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     private SchemaWithVersion getLatestSchemaForGroup(String groupId) {
-        Response response = proxy.getLatestGroupSchema(groupId, null);
+        Response response = proxy.getLatestGroupSchema(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -246,7 +246,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     private SchemaWithVersion getLatestSchemaByObjectType(String groupId, String objectTypeName) {
-        Response response = proxy.getLatestSchemaForObjectType(groupId, objectTypeName, null);
+        Response response = proxy.getLatestSchemaForObjectType(groupId, objectTypeName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -272,7 +272,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     private List<SchemaEvolution> getEvolutionHistory(String groupId) {
-        Response response = proxy.getGroupSchemas(groupId, null);
+        Response response = proxy.getGroupSchemas(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processHistoryResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -284,7 +284,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     private List<SchemaEvolution> getEvolutionHistoryByObjectType(String groupId, String objectTypeName) {
-        Response response = proxy.getObjectTypeSchemas(groupId, objectTypeName, null);
+        Response response = proxy.getObjectTypeSchemas(groupId, objectTypeName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processHistoryResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -308,7 +308,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public VersionInfo getSchemaVersion(String groupId, SchemaInfo schema) {
         GetSchemaVersion getSchemaVersion = new GetSchemaVersion().schemaInfo(ModelHelper.encode(schema));
 
-        Response response = proxy.getSchemaVersion(groupId, getSchemaVersion, null);
+        Response response = proxy.getSchemaVersion(groupId, getSchemaVersion);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -323,7 +323,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public boolean validateSchema(String groupId, SchemaInfo schema) {
         ValidateRequest validateRequest = new ValidateRequest()
                 .schemaInfo(ModelHelper.encode(schema));
-        Response response = proxy.validate(groupId, validateRequest, null);
+        Response response = proxy.validate(groupId, validateRequest);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return response.readEntity(Valid.class).isValid();
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -337,7 +337,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public boolean canRead(String groupId, SchemaInfo schema) {
         CanReadRequest request = new CanReadRequest().schemaInfo(ModelHelper.encode(schema));
-        Response response = proxy.canRead(groupId, request, null);
+        Response response = proxy.canRead(groupId, request);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return response.readEntity(CanRead.class).isCompatible();
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -350,7 +350,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public List<CodecType> getCodecs(String groupId) {
-        Response response = proxy.getCodecsList(groupId, null);
+        Response response = proxy.getCodecsList(groupId);
         CodecsList list = response.readEntity(CodecsList.class);
 
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -366,7 +366,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void addCodec(String groupId, CodecType codecType) {
         AddCodec addCodec = new AddCodec().codec(ModelHelper.encode(codecType));
-        Response response = proxy.addCodec(groupId, addCodec, null);
+        Response response = proxy.addCodec(groupId, addCodec);
 
         if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
             throw new NotFoundException("Group not found.");
