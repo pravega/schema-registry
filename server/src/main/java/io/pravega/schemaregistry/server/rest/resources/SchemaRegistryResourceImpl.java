@@ -397,7 +397,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getSchemaVersion(String groupName, Long fingerprint, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersion(String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get schema version called for group {}", groupName);
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(getSchemaVersion.getSchemaInfo());
 

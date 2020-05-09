@@ -121,8 +121,8 @@ public class ProtobufDemo {
 
             // endregion
 
-            // region read into specific schema
             try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
+                // region read into specific schema
                 String readerGroupName = "rg" + stream;
                 readerGroupManager.createReaderGroup(readerGroupName,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
@@ -136,31 +136,33 @@ public class ProtobufDemo {
 
                 // endregion
 
-                // region generic read
-                // 1. try without passing the schema. writer schema will be used to read
-                String rg2 = "rg2" + stream;
-                readerGroupManager.createReaderGroup(rg2,
-                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                if (encodeHeaders) {
+                    // region generic read
+                    // 1. try without passing the schema. writer schema will be used to read
+                    String rg2 = "rg2" + stream;
+                    readerGroupManager.createReaderGroup(rg2,
+                            ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
+                    Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
 
-                EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                    EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<DynamicMessage> event2 = reader2.readNextEvent(1000);
-                assert null != event2.getEvent();
+                    EventRead<DynamicMessage> event2 = reader2.readNextEvent(1000);
+                    assert null != event2.getEvent();
 
-                // 2. try with passing the schema. reader schema will be used to read
-                String rg3 = "rg3" + encodeHeaders;
-                readerGroupManager.createReaderGroup(rg3,
-                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                    // 2. try with passing the schema. reader schema will be used to read
+                    String rg3 = "rg3" + encodeHeaders;
+                    readerGroupManager.createReaderGroup(rg3,
+                            ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
-                genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
+                    ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
+                    genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
 
-                reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
+                    reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
-                event2 = reader2.readNextEvent(1000);
-                assert null != event2.getEvent();
+                    event2 = reader2.readNextEvent(1000);
+                    assert null != event2.getEvent();
+                }
                 // endregion
             }
         }
