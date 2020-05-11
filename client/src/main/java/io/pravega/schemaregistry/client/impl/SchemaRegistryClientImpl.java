@@ -72,12 +72,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     @Override
-    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean validateBySchemaName, Map<String, String> properties) {
+    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionBySchemaName, Map<String, String> properties) {
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaType schemaTypeModel = ModelHelper.encode(schemaType);
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .properties(properties).validateBySchemaName(validateBySchemaName)
+                                                             .properties(properties).versionBySchemaName(versionBySchemaName)
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
 
@@ -113,7 +113,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 x -> {
                     SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
                     SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
-                    return new GroupProperties(schemaType, rules, x.isValidateBySchemaName(), x.getProperties());
+                    return new GroupProperties(schemaType, rules, x.isVersionBySchemaName(), x.getProperties());
                 }));
     }
 

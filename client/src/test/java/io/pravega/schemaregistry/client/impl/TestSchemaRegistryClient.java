@@ -79,7 +79,7 @@ public class TestSchemaRegistryClient {
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .validateBySchemaName(false);
+                                                       .versionBySchemaName(false);
         GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
         doReturn(groupList).when(response).readEntity(eq(GroupsList.class));
 
@@ -103,7 +103,7 @@ public class TestSchemaRegistryClient {
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .validateBySchemaName(false);
+                                                       .versionBySchemaName(false);
         GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
         doReturn(response).when(proxy).listGroups();
 
@@ -148,7 +148,7 @@ public class TestSchemaRegistryClient {
                                                                .schemaType(
                                                                        io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .validateBySchemaName(false);
+                                                       .versionBySchemaName(false);
         doReturn(mygroup).when(response).readEntity(eq(GroupProperties.class));
         io.pravega.schemaregistry.contract.data.GroupProperties groupProperties = client.getGroupProperties("mygroup");
         assertEquals(groupProperties.getSchemaType(), SchemaType.Any);

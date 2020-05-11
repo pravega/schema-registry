@@ -70,7 +70,7 @@ paths:
                   type: string
                   minLength: 0
                   maxLength: 40
-              validateBySchemaName:
+              versionBySchemaName:
                 type: boolean
       responses:
         201:
@@ -603,7 +603,7 @@ definitions:
           $ref: "#/definitions/SchemaValidationRules"
       schemaType:
           $ref: "#/definitions/SchemaType"
-      validateBySchemaName:
+      versionBySchemaName:
           type: boolean
       properties:
         type: object

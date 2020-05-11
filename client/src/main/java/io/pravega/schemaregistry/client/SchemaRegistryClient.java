@@ -36,14 +36,14 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group that uniquely identifies the group. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
-     * @param validateBySchemaName Property to describe whether group should have schema compatibility checks performed by object types. 
+     * @param versionBySchemaName Property to describe whether group should have schema compatibility checks performed by object types. 
      *                            Object Types are uniquely identified by {@link SchemaInfo#name}. 
      * @param properties          Map of properties. Example properties could include flag to indicate whether client should
      *                            encode registry service generated encoding id with payload. 
      * @return True indicates if the group was added successfully, false if it exists. 
      */
     boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules,
-                     boolean validateBySchemaName, Map<String, String> properties);
+                     boolean versionBySchemaName, Map<String, String> properties);
     
     /**
      * Api to remove group. 
@@ -63,7 +63,7 @@ public interface SchemaRegistryClient {
      * Get group properties for the group. 
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#validateBySchemaName} that specifies if schemas should be exclusively validated against 
+     * {@link GroupProperties#versionBySchemaName} that specifies if schemas should be exclusively validated against 
      * schemas that have the same {@link SchemaInfo#name}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
      * 
@@ -89,7 +89,7 @@ public interface SchemaRegistryClient {
     List<String> getObjects(String groupId);
 
     /**
-     * Registers schema to the group. If group is configured with {@link GroupProperties#validateBySchemaName} then 
+     * Registers schema to the group. If group is configured with {@link GroupProperties#versionBySchemaName} then 
      * the {@link SchemaInfo#name} is used for validating against existing group schemas that share the same name. 
      * 
      * @param groupId Id for the group. 
@@ -130,7 +130,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets latest schema and version for the group (or schemaName, if specified). 
-     * For groups configured with {@link GroupProperties#validateBySchemaName}, the schemaName name needs to be supplied to 
+     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName name needs to be supplied to 
      * get the latest schema for the schemaName. 
      * 
      * @param groupId Id for the group. 
@@ -142,7 +142,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets all schemas with corresponding versions for the group (or schemaName, if specified). 
-     * For groups configured with {@link GroupProperties#validateBySchemaName}, the schemaName name needs to be supplied to 
+     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName name needs to be supplied to 
      * get the latest schema for the schemaName. {@link SchemaInfo#name} is used as the schemaName name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
@@ -153,7 +153,7 @@ public interface SchemaRegistryClient {
     List<SchemaEvolution> getGroupEvolutionHistory(String groupId, @Nullable String schemaName);
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateBySchemaName}
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
      * the version will contain the name taken from the {@link SchemaInfo#name}. 
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      * 
