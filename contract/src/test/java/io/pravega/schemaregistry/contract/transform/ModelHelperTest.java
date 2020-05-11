@@ -34,7 +34,7 @@ public class ModelHelperTest {
         SchemaValidationRules rules = new SchemaValidationRules().rules(Collections.emptyMap());
         SchemaInfo schema = new SchemaInfo()
                 .schemaName("a").schemaType(type).schemaData(new byte[0]).properties(Collections.emptyMap());
-        VersionInfo version = new VersionInfo().objectType("a").version(1).ordinal(1);
+        VersionInfo version = new VersionInfo().schemaName("a").version(1).ordinal(1);
         Compatibility compatibility = new Compatibility().name(Compatibility.class.getSimpleName())
                                                          .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL).backwardTill(version).forwardTill(version);
         CodecType codec = new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM).customTypeName("custom");
@@ -61,7 +61,7 @@ public class ModelHelperTest {
         assertEquals(codecType.getCustomTypeName(), "custom");
 
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(version);
-        assertEquals(versionInfo.getObjectType(), version.getObjectType());
+        assertEquals(versionInfo.getSchemaName(), version.getSchemaName());
         assertEquals(versionInfo.getVersion(), version.getVersion().intValue());
         
         io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo = ModelHelper.decode(new EncodingInfo().schemaInfo(schema).versionInfo(version).codecType(codec));
@@ -80,20 +80,20 @@ public class ModelHelperTest {
     public void testEncode() {
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = io.pravega.schemaregistry.contract.data.SchemaType.custom("custom");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                "name", "objecttype", schemaType, new byte[0], Collections.emptyMap());
+                "name", schemaType, new byte[0], Collections.emptyMap());
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 1);
         io.pravega.schemaregistry.contract.data.Compatibility rule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 0),
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1, 1));
         io.pravega.schemaregistry.contract.data.SchemaValidationRules schemaValidationRules = io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(rule);
         io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties.builder()
-                .schemaType(schemaType).schemaValidationRules(schemaValidationRules).validateByObjectType(true).properties(Collections.emptyMap()).build();
+                                                                                                                              .schemaType(schemaType).schemaValidationRules(schemaValidationRules).versionBySchemaName(true).properties(Collections.emptyMap()).build();
         io.pravega.schemaregistry.contract.data.CodecType codecType = io.pravega.schemaregistry.contract.data.CodecType.custom("codec", Collections.emptyMap());
 
         // encode test
         VersionInfo version = ModelHelper.encode(versionInfo);
         assertEquals(version.getVersion().intValue(), versionInfo.getVersion());
-        assertEquals(version.getObjectType(), versionInfo.getObjectType());
+        assertEquals(version.getSchemaName(), versionInfo.getSchemaName());
         
         SchemaType type = ModelHelper.encode(schemaType);
         assertEquals(type.getSchemaType(), SchemaType.SchemaTypeEnum.CUSTOM);
@@ -134,14 +134,14 @@ public class ModelHelperTest {
         GroupProperties groupProperties = ModelHelper.encode(prop);
         assertEquals(groupProperties.getSchemaType(), type);
         assertEquals(groupProperties.getSchemaValidationRules(), rules);
-        assertEquals(groupProperties.isValidateByObjectType(), prop.isValidateByObjectType());
+        assertEquals(groupProperties.isVersionBySchemaName(), prop.isVersionBySchemaName());
         assertEquals(groupProperties.getProperties(), prop.getProperties());
         assertNull(groupProperties.getGroupName());
         
         groupProperties = ModelHelper.encode("groupName", prop);
         assertEquals(groupProperties.getSchemaType(), type);
         assertEquals(groupProperties.getSchemaValidationRules(), rules);
-        assertEquals(groupProperties.isValidateByObjectType(), prop.isValidateByObjectType());
+        assertEquals(groupProperties.isVersionBySchemaName(), prop.isVersionBySchemaName());
         assertEquals(groupProperties.getProperties(), prop.getProperties());
         assertEquals(groupProperties.getGroupName(), "groupName");
     }

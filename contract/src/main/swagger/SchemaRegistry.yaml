@@ -70,7 +70,7 @@ paths:
                   type: string
                   minLength: 0
                   maxLength: 40
-              validateByObjectType:
+              versionBySchemaName:
                 type: boolean
       responses:
         201:
@@ -385,7 +385,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objectTypes:
+  /groups/{groupName}/objects:
     parameters:
       - in: path
         name: groupName
@@ -395,20 +395,20 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getObjectTypes
-      description: Fetch all objectTypes under a Group. This api will return schema types.  
+      operationId: getObjects
+      description: Fetch all object types under a Group. This api will return schema types.  
       produces:
         - application/json
       responses:
         200:
-          description: List of objectTypes under the group
+          description: List of object types under the group
           schema:
-            $ref: "#/definitions/ObjectTypesList"
+            $ref: "#/definitions/ObjectsList"
         404:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions:
+  /groups/{groupName}/objects/{objectName}/schemas/versions:
     parameters:
       - in: path
         name: groupName
@@ -416,14 +416,14 @@ paths:
         required: true
         type: string
       - in: path
-        name: objectTypeName
+        name: objectName
         description: Object type
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getObjectTypeSchemas
+      operationId: getObjectSchemas
       description: Fetch all schemas registered with the given schema name
       produces:
         - application/json
@@ -436,7 +436,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objectTypes/{objectTypeName}/schemas/versions/latest:
+  /groups/{groupName}/objects/{schemaName}/schemas/versions/latest:
     parameters:
       - in: path
         name: groupName
@@ -444,20 +444,20 @@ paths:
         required: true
         type: string
       - in: path
-        name: objectTypeName
+        name: schemaName
         description: Object type 
         required: true
         type: string
     get:
       tags:
       - "Schema"
-      operationId: getLatestSchemaForObjectType
+      operationId: getLatestSchemaForSchemaName
       description: Fetch the properties of an existing Group
       produces:
         - application/json
       responses:
         200:
-          description: Found latest schema in objectType
+          description: Found latest schema in name
           schema:
             $ref: "#/definitions/SchemaWithVersion"
         404:
@@ -474,7 +474,7 @@ paths:
     put:
       tags:
       - "Encoding"
-      operationId: getOrGenerateEncodingId
+      operationId: getEncodingId
       description: Fetch the properties of an existing Group
       consumes:
         - application/json
@@ -587,10 +587,10 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/GroupProperties"
-  ObjectTypesList:
+  ObjectsList:
     type: object
     properties:
-      objectTypes:
+      objects:
         type: array
         items:
           type: string
@@ -603,7 +603,7 @@ definitions:
           $ref: "#/definitions/SchemaValidationRules"
       schemaType:
           $ref: "#/definitions/SchemaType"
-      validateByObjectType:
+      versionBySchemaName:
           type: boolean
       properties:
         type: object
@@ -629,8 +629,6 @@ definitions:
     properties:
       schemaName:
         type: string
-      objectType:
-        type: string
       schemaType:
           $ref: "#/definitions/SchemaType"
       schemaData:
@@ -645,7 +643,7 @@ definitions:
   VersionInfo:
     type: object
     properties:
-      objectType:
+      schemaName:
         type: string
       version:
         type: integer

@@ -287,7 +287,7 @@ public class Group<V> {
         TableRecords.SchemaInfoKey schemaInfoKey = new TableRecords.SchemaInfoKey(getFingerprint(schemaInfo));
         keys.add(schemaInfoKey);
 
-        if (prop.isValidateByObjectType()) {
+        if (prop.isVersionBySchemaName()) {
             keys.add(new TableRecords.LatestSchemaVersionForObjectTypeKey(schemaInfo.getName()));
             keys.add(OBJECTS_TYPE_KEY);
         }
@@ -300,7 +300,7 @@ public class Group<V> {
             int nextOrdinal = latest == null ? 0 : latest.getVersion().getOrdinal() + 1;
             int nextVersion;
 
-            if (prop.isValidateByObjectType()) {
+            if (prop.isVersionBySchemaName()) {
                 TableRecords.LatestSchemaVersionValue objectLatestVersion = (TableRecords.LatestSchemaVersionValue) values.get(2).getValue();
                 nextVersion = objectLatestVersion == null ? 0 : objectLatestVersion.getVersion().getVersion() + 1;
             } else {
@@ -331,7 +331,7 @@ public class Group<V> {
             entries.add(new AbstractMap.SimpleEntry<>(LATEST_SCHEMA_VERSION_KEY,
                     new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), latestVersion)));
 
-            if (prop.isValidateByObjectType()) {
+            if (prop.isVersionBySchemaName()) {
                 // 3.1 latest for object type
                 V objectLatestVersionVersion = values.get(2).getVersion();
                 entries.add(new AbstractMap.SimpleEntry<>(new TableRecords.LatestSchemaVersionForObjectTypeKey(
@@ -340,7 +340,7 @@ public class Group<V> {
             }
 
             // 4. object types list
-            if (prop.isValidateByObjectType()) {
+            if (prop.isVersionBySchemaName()) {
                 TableRecords.ObjectTypesListValue objectTypes = (TableRecords.ObjectTypesListValue) values.get(3).getValue();
                 V objectTypesVersion = values.get(3).getVersion();
 
@@ -381,7 +381,7 @@ public class Group<V> {
                              TableRecords.GroupPropertiesRecord properties = (TableRecords.GroupPropertiesRecord) entries.get(0);
                              TableRecords.ValidationRecord validationRecord = (TableRecords.ValidationRecord) entries.get(1);
                              return new GroupProperties(properties.getSchemaType(), validationRecord.getValidationRules(),
-                                     properties.isValidateByObjectType(),
+                                     properties.isVersionedBySchemaName(),
                                      properties.getProperties());
                          });
     }

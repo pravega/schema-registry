@@ -111,7 +111,7 @@ public class SerDeDemo {
 
         URL url = path.toUri().toURL();
 
-        SchemaInfo schemaInfo = new SchemaInfo("serde", "object", schemaType, url.toString().getBytes(Charsets.UTF_8), map);
+        SchemaInfo schemaInfo = new SchemaInfo("serde", schemaType, url.toString().getBytes(Charsets.UTF_8), map);
         MySerializer mySerializer = new MySerializer();
 
         Serializer<MyPojo> serializer = SerializerFactory.customSerializer(config, () -> schemaInfo, mySerializer);

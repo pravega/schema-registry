@@ -29,7 +29,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.ObjectTypesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.ObjectsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
@@ -96,7 +96,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
         SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
         SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
         GroupProperties properties = new GroupProperties(
-                schemaType, validationRules, createGroupRequest.isValidateByObjectType(), createGroupRequest.getProperties());
+                schemaType, validationRules, createGroupRequest.isVersionBySchemaName(), createGroupRequest.getProperties());
         String groupName = createGroupRequest.getGroupName();
         registryService.createGroup(groupName, properties)
                        .thenApply(createStatus -> {
@@ -365,9 +365,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getOrGenerateEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest,
+    public void getEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest,
                                         SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("getOrGenerateEncodingId called for group {} with version {} and codec {}", groupName, 
+        log.info("getEncodingId called for group {} with version {} and codec {}", groupName, 
                 getEncodingIdRequest.getVersionInfo(), getEncodingIdRequest.getCodecType());
         io.pravega.schemaregistry.contract.data.VersionInfo version = ModelHelper.decode(getEncodingIdRequest.getVersionInfo());
         CodecType codecType = ModelHelper.decode(getEncodingIdRequest.getCodecType());
@@ -383,10 +383,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                                log.warn("Group {} not found", groupName);
                                return Response.status(Status.NOT_FOUND).build();
                            } else if (Exceptions.unwrap(exception) instanceof CodecNotFoundException) {
-                               log.info("getOrGenerateEncodingId failed Codec Not Found {}", groupName);
+                               log.info("getEncodingId failed Codec Not Found {}", groupName);
                                return Response.status(Status.PRECONDITION_FAILED).build();
                            } else {
-                               log.warn("getOrGenerateEncodingId failed with exception: ", exception);
+                               log.warn("getEncodingId failed with exception: ", exception);
                                return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                            }
                        })
@@ -423,7 +423,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getObjectTypeSchemas(String groupName, String objectTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getObjectSchemas(String groupName, String objectTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getObjectTypeSchemas called for group {} objectType {}", groupName, objectTypeName);
         registryService.getGroupEvolutionHistory(groupName, objectTypeName)
                        .thenApply(schemaEpochs -> {
@@ -447,11 +447,11 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getObjectTypes(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getObjects(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getObjectTypes called for group {} ", groupName);
         registryService.getObjectTypes(groupName, null)
                        .thenApply(objectTypes -> {
-                           ObjectTypesList objectTypesList = new ObjectTypesList().objectTypes(objectTypes.getList());
+                           ObjectsList objectTypesList = new ObjectsList().objects(objectTypes.getList());
                            log.info("Found object types {} for group {} ", objectTypesList, groupName);
                            return Response.status(Status.OK).entity(objectTypesList).build();
                        })
@@ -471,7 +471,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void getLatestSchemaForObjectType(String groupName, String objectTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getLatestSchemaForSchemaName(String groupName, String objectTypeName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getLatestSchemaForObjectType called for group {} object type {}", groupName, objectTypeName);
         registryService.getLatestSchema(groupName, objectTypeName)
                        .thenApply(schemaWithVersion -> {

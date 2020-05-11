@@ -68,7 +68,7 @@ public class PravegaKVGroups implements Groups<Version> {
                            boolean toReturn = entry.getRecord().getId().equals(id);
                            return index.create()
                                      .thenCompose(v -> grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(),
-                                             groupProperties.isValidateByObjectType(), groupProperties.getSchemaValidationRules()))
+                                             groupProperties.isVersionBySchemaName(), groupProperties.getSchemaValidationRules()))
                                      .thenCompose(v -> {
                                          byte[] newValue = new GroupsValue(entry.getRecord().getId(), GroupsValue.State.Active).toBytes();
                                          return tableStore.updateEntry(GROUPS, group.getBytes(Charsets.UTF_8), newValue, entry.getVersion());

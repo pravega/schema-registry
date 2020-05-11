@@ -28,7 +28,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.ObjectTypesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.ObjectsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
@@ -79,7 +79,7 @@ public class TestSchemaRegistryClient {
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .validateByObjectType(false);
+                                                       .versionBySchemaName(false);
         GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
         doReturn(groupList).when(response).readEntity(eq(GroupsList.class));
 
@@ -103,7 +103,7 @@ public class TestSchemaRegistryClient {
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .validateByObjectType(false);
+                                                       .versionBySchemaName(false);
         GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
         doReturn(response).when(proxy).listGroups();
 
@@ -148,7 +148,7 @@ public class TestSchemaRegistryClient {
                                                                .schemaType(
                                                                        io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .validateByObjectType(false);
+                                                       .versionBySchemaName(false);
         doReturn(mygroup).when(response).readEntity(eq(GroupProperties.class));
         io.pravega.schemaregistry.contract.data.GroupProperties groupProperties = client.getGroupProperties("mygroup");
         assertEquals(groupProperties.getSchemaType(), SchemaType.Any);
@@ -197,26 +197,26 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getObjectTypes(anyString());
+        doReturn(response).when(proxy).getObjects(anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         List<String> stringList = new ArrayList<>();
         stringList.add("element1");
         stringList.add("element2");
-        ObjectTypesList objectTypesList = new ObjectTypesList();
-        objectTypesList.objectTypes(stringList);
-        doReturn(objectTypesList).when(response).readEntity(ObjectTypesList.class);
-        List<String> output = client.getObjectTypes("mygroup");
+        ObjectsList objectTypesList = new ObjectsList();
+        objectTypesList.objects(stringList);
+        doReturn(objectTypesList).when(response).readEntity(ObjectsList.class);
+        List<String> output = client.getObjects("mygroup");
         assertEquals(2, output.size());
         assertEquals("element1", output.get(0));
         assertEquals("element2", output.get(1));
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
-        AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getObjectTypes("mygroup"),
+        AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getObjects("mygroup"),
                 e -> e instanceof NotFoundException);
         // Runtime exception
         doReturn(Response.Status.EXPECTATION_FAILED.getStatusCode()).when(response).getStatus();
-        AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getObjectTypes("mygroup"),
+        AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getObjects("mygroup"),
                 e -> e instanceof RuntimeException);
     }
 
@@ -230,15 +230,15 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo versionInfo =
                 new io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo().version(
-                        5).objectType("schema2").ordinal(5);
+                        5).schemaName("schema2").ordinal(5);
         doReturn(versionInfo).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class);
         VersionInfo versionInfo1 = client.addSchema("mygroup", schemaInfo);
         assertEquals(5, versionInfo1.getVersion());
-        assertEquals("schema2", versionInfo1.getObjectType());
+        assertEquals("schema2", versionInfo1.getSchemaName());
         assertEquals(5, versionInfo1.getOrdinal());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
@@ -297,7 +297,7 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         CodecType codecType = CodecType.GZip;
         EncodingInfo encodingInfo = new EncodingInfo(versionInfo, schemaInfo, codecType);
         EncodingId encodingId = new EncodingId(5);
@@ -322,7 +322,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getOrGenerateEncodingId(anyString(), any());
+        doReturn(response).when(proxy).getEncodingId(anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         CodecType codecType = CodecType.GZip;
@@ -358,7 +358,7 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class);
@@ -380,14 +380,14 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getLatestSchemaForObjectType(anyString(), anyString());
+        doReturn(response).when(proxy).getLatestSchemaForSchemaName(anyString(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class);
@@ -416,7 +416,7 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
         SchemaVersionAndRules schemaVersionAndRules = new SchemaVersionAndRules().validationRules(ModelHelper.encode(schemaValidationRules)).schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo));
         SchemaList schemaList = new SchemaList();
@@ -438,18 +438,18 @@ public class TestSchemaRegistryClient {
     }
 
     @Test
-    public void testGetEvolutionHistoryByObjectType() {
+    public void testGetHistoryByObjectType() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getObjectTypeSchemas(anyString(), anyString());
+        doReturn(response).when(proxy).getObjectSchemas(anyString(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
         SchemaVersionAndRules schemaVersionAndRules = new SchemaVersionAndRules().validationRules(ModelHelper.encode(schemaValidationRules)).schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo));
         SchemaList schemaList = new SchemaList();
@@ -481,12 +481,12 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         doReturn(ModelHelper.encode(versionInfo)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class);
         VersionInfo versionInfo1 = client.getSchemaVersion("mygroup", schemaInfo);
-        assertEquals(versionInfo.getObjectType(), versionInfo1.getObjectType());
+        assertEquals(versionInfo.getSchemaName(), versionInfo1.getSchemaName());
         assertEquals(versionInfo.getVersion(), versionInfo1.getVersion());
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
@@ -509,7 +509,7 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         Valid valid = new Valid().valid(Boolean.TRUE);
         doReturn(valid).when(response).readEntity(Valid.class);
         Boolean valid1 = client.validateSchema("mygroup", schemaInfo);
@@ -535,7 +535,7 @@ public class TestSchemaRegistryClient {
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];
         Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", "anyObject", schemaType, schemaData, properties);
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         CanRead canRead = new CanRead().compatible(Boolean.TRUE);
         doReturn(canRead).when(response).readEntity(CanRead.class);
         Boolean canRead1 = client.canRead("mygroup", schemaInfo);

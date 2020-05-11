@@ -183,7 +183,7 @@ public class SQLApp {
         map.put("scope", scope);
         map.put("stream", stream);
         
-        SchemaInfo tableSchemaInfo = new SchemaInfo("table", "row", schemaType, tableSchema.toBytes(), map);
+        SchemaInfo tableSchemaInfo = new SchemaInfo("table", schemaType, tableSchema.toBytes(), map);
         
         client.addGroup(tableGroupId, schemaType, validationRules, false, Collections.emptyMap());
         client.addSchema(tableGroupId, tableSchemaInfo);

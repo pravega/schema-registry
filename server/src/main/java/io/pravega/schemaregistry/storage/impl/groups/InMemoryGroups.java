@@ -52,7 +52,7 @@ public class InMemoryGroups implements Groups<Integer> {
         }
         Group<Integer> grp = groups.computeIfAbsent(group, 
                 x -> new Group<>(group, kvFactory.get(), executor));
-        return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isValidateByObjectType(), 
+        return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isVersionBySchemaName(), 
                 groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }
 

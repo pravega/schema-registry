@@ -114,7 +114,7 @@ public class SchemaRegistryService {
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#validateByObjectType} that specifies if schemas are evolved by object type.
+     * {@link GroupProperties#versionBySchemaName} that specifies if schemas are evolved by object type.
      * Object types are uniquely identified by {@link SchemaInfo#name}.
      * {@link GroupProperties#properties} properties for a group.
      *
@@ -190,7 +190,7 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Adds schema to the group. If group is configured with {@link GroupProperties#validateByObjectType}, then
+     * Adds schema to the group. If group is configured with {@link GroupProperties#versionBySchemaName}, then
      * the {@link SchemaInfo#name} is used to filter previous schemas and apply schema validation policy against schemas
      * of object type.
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in
@@ -309,7 +309,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets latest schema and version for the group (or objectType, if specified).
-     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypename needs to be supplied to
+     * For groups configured with {@link GroupProperties#versionBySchemaName}, the objectTypename needs to be supplied to
      * get the latest schema for the object type.
      *
      * @param group          Name of group.
@@ -342,7 +342,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets all schemas with corresponding versions for the group (or objectTypeName, if specified).
-     * For groups configured with {@link GroupProperties#validateByObjectType}, the objectTypeName name needs to be supplied to
+     * For groups configured with {@link GroupProperties#versionBySchemaName}, the objectTypeName name needs to be supplied to
      * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name.
      * The order in the list matches the order in which schemas were evolved within the group.
      *
@@ -376,7 +376,7 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#validateByObjectType}
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
      * the objectTypename is taken from the {@link SchemaInfo#name}.
      * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
      *
@@ -400,7 +400,7 @@ public class SchemaRegistryService {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * If {@link GroupProperties#validateByObjectType} is set, the validation is performed against schemas with same
+     * If {@link GroupProperties#versionBySchemaName} is set, the validation is performed against schemas with same
      * object type identified by {@link SchemaInfo#name}.
      *
      * @param group  Name of group.
@@ -524,7 +524,7 @@ public class SchemaRegistryService {
                                                   || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.FullTransitive)));
 
         if (fetchAll) {
-            if (groupProperties.isValidateByObjectType()) {
+            if (groupProperties.isVersionBySchemaName()) {
                 schemasFuture = store.listSchemasByObjectType(group, schema.getName(), null)
                                      .thenApply(ListWithToken::getList);
             } else {
@@ -549,7 +549,7 @@ public class SchemaRegistryService {
                                                   }
                                               }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
-                if (groupProperties.isValidateByObjectType()) {
+                if (groupProperties.isVersionBySchemaName()) {
                     schemasFuture = store.listSchemasByObjectType(group, schema.getName(), till, null)
                                          .thenApply(ListWithToken::getList);
                 } else {
@@ -557,7 +557,7 @@ public class SchemaRegistryService {
                                          .thenApply(ListWithToken::getList);
                 }
             } else {
-                if (groupProperties.isValidateByObjectType()) {
+                if (groupProperties.isVersionBySchemaName()) {
                     schemasFuture = store.getLatestSchema(group, schema.getName())
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {

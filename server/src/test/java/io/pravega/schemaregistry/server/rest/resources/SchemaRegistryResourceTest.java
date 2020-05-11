@@ -112,7 +112,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any());
         CanReadRequest canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
                 .schemaName("name")
-                .objectType("name")
                 .schemaType(ModelHelper.encode(SchemaType.Avro))
                 .schemaData(new byte[0])
                 .properties(Collections.emptyMap())
