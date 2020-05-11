@@ -16,7 +16,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequ
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.ObjectTypesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.ObjectsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
@@ -45,9 +45,9 @@ public abstract class GroupsApiService {
     public abstract Response getGroupProperties(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupSchemas(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getLatestGroupSchema(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getLatestSchemaForObjectType(String groupName,String objectTypeName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getObjectTypeSchemas(String groupName,String objectTypeName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getObjectTypes(String groupName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getLatestSchemaForName(String groupName,String schemaName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getObjectSchemas(String groupName,String objectName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getObjects(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getOrGenerateEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaFromVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaValidationRules(String groupName,SecurityContext securityContext) throws NotFoundException;

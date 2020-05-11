@@ -42,8 +42,8 @@ public class CreateGroupRequest   {
   @JsonProperty("properties")
   private Map<String, String> properties = null;
 
-  @JsonProperty("validateByObjectType")
-  private Boolean validateByObjectType = null;
+  @JsonProperty("validateBySchemaName")
+  private Boolean validateBySchemaName = null;
 
   public CreateGroupRequest groupName(String groupName) {
     this.groupName = groupName;
@@ -129,23 +129,23 @@ public class CreateGroupRequest   {
     this.properties = properties;
   }
 
-  public CreateGroupRequest validateByObjectType(Boolean validateByObjectType) {
-    this.validateByObjectType = validateByObjectType;
+  public CreateGroupRequest validateBySchemaName(Boolean validateBySchemaName) {
+    this.validateBySchemaName = validateBySchemaName;
     return this;
   }
 
   /**
-   * Get validateByObjectType
-   * @return validateByObjectType
+   * Get validateBySchemaName
+   * @return validateBySchemaName
    **/
-  @JsonProperty("validateByObjectType")
+  @JsonProperty("validateBySchemaName")
   @ApiModelProperty(value = "")
-  public Boolean isValidateByObjectType() {
-    return validateByObjectType;
+  public Boolean isValidateBySchemaName() {
+    return validateBySchemaName;
   }
 
-  public void setValidateByObjectType(Boolean validateByObjectType) {
-    this.validateByObjectType = validateByObjectType;
+  public void setValidateBySchemaName(Boolean validateBySchemaName) {
+    this.validateBySchemaName = validateBySchemaName;
   }
 
 
@@ -162,12 +162,12 @@ public class CreateGroupRequest   {
         Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
         Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
         Objects.equals(this.properties, createGroupRequest.properties) &&
-        Objects.equals(this.validateByObjectType, createGroupRequest.validateByObjectType);
+        Objects.equals(this.validateBySchemaName, createGroupRequest.validateBySchemaName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, validationRules, properties, validateByObjectType);
+    return Objects.hash(groupName, schemaType, validationRules, properties, validateBySchemaName);
   }
 
 
@@ -180,7 +180,7 @@ public class CreateGroupRequest   {
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
-    sb.append("    validateByObjectType: ").append(toIndentedString(validateByObjectType)).append("\n");
+    sb.append("    validateBySchemaName: ").append(toIndentedString(validateBySchemaName)).append("\n");
     sb.append("}");
     return sb.toString();
   }

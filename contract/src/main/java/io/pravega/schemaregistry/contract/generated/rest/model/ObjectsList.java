@@ -23,38 +23,38 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * ObjectTypesList
+ * ObjectsList
  */
 
-public class ObjectTypesList   {
-  @JsonProperty("objectTypes")
-  private List<String> objectTypes = null;
+public class ObjectsList   {
+  @JsonProperty("objects")
+  private List<String> objects = null;
 
-  public ObjectTypesList objectTypes(List<String> objectTypes) {
-    this.objectTypes = objectTypes;
+  public ObjectsList objects(List<String> objects) {
+    this.objects = objects;
     return this;
   }
 
-  public ObjectTypesList addObjectTypesItem(String objectTypesItem) {
-    if (this.objectTypes == null) {
-      this.objectTypes = new ArrayList<String>();
+  public ObjectsList addObjectsItem(String objectsItem) {
+    if (this.objects == null) {
+      this.objects = new ArrayList<String>();
     }
-    this.objectTypes.add(objectTypesItem);
+    this.objects.add(objectsItem);
     return this;
   }
 
   /**
-   * Get objectTypes
-   * @return objectTypes
+   * Get objects
+   * @return objects
    **/
-  @JsonProperty("objectTypes")
+  @JsonProperty("objects")
   @ApiModelProperty(value = "")
-  public List<String> getObjectTypes() {
-    return objectTypes;
+  public List<String> getObjects() {
+    return objects;
   }
 
-  public void setObjectTypes(List<String> objectTypes) {
-    this.objectTypes = objectTypes;
+  public void setObjects(List<String> objects) {
+    this.objects = objects;
   }
 
 
@@ -66,22 +66,22 @@ public class ObjectTypesList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ObjectTypesList objectTypesList = (ObjectTypesList) o;
-    return Objects.equals(this.objectTypes, objectTypesList.objectTypes);
+    ObjectsList objectsList = (ObjectsList) o;
+    return Objects.equals(this.objects, objectsList.objects);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(objectTypes);
+    return Objects.hash(objects);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ObjectTypesList {\n");
+    sb.append("class ObjectsList {\n");
     
-    sb.append("    objectTypes: ").append(toIndentedString(objectTypes)).append("\n");
+    sb.append("    objects: ").append(toIndentedString(objects)).append("\n");
     sb.append("}");
     return sb.toString();
   }

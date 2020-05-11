@@ -39,7 +39,7 @@ public class ModelHelper {
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = decode(schemaInfo.getSchemaType());
-        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), schemaInfo.getObjectType(), 
+        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), 
                 schemaType, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
@@ -89,7 +89,7 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
-        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getObjectType(), versionInfo.getVersion(), versionInfo.getOrdinal());
+        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion(), versionInfo.getOrdinal());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
@@ -113,7 +113,7 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
         return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
-        .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).validateByObjectType(groupProperties.isValidateByObjectType())
+        .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).validateBySchemaName(groupProperties.isValidateBySchemaName())
                 .properties(groupProperties.getProperties()).build();
     }
     // endregion
@@ -168,7 +168,7 @@ public class ModelHelper {
         return new GroupProperties()
                 .schemaType(encode(groupProperties.getSchemaType()))
                 .properties(groupProperties.getProperties())
-                .validateByObjectType(groupProperties.isValidateByObjectType())
+                .validateBySchemaName(groupProperties.isValidateBySchemaName())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
 
@@ -177,12 +177,12 @@ public class ModelHelper {
     }
 
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
-        return new VersionInfo().objectType(versionInfo.getObjectType()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
+        return new VersionInfo().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
     }
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {
         return new SchemaInfo().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData())
-                               .schemaName(schemaInfo.getName()).schemaType(encode(schemaInfo.getSchemaType())).objectType(schemaInfo.getObjectType());
+                               .schemaName(schemaInfo.getName()).schemaType(encode(schemaInfo.getSchemaType()));
     }
 
     public static SchemaType encode(io.pravega.schemaregistry.contract.data.SchemaType schemaType) {

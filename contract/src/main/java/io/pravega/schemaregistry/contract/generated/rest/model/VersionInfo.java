@@ -25,8 +25,8 @@ import javax.validation.constraints.*;
  */
 
 public class VersionInfo   {
-  @JsonProperty("objectType")
-  private String objectType = null;
+  @JsonProperty("schemaName")
+  private String schemaName = null;
 
   @JsonProperty("version")
   private Integer version = null;
@@ -34,23 +34,23 @@ public class VersionInfo   {
   @JsonProperty("ordinal")
   private Integer ordinal = null;
 
-  public VersionInfo objectType(String objectType) {
-    this.objectType = objectType;
+  public VersionInfo schemaName(String schemaName) {
+    this.schemaName = schemaName;
     return this;
   }
 
   /**
-   * Get objectType
-   * @return objectType
+   * Get schemaName
+   * @return schemaName
    **/
-  @JsonProperty("objectType")
+  @JsonProperty("schemaName")
   @ApiModelProperty(value = "")
-  public String getObjectType() {
-    return objectType;
+  public String getSchemaName() {
+    return schemaName;
   }
 
-  public void setObjectType(String objectType) {
-    this.objectType = objectType;
+  public void setSchemaName(String schemaName) {
+    this.schemaName = schemaName;
   }
 
   public VersionInfo version(Integer version) {
@@ -101,14 +101,14 @@ public class VersionInfo   {
       return false;
     }
     VersionInfo versionInfo = (VersionInfo) o;
-    return Objects.equals(this.objectType, versionInfo.objectType) &&
+    return Objects.equals(this.schemaName, versionInfo.schemaName) &&
         Objects.equals(this.version, versionInfo.version) &&
         Objects.equals(this.ordinal, versionInfo.ordinal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(objectType, version, ordinal);
+    return Objects.hash(schemaName, version, ordinal);
   }
 
 
@@ -117,7 +117,7 @@ public class VersionInfo   {
     StringBuilder sb = new StringBuilder();
     sb.append("class VersionInfo {\n");
     
-    sb.append("    objectType: ").append(toIndentedString(objectType)).append("\n");
+    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("    ordinal: ").append(toIndentedString(ordinal)).append("\n");
     sb.append("}");

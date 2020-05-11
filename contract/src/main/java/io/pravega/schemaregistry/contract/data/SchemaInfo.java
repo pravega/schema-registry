@@ -20,9 +20,8 @@ import java.util.Objects;
 
 /**
  * Encapsulates properties of a schema. 
- * {@link SchemaInfo#name} name of the schema.  
- * {@link SchemaInfo#objectType} object type represented by the schema. This is used to identify the exact object type 
- * and used if a group needs to be divided in different evolution subsets by object types. (ref: {@link GroupProperties#validateByObjectType}). 
+ * {@link SchemaInfo#name} object type represented by the schema. This is used to identify the exact object type 
+ * and used if a group needs to be divided in different evolution subsets by object types. (ref: {@link GroupProperties#validateBySchemaName}). 
  * {@link SchemaInfo#schemaType} Serialization format.
  * {@link SchemaInfo#schemaData} Schema as an array of 8-bit unsigned bytes. This is schema-type specific and to be consumed
  * by schema-type specific parsers. 
@@ -35,7 +34,6 @@ import java.util.Objects;
 @AllArgsConstructor
 public class SchemaInfo {
     private final String name;
-    private final String objectType;
     private final SchemaType schemaType;
     private final byte[] schemaData;
     private final Map<String, String> properties;
@@ -50,7 +48,6 @@ public class SchemaInfo {
         }
         SchemaInfo that = (SchemaInfo) o;
         return Objects.equals(name, that.name) &&
-                Objects.equals(objectType, that.objectType) &&
                 schemaType == that.schemaType &&
                 Arrays.equals(schemaData, that.schemaData) &&
                 Objects.equals(properties, that.properties);
@@ -59,7 +56,7 @@ public class SchemaInfo {
     @Override
     public int hashCode() {
 
-        int result = Objects.hash(name, objectType, schemaType, properties);
+        int result = Objects.hash(name, name, schemaType, properties);
         result = 31 * result + Arrays.hashCode(schemaData);
         return result;
     }
