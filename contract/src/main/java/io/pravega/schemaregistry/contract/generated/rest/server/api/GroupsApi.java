@@ -173,6 +173,25 @@ public class GroupsApi  {
     throws NotFoundException {
         return delegate.getCodecsList(groupName,securityContext);
     }
+    @PUT
+    @Path("/{groupName}/encodings")
+    @Consumes({ "application/json" })
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = EncodingId.class, tags={ "Encoding", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingId.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not registered", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
+    public Response getEncodingId(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getEncodingId(groupName,getEncodingIdRequest,securityContext);
+    }
     @GET
     @Path("/{groupName}/encodings/{encodingId}")
     
@@ -249,11 +268,11 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
-    public Response getLatestSchemaForName(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+    public Response getLatestSchemaForSchemaName(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Object type",required=true) @PathParam("schemaName") String schemaName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getLatestSchemaForName(groupName,schemaName,securityContext);
+        return delegate.getLatestSchemaForSchemaName(groupName,schemaName,securityContext);
     }
     @GET
     @Path("/{groupName}/objects/{objectName}/schemas/versions")
@@ -287,25 +306,6 @@ public class GroupsApi  {
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getObjects(groupName,securityContext);
-    }
-    @PUT
-    @Path("/{groupName}/encodings")
-    @Consumes({ "application/json" })
-    @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = EncodingId.class, tags={ "Encoding", })
-    @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingId.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not registered", response = Void.class),
-        
-        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
-    public Response getOrGenerateEncodingId(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
-,@Context SecurityContext securityContext)
-    throws NotFoundException {
-        return delegate.getOrGenerateEncodingId(groupName,getEncodingIdRequest,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas/versions/{version}")

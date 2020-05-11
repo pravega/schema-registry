@@ -41,14 +41,14 @@ public abstract class GroupsApiService {
     public abstract Response createGroup(CreateGroupRequest createGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getCodecsList(String groupName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingInfo(String groupName,Integer encodingId,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupProperties(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupSchemas(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getLatestGroupSchema(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getLatestSchemaForName(String groupName,String schemaName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getLatestSchemaForSchemaName(String groupName,String schemaName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getObjectSchemas(String groupName,String objectName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getObjects(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getOrGenerateEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaFromVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaValidationRules(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaVersion(String groupName,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;

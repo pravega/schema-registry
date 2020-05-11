@@ -451,7 +451,7 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getLatestSchemaForName
+      operationId: getLatestSchemaForSchemaName
       description: Fetch the properties of an existing Group
       produces:
         - application/json
@@ -474,7 +474,7 @@ paths:
     put:
       tags:
       - "Encoding"
-      operationId: getOrGenerateEncodingId
+      operationId: getEncodingId
       description: Fetch the properties of an existing Group
       consumes:
         - application/json

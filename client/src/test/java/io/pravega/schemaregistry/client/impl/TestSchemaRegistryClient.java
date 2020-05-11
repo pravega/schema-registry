@@ -322,7 +322,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getOrGenerateEncodingId(anyString(), any());
+        doReturn(response).when(proxy).getEncodingId(anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         CodecType codecType = CodecType.GZip;
@@ -380,7 +380,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getLatestSchemaForName(anyString(), anyString());
+        doReturn(response).when(proxy).getLatestSchemaForSchemaName(anyString(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);

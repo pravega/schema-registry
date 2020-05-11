@@ -211,7 +211,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
         getEncodingIdRequest.codecType(ModelHelper.encode(codecType))
                             .versionInfo(ModelHelper.encode(version));
-        Response response = proxy.getOrGenerateEncodingId(groupId, getEncodingIdRequest);
+        Response response = proxy.getEncodingId(groupId, getEncodingIdRequest);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -246,7 +246,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     private SchemaWithVersion getLatestSchemaByObjectType(String groupId, String objectTypeName) {
-        Response response = proxy.getLatestSchemaForName(groupId, objectTypeName);
+        Response response = proxy.getLatestSchemaForSchemaName(groupId, objectTypeName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {

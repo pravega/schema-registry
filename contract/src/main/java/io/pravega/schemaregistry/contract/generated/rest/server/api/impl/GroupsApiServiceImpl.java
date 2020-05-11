@@ -66,6 +66,11 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
+    public Response getEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
     public Response getEncodingInfo(String groupName, Integer encodingId, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
@@ -86,7 +91,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getLatestSchemaForName(String groupName, String schemaName, SecurityContext securityContext) throws NotFoundException {
+    public Response getLatestSchemaForSchemaName(String groupName, String schemaName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -97,11 +102,6 @@ public class GroupsApiServiceImpl extends GroupsApiService {
     }
     @Override
     public Response getObjects(String groupName, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response getOrGenerateEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
