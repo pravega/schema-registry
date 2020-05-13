@@ -5,7 +5,7 @@
 replicaCount: 1
 
 image:
-  repository: pravega/schemaregistry
+  repository: pravega/schema-registry
   tag: 0.1.0
   pullPolicy: IfNotPresent
 
