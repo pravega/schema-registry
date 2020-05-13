@@ -1,0 +1,18 @@
+# Default values for schema-registry.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: srishtithakkar/schemaregistry
+  tag: test-v1
+  pullPolicy: IfNotPresent
+
+service:
+  type: LoadBalancer
+  port: 9092
+
+controller:
+  ip: localhost
+  port: 9090

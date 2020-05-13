@@ -1,0 +1,6 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "schema-registry.configmap" . }}
+data:
+  "CONTROLLER_URL": "tcp://{{ .Values.controller.ip }}:{{ .Values.controller.port }}"
