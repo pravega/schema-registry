@@ -1,6 +1,6 @@
 # Schema Registry Helm Chart
 
-Installs [Pravega Schema Registry](https://github.com/pravega/schema-registry) to create/configure/manage Pravega clusters atop Kubernetes.
+Installs [Pravega Schema Registry](https://github.com/pravega/schema-registry) atop Kubernetes.
 
 ## Introduction
 
@@ -28,7 +28,7 @@ To uninstall/delete the `my-release` deployment:
 $ helm uninstall my-release
 ```
 
-The command removes all the Kubernetes components associated with the chart and deletes the release.
+This command removes all the Kubernetes components associated with the chart and deletes the release.
 
 ## Configuration
 
