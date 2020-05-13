@@ -366,9 +366,11 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 200, message = "List of all groups", response = GroupsList.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching the list of Groups", response = Void.class) })
-    public Response listGroups(@Context SecurityContext securityContext)
+    public Response listGroups(@ApiParam(value = "Continuation token") @QueryParam("continuationToken") String continuationToken
+,@ApiParam(value = "The numbers of items to return") @QueryParam("limit") Integer limit
+,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.listGroups(securityContext);
+        return delegate.listGroups(continuationToken,limit,securityContext);
     }
     @PUT
     @Path("/{groupName}/rules")

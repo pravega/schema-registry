@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.client.impl;
@@ -53,6 +53,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -103,18 +104,30 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public Map<String, GroupProperties> listGroups() {
-        Response response = proxy.listGroups();
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            throw new RuntimeException("Internal Service error. Failed to list groups.");
-        }
+        String continuationToken = null;
+        int limit = 100;
+        Map<String, GroupProperties> result = new HashMap<>();
+        while (true) {
+            Response response = proxy.listGroups(continuationToken, limit);
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new RuntimeException("Internal Service error. Failed to list groups.");
+            }
 
-        GroupsList entity = response.readEntity(GroupsList.class);
-        return entity.getGroups().stream().collect(Collectors.toMap(x -> x.getGroupName(),
-                x -> {
-                    SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
-                    SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
-                    return new GroupProperties(schemaType, rules, x.isVersionBySchemaName(), x.getProperties());
-                }));
+            GroupsList entity = response.readEntity(GroupsList.class);
+            Map<String, GroupProperties> map = entity.getGroups().stream().collect(Collectors.toMap(x -> x.getGroupName(),
+                    x -> {
+                        SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
+                        SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
+                        return new GroupProperties(schemaType, rules, x.isVersionBySchemaName(), x.getProperties());
+                    }));
+            continuationToken = entity.getContinuationToken();
+            result.putAll(map);
+
+            if (map.size() < 100) {
+                break;
+            }
+        }
+        return result;
     }
 
     @SneakyThrows

@@ -31,6 +31,9 @@ public class GroupsList   {
   @JsonProperty("groups")
   private List<GroupProperties> groups = null;
 
+  @JsonProperty("continuationToken")
+  private String continuationToken = null;
+
   public GroupsList groups(List<GroupProperties> groups) {
     this.groups = groups;
     return this;
@@ -58,6 +61,25 @@ public class GroupsList   {
     this.groups = groups;
   }
 
+  public GroupsList continuationToken(String continuationToken) {
+    this.continuationToken = continuationToken;
+    return this;
+  }
+
+  /**
+   * Get continuationToken
+   * @return continuationToken
+   **/
+  @JsonProperty("continuationToken")
+  @ApiModelProperty(value = "")
+  public String getContinuationToken() {
+    return continuationToken;
+  }
+
+  public void setContinuationToken(String continuationToken) {
+    this.continuationToken = continuationToken;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -68,12 +90,13 @@ public class GroupsList   {
       return false;
     }
     GroupsList groupsList = (GroupsList) o;
-    return Objects.equals(this.groups, groupsList.groups);
+    return Objects.equals(this.groups, groupsList.groups) &&
+        Objects.equals(this.continuationToken, groupsList.continuationToken);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(groups, continuationToken);
   }
 
 
@@ -83,6 +106,7 @@ public class GroupsList   {
     sb.append("class GroupsList {\n");
     
     sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    continuationToken: ").append(toIndentedString(continuationToken)).append("\n");
     sb.append("}");
     return sb.toString();
   }

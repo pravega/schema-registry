@@ -36,6 +36,15 @@ paths:
       description: List all groups
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: continuationToken
+          type: string
+          description: Continuation token
+        - in: query
+          name: limit
+          type: integer
+          description: The numbers of items to return
       responses:
         200:
           description: List of all groups
@@ -587,6 +596,8 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/GroupProperties"
+      continuationToken:
+        type: string
   ObjectsList:
     type: object
     properties:

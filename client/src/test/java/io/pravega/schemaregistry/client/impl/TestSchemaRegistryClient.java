@@ -73,7 +73,7 @@ public class TestSchemaRegistryClient {
         reset(response);
         
         // list groups
-        doReturn(response).when(proxy).listGroups();
+        doReturn(response).when(proxy).listGroups(null, 100);
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         GroupProperties mygroup = new GroupProperties().groupName("mygroup").properties(Collections.emptyMap())
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
@@ -105,7 +105,7 @@ public class TestSchemaRegistryClient {
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
                                                        .versionBySchemaName(false);
         GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
-        doReturn(response).when(proxy).listGroups();
+        doReturn(response).when(proxy).listGroups(null, 100);
 
         doReturn(groupList).when(response).readEntity(eq(GroupsList.class));
         Map<String, io.pravega.schemaregistry.contract.data.GroupProperties> groups = client.listGroups();

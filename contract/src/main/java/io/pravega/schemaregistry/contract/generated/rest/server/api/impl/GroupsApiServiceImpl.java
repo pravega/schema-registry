@@ -121,7 +121,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response listGroups(SecurityContext securityContext) throws NotFoundException {
+    public Response listGroups( String continuationToken,  Integer limit, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
