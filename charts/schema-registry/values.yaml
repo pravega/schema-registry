@@ -5,8 +5,8 @@
 replicaCount: 1
 
 image:
-  repository: srishtithakkar/schemaregistry
-  tag: test-v1
+  repository: pravega/schemaregistry
+  tag: 0.1.0
   pullPolicy: IfNotPresent
 
 service:

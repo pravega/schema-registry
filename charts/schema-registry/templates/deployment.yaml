@@ -32,8 +32,3 @@ spec:
             httpGet:
               path: /ping
               port: rest
-          readinessProbe:
-            initialDelaySeconds: 2
-            httpGet:
-              path: /ping
-              port: rest
