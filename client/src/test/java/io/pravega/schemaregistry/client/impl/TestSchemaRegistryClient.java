@@ -27,7 +27,7 @@ import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
-import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.ObjectsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
@@ -75,19 +75,20 @@ public class TestSchemaRegistryClient {
         // list groups
         doReturn(response).when(proxy).listGroups(null, 100);
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        GroupProperties mygroup = new GroupProperties().groupName("mygroup").properties(Collections.emptyMap())
+        GroupProperties mygroup = new GroupProperties().properties(Collections.emptyMap())
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
                                                        .versionBySchemaName(false);
-        GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
-        doReturn(groupList).when(response).readEntity(eq(GroupsList.class));
+        String groupName = "mygroup";
+        ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupName, mygroup));
+        doReturn(groupList).when(response).readEntity(eq(ListGroupsResponse.class));
 
         Map<String, io.pravega.schemaregistry.contract.data.GroupProperties> groups = client.listGroups();
         assertEquals(1, groups.size());
-        assertTrue(groups.containsKey("mygroup"));
-        assertEquals(groups.get("mygroup").getSchemaType(), SchemaType.Any);
-        assertEquals(groups.get("mygroup").getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
+        assertTrue(groups.containsKey(groupName));
+        assertEquals(groups.get(groupName).getSchemaType(), SchemaType.Any);
+        assertEquals(groups.get(groupName).getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
 
         reset(response);
     }
@@ -99,20 +100,21 @@ public class TestSchemaRegistryClient {
         Response response = mock(Response.class);
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        GroupProperties mygroup = new GroupProperties().groupName("mygroup").properties(Collections.emptyMap())
+        GroupProperties mygroup = new GroupProperties().properties(Collections.emptyMap())
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
                                                        .versionBySchemaName(false);
-        GroupsList groupList = new GroupsList().groups(Collections.singletonList(mygroup));
+        String groupId = "mygroup";
+        ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupId, mygroup));
         doReturn(response).when(proxy).listGroups(null, 100);
 
-        doReturn(groupList).when(response).readEntity(eq(GroupsList.class));
+        doReturn(groupList).when(response).readEntity(eq(ListGroupsResponse.class));
         Map<String, io.pravega.schemaregistry.contract.data.GroupProperties> groups = client.listGroups();
         assertEquals(1, groups.size());
-        assertTrue(groups.containsKey("mygroup"));
-        assertEquals(groups.get("mygroup").getSchemaType(), SchemaType.Any);
-        assertEquals(groups.get("mygroup").getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
+        assertTrue(groups.containsKey(groupId));
+        assertEquals(groups.get(groupId).getSchemaType(), SchemaType.Any);
+        assertEquals(groups.get(groupId).getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
         
         // Runtime Exception
         doReturn(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).when(response).getStatus();
@@ -143,7 +145,8 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).getGroupProperties(anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        GroupProperties mygroup = new GroupProperties().groupName("mygroup").properties(Collections.emptyMap())
+        GroupProperties mygroup
+                = new GroupProperties().properties(Collections.emptyMap())
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(
                                                                        io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))

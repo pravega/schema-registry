@@ -30,9 +30,6 @@ import javax.validation.constraints.*;
  */
 
 public class GroupProperties   {
-  @JsonProperty("groupName")
-  private String groupName = null;
-
   @JsonProperty("schemaValidationRules")
   private SchemaValidationRules schemaValidationRules = null;
 
@@ -44,25 +41,6 @@ public class GroupProperties   {
 
   @JsonProperty("properties")
   private Map<String, String> properties = null;
-
-  public GroupProperties groupName(String groupName) {
-    this.groupName = groupName;
-    return this;
-  }
-
-  /**
-   * Get groupName
-   * @return groupName
-   **/
-  @JsonProperty("groupName")
-  @ApiModelProperty(value = "")
-  public String getGroupName() {
-    return groupName;
-  }
-
-  public void setGroupName(String groupName) {
-    this.groupName = groupName;
-  }
 
   public GroupProperties schemaValidationRules(SchemaValidationRules schemaValidationRules) {
     this.schemaValidationRules = schemaValidationRules;
@@ -158,8 +136,7 @@ public class GroupProperties   {
       return false;
     }
     GroupProperties groupProperties = (GroupProperties) o;
-    return Objects.equals(this.groupName, groupProperties.groupName) &&
-        Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
+    return Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
         Objects.equals(this.schemaType, groupProperties.schemaType) &&
         Objects.equals(this.versionBySchemaName, groupProperties.versionBySchemaName) &&
         Objects.equals(this.properties, groupProperties.properties);
@@ -167,7 +144,7 @@ public class GroupProperties   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaValidationRules, schemaType, versionBySchemaName, properties);
+    return Objects.hash(schemaValidationRules, schemaType, versionBySchemaName, properties);
   }
 
 
@@ -176,7 +153,6 @@ public class GroupProperties   {
     StringBuilder sb = new StringBuilder();
     sb.append("class GroupProperties {\n");
     
-    sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    versionBySchemaName: ").append(toIndentedString(versionBySchemaName)).append("\n");

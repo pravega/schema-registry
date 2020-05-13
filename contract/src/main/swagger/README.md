@@ -31,7 +31,8 @@ All files that get generated outside of the contract/src/main/java/io/pravega/sc
 
 ## Update ApiV1.java
 The JAXRS API stubs decorated with swagger annotations are generated in .../contract/io/pravega/schemaregistry/contract/v1/ApiV1.java class.
-Copy these API descriptions into interfaces in .../contract/io.pravega.schemaregistry/contract//v1/ApiV1.java. Also ensure that the APIs in ApiV1.java are modified to use only jersey async interfaces.
+Copy these API descriptions into interfaces in .../contract/io.pravega.schemaregistry/contract//v1/ApiV1.java. 
+Also make an asynchronour version of APIs in .../contract/io.pravega.schemaregistry/server/rest/v1/ApiV1.java to use only jersey async interfaces.
 
 ## Generate documentation
 ### Download Swagger2Markup CLI

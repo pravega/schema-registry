@@ -138,7 +138,7 @@ public class SchemaInfo   {
     SchemaInfo schemaInfo = (SchemaInfo) o;
     return Objects.equals(this.schemaName, schemaInfo.schemaName) &&
         Objects.equals(this.schemaType, schemaInfo.schemaType) &&
-        Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
+            Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
         Objects.equals(this.properties, schemaInfo.properties);
   }
 
