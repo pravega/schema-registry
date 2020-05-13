@@ -256,7 +256,7 @@ public class TableStore {
         cache.invalidate(new TableCacheKey<>(table, key));
     }
 
-    private <K> CompletableFuture<Map.Entry<ByteBuf, List<K>>> getKeysPaginated(String tableName, ByteBuf continuationToken, int limit,
+    public <K> CompletableFuture<Map.Entry<ByteBuf, List<K>>> getKeysPaginated(String tableName, ByteBuf continuationToken, int limit,
                                                                                 Function<byte[], K> fromByteKey) {
         log.trace("get keys paginated called for : {}", tableName);
 

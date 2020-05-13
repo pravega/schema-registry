@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.impl.group.Group;
 
 import java.util.concurrent.CompletableFuture;
@@ -25,7 +26,7 @@ public interface Groups<T> {
 
     CompletableFuture<Boolean> addNewGroup(String group, GroupProperties groupProperties);
 
-    CompletableFuture<ListWithToken<String>> getGroups();
+    CompletableFuture<ListWithToken<String>> getGroups(ContinuationToken token, int limit);
 
     CompletableFuture<Void> deleteGroup(String group);
 }

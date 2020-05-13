@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.client.impl;
@@ -35,7 +35,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
-import io.pravega.schemaregistry.contract.generated.rest.model.GroupsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.ObjectsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
@@ -53,6 +53,7 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.core.Response;
 import java.net.URI;
 import java.net.URLEncoder;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -103,18 +104,34 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public Map<String, GroupProperties> listGroups() {
-        Response response = proxy.listGroups();
-        if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-            throw new RuntimeException("Internal Service error. Failed to list groups.");
-        }
+        String continuationToken = null;
+        int limit = 100;
+        Map<String, GroupProperties> result = new HashMap<>();
+        while (true) {
+            Response response = proxy.listGroups(continuationToken, limit);
+            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
+                throw new RuntimeException("Internal Service error. Failed to list groups.");
+            }
 
-        GroupsList entity = response.readEntity(GroupsList.class);
-        return entity.getGroups().stream().collect(Collectors.toMap(x -> x.getGroupName(),
-                x -> {
-                    SchemaType schemaType = ModelHelper.decode(x.getSchemaType());
-                    SchemaValidationRules rules = ModelHelper.decode(x.getSchemaValidationRules());
-                    return new GroupProperties(schemaType, rules, x.isVersionBySchemaName(), x.getProperties());
-                }));
+            ListGroupsResponse entity = response.readEntity(ListGroupsResponse.class);
+            Map<String, GroupProperties> map = entity.getGroups().entrySet().stream()
+                                                     .collect(HashMap::new, (m, x) -> {
+                        if (x.getValue() == null) {
+                            m.put(x.getKey(), null);
+                        } else {
+                            SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
+                            SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
+                            m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionBySchemaName(), x.getValue().getProperties()));
+                        }
+                    }, HashMap::putAll);
+            continuationToken = entity.getContinuationToken();
+            result.putAll(map);
+
+            if (map.size() < 100) {
+                break;
+            }
+        }
+        return result;
     }
 
     @SneakyThrows

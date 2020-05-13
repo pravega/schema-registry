@@ -36,11 +36,20 @@ paths:
       description: List all groups
       produces:
         - application/json
+      parameters:
+        - in: query
+          name: continuationToken
+          type: string
+          description: Continuation token
+        - in: query
+          name: limit
+          type: integer
+          description: The numbers of items to return
       responses:
         200:
           description: List of all groups
           schema:
-            $ref: "#/definitions/GroupsList"
+            $ref: "#/definitions/ListGroupsResponse"
         500:
           description: Internal server error while fetching the list of Groups
     post:
@@ -580,13 +589,15 @@ paths:
         500:
           description: Internal server error while creating a Group
 definitions:
-  GroupsList:
+  ListGroupsResponse:
     type: object
     properties:
       groups:
-        type: array
-        items:
+        type: object
+        additionalProperties:
           $ref: "#/definitions/GroupProperties"
+      continuationToken:
+        type: string
   ObjectsList:
     type: object
     properties:
@@ -597,8 +608,6 @@ definitions:
   GroupProperties:
     type: object
     properties:
-      groupName:
-        type: string
       schemaValidationRules:
           $ref: "#/definitions/SchemaValidationRules"
       schemaType:

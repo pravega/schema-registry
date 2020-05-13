@@ -29,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
  * Schema Store interface for storing and retrieving and querying schemas. 
  */
 public interface SchemaStore {
-    CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token);
+    CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token, int limit);
 
     CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties);
 
@@ -41,17 +41,15 @@ public interface SchemaStore {
     
     CompletableFuture<Void> updateValidationRules(String group, Etag etag, SchemaValidationRules policy);
 
-    CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token);
+    CompletableFuture<List<String>> listObjectTypes(String group);
     
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token);
+    CompletableFuture<List<SchemaWithVersion>> listSchemas(String group);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, VersionInfo from, ContinuationToken token);
+    CompletableFuture<List<SchemaWithVersion>> listSchemas(String group, VersionInfo from);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
-                                                                                ContinuationToken token);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName);
 
-    CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
-                                                                                VersionInfo from, ContinuationToken token);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName, VersionInfo from);
     
     CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal);
 
@@ -73,7 +71,7 @@ public interface SchemaStore {
 
     CompletableFuture<Void> addCodec(String group, CodecType codecType);
 
-    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group);
+    CompletableFuture<List<SchemaEvolution>> getGroupHistory(String group);
     
-    CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);
+    CompletableFuture<List<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);
 }

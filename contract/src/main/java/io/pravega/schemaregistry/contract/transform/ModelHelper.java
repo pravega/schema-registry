@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.contract.transform;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
@@ -38,14 +39,21 @@ public class ModelHelper {
 
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
+        Preconditions.checkArgument(schemaInfo != null);
+        Preconditions.checkArgument(schemaInfo.getSchemaName() != null);
+        Preconditions.checkArgument(schemaInfo.getSchemaType() != null);
+        Preconditions.checkArgument(schemaInfo.getProperties() != null);
+        Preconditions.checkArgument(schemaInfo.getSchemaData() != null);
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = decode(schemaInfo.getSchemaType());
         return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), 
                 schemaType, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaType decode(SchemaType schemaType) {
+        Preconditions.checkArgument(schemaType != null);
         switch (schemaType.getSchemaType()) {
             case CUSTOM:
+                Preconditions.checkArgument(schemaType.getCustomTypeName() != null);
                 return io.pravega.schemaregistry.contract.data.SchemaType.custom(schemaType.getCustomTypeName());
             default:
                 return searchEnum(io.pravega.schemaregistry.contract.data.SchemaType.class, schemaType.getSchemaType().name());
@@ -53,14 +61,14 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaValidationRules decode(SchemaValidationRules rules) {
+        Preconditions.checkArgument(rules != null);
+        Preconditions.checkArgument(rules.getRules() != null);
         List<io.pravega.schemaregistry.contract.data.SchemaValidationRule> list = rules.getRules().entrySet().stream().map(rule -> {
             if (rule.getValue().getRule() instanceof Map) {
                 String name = (String) ((Map) rule.getValue().getRule()).get("name");
-                if (name.equals(Compatibility.class.getSimpleName())) {
-                    return decode(MAPPER.convertValue(rule.getValue().getRule(), Compatibility.class));
-                } else {
-                    throw new NotImplementedException("Rule not implemented");
-                }
+                Preconditions.checkArgument(name.equals(Compatibility.class.getSimpleName()));
+                
+                return decode(MAPPER.convertValue(rule.getValue().getRule(), Compatibility.class));
             } else if (rule.getValue().getRule() instanceof Compatibility) {
                 return decode((Compatibility) rule.getValue().getRule());
             } else {
@@ -71,16 +79,36 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
+        Preconditions.checkArgument(compatibility.getName() != null);
+        Preconditions.checkArgument(compatibility.getPolicy() != null);
+        if (compatibility.getPolicy().equals(Compatibility.PolicyEnum.BACKWARDTILL)) {
+            Preconditions.checkArgument(compatibility.getBackwardTill() != null);
+        }
+        if (compatibility.getPolicy().equals(Compatibility.PolicyEnum.FORWARDTILL)) {
+            Preconditions.checkArgument(compatibility.getForwardTill() != null);
+        }
+        if (compatibility.getPolicy().equals(Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL)) {
+            Preconditions.checkArgument(compatibility.getBackwardTill() != null);
+            Preconditions.checkArgument(compatibility.getForwardTill() != null);
+        }
+        
         io.pravega.schemaregistry.contract.data.VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         io.pravega.schemaregistry.contract.data.VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
+        
         return new io.pravega.schemaregistry.contract.data.Compatibility(
                 searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()),
                 backwardTill, forwardTill);
     }
 
     public static io.pravega.schemaregistry.contract.data.CodecType decode(CodecType codecType) {
+        Preconditions.checkArgument(codecType != null);
+        Preconditions.checkArgument(codecType.getCodecType() != null);
+        if (codecType.getCodecType().equals(CodecType.CodecTypeEnum.CUSTOM)) {
+            Preconditions.checkArgument(codecType.getCustomTypeName() != null);
+        }
         switch (codecType.getCodecType()) {
             case CUSTOM:
+                Preconditions.checkArgument(codecType.getCustomTypeName() != null);
                 return io.pravega.schemaregistry.contract.data.CodecType.custom(codecType.getCustomTypeName(), codecType.getProperties());
             default:
                 return searchEnum(
@@ -89,29 +117,43 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
+        Preconditions.checkArgument(versionInfo != null);
+        Preconditions.checkArgument(versionInfo.getSchemaName() != null);
+        Preconditions.checkArgument(versionInfo.getVersion() != null);
+        Preconditions.checkArgument(versionInfo.getOrdinal() != null);
         return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion(), versionInfo.getOrdinal());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
+        Preconditions.checkArgument(encodingInfo != null);
         return new io.pravega.schemaregistry.contract.data.EncodingInfo(decode(encodingInfo.getVersionInfo()),
                 decode(encodingInfo.getSchemaInfo()), decode(encodingInfo.getCodecType()));
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaWithVersion decode(SchemaWithVersion schemaWithVersion) {
+        Preconditions.checkArgument(schemaWithVersion != null);
         return new io.pravega.schemaregistry.contract.data.SchemaWithVersion(decode(schemaWithVersion.getSchemaInfo()),
                 decode(schemaWithVersion.getVersion()));
     }
 
     public static SchemaEvolution decode(SchemaVersionAndRules schemaEvolution) {
+        Preconditions.checkArgument(schemaEvolution != null);
+
         return new io.pravega.schemaregistry.contract.data.SchemaEvolution(decode(schemaEvolution.getSchemaInfo()),
                 decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()));
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingId decode(EncodingId encodingId) {
+        Preconditions.checkArgument(encodingId != null);
+        Preconditions.checkArgument(encodingId.getEncodingId() != null);
+
         return new io.pravega.schemaregistry.contract.data.EncodingId(encodingId.getEncodingId());
     }
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
+        Preconditions.checkArgument(groupProperties != null);
+        Preconditions.checkArgument(groupProperties.isVersionBySchemaName() != null);
+
         return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
         .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).versionBySchemaName(groupProperties.isVersionBySchemaName())
                 .properties(groupProperties.getProperties()).build();
@@ -171,11 +213,7 @@ public class ModelHelper {
                 .versionBySchemaName(groupProperties.isVersionBySchemaName())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
-
-    public static GroupProperties encode(String groupName, io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
-        return encode(groupProperties).groupName(groupName);
-    }
-
+    
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
         return new VersionInfo().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
     }
@@ -187,6 +225,7 @@ public class ModelHelper {
 
     public static SchemaType encode(io.pravega.schemaregistry.contract.data.SchemaType schemaType) {
         if (schemaType.equals(io.pravega.schemaregistry.contract.data.SchemaType.Custom)) {
+            Preconditions.checkArgument(schemaType.getCustomTypeName() != null);
             SchemaType schemaTypeModel = new SchemaType().schemaType(SchemaType.SchemaTypeEnum.CUSTOM);
             return schemaTypeModel.customTypeName(schemaType.getCustomTypeName());
         } else {
@@ -201,6 +240,7 @@ public class ModelHelper {
 
     public static CodecType encode(io.pravega.schemaregistry.contract.data.CodecType codec) {
         if (codec.equals(io.pravega.schemaregistry.contract.data.CodecType.Custom)) {
+            Preconditions.checkArgument(codec.getCustomTypeName() != null);
             return new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM)
                                   .customTypeName(codec.getCustomTypeName())
                                   .properties(codec.getProperties());

@@ -23,19 +23,16 @@ Download swagger-codegen-cli from maven - http://repo1.maven.org/maven2/io/swagg
 
 ## Generate the API stubs using Swagger Codegen
 ```
-java -jar swagger-codegen-cli.jar generate -i <schema registry root>/contract/src/main/swagger/SchemaRegistry.yaml -l jaxrs -c <schema registry root>/contract/src/main/swagger/server.config.json -o <schema registry root>/server/
+java -jar swagger-codegen-cli.jar generate -i <schema registry root>/contract/src/main/swagger/SchemaRegistry.yaml -l jaxrs -c <schema registry root>/contract/src/main/swagger/server.config.json -o <schema registry root>/contract/
 ```
 
 ## Remove extra files created by codegen
-All files that get generated outside of the server/src/main/java/io/pravega/server/io.pravega.rest/generated folder should be deleted and not committed to git.
+All files that get generated outside of the contract/src/main/java/io/pravega/schemaregistry/contract/generated/rest folder should be deleted and not committed to git.
 
 ## Update ApiV1.java
-The JAXRS API stubs decorated with swagger annotations are generated in .../server/io.pravega.rest/generated/api/GroupsApi.java class.
-Copy these API descriptions into interfaces in .../server/io.pravega.rest/v1/ApiV1.java. Also ensure that the APIs in ApiV1.java are modified to use only jersey async interfaces.
-
-## Update generated/model/RetentionConfig.java
-Swagger codegen truncates common enum prefixes. So until https://github.com/swagger-api/swagger-codegen/issues/4261 is fixed we need to perform the following manual step.
-In file RetentionConfig.java replace DAYS to LIMITED_DAYS and SIZE_MB to LIMITED_SIZE_MB.
+The JAXRS API stubs decorated with swagger annotations are generated in .../contract/io/pravega/schemaregistry/contract/v1/ApiV1.java class.
+Copy these API descriptions into interfaces in .../contract/io.pravega.schemaregistry/contract//v1/ApiV1.java. 
+Also make an asynchronour version of APIs in .../contract/io.pravega.schemaregistry/server/rest/v1/ApiV1.java to use only jersey async interfaces.
 
 ## Generate documentation
 ### Download Swagger2Markup CLI

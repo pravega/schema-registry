@@ -19,28 +19,32 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * GroupsList
+ * ListGroupsResponse
  */
 
-public class GroupsList   {
+public class ListGroupsResponse   {
   @JsonProperty("groups")
-  private List<GroupProperties> groups = null;
+  private Map<String, GroupProperties> groups = null;
 
-  public GroupsList groups(List<GroupProperties> groups) {
+  @JsonProperty("continuationToken")
+  private String continuationToken = null;
+
+  public ListGroupsResponse groups(Map<String, GroupProperties> groups) {
     this.groups = groups;
     return this;
   }
 
-  public GroupsList addGroupsItem(GroupProperties groupsItem) {
+  public ListGroupsResponse putGroupsItem(String key, GroupProperties groupsItem) {
     if (this.groups == null) {
-      this.groups = new ArrayList<GroupProperties>();
+      this.groups = new HashMap<String, GroupProperties>();
     }
-    this.groups.add(groupsItem);
+    this.groups.put(key, groupsItem);
     return this;
   }
 
@@ -50,12 +54,31 @@ public class GroupsList   {
    **/
   @JsonProperty("groups")
   @ApiModelProperty(value = "")
-  public List<GroupProperties> getGroups() {
+  public Map<String, GroupProperties> getGroups() {
     return groups;
   }
 
-  public void setGroups(List<GroupProperties> groups) {
+  public void setGroups(Map<String, GroupProperties> groups) {
     this.groups = groups;
+  }
+
+  public ListGroupsResponse continuationToken(String continuationToken) {
+    this.continuationToken = continuationToken;
+    return this;
+  }
+
+  /**
+   * Get continuationToken
+   * @return continuationToken
+   **/
+  @JsonProperty("continuationToken")
+  @ApiModelProperty(value = "")
+  public String getContinuationToken() {
+    return continuationToken;
+  }
+
+  public void setContinuationToken(String continuationToken) {
+    this.continuationToken = continuationToken;
   }
 
 
@@ -67,22 +90,24 @@ public class GroupsList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    GroupsList groupsList = (GroupsList) o;
-    return Objects.equals(this.groups, groupsList.groups);
+    ListGroupsResponse listGroupsResponse = (ListGroupsResponse) o;
+    return Objects.equals(this.groups, listGroupsResponse.groups) &&
+        Objects.equals(this.continuationToken, listGroupsResponse.continuationToken);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(groups, continuationToken);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class GroupsList {\n");
+    sb.append("class ListGroupsResponse {\n");
     
     sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    continuationToken: ").append(toIndentedString(continuationToken)).append("\n");
     sb.append("}");
     return sb.toString();
   }

@@ -13,7 +13,6 @@ import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
-import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -40,10 +39,12 @@ import lombok.extern.slf4j.Slf4j;
 import javax.annotation.Nullable;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 /**
@@ -64,21 +65,27 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Lists groups.
+     * Lists groups with pagination.
      *
-     * @param continuationToken continuation token
+     * @param continuationToken continuation token.
+     * @param limit max number of groups to return.
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
-    public CompletableFuture<MapWithToken<String, GroupProperties>> listGroups(String continuationToken) {
+    public CompletableFuture<MapWithToken<String, GroupProperties>> listGroups(ContinuationToken continuationToken, int limit) {
         log.info("List groups called");
-        return store.listGroups(ContinuationToken.parse(continuationToken))
+        return store.listGroups(continuationToken, limit)
                     .thenCompose(reply -> {
                         ContinuationToken token = reply.getToken();
                         List<String> list = reply.getList();
-                        return Futures.allOfWithResults(list.stream().collect(Collectors.toMap(x -> x, store::getGroupProperties)))
-                                      .thenApply(groups -> {
+                        return Futures.allOfWithResults(list.stream().collect(Collectors.toMap(x -> x, 
+                                x -> Futures.exceptionallyExpecting(store.getGroupProperties(x).thenApply(AtomicReference::new), 
+                                        e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                        new AtomicReference<>((GroupProperties) null))
+                        ))).thenApply(groups -> {
                                           log.info("Returning groups {}", groups);
-                                          return new MapWithToken<>(groups, token);
+                                          return new MapWithToken<>(
+                                                  groups.entrySet().stream().collect(HashMap::new, 
+                                                          (m, v) -> m.put(v.getKey(), v.getValue().get()), HashMap::putAll), token);
                                       });
                     });
     }
@@ -92,10 +99,10 @@ public class SchemaRegistryService {
      * new group, false indicates it was an existing group.
      */
     public CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties) {
-        Preconditions.checkNotNull(groupProperties.getSchemaType());
-        Preconditions.checkNotNull(groupProperties.getSchemaValidationRules());
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(groupProperties != null);
         Preconditions.checkArgument(validateRules(groupProperties.getSchemaType(), groupProperties.getSchemaValidationRules()));
-        log.info("create group called for {}", group);
+        log.info("create group called for {} with group properties {}", group, groupProperties);
         return store.createGroup(group, groupProperties)
                     .whenComplete((r, e) -> {
                         if (e == null) {
@@ -122,6 +129,7 @@ public class SchemaRegistryService {
      * @return CompletableFuture which holds group properties upon completion.
      */
     public CompletableFuture<GroupProperties> getGroupProperties(String group) {
+        Preconditions.checkArgument(group != null);
         log.info("getGroupProperties called for group {}.", group);
         return store.getGroupProperties(group)
                     .whenComplete((r, e) -> {
@@ -143,22 +151,24 @@ public class SchemaRegistryService {
      * @return CompletableFuture which is completed when validation policy update completes.
      */
     public CompletableFuture<Void> updateSchemaValidationRules(String group, SchemaValidationRules validationRules, 
-                                                               SchemaValidationRules previousRules) {
+                                                               @Nullable SchemaValidationRules previousRules) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(validationRules != null);
         log.info("updateSchemaValidationRules called for group {}. New validation rules {}", group, validationRules);
         return RETRY.runAsync(() -> store.getGroupEtag(group)
                                 .thenCompose(pos -> {
-                                    if (previousRules == null) {
-                                        return store.updateValidationRules(group, pos, validationRules);
-                                    } else {
-                                        return store.getGroupProperties(group)
-                                             .thenCompose(prop -> {
-                                                 if (previousRules.equals(prop.getSchemaValidationRules())) {
-                                                     return store.updateValidationRules(group, pos, validationRules);
-                                                 } else {
-                                                     throw new PreconditionFailedException("Conditional update failed");
-                                                 }
-                                             });
-                                    }
+                                    return store.getGroupProperties(group)
+                                            .thenCompose(prop -> {
+                                                if (previousRules == null) {
+                                                    return store.updateValidationRules(group, pos, validationRules);
+                                                } else {
+                                                    if (previousRules.equals(prop.getSchemaValidationRules())) {
+                                                        return store.updateValidationRules(group, pos, validationRules);
+                                                    } else {
+                                                        throw new PreconditionFailedException("Conditional update failed");
+                                                    }
+                                                }
+                                            });
                                 })
                                 .whenComplete((r, e) -> {
                                     if (e == null) {
@@ -173,16 +183,16 @@ public class SchemaRegistryService {
      * Gets list of object types registered under the group. Object types are identified by {@link SchemaInfo#name}
      *
      * @param group Name of group.
-     * @param token Continuation token.
      * @return CompletableFuture which holds list of object types upon completion.
      */
-    public CompletableFuture<ListWithToken<String>> getObjectTypes(String group, ContinuationToken token) {
+    public CompletableFuture<List<String>> getObjectTypes(String group) {
+        Preconditions.checkArgument(group != null);
         log.info("getObjectTypes called for group {}. New validation rules {}", group);
 
-        return store.listObjectTypes(group, token)
+        return store.listObjectTypes(group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {} getObjectTypes {}.", group, r.getList());
+                            log.info("Group {} getObjectTypes {}.", group, r);
                         } else {
                             log.warn("getObjectTypes for group {} request failed with error", e, group);
                         }
@@ -201,6 +211,8 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds versionInfo which uniquely identifies where the schema is added in the group.
      */
     public CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schema) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(schema != null);
         log.info("addSchema called for group {}. schema {}", schema.getName());
 
         // 1. get group policy
@@ -265,6 +277,9 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Encoding info corresponding to the encoding id.
      */
     public CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(encodingId != null);
+        
         log.info("Group {}, getEncodingInfo {} .", group, encodingId);
 
         return store.getEncodingInfo(group, encodingId)
@@ -286,6 +301,9 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Encoding id for the pair of version and codec type.
      */
     public CompletableFuture<EncodingId> getEncodingId(String group, VersionInfo version, CodecType codecType) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(version != null);
+        Preconditions.checkArgument(codecType != null);
         log.info("Group {}, getEncodingId for {} {}.", group, version, codecType);
 
         return RETRY.runAsync(() -> {
@@ -317,6 +335,7 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
     public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String objectTypeName) {
+        Preconditions.checkArgument(group != null);
         log.info("Group {}, getLatestSchema for {}.", group, objectTypeName);
 
         if (objectTypeName == null) {
@@ -351,10 +370,11 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
     public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
+        Preconditions.checkArgument(group != null);
         log.info("Group {}, getGroupEvolutionHistory for {}.", group, objectTypeName);
 
         if (objectTypeName != null) {
-            return store.getGroupHistoryForObjectType(group, objectTypeName).thenApply(ListWithToken::getList)
+            return store.getGroupHistoryForObjectType(group, objectTypeName)
                         .whenComplete((r, e) -> {
                             if (e == null) {
                                 log.info("Group {}, object type = {}, history size = {}.", group, objectTypeName, r.size());
@@ -363,7 +383,7 @@ public class SchemaRegistryService {
                             }
                         });
         } else {
-            return store.getGroupHistory(group).thenApply(ListWithToken::getList)
+            return store.getGroupHistory(group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
                                 log.info("Group {}, history size = {}.", group, r.size());
@@ -385,6 +405,8 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds VersionInfo corresponding to schema.
      */
     public CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schema) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(schema != null);
         log.info("Group {}, getSchemaVersion for {}.", group, schema.getName());
 
         return store.getSchemaVersion(group, schema)
@@ -408,6 +430,8 @@ public class SchemaRegistryService {
      * @return True if it satisfies validation checks, false otherwise.
      */
     public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(schema != null);
         log.info("Group {}, validateSchema for {}.", group, schema.getName());
 
         return store.getGroupProperties(group)
@@ -430,6 +454,8 @@ public class SchemaRegistryService {
      * @return True if schema can be used for reading subject to compatibility policy, false otherwise.
      */
     public CompletableFuture<Boolean> canRead(String group, SchemaInfo schema) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(schema != null);
         log.info("Group {}, canRead for {}.", group, schema.getName());
 
         return store.getGroupProperties(group)
@@ -451,6 +477,7 @@ public class SchemaRegistryService {
      * @return CompletableFuture which is completed when group is deleted.
      */
     public CompletableFuture<Void> deleteGroup(String group) {
+        Preconditions.checkArgument(group != null);
         log.info("Group {}, deleteGroup.", group);
 
         return store.deleteGroup(group)
@@ -470,6 +497,7 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds list of compressions used for encoding in the group.
      */
     public CompletableFuture<List<CodecType>> getCodecTypes(String group) {
+        Preconditions.checkArgument(group != null);
         log.info("Group {}, getCodecTypes.", group);
 
         return store.getCodecTypes(group)
@@ -483,6 +511,9 @@ public class SchemaRegistryService {
     }
 
     public CompletableFuture<Void> addCodec(String group, CodecType codecType) {
+        Preconditions.checkArgument(group != null);
+        Preconditions.checkArgument(codecType != null);
+        
         log.info("Group {}, addCodec {}.", group, codecType);
 
         return store.addCodec(group, codecType)
@@ -497,14 +528,13 @@ public class SchemaRegistryService {
     }
     
     private boolean validateRules(SchemaType schemaType, SchemaValidationRules newRules) {
-        Preconditions.checkNotNull(newRules);
-
         switch (schemaType) {
             case Avro:
                 return true;
             case Protobuf:
             case Json:
             case Custom:
+            case Any:
                 return newRules.getRules().size() == 1 &&
                         newRules.getRules().entrySet().stream().allMatch(x -> {
                             return x.getValue() instanceof Compatibility && (
@@ -525,11 +555,9 @@ public class SchemaRegistryService {
 
         if (fetchAll) {
             if (groupProperties.isVersionBySchemaName()) {
-                schemasFuture = store.listSchemasByObjectType(group, schema.getName(), null)
-                                     .thenApply(ListWithToken::getList);
+                schemasFuture = store.listSchemasByObjectType(group, schema.getName());
             } else {
-                schemasFuture = store.listSchemas(group, null)
-                                     .thenApply(ListWithToken::getList);
+                schemasFuture = store.listSchemas(group);
             }
         } else {
             VersionInfo till = groupProperties.getSchemaValidationRules().getRules().values().stream()
@@ -550,11 +578,9 @@ public class SchemaRegistryService {
                                               }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
                 if (groupProperties.isVersionBySchemaName()) {
-                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), till, null)
-                                         .thenApply(ListWithToken::getList);
+                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), till);
                 } else {
-                    schemasFuture = store.listSchemas(group, till, null)
-                                         .thenApply(ListWithToken::getList);
+                    schemasFuture = store.listSchemas(group, till);
                 }
             } else {
                 if (groupProperties.isVersionBySchemaName()) {

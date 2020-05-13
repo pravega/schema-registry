@@ -9,9 +9,30 @@
  */
 package io.pravega.schemaregistry.storage;
 
+import com.google.common.base.Strings;
+
 public class ContinuationToken {
-    public static ContinuationToken parse(String token) {
-        // TODO: parse string to token
-        return null;
+    public static final ContinuationToken EMPTY = new ContinuationToken("");
+    private final String token;
+
+    private ContinuationToken(String token) {
+        this.token = token;
+    }
+
+    @Override
+    public String toString() {
+        return token;
+    }
+
+    public static ContinuationToken create(String token) {
+        return fromString(token);
+    }
+
+    public static ContinuationToken fromString(String token) {
+        if (Strings.isNullOrEmpty(token)) {
+            return EMPTY;
+        } else {
+            return new ContinuationToken(token);
+        }
     }
 }

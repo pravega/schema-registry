@@ -136,14 +136,6 @@ public class ModelHelperTest {
         assertEquals(groupProperties.getSchemaValidationRules(), rules);
         assertEquals(groupProperties.isVersionBySchemaName(), prop.isVersionBySchemaName());
         assertEquals(groupProperties.getProperties(), prop.getProperties());
-        assertNull(groupProperties.getGroupName());
-        
-        groupProperties = ModelHelper.encode("groupName", prop);
-        assertEquals(groupProperties.getSchemaType(), type);
-        assertEquals(groupProperties.getSchemaValidationRules(), rules);
-        assertEquals(groupProperties.isVersionBySchemaName(), prop.isVersionBySchemaName());
-        assertEquals(groupProperties.getProperties(), prop.getProperties());
-        assertEquals(groupProperties.getGroupName(), "groupName");
     }
 
 }

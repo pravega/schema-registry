@@ -15,7 +15,6 @@ import com.google.common.hash.Hashing;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
-import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -104,19 +103,16 @@ public class Group<V> {
                          .thenApply(record -> groupTable.toEtag(record.getVersion()));
     }
 
-    public CompletableFuture<ListWithToken<String>> getObjectTypes() {
+    public CompletableFuture<List<String>> getObjectTypes() {
         return groupTable.getEntry(OBJECTS_TYPE_KEY, TableRecords.ObjectTypesListValue.class)
-                         .thenApply(objectTypes -> {
-                             List<String> list = objectTypes == null ? Collections.emptyList() : objectTypes.getObjectTypes();
-                             return new ListWithToken<>(list, null);
-                         });
+                         .thenApply(objectTypes -> objectTypes == null ? Collections.emptyList() : objectTypes.getObjectTypes());
     }
 
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas() {
+    public CompletableFuture<List<SchemaWithVersion>> getSchemas() {
         return getSchemas(0);
     }
 
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(int fromPos) {
+    public CompletableFuture<List<SchemaWithVersion>> getSchemas(int fromPos) {
         return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, TableRecords.LatestSchemaVersionValue.class)
                          .thenCompose(latest -> {
                              int endPos = latest == null ? 0 : latest.getVersion().getOrdinal() + 1;
@@ -126,24 +122,18 @@ public class Group<V> {
                                      .map(TableRecords.VersionKey::new)
                                      .collect(Collectors.toList());
                              return groupTable.getEntries(keys, TableRecords.SchemaRecord.class);
-                         }).thenApply(entries -> {
-                    List<SchemaWithVersion> list = entries.stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), x.getVersionInfo()))
-                                                          .collect(Collectors.toList());
-                    return new ListWithToken<>(list, null);
-                });
+                         }).thenApply(entries -> entries.stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), x.getVersionInfo()))
+                                                             .collect(Collectors.toList()));
     }
 
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String objectTypeName) {
+    public CompletableFuture<List<SchemaWithVersion>> getSchemas(String objectTypeName) {
         return getSchemas(objectTypeName, 0);
     }
 
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> getSchemas(String objectTypeName, int fromPos) {
+    public CompletableFuture<List<SchemaWithVersion>> getSchemas(String objectTypeName, int fromPos) {
         return getSchemas(fromPos)
-                .thenApply(schemas -> {
-                    List<SchemaWithVersion> list = schemas
-                            .getList().stream().filter(x -> x.getSchema().getName().equals(objectTypeName)).collect(Collectors.toList());
-                    return new ListWithToken<>(list, null);
-                });
+                .thenApply(schemas -> schemas.stream().filter(x -> x.getSchema().getName().equals(objectTypeName))
+                                             .collect(Collectors.toList()));
     }
 
     public CompletableFuture<SchemaInfo> getSchema(int versionOrdinal) {
@@ -260,25 +250,22 @@ public class Group<V> {
         }
     }
 
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getHistory() {
+    public CompletableFuture<List<SchemaEvolution>> getHistory() {
         return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, TableRecords.LatestSchemaVersionValue.class)
                          .thenCompose(latestPos -> {
                              List<TableRecords.VersionKey> keys = IntStream.range(0, latestPos.getVersion().getOrdinal() + 1)
                                                                            .boxed().map(TableRecords.VersionKey::new)
                                                                            .collect(Collectors.toList());
                              return groupTable.getEntries(keys, TableRecords.SchemaRecord.class);
-                         }).thenApply(entries -> {
-                    List<SchemaEvolution> list = entries
-                            .stream().map(x -> new SchemaEvolution(x.getSchemaInfo(), x.getVersionInfo(), x.getValidationRules()))
-                            .collect(Collectors.toList());
-                    return new ListWithToken<>(list, null);
-                });
+                         }).thenApply(entries -> entries
+                                 .stream().map(x -> new SchemaEvolution(x.getSchemaInfo(), x.getVersionInfo(), x.getValidationRules()))
+                                 .collect(Collectors.toList()));
     }
 
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getHistory(String objectTypeName) {
+    public CompletableFuture<List<SchemaEvolution>> getHistory(String objectTypeName) {
         return getHistory().thenApply(list ->
-                new ListWithToken<>(list.getList().stream().filter(x -> x.getSchema().getName().equals(objectTypeName))
-                                        .collect(Collectors.toList()), null));
+                list.stream().filter(x -> x.getSchema().getName().equals(objectTypeName))
+                                        .collect(Collectors.toList()));
     }
 
     public CompletableFuture<VersionInfo> addSchemaToGroup(SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {

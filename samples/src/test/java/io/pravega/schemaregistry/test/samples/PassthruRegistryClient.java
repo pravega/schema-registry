@@ -47,7 +47,7 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
 
     @Override
     public Map<String, GroupProperties> listGroups() {
-        return service.listGroups(null).thenApply(MapWithToken::getMap).join();
+        return service.listGroups(null, 100).thenApply(MapWithToken::getMap).join();
     }
 
     @Override
@@ -62,7 +62,7 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     
     @Override
     public List<String> getObjects(String group) {
-        return service.getObjectTypes(group, null).join().getList();
+        return service.getObjectTypes(group).join();
     }
 
     @Override

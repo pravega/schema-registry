@@ -11,9 +11,10 @@ package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.impl.group.Group;
-import io.pravega.schemaregistry.storage.impl.group.InMemoryGroupTable;
 import io.pravega.schemaregistry.storage.impl.group.GroupTable;
+import io.pravega.schemaregistry.storage.impl.group.InMemoryGroupTable;
 import lombok.Synchronized;
 
 import javax.annotation.concurrent.GuardedBy;
@@ -51,14 +52,18 @@ public class InMemoryGroups implements Groups<Integer> {
             return CompletableFuture.completedFuture(false);
         }
         Group<Integer> grp = groups.computeIfAbsent(group, 
-                x -> new Group<>(group, kvFactory.get(), executor));
+                x -> {
+                    
+                    return new Group<>(group, kvFactory.get(), executor);
+                });
         return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isVersionBySchemaName(), 
                 groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }
 
     @Synchronized
     @Override
-    public CompletableFuture<ListWithToken<String>> getGroups() {
+    public CompletableFuture<ListWithToken<String>> getGroups(ContinuationToken token, int limit) {
+        // TODO: implement pagination
         return CompletableFuture.completedFuture(new ListWithToken<>(new ArrayList<>(groups.keySet()), null));
     }
 

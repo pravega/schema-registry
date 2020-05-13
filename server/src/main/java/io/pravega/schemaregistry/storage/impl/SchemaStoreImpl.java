@@ -40,8 +40,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     
     // region schema store
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token) {
-        return groups.getGroups();
+    public CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token, int limit) {
+        return groups.getGroups(token, limit);
     }
 
     @Override
@@ -71,30 +71,28 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<String>> listObjectTypes(String group, ContinuationToken token) {
+    public CompletableFuture<List<String>> listObjectTypes(String group) {
         return getGroup(group).thenCompose(Group::getObjectTypes);
     }
 
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, ContinuationToken token) {
+    public CompletableFuture<List<SchemaWithVersion>> listSchemas(String group) {
         return getGroup(group).thenCompose(Group::getSchemas);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemas(String group, VersionInfo from, ContinuationToken token) {
+    public CompletableFuture<List<SchemaWithVersion>> listSchemas(String group, VersionInfo from) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(from.getOrdinal()));
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
-                                                                                      ContinuationToken token) {
+    public CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName));
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName,
-                                                                                      VersionInfo from, ContinuationToken token) {
+    public CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName, VersionInfo from) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(objectTypeName, from.getOrdinal()));
     }
 
@@ -150,12 +148,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistory(String group) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupHistory(String group) {
         return getGroup(group).thenCompose(Group::getHistory);
     }
 
     @Override
-    public CompletableFuture<ListWithToken<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName) {
+    public CompletableFuture<List<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName) {
         return getGroup(group).thenCompose(grp -> grp.getHistory(objectTypeName));
     }
 

@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.service;
 
 import com.google.common.collect.Lists;
+import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -17,6 +18,7 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.storage.SchemaStore;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -28,8 +30,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
@@ -55,13 +56,17 @@ public class SchemaRegistryServiceTest {
         ArrayList<String> groups = Lists.newArrayList("grp1", "grp2");
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new ListWithToken<>(groups, null));
-        }).when(store).listGroups(any());
+        }).when(store).listGroups(any(), anyInt());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new GroupProperties(SchemaType.Avro, 
                     SchemaValidationRules.of(Compatibility.backward()), false, Collections.singletonMap("Encode", "false")));
-        }).when(store).getGroupProperties(anyString());
+        }).when(store).getGroupProperties(eq("grp1"));
+        
+        doAnswer(x -> {
+            return Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group prop not found"));
+        }).when(store).getGroupProperties(eq("grp2"));
 
-        MapWithToken<String, GroupProperties> result = service.listGroups(null).join();
+        MapWithToken<String, GroupProperties> result = service.listGroups(null, 100).join();
         assertEquals(result.getMap().size(), 2);
     }
 }
