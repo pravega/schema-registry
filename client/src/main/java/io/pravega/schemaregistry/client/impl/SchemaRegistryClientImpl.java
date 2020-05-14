@@ -245,7 +245,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (schemaName == null) {
             return getLatestSchemaForGroup(groupId);
         } else {
-            return getLatestSchemaByObjectType(groupId, schemaName);
+            return getLatestSchemaBySchemaName(groupId, schemaName);
         }
     }
 
@@ -262,8 +262,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @SneakyThrows
-    private SchemaWithVersion getLatestSchemaByObjectType(String groupId, String objectTypeName) {
-        Response response = proxy.getLatestSchemaForSchemaName(groupId, objectTypeName);
+    private SchemaWithVersion getLatestSchemaBySchemaName(String groupId, String schemaName) {
+        Response response = proxy.getLatestSchemaForSchemaName(groupId, schemaName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {

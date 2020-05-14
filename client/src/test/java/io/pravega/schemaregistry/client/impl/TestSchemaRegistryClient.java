@@ -379,7 +379,7 @@ public class TestSchemaRegistryClient {
     }
 
     @Test
-    public void testGetLatestSchemaByObjectType() {
+    public void testGetLatestSchemaBySchemaName() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
@@ -443,7 +443,7 @@ public class TestSchemaRegistryClient {
     }
 
     @Test
-    public void testGetHistoryByObjectType() {
+    public void testGetHistoryBySchemaName() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
