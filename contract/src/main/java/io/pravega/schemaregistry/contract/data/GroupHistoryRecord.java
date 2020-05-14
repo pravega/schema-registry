@@ -22,6 +22,7 @@ public class GroupHistoryRecord {
     private final VersionInfo version;
     private final SchemaValidationRules rules;
     private final long timestamp;
+    private final String schemaString;
 }
 
 

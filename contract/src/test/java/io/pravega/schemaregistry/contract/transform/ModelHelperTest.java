@@ -119,10 +119,12 @@ public class ModelHelperTest {
         assertEquals(rules.getRules().size(), 1);
         
         io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord schemaEvolution = ModelHelper.encode(new GroupHistoryRecord(
-                schemaInfo, versionInfo, schemaValidationRules, 100L));
+                schemaInfo, versionInfo, schemaValidationRules, 100L, ""));
         assertEquals(schemaEvolution.getSchemaInfo(), schema);
         assertEquals(schemaEvolution.getValidationRules(), rules);
         assertEquals(schemaEvolution.getVersion(), version);
+        assertEquals(schemaEvolution.getTimestamp().longValue(), 100L);
+        assertEquals(schemaEvolution.getSchemaString(), "");
 
         Compatibility compatibility = ModelHelper.encode(rule);
         assertEquals(compatibility.getPolicy(), Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL);

@@ -796,6 +796,8 @@ definitions:
         timestamp:
           type: integer
           format: int64
+        schemaString:
+          type: string  
   GroupHistory:
     type: object
     properties:

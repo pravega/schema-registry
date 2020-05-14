@@ -40,6 +40,9 @@ public class GroupHistoryRecord   {
   @JsonProperty("timestamp")
   private Long timestamp = null;
 
+  @JsonProperty("schemaString")
+  private String schemaString = null;
+
   public GroupHistoryRecord schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
@@ -116,6 +119,25 @@ public class GroupHistoryRecord   {
     this.timestamp = timestamp;
   }
 
+  public GroupHistoryRecord schemaString(String schemaString) {
+    this.schemaString = schemaString;
+    return this;
+  }
+
+  /**
+   * Get schemaString
+   * @return schemaString
+   **/
+  @JsonProperty("schemaString")
+  @ApiModelProperty(value = "")
+  public String getSchemaString() {
+    return schemaString;
+  }
+
+  public void setSchemaString(String schemaString) {
+    this.schemaString = schemaString;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -129,12 +151,13 @@ public class GroupHistoryRecord   {
     return Objects.equals(this.schemaInfo, groupHistoryRecord.schemaInfo) &&
         Objects.equals(this.version, groupHistoryRecord.version) &&
         Objects.equals(this.validationRules, groupHistoryRecord.validationRules) &&
-        Objects.equals(this.timestamp, groupHistoryRecord.timestamp);
+        Objects.equals(this.timestamp, groupHistoryRecord.timestamp) &&
+        Objects.equals(this.schemaString, groupHistoryRecord.schemaString);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, version, validationRules, timestamp);
+    return Objects.hash(schemaInfo, version, validationRules, timestamp, schemaString);
   }
 
 
@@ -147,6 +170,7 @@ public class GroupHistoryRecord   {
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
+    sb.append("    schemaString: ").append(toIndentedString(schemaString)).append("\n");
     sb.append("}");
     return sb.toString();
   }
