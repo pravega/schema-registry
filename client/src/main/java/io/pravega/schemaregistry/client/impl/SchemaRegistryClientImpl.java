@@ -15,8 +15,8 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -36,8 +36,8 @@ import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupReques
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
-import io.pravega.schemaregistry.contract.generated.rest.model.ObjectsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaList;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaNamesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
@@ -165,9 +165,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     @Override
-    public List<String> getObjects(String groupId) {
-        Response response = proxy.getObjects(groupId);
-        ObjectsList objectsList = response.readEntity(ObjectsList.class);
+    public List<String> getSchemaNames(String groupId) {
+        Response response = proxy.getSchemaNames(groupId);
+        SchemaNamesList objectsList = response.readEntity(SchemaNamesList.class);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return objectsList.getObjects();
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -245,7 +245,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (schemaName == null) {
             return getLatestSchemaForGroup(groupId);
         } else {
-            return getLatestSchemaByObjectType(groupId, schemaName);
+            return getLatestSchemaBySchemaName(groupId, schemaName);
         }
     }
 
@@ -262,8 +262,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @SneakyThrows
-    private SchemaWithVersion getLatestSchemaByObjectType(String groupId, String objectTypeName) {
-        Response response = proxy.getLatestSchemaForSchemaName(groupId, objectTypeName);
+    private SchemaWithVersion getLatestSchemaBySchemaName(String groupId, String schemaName) {
+        Response response = proxy.getLatestSchemaForSchemaName(groupId, schemaName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -279,47 +279,55 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<SchemaEvolution> getGroupEvolutionHistory(String groupId, @Nullable String schemaName) {
+    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaName) {
         if (schemaName == null) {
-            return getEvolutionHistory(groupId);
+            return getGroupSchemas(groupId);
         } else {
-            return getHistoryByObject(groupId, schemaName);
+            return getGroupSchemasBySchemaName(groupId, schemaName);
         }
     }
 
+    @Override
+    public List<GroupHistoryRecord> getGroupHistory(String groupId) {
+        Response response = proxy.getGroupHistory(groupId);
+        if (response.getStatus() == Response.Status.OK.getStatusCode()) {
+            io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory history = response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory.class);
+            return history.getHistory().stream().map(ModelHelper::decode).collect(Collectors.toList());
+
+        } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new NotFoundException("getGroupSchemas failed. Either Group or Version does not exist.");
+        } else {
+            throw new RuntimeException("Internal Service error. Failed to get schema evolution history for group.");
+        }
+
+    }
+
     @SneakyThrows
-    private List<SchemaEvolution> getEvolutionHistory(String groupId) {
+    private List<SchemaWithVersion> getGroupSchemas(String groupId) {
         Response response = proxy.getGroupSchemas(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-            return processHistoryResponse(response);
+            SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
+            return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new NotFoundException("getEvolutionHistory failed. Either Group or Version does not exist.");
+            throw new NotFoundException("getGroupSchemas failed. Group does not exist.");
         } else {
-            throw new RuntimeException("Internal Service error. Failed to get schema evolution history for group.");
+            throw new RuntimeException("Internal Service error. Failed to get schema versions for group.");
         }
     }
 
     @SneakyThrows
-    private List<SchemaEvolution> getHistoryByObject(String groupId, String objectSchemaName) {
-        Response response = proxy.getObjectSchemas(groupId, objectSchemaName);
+    private List<SchemaWithVersion> getGroupSchemasBySchemaName(String groupId, String schemaName) {
+        Response response = proxy.getSchemasForSchemaName(groupId, schemaName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-            return processHistoryResponse(response);
-        } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new NotFoundException("getEvolutionHistory failed. Either Group or Version does not exist.");
-        } else {
-            throw new RuntimeException("Internal Service error. Failed to get schema evolution history for group.");
-        }
-    }
-
-    private List<SchemaEvolution> processHistoryResponse(Response response) {
-        if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-            SchemaList schemaList = response.readEntity(SchemaList.class);
+            SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
             return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
+        } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+            throw new NotFoundException("getGroupSchemas failed. Group does not exist.");
         } else {
-            throw new RuntimeException("Internal Service error. Failed to get group history.");
+            throw new RuntimeException("Internal Service error. Failed to get schema versions for group.");
         }
     }
-
+    
     @SneakyThrows
     @Override
     public VersionInfo getSchemaVersion(String groupId, SchemaInfo schema) {

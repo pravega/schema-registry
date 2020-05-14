@@ -121,6 +121,29 @@ paths:
           description: Successfully deleted the Group
         500:
           description: Internal server error while deleting the Group
+  /groups/{groupName}/history:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getGroupHistory
+      description: Fetch the history of schema evolution of a Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group history
+          schema:
+            $ref: "#/definitions/GroupHistory"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
   /groups/{groupName}/rules:
     parameters:
       - in: path
@@ -180,6 +203,45 @@ paths:
         description: Group name
         required: true
         type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSchemaNames
+      description: Fetch all different objects identified by schema names under a Group. This api will return schema types.  
+      produces:
+        - application/json
+      responses:
+        200:
+          description: List of objects identified by schema names under the group
+          schema:
+            $ref: "#/definitions/SchemaNamesList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/versions:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getGroupSchemas
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaVersionsList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
     post:
       tags:
       - "Schema"
@@ -212,102 +274,7 @@ paths:
           description: Invalid schema type
         500:
           description: Internal server error while creating a Group
-  /groups/{groupName}/schemas/validate:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-    post:
-      tags:
-      - "Schema"
-      operationId: validate
-      description: check if given schema is compatible with schemas in the registry for current policy setting. 
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: ValidateRequest
-          description: Checks if schema is valid with respect to supplied validation rules
-          required: true
-          schema:
-            type: object
-            properties:
-              schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
-              validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Schema is valid
-          valid:
-             $ref: "#/definitions/Valid"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/canRead:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-    post:
-      tags:
-      - "Schema"
-      operationId: canRead
-      description: check if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: CanReadRequest
-          description: Checks if schema can be used to read the data in the stream based on compatibility rules. 
-          required: true
-          schema:
-            type: object
-            properties:
-              schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Schema can be used to read
-          canRead:
-             $ref: "#/definitions/CanRead"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/versions:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getGroupSchemas
-      description: Fetch the properties of an existing Group
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Versioned history of schemas registered under the group
-          schema:
-            $ref: "#/definitions/SchemaList"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/versions/schema:
+  /groups/{groupName}/schemas/versions/version:
     parameters:
       - in: path
         name: groupName
@@ -342,7 +309,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/versions/{version}:
+  /groups/{groupName}/schemas/versions/{versionOrdinal}:
     parameters:
       - in: path
         name: groupName
@@ -394,58 +361,79 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objects:
+  /groups/{groupName}/schemas/versions/validate:
     parameters:
       - in: path
         name: groupName
         description: Group name
         required: true
         type: string
-    get:
+    post:
       tags:
       - "Schema"
-      operationId: getObjects
-      description: Fetch all object types under a Group. This api will return schema types.  
+      operationId: validate
+      description: check if given schema is compatible with schemas in the registry for current policy setting. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: ValidateRequest
+          description: Checks if schema is valid with respect to supplied validation rules
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+              validationRules:
+                  $ref: "#/definitions/SchemaValidationRules"
       produces:
         - application/json
       responses:
         200:
-          description: List of object types under the group
-          schema:
-            $ref: "#/definitions/ObjectsList"
+          description: Schema is valid
+          valid:
+             $ref: "#/definitions/Valid"
         404:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objects/{objectName}/schemas/versions:
+  /groups/{groupName}/schemas/versions/canRead:
     parameters:
       - in: path
         name: groupName
         description: Group name
         required: true
         type: string
-      - in: path
-        name: objectName
-        description: Object type
-        required: true
-        type: string
-    get:
+    post:
       tags:
       - "Schema"
-      operationId: getObjectSchemas
-      description: Fetch all schemas registered with the given schema name
+      operationId: canRead
+      description: check if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CanReadRequest
+          description: Checks if schema can be used to read the data in the stream based on compatibility rules. 
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
       produces:
         - application/json
       responses:
         200:
-          description: Versioned history of schemas registered under the group of specified schema type
-          schema:
-            $ref: "#/definitions/SchemaList"
+          description: Schema can be used to read
+          canRead:
+             $ref: "#/definitions/CanRead"
         404:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/objects/{schemaName}/schemas/versions/latest:
+  /groups/{groupName}/schemas/{schemaName}/versions:
     parameters:
       - in: path
         name: groupName
@@ -454,7 +442,35 @@ paths:
         type: string
       - in: path
         name: schemaName
-        description: Object type 
+        description: Schema name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Schema"
+      operationId: getSchemasForSchemaName
+      description: Fetch all schemas registered with the given schema name
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group of specified schema type
+          schema:
+            $ref: "#/definitions/SchemaVersionsList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+  /groups/{groupName}/schemas/{schemaName}/versions/latest:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: schemaName
+        description: Schema name 
         required: true
         type: string
     get:
@@ -598,7 +614,7 @@ definitions:
           $ref: "#/definitions/GroupProperties"
       continuationToken:
         type: string
-  ObjectsList:
+  SchemaNamesList:
     type: object
     properties:
       objects:
@@ -667,22 +683,13 @@ definitions:
         $ref: "#/definitions/SchemaInfo"
       version:
         $ref: "#/definitions/VersionInfo"
-  SchemaVersionAndRules:
-    type: object
-    properties:
-      schemaInfo:
-        $ref: "#/definitions/SchemaInfo"
-      version:
-        $ref: "#/definitions/VersionInfo"
-      validationRules:
-        $ref: "#/definitions/SchemaValidationRules"
-  SchemaList:
+  SchemaVersionsList:
     type: object
     properties:
       schemas:
         type: array
         items:
-          $ref: "#/definitions/SchemaVersionAndRules"        
+          $ref: "#/definitions/SchemaWithVersion"
   CodecType:
     type: object
     properties:
@@ -777,4 +784,22 @@ definitions:
     properties:
       compatible:
         type: boolean
-          
+  GroupHistoryRecord:
+      type: object
+      properties:
+        schemaInfo:
+          $ref: "#/definitions/SchemaInfo"
+        version:
+          $ref: "#/definitions/VersionInfo"
+        validationRules:
+          $ref: "#/definitions/SchemaValidationRules"
+        timestamp:
+          type: integer
+          format: int64
+  GroupHistory:
+    type: object
+    properties:
+       history:
+        type: array
+        items:
+          $ref: "#/definitions/GroupHistoryRecord"

@@ -14,8 +14,8 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
@@ -41,21 +41,21 @@ public interface SchemaStore {
     
     CompletableFuture<Void> updateValidationRules(String group, Etag etag, SchemaValidationRules policy);
 
-    CompletableFuture<List<String>> listObjectTypes(String group);
+    CompletableFuture<List<String>> listSchemaNames(String group);
     
     CompletableFuture<List<SchemaWithVersion>> listSchemas(String group);
 
     CompletableFuture<List<SchemaWithVersion>> listSchemas(String group, VersionInfo from);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String schemaName);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String objectTypeName, VersionInfo from);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String schemaName, VersionInfo from);
     
     CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal);
 
     CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String objectTypeName);
+    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String schemaName);
     
     CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
 
@@ -71,7 +71,7 @@ public interface SchemaStore {
 
     CompletableFuture<Void> addCodec(String group, CodecType codecType);
 
-    CompletableFuture<List<SchemaEvolution>> getGroupHistory(String group);
+    CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String group);
     
-    CompletableFuture<List<SchemaEvolution>> getGroupHistoryForObjectType(String group, String objectTypeName);
+    CompletableFuture<List<GroupHistoryRecord>> getGroupHistoryForSchemaName(String group, String schemaName);
 }

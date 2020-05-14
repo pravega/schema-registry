@@ -12,15 +12,16 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.Data;
 
 /**
- * Describes changes to the group and the validation rules {@link SchemaEvolution#rules} that were 
- * applied while registering {@link SchemaEvolution#schema} and the unique {@link SchemaEvolution#version} identifier 
+ * Describes changes to the group and the validation rules {@link GroupHistoryRecord#rules} that were 
+ * applied while registering {@link GroupHistoryRecord#schema} and the unique {@link GroupHistoryRecord#version} identifier 
  * that was assigned to it. 
  */
 @Data
-public class SchemaEvolution {
+public class GroupHistoryRecord {
     private final SchemaInfo schema;
     private final VersionInfo version;
     private final SchemaValidationRules rules;
+    private final long timestamp;
 }
 
 

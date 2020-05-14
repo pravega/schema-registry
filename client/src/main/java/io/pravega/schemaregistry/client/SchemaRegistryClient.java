@@ -12,8 +12,8 @@ package io.pravega.schemaregistry.client;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -86,7 +86,7 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group. 
      * @return List of different objects within the group.   
      */
-    List<String> getObjects(String groupId);
+    List<String> getSchemaNames(String groupId);
 
     /**
      * Registers schema to the group. If group is configured with {@link GroupProperties#versionBySchemaName} then 
@@ -150,7 +150,16 @@ public interface SchemaRegistryClient {
      * @param schemaName Name of schemaName. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaEvolution> getGroupEvolutionHistory(String groupId, @Nullable String schemaName);
+    List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaName);
+
+    /**
+     * Gets complete schema evolution history of the group with schemas, versions, rules and time for the group. 
+     * The order in the list matches the order in which schemas were evolved within the group. 
+     * 
+     * @param groupId Id for the group.
+     * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
+     */
+    List<GroupHistoryRecord> getGroupHistory(String groupId);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}

@@ -18,8 +18,8 @@ import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
@@ -185,16 +185,16 @@ public class SchemaRegistryService {
      * @param group Name of group.
      * @return CompletableFuture which holds list of object types upon completion.
      */
-    public CompletableFuture<List<String>> getObjectTypes(String group) {
+    public CompletableFuture<List<String>> getSchemaNames(String group) {
         Preconditions.checkArgument(group != null);
-        log.info("getObjectTypes called for group {}. New validation rules {}", group);
+        log.info("getSchemaNames called for group {}. New validation rules {}", group);
 
-        return store.listObjectTypes(group)
+        return store.listSchemaNames(group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {} getObjectTypes {}.", group, r);
+                            log.info("Group {} getSchemaNames {}.", group, r);
                         } else {
-                            log.warn("getObjectTypes for group {} request failed with error", e, group);
+                            log.warn("getSchemaNames for group {} request failed with error", e, group);
                         }
                     });
     }
@@ -326,19 +326,19 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets latest schema and version for the group (or objectType, if specified).
-     * For groups configured with {@link GroupProperties#versionBySchemaName}, the objectTypename needs to be supplied to
+     * Gets latest schema and version for the group (or schemaName, if specified).
+     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName needs to be supplied to
      * get the latest schema for the object type.
      *
      * @param group          Name of group.
-     * @param objectTypeName Object type.
+     * @param schemaName Object type.
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String objectTypeName) {
+    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String schemaName) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getLatestSchema for {}.", group, objectTypeName);
+        log.info("Group {}, getLatestSchema for {}.", group, schemaName);
 
-        if (objectTypeName == null) {
+        if (schemaName == null) {
             return store.getLatestSchema(group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
@@ -348,38 +348,38 @@ public class SchemaRegistryService {
                             }
                         });
         } else {
-            return store.getLatestSchema(group, objectTypeName)
+            return store.getLatestSchema(group, schemaName)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, getLatestSchema = {}.", group, objectTypeName, r.getVersion());
+                                log.info("Group {}, object type = {}, getLatestSchema = {}.", group, schemaName, r.getVersion());
                             } else {
-                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, objectTypeName);
+                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, schemaName);
                             }
                         });
         }
     }
 
     /**
-     * Gets all schemas with corresponding versions for the group (or objectTypeName, if specified).
-     * For groups configured with {@link GroupProperties#versionBySchemaName}, the objectTypeName name needs to be supplied to
-     * get the latest schema for the objectTypeName. {@link SchemaInfo#name} is used as the objectTypeName name.
+     * Gets all schemas with corresponding versions for the group (or schemaName, if specified).
+     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName name needs to be supplied to
+     * get the latest schema for the schemaName. {@link SchemaInfo#name} is used as the schemaName name.
      * The order in the list matches the order in which schemas were evolved within the group.
      *
      * @param group          Name of group.
-     * @param objectTypeName Object type.
+     * @param schemaName Object type.
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
-    public CompletableFuture<List<SchemaEvolution>> getGroupEvolutionHistory(String group, @Nullable String objectTypeName) {
+    public CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String group, @Nullable String schemaName) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getGroupEvolutionHistory for {}.", group, objectTypeName);
+        log.info("Group {}, getGroupHistory for {}.", group, schemaName);
 
-        if (objectTypeName != null) {
-            return store.getGroupHistoryForObjectType(group, objectTypeName)
+        if (schemaName != null) {
+            return store.getGroupHistoryForSchemaName(group, schemaName)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, history size = {}.", group, objectTypeName, r.size());
+                                log.info("Group {}, object type = {}, history size = {}.", group, schemaName, r.size());
                             } else {
-                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, objectTypeName);
+                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, schemaName);
                             }
                         });
         } else {
@@ -397,7 +397,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
-     * the objectTypename is taken from the {@link SchemaInfo#name}.
+     * the schemaName is taken from the {@link SchemaInfo#name}.
      * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
      *
      * @param group  Name of group.

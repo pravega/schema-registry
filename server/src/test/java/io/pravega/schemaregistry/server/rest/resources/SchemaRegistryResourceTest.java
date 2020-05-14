@@ -110,7 +110,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 .schemaData(new byte[0])
                 .properties(Collections.emptyMap())
         );
-        Future<Response> future = target(GROUPS).path("mygroup").path("schemas/canRead").request().async()
+        Future<Response> future = target(GROUPS).path("mygroup").path("schemas/versions/canRead").request().async()
                                                                                        .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
         Response response = future.get();
         assertTrue(response.readEntity(CanRead.class).isCompatible());
@@ -120,7 +120,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 .schemaData(new byte[0])
                 .properties(Collections.emptyMap())
         );
-        future = target(GROUPS).path("mygroup").path("schemas/canRead").request().async()
+        future = target(GROUPS).path("mygroup").path("schemas/versions/canRead").request().async()
                                                 .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
         response = future.get();
         assertEquals(400, response.getStatus());

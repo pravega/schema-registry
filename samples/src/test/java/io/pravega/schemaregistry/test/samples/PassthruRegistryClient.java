@@ -14,8 +14,8 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
@@ -26,6 +26,7 @@ import io.pravega.schemaregistry.service.SchemaRegistryService;
 import javax.annotation.Nullable;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class PassthruRegistryClient implements SchemaRegistryClient {
     private final SchemaRegistryService service;
@@ -61,8 +62,8 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
     
     @Override
-    public List<String> getObjects(String group) {
-        return service.getObjectTypes(group).join();
+    public List<String> getSchemaNames(String group) {
+        return service.getSchemaNames(group).join();
     }
 
     @Override
@@ -91,10 +92,16 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<SchemaEvolution> getGroupEvolutionHistory(String group, @Nullable String subgroup) {
-        return service.getGroupEvolutionHistory(group, subgroup).join();
+    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaName) {
+        return service.getGroupHistory(groupId, schemaName)
+                .thenApply(history -> history.stream().map(x -> new SchemaWithVersion(x.getSchema(), x.getVersion())).collect(Collectors.toList())).join();
     }
 
+    @Override
+    public List<GroupHistoryRecord> getGroupHistory(String group) {
+        return service.getGroupHistory(group, null).join();
+    }
+    
     @Override
     public VersionInfo getSchemaVersion(String group, SchemaInfo schema) {
         return service.getSchemaVersion(group, schema).join();

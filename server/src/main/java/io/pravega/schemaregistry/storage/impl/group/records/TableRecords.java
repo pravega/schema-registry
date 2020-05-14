@@ -42,7 +42,7 @@ public interface TableRecords {
             ? extends ObjectBuilder<? extends TableValue>>> SERIALIZERS_BY_KEY_TYPE =
             ImmutableMap.<Class<? extends TableKey>, VersionedSerializer.WithBuilder<? extends TableValue, ? extends ObjectBuilder<? extends TableValue>>>builder()
                     .put(VersionKey.class, SchemaRecord.SERIALIZER)
-                    .put(SchemaInfoKey.class, SchemaVersionValue.SERIALIZER)
+                    .put(SchemaInfoKey.class, SchemaVersionList.SERIALIZER)
                     .put(GroupPropertyKey.class, GroupPropertiesRecord.SERIALIZER)
                     .put(ValidationPolicyKey.class, ValidationRecord.SERIALIZER)
                     .put(Etag.class, Etag.SERIALIZER)
@@ -300,7 +300,7 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class SchemaVersionValue implements TableValue {
+    class SchemaVersionList implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final List<VersionInfo> versions;
@@ -311,13 +311,13 @@ public interface TableRecords {
             return SERIALIZER.serialize(this).getCopy();
         }
 
-        private static class SchemaVersionValueBuilder implements ObjectBuilder<SchemaVersionValue> {
+        private static class SchemaVersionListBuilder implements ObjectBuilder<SchemaVersionList> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaVersionValue, SchemaVersionValue.SchemaVersionValueBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaVersionList, SchemaVersionList.SchemaVersionListBuilder> {
             @Override
-            protected SchemaVersionValue.SchemaVersionValueBuilder newBuilder() {
-                return SchemaVersionValue.builder();
+            protected SchemaVersionList.SchemaVersionListBuilder newBuilder() {
+                return SchemaVersionList.builder();
             }
 
             @Override
@@ -330,11 +330,11 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(SchemaVersionValue e, RevisionDataOutput target) throws IOException {
+            private void write00(SchemaVersionList e, RevisionDataOutput target) throws IOException {
                 target.writeCollection(e.versions, VersionInfoSerializer.SERIALIZER::serialize);
             }
 
-            private void read00(RevisionDataInput source, SchemaVersionValue.SchemaVersionValueBuilder b) throws IOException {
+            private void read00(RevisionDataInput source, SchemaVersionList.SchemaVersionListBuilder b) throws IOException {
                 b.versions(new ArrayList<>(source.readCollection(VersionInfoSerializer.SERIALIZER::deserialize)));
             }
         }
@@ -346,7 +346,7 @@ public interface TableRecords {
     class VersionKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final int position;
+        private final int ordinal;
 
         private static class VersionKeyBuilder implements ObjectBuilder<VersionKey> {
         }
@@ -368,11 +368,11 @@ public interface TableRecords {
             }
 
             private void write00(VersionKey e, RevisionDataOutput target) throws IOException {
-                target.writeInt(e.position);
+                target.writeInt(e.ordinal);
             }
 
             private void read00(RevisionDataInput source, VersionKey.VersionKeyBuilder b) throws IOException {
-                b.position(source.readInt());
+                b.ordinal(source.readInt());
             }
         }
     }
@@ -386,6 +386,7 @@ public interface TableRecords {
         private final SchemaInfo schemaInfo;
         private final VersionInfo versionInfo;
         private final SchemaValidationRules validationRules;
+        private final long timestamp;
 
         @Override
         @SneakyThrows
@@ -416,12 +417,14 @@ public interface TableRecords {
                 SchemaInfoSerializer.SERIALIZER.serialize(target, e.schemaInfo);
                 VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
                 SchemaValidationRulesSerializer.SERIALIZER.serialize(target, e.validationRules);
+                target.writeLong(e.timestamp);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
                 b.schemaInfo(SchemaInfoSerializer.SERIALIZER.deserialize(source))
                  .versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source))
-                 .validationRules(SchemaValidationRulesSerializer.SERIALIZER.deserialize(source));
+                 .validationRules(SchemaValidationRulesSerializer.SERIALIZER.deserialize(source))
+                 .timestamp(source.readLong());
             }
         }
     }

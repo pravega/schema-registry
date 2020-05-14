@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.contract.transform;
 
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
@@ -17,7 +18,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import org.junit.Test;
@@ -118,8 +118,8 @@ public class ModelHelperTest {
         SchemaValidationRules rules = ModelHelper.encode(schemaValidationRules);
         assertEquals(rules.getRules().size(), 1);
         
-        SchemaVersionAndRules schemaEvolution = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.SchemaEvolution(
-                schemaInfo, versionInfo, schemaValidationRules));
+        io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord schemaEvolution = ModelHelper.encode(new GroupHistoryRecord(
+                schemaInfo, versionInfo, schemaValidationRules, 100L));
         assertEquals(schemaEvolution.getSchemaInfo(), schema);
         assertEquals(schemaEvolution.getValidationRules(), rules);
         assertEquals(schemaEvolution.getVersion(), version);

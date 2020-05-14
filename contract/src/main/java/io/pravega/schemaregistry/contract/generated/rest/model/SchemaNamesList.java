@@ -23,19 +23,19 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * ObjectsList
+ * SchemaNamesList
  */
 
-public class ObjectsList   {
+public class SchemaNamesList   {
   @JsonProperty("objects")
   private List<String> objects = null;
 
-  public ObjectsList objects(List<String> objects) {
+  public SchemaNamesList objects(List<String> objects) {
     this.objects = objects;
     return this;
   }
 
-  public ObjectsList addObjectsItem(String objectsItem) {
+  public SchemaNamesList addObjectsItem(String objectsItem) {
     if (this.objects == null) {
       this.objects = new ArrayList<String>();
     }
@@ -66,8 +66,8 @@ public class ObjectsList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ObjectsList objectsList = (ObjectsList) o;
-    return Objects.equals(this.objects, objectsList.objects);
+    SchemaNamesList schemaNamesList = (SchemaNamesList) o;
+    return Objects.equals(this.objects, schemaNamesList.objects);
   }
 
   @Override
@@ -79,7 +79,7 @@ public class ObjectsList   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ObjectsList {\n");
+    sb.append("class SchemaNamesList {\n");
     
     sb.append("    objects: ").append(toIndentedString(objects)).append("\n");
     sb.append("}");
