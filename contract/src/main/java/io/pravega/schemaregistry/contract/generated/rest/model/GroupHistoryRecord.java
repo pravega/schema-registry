@@ -24,10 +24,10 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaVersionAndRules
+ * GroupHistoryRecord
  */
 
-public class SchemaVersionAndRules   {
+public class GroupHistoryRecord   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
@@ -37,7 +37,10 @@ public class SchemaVersionAndRules   {
   @JsonProperty("validationRules")
   private SchemaValidationRules validationRules = null;
 
-  public SchemaVersionAndRules schemaInfo(SchemaInfo schemaInfo) {
+  @JsonProperty("timestamp")
+  private Long timestamp = null;
+
+  public GroupHistoryRecord schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -56,7 +59,7 @@ public class SchemaVersionAndRules   {
     this.schemaInfo = schemaInfo;
   }
 
-  public SchemaVersionAndRules version(VersionInfo version) {
+  public GroupHistoryRecord version(VersionInfo version) {
     this.version = version;
     return this;
   }
@@ -75,7 +78,7 @@ public class SchemaVersionAndRules   {
     this.version = version;
   }
 
-  public SchemaVersionAndRules validationRules(SchemaValidationRules validationRules) {
+  public GroupHistoryRecord validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -94,6 +97,25 @@ public class SchemaVersionAndRules   {
     this.validationRules = validationRules;
   }
 
+  public GroupHistoryRecord timestamp(Long timestamp) {
+    this.timestamp = timestamp;
+    return this;
+  }
+
+  /**
+   * Get timestamp
+   * @return timestamp
+   **/
+  @JsonProperty("timestamp")
+  @ApiModelProperty(value = "")
+  public Long getTimestamp() {
+    return timestamp;
+  }
+
+  public void setTimestamp(Long timestamp) {
+    this.timestamp = timestamp;
+  }
+
 
   @Override
   public boolean equals(java.lang.Object o) {
@@ -103,26 +125,28 @@ public class SchemaVersionAndRules   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaVersionAndRules schemaVersionAndRules = (SchemaVersionAndRules) o;
-    return Objects.equals(this.schemaInfo, schemaVersionAndRules.schemaInfo) &&
-        Objects.equals(this.version, schemaVersionAndRules.version) &&
-        Objects.equals(this.validationRules, schemaVersionAndRules.validationRules);
+    GroupHistoryRecord groupHistoryRecord = (GroupHistoryRecord) o;
+    return Objects.equals(this.schemaInfo, groupHistoryRecord.schemaInfo) &&
+        Objects.equals(this.version, groupHistoryRecord.version) &&
+        Objects.equals(this.validationRules, groupHistoryRecord.validationRules) &&
+        Objects.equals(this.timestamp, groupHistoryRecord.timestamp);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, version, validationRules);
+    return Objects.hash(schemaInfo, version, validationRules, timestamp);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaVersionAndRules {\n");
+    sb.append("class GroupHistoryRecord {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
+    sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("}");
     return sb.toString();
   }

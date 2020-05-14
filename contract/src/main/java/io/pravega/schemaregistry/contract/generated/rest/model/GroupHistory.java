@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -24,38 +24,38 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaList
+ * GroupHistory
  */
 
-public class SchemaList   {
-  @JsonProperty("schemas")
-  private List<SchemaVersionAndRules> schemas = null;
+public class GroupHistory   {
+  @JsonProperty("history")
+  private List<GroupHistoryRecord> history = null;
 
-  public SchemaList schemas(List<SchemaVersionAndRules> schemas) {
-    this.schemas = schemas;
+  public GroupHistory history(List<GroupHistoryRecord> history) {
+    this.history = history;
     return this;
   }
 
-  public SchemaList addSchemasItem(SchemaVersionAndRules schemasItem) {
-    if (this.schemas == null) {
-      this.schemas = new ArrayList<SchemaVersionAndRules>();
+  public GroupHistory addHistoryItem(GroupHistoryRecord historyItem) {
+    if (this.history == null) {
+      this.history = new ArrayList<GroupHistoryRecord>();
     }
-    this.schemas.add(schemasItem);
+    this.history.add(historyItem);
     return this;
   }
 
   /**
-   * Get schemas
-   * @return schemas
+   * Get history
+   * @return history
    **/
-  @JsonProperty("schemas")
+  @JsonProperty("history")
   @ApiModelProperty(value = "")
-  public List<SchemaVersionAndRules> getSchemas() {
-    return schemas;
+  public List<GroupHistoryRecord> getHistory() {
+    return history;
   }
 
-  public void setSchemas(List<SchemaVersionAndRules> schemas) {
-    this.schemas = schemas;
+  public void setHistory(List<GroupHistoryRecord> history) {
+    this.history = history;
   }
 
 
@@ -67,22 +67,22 @@ public class SchemaList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaList schemaList = (SchemaList) o;
-    return Objects.equals(this.schemas, schemaList.schemas);
+    GroupHistory groupHistory = (GroupHistory) o;
+    return Objects.equals(this.history, groupHistory.history);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemas);
+    return Objects.hash(history);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaList {\n");
+    sb.append("class GroupHistory {\n");
     
-    sb.append("    schemas: ").append(toIndentedString(schemas)).append("\n");
+    sb.append("    history: ").append(toIndentedString(history)).append("\n");
     sb.append("}");
     return sb.toString();
   }

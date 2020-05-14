@@ -12,17 +12,16 @@ package io.pravega.schemaregistry.contract.transform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import io.pravega.schemaregistry.contract.data.SchemaEvolution;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionAndRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import org.apache.commons.lang3.NotImplementedException;
@@ -136,11 +135,11 @@ public class ModelHelper {
                 decode(schemaWithVersion.getVersion()));
     }
 
-    public static SchemaEvolution decode(SchemaVersionAndRules schemaEvolution) {
+    public static io.pravega.schemaregistry.contract.data.GroupHistoryRecord decode(GroupHistoryRecord schemaEvolution) {
         Preconditions.checkArgument(schemaEvolution != null);
 
-        return new io.pravega.schemaregistry.contract.data.SchemaEvolution(decode(schemaEvolution.getSchemaInfo()),
-                decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()));
+        return new io.pravega.schemaregistry.contract.data.GroupHistoryRecord(decode(schemaEvolution.getSchemaInfo()),
+                decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()), schemaEvolution.getTimestamp());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingId decode(EncodingId encodingId) {
@@ -161,10 +160,11 @@ public class ModelHelper {
     // endregion
 
     // region encode
-    public static SchemaVersionAndRules encode(io.pravega.schemaregistry.contract.data.SchemaEvolution schemaEvolution) {
-        SchemaInfo encode = encode(schemaEvolution.getSchema());
-        return new SchemaVersionAndRules().schemaInfo(encode)
-                                          .version(encode(schemaEvolution.getVersion())).validationRules(encode(schemaEvolution.getRules()));
+    public static GroupHistoryRecord encode(io.pravega.schemaregistry.contract.data.GroupHistoryRecord groupHistoryRecord) {
+        return new GroupHistoryRecord().schemaInfo(encode(groupHistoryRecord.getSchema()))
+                                       .version(encode(groupHistoryRecord.getVersion()))
+                                       .validationRules(encode(groupHistoryRecord.getRules()))
+                                       .timestamp(groupHistoryRecord.getTimestamp());
     }
 
     public static SchemaValidationRules encode(io.pravega.schemaregistry.contract.data.SchemaValidationRules rules) {
