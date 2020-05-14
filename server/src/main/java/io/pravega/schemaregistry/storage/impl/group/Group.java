@@ -9,9 +9,12 @@
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.Lists;
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.util.JsonFormat;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
@@ -30,6 +33,7 @@ import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.AbstractMap;
@@ -258,10 +262,11 @@ public class Group<V> {
                                                                            .collect(Collectors.toList());
                              return groupTable.getEntries(keys, TableRecords.SchemaRecord.class);
                          }).thenApply(entries -> entries
-                        .stream().map(x -> new GroupHistoryRecord(x.getSchemaInfo(), x.getVersionInfo(), x.getValidationRules(), x.getTimestamp()))
+                        .stream().map(x -> new GroupHistoryRecord(x.getSchemaInfo(), x.getVersionInfo(), 
+                                x.getValidationRules(), x.getTimestamp(), getSchemaString(x.getSchemaInfo())))
                         .collect(Collectors.toList()));
     }
-
+    
     public CompletableFuture<List<GroupHistoryRecord>> getHistory(String schemaName) {
         return getHistory().thenApply(list ->
                 list.stream().filter(x -> x.getSchema().getName().equals(schemaName))
@@ -435,5 +440,25 @@ public class Group<V> {
                         }
                     });
         }, executor).thenApply(v -> found.get());
+    }
+
+    @SneakyThrows
+    private String getSchemaString(SchemaInfo schemaInfo) {
+        String schemaString;
+        switch (schemaInfo.getSchemaType()) {
+            case Avro:
+            case Json:
+                schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+                break;
+            case Protobuf:
+                DescriptorProtos.FileDescriptorSet descriptor = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+                JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
+                schemaString = printer.print(descriptor);
+                break;
+            default:
+                schemaString = "";
+                break;
+        }
+        return schemaString;
     }
 }

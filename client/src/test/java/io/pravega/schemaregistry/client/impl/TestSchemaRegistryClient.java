@@ -423,15 +423,17 @@ public class TestSchemaRegistryClient {
         SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
         GroupHistoryRecord groupHistoryRecord = new io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord()
                 .schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo))
-                .validationRules(ModelHelper.encode(schemaValidationRules)).timestamp(100L);
+                .validationRules(ModelHelper.encode(schemaValidationRules)).timestamp(100L).schemaString("");
         GroupHistory history = new GroupHistory();
         history.addHistoryItem(groupHistoryRecord);
         doReturn(history).when(response).readEntity(GroupHistory.class);
-        List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> schemaEvolutionList1 = client.getGroupHistory("mygroup");
-        assertEquals(1, schemaEvolutionList1.size());
-        assertEquals(schemaValidationRules, schemaEvolutionList1.get(0).getRules());
-        assertEquals(schemaInfo, schemaEvolutionList1.get(0).getSchema());
-        assertEquals(versionInfo, schemaEvolutionList1.get(0).getVersion());
+        List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getGroupHistory("mygroup");
+        assertEquals(1, groupHistoryList.size());
+        assertEquals(schemaValidationRules, groupHistoryList.get(0).getRules());
+        assertEquals(schemaInfo, groupHistoryList.get(0).getSchema());
+        assertEquals(versionInfo, groupHistoryList.get(0).getVersion());
+        assertEquals(100L, groupHistoryList.get(0).getTimestamp());
+        assertEquals("", groupHistoryList.get(0).getSchemaString());
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.transform;
@@ -44,7 +44,7 @@ public class ModelHelper {
         Preconditions.checkArgument(schemaInfo.getProperties() != null);
         Preconditions.checkArgument(schemaInfo.getSchemaData() != null);
         io.pravega.schemaregistry.contract.data.SchemaType schemaType = decode(schemaInfo.getSchemaType());
-        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(), 
+        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(),
                 schemaType, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
@@ -66,7 +66,7 @@ public class ModelHelper {
             if (rule.getValue().getRule() instanceof Map) {
                 String name = (String) ((Map) rule.getValue().getRule()).get("name");
                 Preconditions.checkArgument(name.equals(Compatibility.class.getSimpleName()));
-                
+
                 return decode(MAPPER.convertValue(rule.getValue().getRule(), Compatibility.class));
             } else if (rule.getValue().getRule() instanceof Compatibility) {
                 return decode((Compatibility) rule.getValue().getRule());
@@ -90,10 +90,10 @@ public class ModelHelper {
             Preconditions.checkArgument(compatibility.getBackwardTill() != null);
             Preconditions.checkArgument(compatibility.getForwardTill() != null);
         }
-        
+
         io.pravega.schemaregistry.contract.data.VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         io.pravega.schemaregistry.contract.data.VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
-        
+
         return new io.pravega.schemaregistry.contract.data.Compatibility(
                 searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()),
                 backwardTill, forwardTill);
@@ -139,7 +139,8 @@ public class ModelHelper {
         Preconditions.checkArgument(schemaEvolution != null);
 
         return new io.pravega.schemaregistry.contract.data.GroupHistoryRecord(decode(schemaEvolution.getSchemaInfo()),
-                decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()), schemaEvolution.getTimestamp());
+                decode(schemaEvolution.getVersion()), decode(schemaEvolution.getValidationRules()), schemaEvolution.getTimestamp(),
+                schemaEvolution.getSchemaString());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingId decode(EncodingId encodingId) {
@@ -154,8 +155,8 @@ public class ModelHelper {
         Preconditions.checkArgument(groupProperties.isVersionBySchemaName() != null);
 
         return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
-        .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).versionBySchemaName(groupProperties.isVersionBySchemaName())
-                .properties(groupProperties.getProperties()).build();
+                                                                      .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).versionBySchemaName(groupProperties.isVersionBySchemaName())
+                                                                      .properties(groupProperties.getProperties()).build();
     }
     // endregion
 
@@ -164,7 +165,8 @@ public class ModelHelper {
         return new GroupHistoryRecord().schemaInfo(encode(groupHistoryRecord.getSchema()))
                                        .version(encode(groupHistoryRecord.getVersion()))
                                        .validationRules(encode(groupHistoryRecord.getRules()))
-                                       .timestamp(groupHistoryRecord.getTimestamp());
+                                       .timestamp(groupHistoryRecord.getTimestamp())
+                                       .schemaString(groupHistoryRecord.getSchemaString());
     }
 
     public static SchemaValidationRules encode(io.pravega.schemaregistry.contract.data.SchemaValidationRules rules) {
@@ -213,7 +215,7 @@ public class ModelHelper {
                 .versionBySchemaName(groupProperties.isVersionBySchemaName())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
-    
+
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
         return new VersionInfo().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
     }
