@@ -196,7 +196,7 @@ public class TestSchemaRegistryClient {
     }
 
     @Test
-    public void testGetObjectTypes() {
+    public void testSchemaNamesApi() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
@@ -206,9 +206,9 @@ public class TestSchemaRegistryClient {
         List<String> stringList = new ArrayList<>();
         stringList.add("element1");
         stringList.add("element2");
-        SchemaNamesList objectTypesList = new SchemaNamesList();
-        objectTypesList.objects(stringList);
-        doReturn(objectTypesList).when(response).readEntity(SchemaNamesList.class);
+        SchemaNamesList schemaNamesList = new SchemaNamesList();
+        schemaNamesList.objects(stringList);
+        doReturn(schemaNamesList).when(response).readEntity(SchemaNamesList.class);
         List<String> output = client.getSchemaNames("mygroup");
         assertEquals(2, output.size());
         assertEquals("element1", output.get(0));
