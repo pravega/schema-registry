@@ -68,7 +68,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        Response addSchemaToGroupIfAbsent(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+        Response addSchemaToGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                           @ApiParam(value = "Add new schema to group", required = true) AddSchemaToGroupRequest addSchemaToGroupRequest);
 
         @POST
@@ -230,7 +230,7 @@ public class ApiV1 {
         Response getSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
 
         @POST
-        @Path("/{groupName}/schemas/versions/version")
+        @Path("/{groupName}/schemas/versions/search")
         @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags = {"Schema", })

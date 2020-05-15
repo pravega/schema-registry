@@ -245,7 +245,7 @@ paths:
     post:
       tags:
       - "Schema"
-      operationId: addSchemaToGroupIfAbsent
+      operationId: addSchemaToGroup
       description: adds a new schema to the group
       consumes:
         - application/json
@@ -274,7 +274,7 @@ paths:
           description: Invalid schema type
         500:
           description: Internal server error while creating a Group
-  /groups/{groupName}/schemas/versions/version:
+  /groups/{groupName}/schemas/versions/search:
     parameters:
       - in: path
         name: groupName
@@ -285,7 +285,7 @@ paths:
       tags:
       - "Schema"
       operationId: getSchemaVersion
-      description: Get the version for the schema if it is registered.
+      description: Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchemaToGroup   
       consumes:
         - application/json
       parameters:

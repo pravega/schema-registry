@@ -105,11 +105,11 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
-    public Response addSchemaToGroupIfAbsent(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+    public Response addSchemaToGroup(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Add new schema to group" ,required=true) AddSchemaToGroupRequest addSchemaToGroupRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.addSchemaToGroupIfAbsent(groupName,addSchemaToGroupRequest,securityContext);
+        return delegate.addSchemaToGroup(groupName,addSchemaToGroupRequest,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions/canRead")
@@ -341,10 +341,10 @@ public class GroupsApi  {
         return delegate.getSchemaValidationRules(groupName,securityContext);
     }
     @POST
-    @Path("/{groupName}/schemas/versions/version")
+    @Path("/{groupName}/schemas/versions/search")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchemaToGroup", response = VersionInfo.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Schema version", response = VersionInfo.class),
         

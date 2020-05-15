@@ -182,7 +182,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public VersionInfo addSchema(String groupId, SchemaInfo schema) {
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
         addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
-        Response response = proxy.addSchemaToGroupIfAbsent(groupId, addSchemaToGroupRequest);
+        Response response = proxy.addSchemaToGroup(groupId, addSchemaToGroupRequest);
         if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
