@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
-import io.pravega.controller.server.rest.v1.ApiV1;
+import io.pravega.schemaregistry.contract.v1.ApiV1;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.Response;

@@ -48,6 +48,12 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 
 public class ApiV1 {
+    @Path("/ping")
+    public interface Ping {
+        @GET
+        Response ping();
+    }
+
     @Path("/v1/groups")
     @io.swagger.annotations.Api(description = "the groups API")
     public interface GroupsApi {
