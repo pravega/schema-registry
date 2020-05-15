@@ -24,8 +24,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * EncodingInfo
+ * Encoding information object that resolves the schema version and codec used for corresponding encoding id.
  */
+@ApiModel(description = "Encoding information object that resolves the schema version and codec used for corresponding encoding id.")
 
 public class EncodingInfo   {
   @JsonProperty("schemaInfo")
@@ -43,11 +44,12 @@ public class EncodingInfo   {
   }
 
   /**
-   * Get schemaInfo
+   * Schema information object.
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Schema information object.")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
@@ -62,11 +64,12 @@ public class EncodingInfo   {
   }
 
   /**
-   * Get versionInfo
+   * Version information object.
    * @return versionInfo
    **/
   @JsonProperty("versionInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Version information object.")
+  @NotNull
   public VersionInfo getVersionInfo() {
     return versionInfo;
   }
@@ -81,11 +84,12 @@ public class EncodingInfo   {
   }
 
   /**
-   * Get codecType
+   * Codec type object.
    * @return codecType
    **/
   @JsonProperty("codecType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Codec type object.")
+  @NotNull
   public CodecType getCodecType() {
     return codecType;
   }

@@ -25,8 +25,9 @@ import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * SchemaValidationRules
+ * Schema validation rules to be applied for new schema addition. Currently only one rule is supported - Compatibility.
  */
+@ApiModel(description = "Schema validation rules to be applied for new schema addition. Currently only one rule is supported - Compatibility.")
 
 public class SchemaValidationRules   {
   @JsonProperty("rules")

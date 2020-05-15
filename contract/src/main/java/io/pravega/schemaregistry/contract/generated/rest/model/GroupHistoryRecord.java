@@ -24,8 +24,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * GroupHistoryRecord
+ * Group History Record that describes each schema evolution - schema information, version generated for the schema, time and rules used for schema validation.
  */
+@ApiModel(description = "Group History Record that describes each schema evolution - schema information, version generated for the schema, time and rules used for schema validation.")
 
 public class GroupHistoryRecord   {
   @JsonProperty("schemaInfo")
@@ -49,11 +50,12 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Get schemaInfo
+   * Schema information object.
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Schema information object.")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
@@ -68,11 +70,12 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Get version
+   * Schema version information object.
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Schema version information object.")
+  @NotNull
   public VersionInfo getVersion() {
     return version;
   }
@@ -87,11 +90,12 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Get validationRules
+   * Schema validation rules applied.
    * @return validationRules
    **/
   @JsonProperty("validationRules")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Schema validation rules applied.")
+  @NotNull
   public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
@@ -106,11 +110,12 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Get timestamp
+   * Timestamp when the schema was added.
    * @return timestamp
    **/
   @JsonProperty("timestamp")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Timestamp when the schema was added.")
+  @NotNull
   public Long getTimestamp() {
     return timestamp;
   }
@@ -125,11 +130,11 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Get schemaString
+   * Schema as json string for schema types that registry service understands.
    * @return schemaString
    **/
   @JsonProperty("schemaString")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Schema as json string for schema types that registry service understands.")
   public String getSchemaString() {
     return schemaString;
   }

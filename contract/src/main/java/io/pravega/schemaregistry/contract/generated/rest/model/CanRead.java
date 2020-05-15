@@ -21,8 +21,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * CanRead
+ * Response object for canRead api.
  */
+@ApiModel(description = "Response object for canRead api.")
 
 public class CanRead   {
   @JsonProperty("compatible")
@@ -34,11 +35,12 @@ public class CanRead   {
   }
 
   /**
-   * Get compatible
+   * Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group&#39;s configured compatibility policy.
    * @return compatible
    **/
   @JsonProperty("compatible")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group's configured compatibility policy.")
+  @NotNull
   public Boolean isCompatible() {
     return compatible;
   }

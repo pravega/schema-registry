@@ -55,7 +55,8 @@ public class CreateGroupRequest   {
    * @return groupName
    **/
   @JsonProperty("groupName")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public String getGroupName() {
     return groupName;
   }
@@ -74,7 +75,8 @@ public class CreateGroupRequest   {
    * @return schemaType
    **/
   @JsonProperty("schemaType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaType getSchemaType() {
     return schemaType;
   }
@@ -93,7 +95,8 @@ public class CreateGroupRequest   {
    * @return validationRules
    **/
   @JsonProperty("validationRules")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
@@ -139,7 +142,8 @@ public class CreateGroupRequest   {
    * @return versionBySchemaName
    **/
   @JsonProperty("versionBySchemaName")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Boolean isVersionBySchemaName() {
     return versionBySchemaName;
   }

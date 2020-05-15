@@ -39,7 +39,8 @@ public class GetSchemaVersion   {
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }

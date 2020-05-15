@@ -43,7 +43,8 @@ public class GetEncodingIdRequest   {
    * @return versionInfo
    **/
   @JsonProperty("versionInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public VersionInfo getVersionInfo() {
     return versionInfo;
   }
@@ -62,7 +63,8 @@ public class GetEncodingIdRequest   {
    * @return codecType
    **/
   @JsonProperty("codecType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public CodecType getCodecType() {
     return codecType;
   }

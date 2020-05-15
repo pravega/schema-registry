@@ -23,8 +23,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaWithVersion
+ * Object that encapsulates SchemaInfo and its corresponding VersionInfo objects.
  */
+@ApiModel(description = "Object that encapsulates SchemaInfo and its corresponding VersionInfo objects.")
 
 public class SchemaWithVersion   {
   @JsonProperty("schemaInfo")
@@ -39,11 +40,12 @@ public class SchemaWithVersion   {
   }
 
   /**
-   * Get schemaInfo
+   * Schema information.
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Schema information.")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
@@ -58,11 +60,12 @@ public class SchemaWithVersion   {
   }
 
   /**
-   * Get version
+   * Version information.
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Version information.")
+  @NotNull
   public VersionInfo getVersion() {
     return version;
   }

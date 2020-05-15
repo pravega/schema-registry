@@ -45,11 +45,11 @@ public class GroupHistory   {
   }
 
   /**
-   * Get history
+   * Chronological list of Group History records.
    * @return history
    **/
   @JsonProperty("history")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Chronological list of Group History records.")
   public List<GroupHistoryRecord> getHistory() {
     return history;
   }

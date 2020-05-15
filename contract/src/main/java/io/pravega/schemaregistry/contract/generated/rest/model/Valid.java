@@ -21,8 +21,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Valid
+ * Response object for validateSchema api.
  */
+@ApiModel(description = "Response object for validateSchema api.")
 
 public class Valid   {
   @JsonProperty("valid")
@@ -34,11 +35,12 @@ public class Valid   {
   }
 
   /**
-   * Get valid
+   * Whether given schema is valid with respect to existing group schemas against the configured validation rules.
    * @return valid
    **/
   @JsonProperty("valid")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "Whether given schema is valid with respect to existing group schemas against the configured validation rules.")
+  @NotNull
   public Boolean isValid() {
     return valid;
   }

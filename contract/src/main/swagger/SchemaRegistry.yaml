@@ -23,6 +23,8 @@ tags:
   description: "Group related APIs"
 - name: "Schema"
   description: "Schema related APIs"
+- name: "Codecs"
+  description: "Codecs related APIs"
 - name: "Encoding"
   description: "Encoding related APIs"
 schemes:
@@ -45,6 +47,8 @@ paths:
           name: limit
           type: integer
           description: The numbers of items to return
+      required:
+          - limit
       responses:
         200:
           description: List of all groups
@@ -81,6 +85,11 @@ paths:
                   maxLength: 40
               versionBySchemaName:
                 type: boolean
+            required:
+                - groupName
+                - schemaType
+                - validationRules
+                - versionBySchemaName   
       responses:
         201:
           description: Successfully added group
@@ -187,6 +196,8 @@ paths:
               previousRules:
                   $ref: "#/definitions/SchemaValidationRules"
                   nullable: true
+            required:
+              - validationRules      
       responses:
         200:
           description: Updated schema validation policy
@@ -246,7 +257,7 @@ paths:
       tags:
       - "Schema"
       operationId: addSchemaToGroup
-      description: adds a new schema to the group
+      description: Adds a new schema to the group
       consumes:
         - application/json
       parameters:
@@ -259,6 +270,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+            required:
+              - schemaInfo      
       produces:
         - application/json
       responses:
@@ -298,6 +311,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+            required:
+              - schemaInfo      
       produces:
         - application/json
       responses:
@@ -318,7 +333,7 @@ paths:
         type: string
       - in: path
         name: version
-        description: version ordinal
+        description: Version ordinal
         required: true
         type: integer
         format: int32
@@ -372,7 +387,7 @@ paths:
       tags:
       - "Schema"
       operationId: validate
-      description: check if given schema is compatible with schemas in the registry for current policy setting. 
+      description: Checks if given schema is compatible with schemas in the registry for current policy setting. 
       consumes:
         - application/json
       parameters:
@@ -387,6 +402,8 @@ paths:
                   $ref: "#/definitions/SchemaInfo"
               validationRules:
                   $ref: "#/definitions/SchemaValidationRules"
+            required:
+              - schemaInfo      
       produces:
         - application/json
       responses:
@@ -409,7 +426,7 @@ paths:
       tags:
       - "Schema"
       operationId: canRead
-      description: check if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
+      description: Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
       consumes:
         - application/json
       parameters:
@@ -422,6 +439,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+            required:
+              - schemaInfo
       produces:
         - application/json
       responses:
@@ -515,6 +534,9 @@ paths:
                   $ref: "#/definitions/VersionInfo"
               codecType:
                   $ref: "#/definitions/CodecType"
+            required:
+              - versionInfo
+              - codecType
       produces:
         - application/json
       responses:
@@ -566,7 +588,7 @@ paths:
         type: string
     get:
       tags:
-      - "Encoding"
+      - "Codecs"
       operationId: getCodecsList
       description: Fetch the properties of an existing Group
       produces:
@@ -582,7 +604,7 @@ paths:
           description: Internal server error while fetching Group details
     post:
       tags:
-      - "Group"
+      - "Codecs"
       operationId: addCodec
       description: Adds a new codec to the group
       consumes:
@@ -597,6 +619,8 @@ paths:
             properties:
               codec:
                   $ref: "#/definitions/CodecType"
+            required:
+              - codec      
       responses:
         201:
           description: Successfully added codec to group
@@ -607,37 +631,52 @@ paths:
 definitions:
   ListGroupsResponse:
     type: object
+    description: Map of Group names to group properties. For partially created groups, the group properties may be null.   
     properties:
       groups:
         type: object
         additionalProperties:
           $ref: "#/definitions/GroupProperties"
       continuationToken:
+        description: Continuation token to identify the position of last group in the response.   
         type: string
+    required:
+      - continuationToken    
   SchemaNamesList:
     type: object
+    description: List of schema names. Schema names uniquely identify different object types under a group.    
     properties:
       objects:
         type: array
         items:
-          type: string
+          type: string      
   GroupProperties:
     type: object
+    description: Metadata for a group.    
     properties:
-      schemaValidationRules:
-          $ref: "#/definitions/SchemaValidationRules"
       schemaType:
+          description: Schema type for the group.    
           $ref: "#/definitions/SchemaType"
+      schemaValidationRules:
+          description: Validation rules to apply while registering new schema.    
+          $ref: "#/definitions/SchemaValidationRules"
       versionBySchemaName:
+          description: Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.     
           type: boolean
       properties:
+        description: User defined Key value strings.     
         type: object
         additionalProperties:
           type: string
           minLength: 0
           maxLength: 40
+    required:
+      - schemaType
+      - versionBySchemaName
+      - schemaValidationRules      
   SchemaType:
     type: object
+    description: Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use schemaType.Custom and supply customTypeName.  
     properties:
       schemaType:
         type: string
@@ -649,51 +688,80 @@ definitions:
           - Custom
       customTypeName:
         type: string  
+    required:
+      - schemaType    
   SchemaInfo:
     type: object
+    description: Schema information object that encapsulates various properties of a schema.   
     properties:
       schemaName:
+        description: Name of the schema. This identifies the type of object the schema payload represents.    
         type: string
       schemaType:
+          description: Type of schema.    
           $ref: "#/definitions/SchemaType"
       schemaData:
+        description: Base64 encoded string for binary data for schema.    
         type: string
         format: binary
       properties:
+        description: User defined key value strings.    
         type: object
         additionalProperties:
           type: string
           minLength: 0
           maxLength: 40
+    required:
+      - schemaName
+      - schemaType
+      - schemaData      
   VersionInfo:
+    description: Version information object.    
     type: object
     properties:
       schemaName:
+        description: Name of schema for this version. This is the name used in SchemaInfo.schemaName.
         type: string
       version:
+        description: Version number that uniquely identifies the schema version among all schemas in the group that share the same SchemaName. 
         type: integer
         format: int32
       ordinal:
+        description: Version ordinal that uniquely identifies the position of the corresponding schema across all schemas in the group.
         type: integer
         format: int32
+    required:
+      - schemaName
+      - version
+      - ordinal    
   SchemaWithVersion:
     type: object
+    description: Object that encapsulates SchemaInfo and its corresponding VersionInfo objects. 
     properties:
       schemaInfo:
+        description: Schema information.
         $ref: "#/definitions/SchemaInfo"
       version:
+        description: Version information.
         $ref: "#/definitions/VersionInfo"
+    required: 
+      - schemaInfo
+      - version    
   SchemaVersionsList:
     type: object
+    description: List of schemas with their versions.  
     properties:
       schemas:
+        description: List of schemas with their versions.
         type: array
         items:
           $ref: "#/definitions/SchemaWithVersion"
   CodecType:
     type: object
+    description: Type of codec. For custom codec use codecType.Custom with customTypeName and optionally additional properties. 
     properties:
       codecType:
+        description: Code Type enum.
         type: string
         enum:
           - None
@@ -701,36 +769,56 @@ definitions:
           - Gzip
           - Custom
       customTypeName:
+        description: Custom type name when codecType.custom is chosen. 
         type: string
       properties:
+        description: Optional additional key value string for codecType.cusom.
         type: object
         additionalProperties:
           type: string
           minLength: 0
           maxLength: 40
+    required:
+      - codecType      
   EncodingId:
     type: object
+    description: Encoding id that uniquely identifies a schema version and codec pair. 
     properties:
       encodingId:
         type: integer
         format: int32
+        description: encoding id generated by service. 
+    required:
+      - encodingId    
   EncodingInfo:
     type: object
+    description: Encoding information object that resolves the schema version and codec used for corresponding encoding id. 
     properties:
       schemaInfo:
+          description: Schema information object.
           $ref: "#/definitions/SchemaInfo"        
       versionInfo:
+          description: Version information object.
           $ref: "#/definitions/VersionInfo"        
       codecType:
+          description: Codec type object.
           $ref: "#/definitions/CodecType"
+    required:
+      - schemaInfo
+      - versionInfo
+      - codecType      
   Compatibility:
     type: object
+    description: Schema Compatibility validation rule.
     required:
       - name
+      - policy
     properties:
       name:
         type: string
+        description: Name is used to identify the type of SchemaValidationRule. For Compatibility rule the name should be "Compatibility".
       policy:
+        description: Compatibility policy enum.
         type: string
         enum:
           - AllowAny
@@ -745,11 +833,14 @@ definitions:
           - Full
           - FullTransitive
       backwardTill:
+        description: Version for backward till if policy is BackwardTill or BackwardAndForwardTill.
         $ref: "#/definitions/VersionInfo"        
       forwardTill:
+        description: Version for forward till if policy is ForwardTill or BackwardAndForwardTill.
         $ref: "#/definitions/VersionInfo"        
   SchemaValidationRules:
     type: object
+    description: Schema validation rules to be applied for new schema addition. Currently only one rule is supported - Compatibility.
     properties:
       rules:
         type: object
@@ -757,10 +848,12 @@ definitions:
           $ref: "#/definitions/SchemaValidationRule"
   SchemaValidationRule:
     type: object
+    description: Schema validation rule base class.
     required:
       - rule
     properties:
       rule:
+        description: Specific schema validation rule. The only rule we have presently is Compatibility. The "name" is used to identify specific Rule type. The only rule supported in this is Compatibility.  
         oneOf:
           - $ref: '#/definitions/Compatibility'
         discriminator:
@@ -769,39 +862,61 @@ definitions:
             Compatibility: '#/definitions/Compatibility'
   CodecsList:
     type: object
+    description: Response object for listCodecTypes.
     properties:
        codecTypes:
         type: array
+        description: List of codecTypes.
         items:
           $ref: "#/definitions/CodecType"
   Valid:
     type: object
+    description: Response object for validateSchema api.
     properties:
       valid:
+        description: Whether given schema is valid with respect to existing group schemas against the configured validation rules. 
         type: boolean
+    required:
+      - valid    
   CanRead:
     type: object
+    description: Response object for canRead api.
     properties:
       compatible:
+        description: Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group's configured compatibility policy. 
         type: boolean
+    required:
+      - compatible    
   GroupHistoryRecord:
       type: object
+      description: Group History Record that describes each schema evolution - schema information, version generated for the schema, time and rules used for schema validation.
       properties:
         schemaInfo:
+          description: Schema information object.
           $ref: "#/definitions/SchemaInfo"
         version:
+          description: Schema version information object.
           $ref: "#/definitions/VersionInfo"
         validationRules:
+          description: Schema validation rules applied.
           $ref: "#/definitions/SchemaValidationRules"
         timestamp:
+          description: Timestamp when the schema was added.
           type: integer
           format: int64
         schemaString:
-          type: string  
+          description: Schema as json string for schema types that registry service understands.
+          type: string
+      required:
+        - schemaInfo
+        - version
+        - validationRules
+        - timestamp      
   GroupHistory:
     type: object
     properties:
        history:
         type: array
+        description: Chronological list of Group History records.
         items:
           $ref: "#/definitions/GroupHistoryRecord"

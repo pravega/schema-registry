@@ -24,8 +24,9 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaVersionsList
+ * List of schemas with their versions.
  */
+@ApiModel(description = "List of schemas with their versions.")
 
 public class SchemaVersionsList   {
   @JsonProperty("schemas")
@@ -45,11 +46,11 @@ public class SchemaVersionsList   {
   }
 
   /**
-   * Get schemas
+   * List of schemas with their versions.
    * @return schemas
    **/
   @JsonProperty("schemas")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "List of schemas with their versions.")
   public List<SchemaWithVersion> getSchemas() {
     return schemas;
   }
