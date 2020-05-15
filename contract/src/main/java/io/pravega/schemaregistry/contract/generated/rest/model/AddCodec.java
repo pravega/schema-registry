@@ -39,7 +39,8 @@ public class AddCodec   {
    * @return codec
    **/
   @JsonProperty("codec")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public CodecType getCodec() {
     return codec;
   }

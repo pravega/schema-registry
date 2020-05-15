@@ -72,7 +72,8 @@ public class ListGroupsResponse   {
    * @return continuationToken
    **/
   @JsonProperty("continuationToken")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public String getContinuationToken() {
     return continuationToken;
   }

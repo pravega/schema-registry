@@ -38,7 +38,8 @@ public class CanRead   {
    * @return compatible
    **/
   @JsonProperty("compatible")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Boolean isCompatible() {
     return compatible;
   }

@@ -42,7 +42,8 @@ public class UpdateValidationRulesPolicyRequest   {
    * @return validationRules
    **/
   @JsonProperty("validationRules")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaValidationRules getValidationRules() {
     return validationRules;
   }

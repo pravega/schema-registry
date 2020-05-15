@@ -38,7 +38,8 @@ public class Valid   {
    * @return valid
    **/
   @JsonProperty("valid")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Boolean isValid() {
     return valid;
   }

@@ -52,7 +52,8 @@ public class SchemaInfo   {
    * @return schemaName
    **/
   @JsonProperty("schemaName")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public String getSchemaName() {
     return schemaName;
   }
@@ -71,7 +72,8 @@ public class SchemaInfo   {
    * @return schemaType
    **/
   @JsonProperty("schemaType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaType getSchemaType() {
     return schemaType;
   }
@@ -90,7 +92,8 @@ public class SchemaInfo   {
    * @return schemaData
    **/
   @JsonProperty("schemaData")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public byte[] getSchemaData() {
     return schemaData;
   }
@@ -138,7 +141,7 @@ public class SchemaInfo   {
     SchemaInfo schemaInfo = (SchemaInfo) o;
     return Objects.equals(this.schemaName, schemaInfo.schemaName) &&
         Objects.equals(this.schemaType, schemaInfo.schemaType) &&
-            Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
+        Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
         Objects.equals(this.properties, schemaInfo.properties);
   }
 

@@ -43,7 +43,8 @@ public class SchemaWithVersion   {
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
@@ -62,7 +63,8 @@ public class SchemaWithVersion   {
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public VersionInfo getVersion() {
     return version;
   }

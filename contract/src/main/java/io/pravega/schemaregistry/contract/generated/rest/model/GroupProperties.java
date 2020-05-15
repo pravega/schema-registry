@@ -52,7 +52,8 @@ public class GroupProperties   {
    * @return schemaValidationRules
    **/
   @JsonProperty("schemaValidationRules")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaValidationRules getSchemaValidationRules() {
     return schemaValidationRules;
   }
@@ -71,7 +72,8 @@ public class GroupProperties   {
    * @return schemaType
    **/
   @JsonProperty("schemaType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaType getSchemaType() {
     return schemaType;
   }
@@ -90,7 +92,8 @@ public class GroupProperties   {
    * @return versionBySchemaName
    **/
   @JsonProperty("versionBySchemaName")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Boolean isVersionBySchemaName() {
     return versionBySchemaName;
   }

@@ -47,6 +47,8 @@ paths:
           name: limit
           type: integer
           description: The numbers of items to return
+      required:
+          - limit
       responses:
         200:
           description: List of all groups
@@ -83,6 +85,11 @@ paths:
                   maxLength: 40
               versionBySchemaName:
                 type: boolean
+            required:
+                - groupName
+                - schemaType
+                - validationRules
+                - versionBySchemaName   
       responses:
         201:
           description: Successfully added group
@@ -189,6 +196,8 @@ paths:
               previousRules:
                   $ref: "#/definitions/SchemaValidationRules"
                   nullable: true
+            required:
+              - validationRules      
       responses:
         200:
           description: Updated schema validation policy
@@ -248,7 +257,7 @@ paths:
       tags:
       - "Schema"
       operationId: addSchemaToGroup
-      description: adds a new schema to the group
+      description: Adds a new schema to the group
       consumes:
         - application/json
       parameters:
@@ -261,6 +270,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+            required:
+              - schemaInfo      
       produces:
         - application/json
       responses:
@@ -300,6 +311,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+            required:
+              - schemaInfo      
       produces:
         - application/json
       responses:
@@ -320,7 +333,7 @@ paths:
         type: string
       - in: path
         name: version
-        description: version ordinal
+        description: Version ordinal
         required: true
         type: integer
         format: int32
@@ -374,7 +387,7 @@ paths:
       tags:
       - "Schema"
       operationId: validate
-      description: check if given schema is compatible with schemas in the registry for current policy setting. 
+      description: Checks if given schema is compatible with schemas in the registry for current policy setting. 
       consumes:
         - application/json
       parameters:
@@ -389,6 +402,8 @@ paths:
                   $ref: "#/definitions/SchemaInfo"
               validationRules:
                   $ref: "#/definitions/SchemaValidationRules"
+            required:
+              - schemaInfo      
       produces:
         - application/json
       responses:
@@ -411,7 +426,7 @@ paths:
       tags:
       - "Schema"
       operationId: canRead
-      description: check if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
+      description: Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
       consumes:
         - application/json
       parameters:
@@ -424,6 +439,8 @@ paths:
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
+            required:
+              - schemaInfo
       produces:
         - application/json
       responses:
@@ -517,6 +534,9 @@ paths:
                   $ref: "#/definitions/VersionInfo"
               codecType:
                   $ref: "#/definitions/CodecType"
+            required:
+              - versionInfo
+              - codecType
       produces:
         - application/json
       responses:
@@ -599,6 +619,8 @@ paths:
             properties:
               codec:
                   $ref: "#/definitions/CodecType"
+            required:
+              - codec      
       responses:
         201:
           description: Successfully added codec to group
@@ -616,13 +638,15 @@ definitions:
           $ref: "#/definitions/GroupProperties"
       continuationToken:
         type: string
+    required:
+      - continuationToken    
   SchemaNamesList:
     type: object
     properties:
       objects:
         type: array
         items:
-          type: string
+          type: string      
   GroupProperties:
     type: object
     properties:
@@ -638,6 +662,10 @@ definitions:
           type: string
           minLength: 0
           maxLength: 40
+    required:
+      - schemaType
+      - versionBySchemaName
+      - schemaValidationRules      
   SchemaType:
     type: object
     properties:
@@ -651,6 +679,8 @@ definitions:
           - Custom
       customTypeName:
         type: string  
+    required:
+      - schemaType    
   SchemaInfo:
     type: object
     properties:
@@ -667,6 +697,10 @@ definitions:
           type: string
           minLength: 0
           maxLength: 40
+    required:
+      - schemaName
+      - schemaType
+      - schemaData      
   VersionInfo:
     type: object
     properties:
@@ -678,6 +712,10 @@ definitions:
       ordinal:
         type: integer
         format: int32
+    required:
+      - schemaName
+      - version
+      - ordinal    
   SchemaWithVersion:
     type: object
     properties:
@@ -685,6 +723,9 @@ definitions:
         $ref: "#/definitions/SchemaInfo"
       version:
         $ref: "#/definitions/VersionInfo"
+    required: 
+      - schemaInfo
+      - version    
   SchemaVersionsList:
     type: object
     properties:
@@ -710,12 +751,16 @@ definitions:
           type: string
           minLength: 0
           maxLength: 40
+    required:
+      - codecType      
   EncodingId:
     type: object
     properties:
       encodingId:
         type: integer
         format: int32
+    required:
+      - encodingId    
   EncodingInfo:
     type: object
     properties:
@@ -725,10 +770,15 @@ definitions:
           $ref: "#/definitions/VersionInfo"        
       codecType:
           $ref: "#/definitions/CodecType"
+    required:
+      - schemaInfo
+      - versionInfo
+      - codecType      
   Compatibility:
     type: object
     required:
       - name
+      - policy
     properties:
       name:
         type: string
@@ -781,11 +831,15 @@ definitions:
     properties:
       valid:
         type: boolean
+    required:
+      - valid    
   CanRead:
     type: object
     properties:
       compatible:
         type: boolean
+    required:
+      - compatible    
   GroupHistoryRecord:
       type: object
       properties:
@@ -799,7 +853,12 @@ definitions:
           type: integer
           format: int64
         schemaString:
-          type: string  
+          type: string
+      required:
+        - schemaInfo
+        - version
+        - validationRules
+        - timestamp      
   GroupHistory:
     type: object
     properties:

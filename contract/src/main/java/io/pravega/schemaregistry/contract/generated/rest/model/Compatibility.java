@@ -118,7 +118,8 @@ public class Compatibility   {
    * @return policy
    **/
   @JsonProperty("policy")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public PolicyEnum getPolicy() {
     return policy;
   }

@@ -44,7 +44,8 @@ public class VersionInfo   {
    * @return schemaName
    **/
   @JsonProperty("schemaName")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public String getSchemaName() {
     return schemaName;
   }
@@ -63,7 +64,8 @@ public class VersionInfo   {
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Integer getVersion() {
     return version;
   }
@@ -82,7 +84,8 @@ public class VersionInfo   {
    * @return ordinal
    **/
   @JsonProperty("ordinal")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Integer getOrdinal() {
     return ordinal;
   }

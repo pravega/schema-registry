@@ -79,7 +79,8 @@ public class SchemaType   {
    * @return schemaType
    **/
   @JsonProperty("schemaType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaTypeEnum getSchemaType() {
     return schemaType;
   }

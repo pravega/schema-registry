@@ -83,7 +83,8 @@ public class CodecType   {
    * @return codecType
    **/
   @JsonProperty("codecType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public CodecTypeEnum getCodecType() {
     return codecType;
   }

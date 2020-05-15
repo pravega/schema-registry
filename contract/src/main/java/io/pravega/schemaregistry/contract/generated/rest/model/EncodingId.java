@@ -38,7 +38,8 @@ public class EncodingId   {
    * @return encodingId
    **/
   @JsonProperty("encodingId")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Integer getEncodingId() {
     return encodingId;
   }

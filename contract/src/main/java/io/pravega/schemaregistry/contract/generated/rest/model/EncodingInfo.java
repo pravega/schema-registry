@@ -47,7 +47,8 @@ public class EncodingInfo   {
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
@@ -66,7 +67,8 @@ public class EncodingInfo   {
    * @return versionInfo
    **/
   @JsonProperty("versionInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public VersionInfo getVersionInfo() {
     return versionInfo;
   }
@@ -85,7 +87,8 @@ public class EncodingInfo   {
    * @return codecType
    **/
   @JsonProperty("codecType")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public CodecType getCodecType() {
     return codecType;
   }

@@ -53,7 +53,8 @@ public class GroupHistoryRecord   {
    * @return schemaInfo
    **/
   @JsonProperty("schemaInfo")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaInfo getSchemaInfo() {
     return schemaInfo;
   }
@@ -72,7 +73,8 @@ public class GroupHistoryRecord   {
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public VersionInfo getVersion() {
     return version;
   }
@@ -91,7 +93,8 @@ public class GroupHistoryRecord   {
    * @return validationRules
    **/
   @JsonProperty("validationRules")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public SchemaValidationRules getValidationRules() {
     return validationRules;
   }
@@ -110,7 +113,8 @@ public class GroupHistoryRecord   {
    * @return timestamp
    **/
   @JsonProperty("timestamp")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Long getTimestamp() {
     return timestamp;
   }
