@@ -54,6 +54,10 @@ public class ApiV1 {
         Response ping();
     }
 
+    /**
+     * Sync Group apis. Identical to {@link GroupsApiAsync}. All methods in this interface are synchronou and return {@link Response} object. 
+     * The purposes of this interface is to be used by proxy-client.    
+     */
     @Path("/v1/groups")
     @io.swagger.annotations.Api(description = "the groups API")
     public interface GroupsApi {
@@ -287,7 +291,8 @@ public class ApiV1 {
     }
 
     /**
-     * Stream metadata version 1.0 APIs.
+     * ASync Group apis. Identical to {@link GroupsApi}. All methods in this interface are asynchronous and use 
+     * {@link AsyncResponse}. This is used on service side so that all api implementation is asynchronous. 
      */
     @Path("/v1/groups")
     @io.swagger.annotations.Api(description = "the groups API")
