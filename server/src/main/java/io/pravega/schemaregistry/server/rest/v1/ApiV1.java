@@ -91,7 +91,7 @@ public final class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        void addSchemaToGroupIfAbsent(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+        void addSchemaToGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                       @ApiParam(value = "Add new schema to group", required = true) AddSchemaToGroupRequest addSchemaToGroupRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
@@ -253,7 +253,7 @@ public final class ApiV1 {
         void getSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
-        @Path("/{groupName}/schemas/versions/version")
+        @Path("/{groupName}/schemas/versions/search")
         @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags = {"Schema", })

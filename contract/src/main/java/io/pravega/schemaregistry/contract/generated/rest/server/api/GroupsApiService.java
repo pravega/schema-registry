@@ -37,7 +37,7 @@ import javax.validation.constraints.*;
 
 public abstract class GroupsApiService {
     public abstract Response addCodec(String groupName,AddCodec addCodec,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response addSchemaToGroupIfAbsent(String groupName,AddSchemaToGroupRequest addSchemaToGroupRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response addSchemaToGroup(String groupName,AddSchemaToGroupRequest addSchemaToGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response canRead(String groupName,CanReadRequest canReadRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response createGroup(CreateGroupRequest createGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName,SecurityContext securityContext) throws NotFoundException;

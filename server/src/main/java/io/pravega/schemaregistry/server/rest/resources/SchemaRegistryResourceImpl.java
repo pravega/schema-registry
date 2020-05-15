@@ -314,10 +314,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
     }
 
     @Override
-    public void addSchemaToGroupIfAbsent(String groupName, AddSchemaToGroupRequest addSchemaRequest,
+    public void addSchemaToGroup(String groupName, AddSchemaToGroupRequest addSchemaRequest,
                                          SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Add schema to group called for group {}", groupName);
-        withCompletion("addSchemaToGroupIfAbsent", () -> {
+        withCompletion("addSchemaToGroup", () -> {
             io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(addSchemaRequest.getSchemaInfo());
 
             return registryService.addSchema(groupName, schemaInfo)
@@ -332,13 +332,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
                                           log.warn("Group {} not found", groupName);
                                           return Response.status(Status.NOT_FOUND).build();
                                       } else if (unwrap instanceof IncompatibleSchemaException) {
-                                          log.info("addSchemaToGroupIfAbsent incompatible schema {}", groupName);
+                                          log.info("addSchemaToGroup incompatible schema {}", groupName);
                                           return Response.status(Status.CONFLICT).build();
                                       } else if (unwrap instanceof SchemaTypeMismatchException) {
-                                          log.info("addSchemaToGroupIfAbsent schema type mismatched {}", groupName);
+                                          log.info("addSchemaToGroup schema type mismatched {}", groupName);
                                           return Response.status(Status.EXPECTATION_FAILED).build();
                                       } else {
-                                          log.warn("addSchemaToGroupIfAbsent failed with exception: ", unwrap);
+                                          log.warn("addSchemaToGroup failed with exception: ", unwrap);
                                           return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                       }
                                   });
