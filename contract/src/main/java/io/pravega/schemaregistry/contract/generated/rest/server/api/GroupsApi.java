@@ -77,7 +77,7 @@ public class GroupsApi  {
     @Path("/{groupName}/codecs")
     @Consumes({ "application/json" })
     
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags={ "Codecs", })
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codec to group", response = Void.class),
         
@@ -162,7 +162,7 @@ public class GroupsApi  {
     @Path("/{groupName}/codecs")
     
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CodecsList.class, tags={ "Encoding", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CodecsList.class, tags={ "Codecs", })
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "Found Codecs", response = CodecsList.class),
         

@@ -23,6 +23,8 @@ tags:
   description: "Group related APIs"
 - name: "Schema"
   description: "Schema related APIs"
+- name: "Codecs"
+  description: "Codecs related APIs"
 - name: "Encoding"
   description: "Encoding related APIs"
 schemes:
@@ -566,7 +568,7 @@ paths:
         type: string
     get:
       tags:
-      - "Encoding"
+      - "Codecs"
       operationId: getCodecsList
       description: Fetch the properties of an existing Group
       produces:
@@ -582,7 +584,7 @@ paths:
           description: Internal server error while fetching Group details
     post:
       tags:
-      - "Group"
+      - "Codecs"
       operationId: addCodec
       description: Adds a new codec to the group
       consumes:

@@ -49,7 +49,7 @@ public class ApiV1 {
         @POST
         @Path("/{groupName}/codecs")
         @Consumes({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags = {"Codecs", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codec to group", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
@@ -105,7 +105,7 @@ public class ApiV1 {
         @GET
         @Path("/{groupName}/codecs")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CodecsList.class, tags = {"Encoding", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the properties of an existing Group", response = CodecsList.class, tags = {"Codecs", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Codecs", response = CodecsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
