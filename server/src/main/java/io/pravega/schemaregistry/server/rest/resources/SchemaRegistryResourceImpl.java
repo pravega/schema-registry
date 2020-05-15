@@ -41,7 +41,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
-import io.pravega.schemaregistry.server.rest.v1.ApiV1;
+import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -62,7 +62,7 @@ import static javax.ws.rs.core.Response.Status;
  * Schema Registry Resource implementation.
  */
 @Slf4j
-public class SchemaRegistryResourceImpl implements ApiV1.GroupsApi {
+public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
 
     @Context
     HttpHeaders headers;
