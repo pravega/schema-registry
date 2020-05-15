@@ -25,12 +25,13 @@ import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * CodecType
+ * Type of codec. For custom codec use codecType.Custom with customTypeName and optionally additional properties.
  */
+@ApiModel(description = "Type of codec. For custom codec use codecType.Custom with customTypeName and optionally additional properties.")
 
 public class CodecType   {
   /**
-   * Gets or Sets codecType
+   * Code Type enum.
    */
   public enum CodecTypeEnum {
     NONE("None"),
@@ -79,11 +80,11 @@ public class CodecType   {
   }
 
   /**
-   * Get codecType
+   * Code Type enum.
    * @return codecType
    **/
   @JsonProperty("codecType")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Code Type enum.")
   @NotNull
   public CodecTypeEnum getCodecType() {
     return codecType;
@@ -99,11 +100,11 @@ public class CodecType   {
   }
 
   /**
-   * Get customTypeName
+   * Custom type name when codecType.custom is chosen.
    * @return customTypeName
    **/
   @JsonProperty("customTypeName")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Custom type name when codecType.custom is chosen.")
   public String getCustomTypeName() {
     return customTypeName;
   }
@@ -126,11 +127,11 @@ public class CodecType   {
   }
 
   /**
-   * Get properties
+   * Optional additional key value string for codecType.cusom.
    * @return properties
    **/
   @JsonProperty("properties")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Optional additional key value string for codecType.cusom.")
   public Map<String, String> getProperties() {
     return properties;
   }

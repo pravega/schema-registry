@@ -24,8 +24,9 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * CodecsList
+ * Response object for listCodecTypes.
  */
+@ApiModel(description = "Response object for listCodecTypes.")
 
 public class CodecsList   {
   @JsonProperty("codecTypes")
@@ -45,11 +46,11 @@ public class CodecsList   {
   }
 
   /**
-   * Get codecTypes
+   * List of codecTypes.
    * @return codecTypes
    **/
   @JsonProperty("codecTypes")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "List of codecTypes.")
   public List<CodecType> getCodecTypes() {
     return codecTypes;
   }

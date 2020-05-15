@@ -23,8 +23,9 @@ import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * SchemaNamesList
+ * List of schema names. Schema names uniquely identify different object types under a group.
  */
+@ApiModel(description = "List of schema names. Schema names uniquely identify different object types under a group.")
 
 public class SchemaNamesList   {
   @JsonProperty("objects")

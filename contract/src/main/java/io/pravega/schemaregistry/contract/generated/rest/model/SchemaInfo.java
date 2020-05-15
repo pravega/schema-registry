@@ -26,8 +26,9 @@ import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * SchemaInfo
+ * Schema information object that encapsulates various properties of a schema.
  */
+@ApiModel(description = "Schema information object that encapsulates various properties of a schema.")
 
 public class SchemaInfo   {
   @JsonProperty("schemaName")
@@ -48,11 +49,11 @@ public class SchemaInfo   {
   }
 
   /**
-   * Get schemaName
+   * Name of the schema. This identifies the type of object the schema payload represents.
    * @return schemaName
    **/
   @JsonProperty("schemaName")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Name of the schema. This identifies the type of object the schema payload represents.")
   @NotNull
   public String getSchemaName() {
     return schemaName;
@@ -68,11 +69,11 @@ public class SchemaInfo   {
   }
 
   /**
-   * Get schemaType
+   * Type of schema.
    * @return schemaType
    **/
   @JsonProperty("schemaType")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Type of schema.")
   @NotNull
   public SchemaType getSchemaType() {
     return schemaType;
@@ -88,11 +89,11 @@ public class SchemaInfo   {
   }
 
   /**
-   * Get schemaData
+   * Base64 encoded string for binary data for schema.
    * @return schemaData
    **/
   @JsonProperty("schemaData")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Base64 encoded string for binary data for schema.")
   @NotNull
   public byte[] getSchemaData() {
     return schemaData;
@@ -116,11 +117,11 @@ public class SchemaInfo   {
   }
 
   /**
-   * Get properties
+   * User defined key value strings.
    * @return properties
    **/
   @JsonProperty("properties")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "User defined key value strings.")
   public Map<String, String> getProperties() {
     return properties;
   }

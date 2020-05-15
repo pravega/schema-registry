@@ -23,15 +23,16 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Compatibility
+ * Schema Compatibility validation rule.
  */
+@ApiModel(description = "Schema Compatibility validation rule.")
 
 public class Compatibility   {
   @JsonProperty("name")
   private String name = null;
 
   /**
-   * Gets or Sets policy
+   * Compatibility policy enum.
    */
   public enum PolicyEnum {
     ALLOWANY("AllowAny"),
@@ -94,11 +95,11 @@ public class Compatibility   {
   }
 
   /**
-   * Get name
+   * Name is used to identify the type of SchemaValidationRule. For Compatibility rule the name should be \&quot;Compatibility\&quot;.
    * @return name
    **/
   @JsonProperty("name")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Name is used to identify the type of SchemaValidationRule. For Compatibility rule the name should be \"Compatibility\".")
   @NotNull
   public String getName() {
     return name;
@@ -114,11 +115,11 @@ public class Compatibility   {
   }
 
   /**
-   * Get policy
+   * Compatibility policy enum.
    * @return policy
    **/
   @JsonProperty("policy")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Compatibility policy enum.")
   @NotNull
   public PolicyEnum getPolicy() {
     return policy;
@@ -134,11 +135,11 @@ public class Compatibility   {
   }
 
   /**
-   * Get backwardTill
+   * Version for backward till if policy is BackwardTill or BackwardAndForwardTill.
    * @return backwardTill
    **/
   @JsonProperty("backwardTill")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Version for backward till if policy is BackwardTill or BackwardAndForwardTill.")
   public VersionInfo getBackwardTill() {
     return backwardTill;
   }
@@ -153,11 +154,11 @@ public class Compatibility   {
   }
 
   /**
-   * Get forwardTill
+   * Version for forward till if policy is ForwardTill or BackwardAndForwardTill.
    * @return forwardTill
    **/
   @JsonProperty("forwardTill")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(value = "Version for forward till if policy is ForwardTill or BackwardAndForwardTill.")
   public VersionInfo getForwardTill() {
     return forwardTill;
   }

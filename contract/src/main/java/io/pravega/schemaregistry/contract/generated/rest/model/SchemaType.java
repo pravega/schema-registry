@@ -22,8 +22,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaType
+ * Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use schemaType.Custom and supply customTypeName.
  */
+@ApiModel(description = "Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use schemaType.Custom and supply customTypeName.")
 
 public class SchemaType   {
   /**

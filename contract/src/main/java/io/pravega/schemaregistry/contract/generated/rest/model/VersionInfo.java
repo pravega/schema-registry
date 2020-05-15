@@ -21,8 +21,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * VersionInfo
+ * Version information object.
  */
+@ApiModel(description = "Version information object.")
 
 public class VersionInfo   {
   @JsonProperty("schemaName")
@@ -40,11 +41,11 @@ public class VersionInfo   {
   }
 
   /**
-   * Get schemaName
+   * Name of schema for this version. This is the name used in SchemaInfo.schemaName.
    * @return schemaName
    **/
   @JsonProperty("schemaName")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Name of schema for this version. This is the name used in SchemaInfo.schemaName.")
   @NotNull
   public String getSchemaName() {
     return schemaName;
@@ -60,11 +61,11 @@ public class VersionInfo   {
   }
 
   /**
-   * Get version
+   * Version number that uniquely identifies the schema version among all schemas in the group that share the same SchemaName.
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Version number that uniquely identifies the schema version among all schemas in the group that share the same SchemaName.")
   @NotNull
   public Integer getVersion() {
     return version;
@@ -80,11 +81,11 @@ public class VersionInfo   {
   }
 
   /**
-   * Get ordinal
+   * Version ordinal that uniquely identifies the position of the corresponding schema across all schemas in the group.
    * @return ordinal
    **/
   @JsonProperty("ordinal")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Version ordinal that uniquely identifies the position of the corresponding schema across all schemas in the group.")
   @NotNull
   public Integer getOrdinal() {
     return ordinal;

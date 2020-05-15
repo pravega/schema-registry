@@ -21,8 +21,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * SchemaValidationRule
+ * Schema validation rule base class.
  */
+@ApiModel(description = "Schema validation rule base class.")
 
 public class SchemaValidationRule   {
   @JsonProperty("rule")
@@ -34,11 +35,11 @@ public class SchemaValidationRule   {
   }
 
   /**
-   * Get rule
+   * Specific schema validation rule. The only rule we have presently is Compatibility. The \&quot;name\&quot; is used to identify specific Rule type. The only rule supported in this is Compatibility.
    * @return rule
    **/
   @JsonProperty("rule")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Specific schema validation rule. The only rule we have presently is Compatibility. The \"name\" is used to identify specific Rule type. The only rule supported in this is Compatibility.")
   @NotNull
   public Object getRule() {
     return rule;

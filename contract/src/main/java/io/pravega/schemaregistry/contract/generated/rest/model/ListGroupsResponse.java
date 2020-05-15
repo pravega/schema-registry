@@ -25,8 +25,9 @@ import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * ListGroupsResponse
+ * Map of Group names to group properties. For partially created groups, the group properties may be null.
  */
+@ApiModel(description = "Map of Group names to group properties. For partially created groups, the group properties may be null.")
 
 public class ListGroupsResponse   {
   @JsonProperty("groups")
@@ -68,11 +69,11 @@ public class ListGroupsResponse   {
   }
 
   /**
-   * Get continuationToken
+   * Continuation token to identify the position of last group in the response.
    * @return continuationToken
    **/
   @JsonProperty("continuationToken")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Continuation token to identify the position of last group in the response.")
   @NotNull
   public String getContinuationToken() {
     return continuationToken;
