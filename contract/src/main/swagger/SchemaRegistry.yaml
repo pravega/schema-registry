@@ -240,7 +240,7 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getGroupSchemas
+      operationId: getSchemas
       description: Fetch the properties of an existing Group
       produces:
         - application/json
@@ -363,7 +363,7 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getLatestGroupSchema
+      operationId: getLatestSchema
       description: Fetch the properties of an existing Group
       produces:
         - application/json

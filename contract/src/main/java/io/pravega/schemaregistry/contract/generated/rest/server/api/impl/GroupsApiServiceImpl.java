@@ -72,7 +72,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getGroupEncodingInfo(String groupName, Integer encodingId, SecurityContext securityContext) throws NotFoundException {
+    public Response getEncodingInfo(String groupName, Integer encodingId, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -87,17 +87,12 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getGroupSchemas(String groupName, SecurityContext securityContext) throws NotFoundException {
+    public Response getLatestSchema(String groupName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getLatestGroupSchema(String groupName, SecurityContext securityContext) throws NotFoundException {
-        // do some magic!
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
-    }
-    @Override
-    public Response getGroupLatestSchemaVersionForSchemaName(String groupName, String schemaName, SecurityContext securityContext) throws NotFoundException {
+    public Response getLatestSchemaForSchemaName(String groupName, String schemaName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -118,6 +113,11 @@ public class GroupsApiServiceImpl extends GroupsApiService {
     }
     @Override
     public Response getSchemaVersion(String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext) throws NotFoundException {
+        // do some magic!
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
+    }
+    @Override
+    public Response getSchemas(String groupName, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

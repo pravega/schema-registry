@@ -293,7 +293,7 @@ public class TestRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         RegistryClientImpl client = new RegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getGroupEncodingInfo(anyString(), anyInt());
+        doReturn(response).when(proxy).getEncodingInfo(anyString(), anyInt());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
@@ -354,7 +354,7 @@ public class TestRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         RegistryClientImpl client = new RegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getLatestGroupSchema(anyString());
+        doReturn(response).when(proxy).getLatestSchema(anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
@@ -383,7 +383,7 @@ public class TestRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         RegistryClientImpl client = new RegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getGroupLatestSchemaVersionForSchemaName(anyString(), anyString());
+        doReturn(response).when(proxy).getLatestSchemaForSchemaName(anyString(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);

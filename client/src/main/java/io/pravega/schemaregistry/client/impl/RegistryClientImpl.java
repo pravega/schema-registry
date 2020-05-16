@@ -212,7 +212,7 @@ public class RegistryClientImpl implements RegistryClient {
     @SneakyThrows
     @Override
     public EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId) {
-        Response response = proxy.getGroupEncodingInfo(groupId, encodingId.getId());
+        Response response = proxy.getEncodingInfo(groupId, encodingId.getId());
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -243,31 +243,31 @@ public class RegistryClientImpl implements RegistryClient {
     @Override
     public SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaName) {
         if (schemaName == null) {
-            return getGroupLatestSchemaVersionForGroup(groupId);
+            return getLatestSchemaVersionForGroup(groupId);
         } else {
-            return getGroupLatestSchemaVersionBySchemaName(groupId, schemaName);
+            return getLatestSchemaVersionForName(groupId, schemaName);
         }
     }
 
     @SneakyThrows
-    private SchemaWithVersion getGroupLatestSchemaVersionForGroup(String groupId) {
-        Response response = proxy.getLatestGroupSchema(groupId);
+    private SchemaWithVersion getLatestSchemaVersionForGroup(String groupId) {
+        Response response = proxy.getLatestSchema(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getGroupLatestSchemaVersionForGroup failed. Either Group or Version does not exist.");
+            throw new ResourceNotFoundException("getLatestSchemaVersionForGroup failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get latest schema for group.");
         }
     }
 
     @SneakyThrows
-    private SchemaWithVersion getGroupLatestSchemaVersionBySchemaName(String groupId, String schemaName) {
-        Response response = proxy.getGroupLatestSchemaVersionForSchemaName(groupId, schemaName);
+    private SchemaWithVersion getLatestSchemaVersionForName(String groupId, String schemaName) {
+        Response response = proxy.getLatestSchemaForSchemaName(groupId, schemaName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getGroupLatestSchemaVersionForGroup failed. Either Group or Version does not exist.");
+            throw new ResourceNotFoundException("getLatestSchemaVersionForGroup failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get latest schema for group.");
         }
@@ -295,7 +295,7 @@ public class RegistryClientImpl implements RegistryClient {
             return history.getHistory().stream().map(ModelHelper::decode).collect(Collectors.toList());
 
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getGroupSchemas failed. Either Group or Version does not exist.");
+            throw new ResourceNotFoundException("getSchemas failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema evolution history for group.");
         }
@@ -304,12 +304,12 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     private List<SchemaWithVersion> getGroupSchemas(String groupId) {
-        Response response = proxy.getGroupSchemas(groupId);
+        Response response = proxy.getSchemas(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
             return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getGroupSchemas failed. Group does not exist.");
+            throw new ResourceNotFoundException("getSchemas failed. Group does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema versions for group.");
         }
@@ -322,7 +322,7 @@ public class RegistryClientImpl implements RegistryClient {
             SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
             return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getGroupSchemas failed. Group does not exist.");
+            throw new ResourceNotFoundException("getSchemas failed. Group does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get schema versions for group.");
         }
