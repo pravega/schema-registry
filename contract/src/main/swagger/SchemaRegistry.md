@@ -199,7 +199,7 @@ Adds a new schema to the group
 | Name | Located in | Description | Required | Schema |
 | ---- | ---------- | ----------- | -------- | ---- |
 | groupName | path | Group name | Yes | string |
-| AddSchemaToGroupRequest | body | Add new schema to group | Yes | object |
+| AddSchemaRequest | body | Add new schema to group | Yes | object |
 
 ##### Responses
 
@@ -216,7 +216,7 @@ Adds a new schema to the group
 #### POST
 ##### Description:
 
-Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchemaToGroup
+Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchema
 
 ##### Parameters
 

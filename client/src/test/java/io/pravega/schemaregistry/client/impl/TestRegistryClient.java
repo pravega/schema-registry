@@ -228,7 +228,7 @@ public class TestRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         RegistryClientImpl client = new RegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).addSchemaToGroup(anyString(), any());
+        doReturn(response).when(proxy).addSchema(anyString(), any());
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         SchemaType schemaType = SchemaType.Any;
         byte[] schemaData = new byte[0];

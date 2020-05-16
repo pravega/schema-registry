@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.contract.v1;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
@@ -83,8 +83,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        Response addSchemaToGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                          @ApiParam(value = "Add new schema to group", required = true) AddSchemaToGroupRequest addSchemaToGroupRequest);
+        Response addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                          @ApiParam(value = "Add new schema to group", required = true) AddSchemaRequest addSchemaRequest);
 
         @POST
         @Path("/{groupName}/schemas/versions/canRead")
@@ -319,8 +319,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        void addSchemaToGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                              @ApiParam(value = "Add new schema to group", required = true) AddSchemaToGroupRequest addSchemaToGroupRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+        void addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                              @ApiParam(value = "Add new schema to group", required = true) AddSchemaRequest addSchemaRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Path("/{groupName}/schemas/versions/canRead")

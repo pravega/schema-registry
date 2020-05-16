@@ -256,13 +256,13 @@ paths:
     post:
       tags:
       - "Schema"
-      operationId: addSchemaToGroup
+      operationId: addSchema
       description: Adds a new schema to the group
       consumes:
         - application/json
       parameters:
         - in: body
-          name: AddSchemaToGroupRequest
+          name: AddSchemaRequest
           description: Add new schema to group
           required: true
           schema:
@@ -298,7 +298,7 @@ paths:
       tags:
       - "Schema"
       operationId: getSchemaVersion
-      description: Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchemaToGroup   
+      description: Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchema   
       consumes:
         - application/json
       parameters:

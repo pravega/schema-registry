@@ -6,7 +6,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.*;
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
@@ -37,7 +37,7 @@ import javax.validation.constraints.*;
 
 public abstract class GroupsApiService {
     public abstract Response addCodec(String groupName,AddCodec addCodec,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response addSchemaToGroup(String groupName,AddSchemaToGroupRequest addSchemaToGroupRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response addSchema(String groupName,AddSchemaRequest addSchemaRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response canRead(String groupName,CanReadRequest canReadRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response createGroup(CreateGroupRequest createGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName,SecurityContext securityContext) throws NotFoundException;

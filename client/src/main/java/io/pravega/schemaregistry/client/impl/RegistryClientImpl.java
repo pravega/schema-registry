@@ -28,7 +28,7 @@ import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException
 import io.pravega.schemaregistry.contract.exceptions.ResourceNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
@@ -180,9 +180,9 @@ public class RegistryClientImpl implements RegistryClient {
     @SneakyThrows
     @Override
     public VersionInfo addSchema(String groupId, SchemaInfo schema) {
-        AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
-        addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
-        Response response = proxy.addSchemaToGroup(groupId, addSchemaToGroupRequest);
+        AddSchemaRequest addSchemaRequest = new AddSchemaRequest();
+        addSchemaRequest.schemaInfo(ModelHelper.encode(schema));
+        Response response = proxy.addSchema(groupId, addSchemaRequest);
         if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
