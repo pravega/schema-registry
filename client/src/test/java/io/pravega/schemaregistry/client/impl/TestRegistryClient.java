@@ -276,16 +276,16 @@ public class TestRegistryClient {
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         doReturn(schemaInfo).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class);
-        SchemaInfo schemaInfo1 = client.getGroupSchemaFromVersion("mygroup", versionInfo);
+        SchemaInfo schemaInfo1 = client.getGroupSchema("mygroup", versionInfo);
         assertEquals(schemaInfo.getSchemaName(), schemaInfo1.getName());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getGroupSchemaFromVersion("mygroup", versionInfo), e -> e instanceof ResourceNotFoundException);
+                () -> client.getGroupSchema("mygroup", versionInfo), e -> e instanceof ResourceNotFoundException);
         // Runtime Exception
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getGroupSchemaFromVersion("mygroup", versionInfo), e -> e instanceof RuntimeException);
+                () -> client.getGroupSchema("mygroup", versionInfo), e -> e instanceof RuntimeException);
     }
 
     @Test
@@ -365,17 +365,17 @@ public class TestRegistryClient {
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class);
-        SchemaWithVersion schemaWithVersion1 = client.getGroupLatestSchema("mygroup", null);
+        SchemaWithVersion schemaWithVersion1 = client.getGroupLatestSchemaVersion("mygroup", null);
         assertEquals(schemaWithVersion.getSchema(), schemaWithVersion1.getSchema());
         assertEquals(schemaWithVersion.getVersion(), schemaWithVersion1.getVersion());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getGroupLatestSchema("mygroup", null), e -> e instanceof ResourceNotFoundException);
+                () -> client.getGroupLatestSchemaVersion("mygroup", null), e -> e instanceof ResourceNotFoundException);
         // Runtime Exception
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getGroupLatestSchema("mygroup", null), e -> e instanceof RuntimeException);
+                () -> client.getGroupLatestSchemaVersion("mygroup", null), e -> e instanceof RuntimeException);
     }
 
     @Test
@@ -394,17 +394,17 @@ public class TestRegistryClient {
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class);
-        SchemaWithVersion schemaWithVersion1 = client.getGroupLatestSchema("mygroup", "myobject");
+        SchemaWithVersion schemaWithVersion1 = client.getGroupLatestSchemaVersion("mygroup", "myobject");
         assertEquals(schemaWithVersion.getSchema(), schemaWithVersion1.getSchema());
         assertEquals(schemaWithVersion.getVersion(), schemaWithVersion1.getVersion());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getGroupLatestSchema("mygroup", "myobject"), e -> e instanceof ResourceNotFoundException);
+                () -> client.getGroupLatestSchemaVersion("mygroup", "myobject"), e -> e instanceof ResourceNotFoundException);
         // Runtime Exception
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getGroupLatestSchema("mygroup", "myobject"), e -> e instanceof RuntimeException);
+                () -> client.getGroupLatestSchemaVersion("mygroup", "myobject"), e -> e instanceof RuntimeException);
     }
 
     @Test

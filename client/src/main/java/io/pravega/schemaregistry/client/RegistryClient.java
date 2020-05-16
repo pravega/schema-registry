@@ -106,7 +106,7 @@ public interface RegistryClient {
      * @param version Version which uniquely identifies schema within a group. 
      * @return Schema info corresponding to the version info. 
      */
-    SchemaInfo getGroupSchemaFromVersion(String groupId, VersionInfo version);
+    SchemaInfo getGroupSchema(String groupId, VersionInfo version);
 
     /**
      * Gets encoding info against the requested encoding Id. 
@@ -138,7 +138,7 @@ public interface RegistryClient {
      *                 
      * @return Schema with version for the last schema that was added to the group (or schemaName).
      */
-    SchemaWithVersion getGroupLatestSchema(String groupId, @Nullable String schemaName);
+    SchemaWithVersion getGroupLatestSchemaVersion(String groupId, @Nullable String schemaName);
 
     /**
      * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}

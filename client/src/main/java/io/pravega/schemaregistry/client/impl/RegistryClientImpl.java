@@ -198,7 +198,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public SchemaInfo getGroupSchemaFromVersion(String groupId, VersionInfo version) {
+    public SchemaInfo getGroupSchema(String groupId, VersionInfo version) {
         Response response = proxy.getSchemaFromVersion(groupId, version.getOrdinal());
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
@@ -241,7 +241,7 @@ public class RegistryClientImpl implements RegistryClient {
     }
 
     @Override
-    public SchemaWithVersion getGroupLatestSchema(String groupId, @Nullable String schemaName) {
+    public SchemaWithVersion getGroupLatestSchemaVersion(String groupId, @Nullable String schemaName) {
         if (schemaName == null) {
             return getLatestSchemaForGroup(groupId);
         } else {
