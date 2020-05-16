@@ -16,7 +16,7 @@ import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -62,7 +62,7 @@ public class SerializerFactory {
     public static <T> Serializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -86,7 +86,7 @@ public class SerializerFactory {
                                                                            AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
@@ -113,7 +113,7 @@ public class SerializerFactory {
     public static Serializer<GenericRecord> avroGenericDeserializer(SerializerConfig config,
                                                                     @Nullable AvroSchema<GenericRecord> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -136,7 +136,7 @@ public class SerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -162,7 +162,7 @@ public class SerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -192,7 +192,7 @@ public class SerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -227,7 +227,7 @@ public class SerializerFactory {
     public static <T extends Message> Serializer<T> protobufSerializer(SerializerConfig config,
                                                                        ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -250,7 +250,7 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<T> protobufDeserializer(SerializerConfig config,
                                                                                     ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -273,7 +273,7 @@ public class SerializerFactory {
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
     public static Serializer<DynamicMessage> protobufGenericDeserializer(SerializerConfig config, ProtobufSchema<DynamicMessage> schema) {
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
@@ -296,7 +296,7 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<T> protobufMultiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -319,7 +319,7 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<T> protobufMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -344,7 +344,7 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> protobufTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -378,7 +378,7 @@ public class SerializerFactory {
      */
     public static <T> Serializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -400,7 +400,7 @@ public class SerializerFactory {
      */
     public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -421,7 +421,7 @@ public class SerializerFactory {
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
     public static Serializer<JSonGenericObject> jsonGenericDeserializer(SerializerConfig config) {
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
@@ -444,7 +444,7 @@ public class SerializerFactory {
     public static <T> Serializer<T> jsonMultiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -467,7 +467,7 @@ public class SerializerFactory {
     public static <T> Serializer<T> jsonMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
@@ -493,7 +493,7 @@ public class SerializerFactory {
     public static <T> Serializer<Either<T, JSonGenericObject>> jsonTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -526,7 +526,7 @@ public class SerializerFactory {
     public static <T> Serializer<T> customSerializer(SerializerConfig config, SchemaContainer<T> schema, PravegaSerializer<T> serializer) {
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         registerCodec(registryClient, config);
@@ -553,7 +553,7 @@ public class SerializerFactory {
                                                        PravegaDeserializer<T> deserializer) {
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -580,7 +580,7 @@ public class SerializerFactory {
      */
     public static Serializer<Object> multiFormatGenericDeserializer(SerializerConfig config) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config); 
@@ -610,7 +610,7 @@ public class SerializerFactory {
      */
     public static Serializer<String> deserializerAsJsonString(SerializerConfig config) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
+        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
                 RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
         failOnCodecMismatch(registryClient, config);
@@ -632,15 +632,15 @@ public class SerializerFactory {
     }
     // endregion
     
-    private static void registerCodec(SchemaRegistryClient client, SerializerConfig config) {
+    private static void registerCodec(RegistryClient client, SerializerConfig config) {
         if (config.isAutoRegisterCodec()) {
-            client.addCodec(config.getGroupId(), config.getCodec().getCodecType());
+            client.addCodecType(config.getGroupId(), config.getCodec().getCodecType());
         }
     }
 
-    private static void failOnCodecMismatch(SchemaRegistryClient client, SerializerConfig config) {
+    private static void failOnCodecMismatch(RegistryClient client, SerializerConfig config) {
         if (config.isFailOnCodecMismatch()) {
-            List<CodecType> codecsInGroup = client.getCodecs(config.getGroupId());
+            List<CodecType> codecsInGroup = client.getCodecTypes(config.getGroupId());
             if (!config.getDecoder().getCodecs().containsAll(codecsInGroup)) {
                 log.warn("Not all Codecs are supported by reader. Required codecs = {}", codecsInGroup);
                 throw new RuntimeException(String.format("Need all codecs in %s", codecsInGroup.toString()));

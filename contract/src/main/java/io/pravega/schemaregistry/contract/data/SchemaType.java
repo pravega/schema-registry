@@ -32,6 +32,11 @@ public enum SchemaType {
     @Setter(AccessLevel.PRIVATE)
     private String customTypeName;
 
+    /**
+     * Method to define a custom schema type with a custom name. 
+     * @param customTypeName Custom type name. 
+     * @return {@link SchemaType#Custom} with supplied custom type name. 
+     */
     public static SchemaType custom(String customTypeName) {
         SchemaType type = SchemaType.Custom;
         type.setCustomTypeName(customTypeName);

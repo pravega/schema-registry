@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
@@ -22,7 +22,7 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
     private final AbstractPravegaDeserializer<G> genericDeserializer;
 
-    MultiplexedAndGenericDeserializer(String groupId, SchemaRegistryClient client,
+    MultiplexedAndGenericDeserializer(String groupId, RegistryClient client,
                                       Map<String, AbstractPravegaDeserializer<T>> deserializers,
                                       AbstractPravegaDeserializer<G> genericDeserializer,
                                       SerializerConfig.Decoder decoder,

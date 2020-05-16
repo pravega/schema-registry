@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.cache;
 
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -28,13 +28,13 @@ import static org.mockito.Mockito.mock;
 public class CacheTest {
     @Test
     public void testCache() {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
         String groupId = "groupId";
         EncodingId encodingId = new EncodingId(0);
         EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", 0, 0),
                 new SchemaInfo("name", SchemaType.Avro, new byte[0], Collections.emptyMap()), CodecFactory.snappy().getCodecType());
         doAnswer(x -> encodingInfo).when(client).getEncodingInfo(eq(groupId), eq(encodingId));
         EncodingCache cache = EncodingCache.getEncodingCacheForGroup(groupId, client);
-        assertEquals(encodingInfo, cache.getEncodingInfo(encodingId));
+        assertEquals(encodingInfo, cache.getGroupEncodingInfo(encodingId));
     }
 }

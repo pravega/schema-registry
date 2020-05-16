@@ -13,7 +13,7 @@ import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.client.stream.Serializer;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -55,7 +55,7 @@ import static org.mockito.Mockito.*;
 public class SerializerTest {
     @Test
     public void testAvroSerializers() {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
 
         SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
@@ -65,13 +65,13 @@ public class SerializerTest {
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
-        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
-        doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
         doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
         doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
-        doAnswer(x -> true).when(client).canRead(anyString(), any());
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<Test1> serializer = SerializerFactory.avroSerializer(config, schema1);
         Test1 test1 = new Test1("name", 1);
@@ -122,7 +122,7 @@ public class SerializerTest {
 
     @Test
     public void testProtobufSerializers() throws IOException {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
         SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
@@ -134,13 +134,13 @@ public class SerializerTest {
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
-        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
-        doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
         doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
         doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
-        doAnswer(x -> true).when(client).canRead(anyString(), any());
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<ProtobufTest.Message2> serializer = SerializerFactory.protobufSerializer(config, schema1);
         ProtobufTest.Message2 message = ProtobufTest.Message2.newBuilder().setName("name").setField1(1).build();
@@ -189,7 +189,7 @@ public class SerializerTest {
 
     @Test
     public void testJsonSerializers() {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
         SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
         JSONSchema<DerivedUser2> schema2 = JSONSchema.of(DerivedUser2.class);
@@ -198,13 +198,13 @@ public class SerializerTest {
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
-        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
-        doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
         doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
         doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
-        doAnswer(x -> true).when(client).canRead(anyString(), any());
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<DerivedUser1> serializer = SerializerFactory.jsonSerializer(config, schema1);
         DerivedUser1 user1 = new DerivedUser1("user", new Address("street", "city"), 2, "user1");
@@ -254,7 +254,7 @@ public class SerializerTest {
 
     @Test
     public void testMultiformatDeserializers() throws IOException {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
@@ -270,16 +270,16 @@ public class SerializerTest {
 
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
                 .when(client).getGroupProperties(anyString());
-        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
-        doAnswer(x -> versionInfo2).when(client).getSchemaVersion(anyString(), eq(schema2.getSchemaInfo()));
-        doAnswer(x -> versionInfo3).when(client).getSchemaVersion(anyString(), eq(schema3.getSchemaInfo()));
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
+        doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(schema3.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
         doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
         doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
         doAnswer(x -> new EncodingInfo(versionInfo3, schema3.getSchemaInfo(), CodecType.None)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
-        doAnswer(x -> true).when(client).canRead(anyString(), any());
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<Test1> avroSerializer = SerializerFactory.avroSerializer(config, schema1);
         Test1 test1 = new Test1("name", 1);
@@ -315,7 +315,7 @@ public class SerializerTest {
 
     @Test
     public void testNoEncodingProto() throws IOException {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
         SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
@@ -326,9 +326,9 @@ public class SerializerTest {
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
                                      .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
                 .when(client).getGroupProperties(anyString());
-        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
-        doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchema(anyString(), any());
-        doAnswer(x -> true).when(client).canRead(anyString(), any());
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchemaVersion(anyString(), any());
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<ProtobufTest.Message2> serializer = SerializerFactory.protobufSerializer(config, schema1);
         verify(client, never()).getEncodingId(anyString(), any(), any());
@@ -345,7 +345,7 @@ public class SerializerTest {
         serialized = serializer.serialize(message);
         AssertExtensions.assertThrows(IllegalArgumentException.class, () -> SerializerFactory.protobufGenericDeserializer(config, null));
 
-        SchemaInfo latestSchema = client.getLatestSchema("groupId", null).getSchema();
+        SchemaInfo latestSchema = client.getLatestSchemaVersion("groupId", null).getSchema();
         ProtobufSchema<DynamicMessage> schemaDynamic = ProtobufSchema.of(latestSchema.getName(), descriptorSet);
         Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(config, schemaDynamic);
         
@@ -355,7 +355,7 @@ public class SerializerTest {
     
     @Test
     public void testNoEncodingJson() throws IOException {
-        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        RegistryClient client = mock(RegistryClient.class);
         SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
@@ -363,9 +363,9 @@ public class SerializerTest {
         doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
                 .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
                 .when(client).getGroupProperties(anyString());
-        doAnswer(x -> versionInfo1).when(client).getSchemaVersion(anyString(), eq(schema1.getSchemaInfo()));
-        doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchema(anyString(), any());
-        doAnswer(x -> true).when(client).canRead(anyString(), any());
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchemaVersion(anyString(), any());
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<DerivedUser1> serializer = SerializerFactory.jsonSerializer(config, schema1);
         verify(client, never()).getEncodingId(anyString(), any(), any());

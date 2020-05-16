@@ -15,7 +15,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import lombok.SneakyThrows;
@@ -31,7 +31,7 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
     private final AvroSchema<T> avroSchema;
     private final LoadingCache<byte[], Schema> knownSchemas;
 
-    AvroDeserlizer(String groupId, SchemaRegistryClient client,
+    AvroDeserlizer(String groupId, RegistryClient client,
                    AvroSchema<T> schema,
                    SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);

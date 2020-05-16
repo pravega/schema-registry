@@ -47,17 +47,17 @@ public interface SchemaStore {
 
     CompletableFuture<List<SchemaWithVersion>> listSchemas(String group, VersionInfo from);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String schemaName);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByName(String group, String schemaName);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String schemaName, VersionInfo from);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByName(String group, String schemaName, VersionInfo from);
     
     CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal);
 
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group);
+    CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String schemaName);
+    CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group, String schemaName);
     
-    CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
+    CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
 
     CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
 

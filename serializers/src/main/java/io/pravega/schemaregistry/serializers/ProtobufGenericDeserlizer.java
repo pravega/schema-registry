@@ -17,7 +17,7 @@ import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.SneakyThrows;
@@ -29,7 +29,7 @@ import java.io.InputStream;
 public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<DynamicMessage> {
     private final LoadingCache<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
-    ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
+    ProtobufGenericDeserlizer(String groupId, RegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
                               SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);
         Preconditions.checkArgument(isEncodeHeader() || schema != null);

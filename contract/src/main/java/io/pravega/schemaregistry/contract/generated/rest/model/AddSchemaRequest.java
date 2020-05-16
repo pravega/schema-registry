@@ -22,14 +22,14 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * AddSchemaToGroupRequest
+ * AddSchemaRequest
  */
 
-public class AddSchemaToGroupRequest   {
+public class AddSchemaRequest   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
-  public AddSchemaToGroupRequest schemaInfo(SchemaInfo schemaInfo) {
+  public AddSchemaRequest schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
     return this;
   }
@@ -58,8 +58,8 @@ public class AddSchemaToGroupRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddSchemaToGroupRequest addSchemaToGroupRequest = (AddSchemaToGroupRequest) o;
-    return Objects.equals(this.schemaInfo, addSchemaToGroupRequest.schemaInfo);
+    AddSchemaRequest addSchemaRequest = (AddSchemaRequest) o;
+    return Objects.equals(this.schemaInfo, addSchemaRequest.schemaInfo);
   }
 
   @Override
@@ -71,7 +71,7 @@ public class AddSchemaToGroupRequest   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddSchemaToGroupRequest {\n");
+    sb.append("class AddSchemaRequest {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("}");

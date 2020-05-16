@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.test.samples;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -98,7 +98,7 @@ public abstract class TestEndToEnd {
     public void testEndToEnd() {
         SchemaStore store = getStore();
         SchemaRegistryService service = new SchemaRegistryService(store, executor);
-        SchemaRegistryClient client = new PassthruRegistryClient(service);
+        RegistryClient client = new PassthruRegistryClient(service);
         
         String group = "group";
 
@@ -145,7 +145,7 @@ public abstract class TestEndToEnd {
         assertEquals(schemaNames.size(), 2);
         assertTrue(schemaNames.contains(myTest));
         assertTrue(schemaNames.contains(myTest2));
-        List<GroupHistoryRecord> groupEvolutionHistory = client.getGroupHistory(group);
+        List<GroupHistoryRecord> groupEvolutionHistory = client.getEvolutionHistory(group);
         assertEquals(groupEvolutionHistory.size(), 3);
         List<SchemaWithVersion> myTestHistory = client.getSchemaVersions(group, myTest);
         assertEquals(myTestHistory.size(), 2);

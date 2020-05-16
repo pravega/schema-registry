@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.test.samples;
 
 import io.pravega.schemaregistry.MapWithToken;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -28,7 +28,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class PassthruRegistryClient implements SchemaRegistryClient {
+public class PassthruRegistryClient implements RegistryClient {
     private final SchemaRegistryService service;
 
     public PassthruRegistryClient(SchemaRegistryService service) {
@@ -72,7 +72,7 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaInfo getSchema(String group, VersionInfo version) {
+    public SchemaInfo getSchemaForVersion(String group, VersionInfo version) {
         return service.getSchema(group, version.getOrdinal()).join();
     }
 
@@ -87,8 +87,8 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaWithVersion getLatestSchema(String group, @Nullable String subgroup) {
-        return service.getLatestSchema(group, subgroup).join();
+    public SchemaWithVersion getLatestSchemaVersion(String group, @Nullable String subgroup) {
+        return service.getGroupLatestSchemaVersion(group, subgroup).join();
     }
 
     @Override
@@ -98,12 +98,12 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<GroupHistoryRecord> getGroupHistory(String group) {
+    public List<GroupHistoryRecord> getEvolutionHistory(String group) {
         return service.getGroupHistory(group, null).join();
     }
     
     @Override
-    public VersionInfo getSchemaVersion(String group, SchemaInfo schema) {
+    public VersionInfo getVersionForSchema(String group, SchemaInfo schema) {
         return service.getSchemaVersion(group, schema).join();
     }
 
@@ -113,17 +113,17 @@ public class PassthruRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean canRead(String group, SchemaInfo schema) {
+    public boolean canReadUsing(String group, SchemaInfo schema) {
         return service.canRead(group, schema).join();
     }
 
     @Override
-    public List<CodecType> getCodecs(String group) {
+    public List<CodecType> getCodecTypes(String group) {
         return service.getCodecTypes(group).join();
     }
 
     @Override
-    public void addCodec(String group, CodecType codecType) {
+    public void addCodecType(String group, CodecType codecType) {
         service.addCodec(group, codecType).join();
     }
 }

@@ -27,8 +27,8 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.RegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -54,7 +54,7 @@ public class SerDeDemo {
     private static final String DESERIALIZER_CLASS_NAME = "DeserializerClassName";
     private static final String SERIALIZER_CLASS_NAME = "SerializerClassName";
     private final ClientConfig clientConfig;
-    private final SchemaRegistryClient client;
+    private final RegistryClient client;
     private final String scope;
     private final String stream;
     private final String groupId;
@@ -62,7 +62,7 @@ public class SerDeDemo {
 
     private SerDeDemo(String controllerURI, String registryUri, String scope, String stream, String filePath) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
-        SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
+        RegistryClientConfig config = new RegistryClientConfig(URI.create(registryUri));
         client = RegistryClientFactory.createRegistryClient(config);
         this.scope = scope;
         this.stream = stream;
@@ -134,7 +134,7 @@ public class SerDeDemo {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        SchemaInfo schema = client.getLatestSchema(groupId, null).getSchema();
+        SchemaInfo schema = client.getLatestSchemaVersion(groupId, null).getSchema();
         String urlString = new String(schema.getSchemaData(), Charsets.UTF_8);
         URL url = new URL(urlString);
 

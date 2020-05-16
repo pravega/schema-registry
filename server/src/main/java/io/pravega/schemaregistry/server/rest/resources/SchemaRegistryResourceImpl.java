@@ -20,7 +20,7 @@ import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException
 import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
@@ -261,9 +261,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getGroupSchemas(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemas(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get group schemas called for group {}", groupName);
-        withCompletion("getGroupSchemas", () -> registryService.getGroupHistory(groupName, null)
+        withCompletion("getSchemas", () -> registryService.getGroupHistory(groupName, null)
                                                                .thenApply(history -> {
                                                                    SchemaVersionsList list = new SchemaVersionsList()
                                                                            .schemas(history.stream().map(x -> new SchemaWithVersion()
@@ -279,7 +279,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                                                        return Response.status(Status.NOT_FOUND).build();
                                                                    }
 
-                                                                   log.warn("getGroupSchemas failed with exception: ", exception);
+                                                                   log.warn("getSchemas failed with exception: ", exception);
                                                                    return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                                                }))
                 .thenApply(response -> {
@@ -289,10 +289,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getLatestGroupSchema(String groupName, SecurityContext securityContext,
-                                     AsyncResponse asyncResponse) throws NotFoundException {
+    public void getLatestSchema(String groupName, SecurityContext securityContext,
+                                AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get latest group schema called for group {}", groupName);
-        withCompletion("getLatestGroupSchema", () -> registryService.getLatestSchema(groupName, null)
+        withCompletion("getLatestSchema", () -> registryService.getGroupLatestSchemaVersion(groupName, null)
                                                                     .thenApply(schemaWithVersion -> {
                                                                         SchemaWithVersion schema = ModelHelper.encode(schemaWithVersion);
                                                                         log.info("Latest schema for group {} has version {}", groupName, schemaWithVersion.getVersion());
@@ -304,7 +304,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                                                             return Response.status(Status.NOT_FOUND).build();
                                                                         }
 
-                                                                        log.warn("getLatestGroupSchema failed with exception: ", exception);
+                                                                        log.warn("getLatestSchema failed with exception: ", exception);
                                                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                                                     }))
                 .thenApply(response -> {
@@ -314,10 +314,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void addSchemaToGroup(String groupName, AddSchemaToGroupRequest addSchemaRequest,
+    public void addSchema(String groupName, AddSchemaRequest addSchemaRequest,
                                          SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Add schema to group called for group {}", groupName);
-        withCompletion("addSchemaToGroup", () -> {
+        withCompletion("addSchema", () -> {
             io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(addSchemaRequest.getSchemaInfo());
 
             return registryService.addSchema(groupName, schemaInfo)
@@ -332,13 +332,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                           log.warn("Group {} not found", groupName);
                                           return Response.status(Status.NOT_FOUND).build();
                                       } else if (unwrap instanceof IncompatibleSchemaException) {
-                                          log.info("addSchemaToGroup incompatible schema {}", groupName);
+                                          log.info("addSchema incompatible schema {}", groupName);
                                           return Response.status(Status.CONFLICT).build();
                                       } else if (unwrap instanceof SchemaTypeMismatchException) {
-                                          log.info("addSchemaToGroup schema type mismatched {}", groupName);
+                                          log.info("addSchema schema type mismatched {}", groupName);
                                           return Response.status(Status.EXPECTATION_FAILED).build();
                                       } else {
-                                          log.warn("addSchemaToGroup failed with exception: ", unwrap);
+                                          log.warn("addSchema failed with exception: ", unwrap);
                                           return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                       }
                                   });
@@ -536,7 +536,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     @Override
     public void getLatestSchemaForSchemaName(String groupName, String schemaNameName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getLatestSchemaForSchemaName called for group {} object type {}", groupName, schemaNameName);
-        withCompletion("getLatestSchemaForSchemaName", () -> registryService.getLatestSchema(groupName, schemaNameName)
+        withCompletion("getLatestSchemaForSchemaName", () -> registryService.getGroupLatestSchemaVersion(groupName, schemaNameName)
                                                                             .thenApply(schemaWithVersion -> {
                                                                                 SchemaWithVersion schema = ModelHelper.encode(schemaWithVersion);
                                                                                 log.info("Latest schema for group {} object type {} has version {} ", groupName, schemaNameName, schema.getVersion());

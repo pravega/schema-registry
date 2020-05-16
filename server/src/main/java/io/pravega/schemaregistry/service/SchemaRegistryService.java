@@ -235,7 +235,7 @@ public class SchemaRegistryService {
                                                              if (!valid) {
                                                                  throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
                                                              }
-                                                             return store.addSchemaToGroup(group, schema, prop, etag);
+                                                             return store.addSchema(group, schema, prop, etag);
                                                          });
                                              });
                                  })), executor)
@@ -334,26 +334,26 @@ public class SchemaRegistryService {
      * @param schemaName Object type.
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, @Nullable String schemaName) {
+    public CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group, @Nullable String schemaName) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getLatestSchema for {}.", group, schemaName);
+        log.info("Group {}, getGroupLatestSchemaVersion for {}.", group, schemaName);
 
         if (schemaName == null) {
-            return store.getLatestSchema(group)
+            return store.getGroupLatestSchemaVersion(group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, getLatestSchema = {}.", group, r.getVersion());
+                                log.info("Group {}, getGroupLatestSchemaVersion = {}.", group, r.getVersion());
                             } else {
-                                log.warn("Group {}, getLatestSchema failed with error", e, group);
+                                log.warn("Group {}, getGroupLatestSchemaVersion failed with error", e, group);
                             }
                         });
         } else {
-            return store.getLatestSchema(group, schemaName)
+            return store.getGroupLatestSchemaVersion(group, schemaName)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, getLatestSchema = {}.", group, schemaName, r.getVersion());
+                                log.info("Group {}, object type = {}, getGroupLatestSchemaVersion = {}.", group, schemaName, r.getVersion());
                             } else {
-                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, schemaName);
+                                log.warn("Group {}, object type = {}, getGroupLatestSchemaVersion failed with error", e, group, schemaName);
                             }
                         });
         }
@@ -379,7 +379,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {}, object type = {}, history size = {}.", group, schemaName, r.size());
                             } else {
-                                log.warn("Group {}, object type = {}, getLatestSchema failed with error", e, group, schemaName);
+                                log.warn("Group {}, object type = {}, getGroupLatestSchemaVersion failed with error", e, group, schemaName);
                             }
                         });
         } else {
@@ -388,7 +388,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {}, history size = {}.", group, r.size());
                             } else {
-                                log.warn("Group {}, getLatestSchema failed with error", e, group);
+                                log.warn("Group {}, getGroupLatestSchemaVersion failed with error", e, group);
                             }
                         });
 
@@ -555,7 +555,7 @@ public class SchemaRegistryService {
 
         if (fetchAll) {
             if (groupProperties.isVersionBySchemaName()) {
-                schemasFuture = store.listSchemasByObjectType(group, schema.getName());
+                schemasFuture = store.listSchemasByName(group, schema.getName());
             } else {
                 schemasFuture = store.listSchemas(group);
             }
@@ -578,16 +578,16 @@ public class SchemaRegistryService {
                                               }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
                 if (groupProperties.isVersionBySchemaName()) {
-                    schemasFuture = store.listSchemasByObjectType(group, schema.getName(), till);
+                    schemasFuture = store.listSchemasByName(group, schema.getName(), till);
                 } else {
                     schemasFuture = store.listSchemas(group, till);
                 }
             } else {
                 if (groupProperties.isVersionBySchemaName()) {
-                    schemasFuture = store.getLatestSchema(group, schema.getName())
+                    schemasFuture = store.getGroupLatestSchemaVersion(group, schema.getName())
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {
-                    schemasFuture = store.getLatestSchema(group)
+                    schemasFuture = store.getGroupLatestSchemaVersion(group)
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 }
             }

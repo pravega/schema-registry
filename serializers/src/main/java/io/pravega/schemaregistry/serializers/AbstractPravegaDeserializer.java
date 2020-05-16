@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -34,7 +34,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private static final int HEADER_SIZE = 1 + Integer.BYTES;
 
     private final String groupId;
-    private final SchemaRegistryClient client;
+    private final RegistryClient client;
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
     // If headers are not encoded, then this will be the latest schema from the registry
     private final SchemaInfo schemaInfo;
@@ -44,7 +44,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private final EncodingCache encodingCache;
     
     protected AbstractPravegaDeserializer(String groupId,
-                                          SchemaRegistryClient client,
+                                          RegistryClient client,
                                           @Nullable SchemaContainer<T> schema,
                                           boolean skipHeaders,
                                           SerializerConfig.Decoder decoder,
@@ -71,7 +71,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
 
         if (schemaInfo != null) {
             log.info("Validate caller supplied schema.");
-            if (!client.canRead(groupId, schemaInfo)) {
+            if (!client.canReadUsing(groupId, schemaInfo)) {
                 throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.getName());
             }
         } else {
@@ -97,7 +97,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
             } else {
                 byte protocol = data.get();
                 EncodingId encodingId = new EncodingId(data.getInt());
-                EncodingInfo encodingInfo = encodingCache.getEncodingInfo(encodingId);
+                EncodingInfo encodingInfo = encodingCache.getGroupEncodingInfo(encodingId);
                 codecType = encodingInfo.getCodec();
                 writerSchema = encodingInfo.getSchemaInfo();
             }

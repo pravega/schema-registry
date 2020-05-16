@@ -72,7 +72,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
 
     @Override
     public CompletableFuture<List<String>> listSchemaNames(String group) {
-        return getGroup(group).thenCompose(Group::getObjectTypes);
+        return getGroup(group).thenCompose(Group::getSchemaNames);
     }
 
 
@@ -87,12 +87,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String schemaName) {
+    public CompletableFuture<List<SchemaWithVersion>> listSchemasByName(String group, String schemaName) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(schemaName));
     }
 
     @Override
-    public CompletableFuture<List<SchemaWithVersion>> listSchemasByObjectType(String group, String schemaName, VersionInfo from) {
+    public CompletableFuture<List<SchemaWithVersion>> listSchemasByName(String group, String schemaName, VersionInfo from) {
         return getGroup(group).thenCompose(grp -> grp.getSchemas(schemaName, from.getOrdinal()));
     }
 
@@ -102,18 +102,18 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group) {
-        return getGroup(group).thenCompose(Group::getLatestSchema);
+    public CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group) {
+        return getGroup(group).thenCompose(Group::getGroupLatestSchemaVersion);
     }
 
     @Override
-    public CompletableFuture<SchemaWithVersion> getLatestSchema(String group, String schemaName) {
-        return getGroup(group).thenCompose(grp -> grp.getLatestSchema(schemaName));
+    public CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group, String schemaName) {
+        return getGroup(group).thenCompose(grp -> grp.getGroupLatestSchemaVersion(schemaName));
     }
     
     @Override
-    public CompletableFuture<VersionInfo> addSchemaToGroup(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
-        return getGroup(group).thenCompose(grp -> grp.addSchemaToGroup(schemaInfo, prop, etag));
+    public CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
+        return getGroup(group).thenCompose(grp -> grp.addSchema(schemaInfo, prop, etag));
     }
 
     @Override

@@ -12,8 +12,8 @@ package io.pravega.schemaregistry.contract.exceptions;
 /**
  * Exception thrown when server isnt able to find the requested resource. 
  */
-public class NotFoundException extends RuntimeException {
-    public NotFoundException(String message) {
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
         super(message);
     }
 }

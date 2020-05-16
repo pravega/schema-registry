@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import lombok.Data;
@@ -31,7 +31,7 @@ public class EncodingCache {
     
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
     
-    private EncodingCache(String groupId, SchemaRegistryClient registryClient) {
+    private EncodingCache(String groupId, RegistryClient registryClient) {
         encodingCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
             public EncodingInfo load(EncodingId key) {
@@ -41,12 +41,12 @@ public class EncodingCache {
     }
     
     @SneakyThrows(ExecutionException.class)
-    public EncodingInfo getEncodingInfo(EncodingId encodingId) {
+    public EncodingInfo getGroupEncodingInfo(EncodingId encodingId) {
         return encodingCache.get(encodingId);
     }
 
     @Synchronized
-    public static EncodingCache getEncodingCacheForGroup(String groupId, SchemaRegistryClient registryClient) {
+    public static EncodingCache getEncodingCacheForGroup(String groupId, RegistryClient registryClient) {
         Key key = new Key(registryClient, groupId);
         if (GROUP_CACHE_MAP.containsKey(key)) {
             return GROUP_CACHE_MAP.get(key);
@@ -59,7 +59,7 @@ public class EncodingCache {
     
     @Data
     private static class Key {
-        private final SchemaRegistryClient client;
+        private final RegistryClient client;
         private final String groupId;
     }
 }

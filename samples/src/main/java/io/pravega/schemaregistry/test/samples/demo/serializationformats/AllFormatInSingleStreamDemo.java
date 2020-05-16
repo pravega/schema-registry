@@ -27,8 +27,8 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.impl.SchemaRegistryClientImpl;
+import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.impl.RegistryClientImpl;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
@@ -60,11 +60,11 @@ import java.util.Scanner;
  */
 public class AllFormatInSingleStreamDemo {
     private final ClientConfig clientConfig;
-    private final SchemaRegistryClient client;
+    private final RegistryClient client;
     private final String scope;
     private final String stream;
 
-    public AllFormatInSingleStreamDemo(ClientConfig clientConfig, SchemaRegistryClient client, String scope, String stream, String groupId) {
+    public AllFormatInSingleStreamDemo(ClientConfig clientConfig, RegistryClient client, String scope, String stream, String groupId) {
         this.clientConfig = clientConfig;
         this.client = client;
         this.scope = scope;
@@ -90,7 +90,7 @@ public class AllFormatInSingleStreamDemo {
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
-        SchemaRegistryClient registryClient = new SchemaRegistryClientImpl(URI.create("http://localhost:9092"));
+        RegistryClient registryClient = new RegistryClientImpl(URI.create("http://localhost:9092"));
         AllFormatInSingleStreamDemo demo = new AllFormatInSingleStreamDemo(clientConfig, registryClient, scope, stream, groupId);
 
         EventStreamWriter<Type1> avro = demo.createAvroWriter(groupId);

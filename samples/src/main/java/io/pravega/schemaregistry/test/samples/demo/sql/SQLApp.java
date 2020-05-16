@@ -22,8 +22,8 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.RegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -62,9 +62,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SQLApp {
-    private  final SchemaRegistryClient client;
+    private  final RegistryClient client;
     private  final ClientConfig clientConfig;
-    public SQLApp(ClientConfig clientConfig, SchemaRegistryClient client) {
+    public SQLApp(ClientConfig clientConfig, RegistryClient client) {
         this.clientConfig = clientConfig;
         this.client = client;
     }
@@ -98,8 +98,8 @@ public class SQLApp {
         String registryUri = cmd.getOptionValue("registryUri");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerUri)).build();
-        SchemaRegistryClientConfig config = new SchemaRegistryClientConfig(URI.create(registryUri));
-        SchemaRegistryClient client = RegistryClientFactory.createRegistryClient(config);
+        RegistryClientConfig config = new RegistryClientConfig(URI.create(registryUri));
+        RegistryClient client = RegistryClientFactory.createRegistryClient(config);
 
         while (true) {
             System.out.println("sql> ");
@@ -125,7 +125,7 @@ public class SQLApp {
               .forEach(x -> {
                   String tableName = x.substring("table://".length());
                   String tableGroupId = getTableGroupId(tableName);
-                  SchemaWithVersion tableSchema = client.getLatestSchema(tableGroupId, null);
+                  SchemaWithVersion tableSchema = client.getLatestSchemaVersion(tableGroupId, null);
 
                   // read into this table schema
                   TableSchema schema = TableSchema.fromBytes(tableSchema.getSchema().getSchemaData());
@@ -159,7 +159,7 @@ public class SQLApp {
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
         GroupProperties properties = client.getGroupProperties(groupId);
         
-        SchemaWithVersion latestSchema = client.getLatestSchema(groupId, null);
+        SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
         SchemaInfo schemaInfo = latestSchema.getSchema();
         TableSchema tableSchema = null;
         switch (properties.getSchemaType()) {
@@ -201,7 +201,7 @@ public class SQLApp {
         String tableName = tokens[3];
         
         String tableGroupId = getTableGroupId(tableName);
-        SchemaWithVersion tableSchema = client.getLatestSchema(tableGroupId, null);
+        SchemaWithVersion tableSchema = client.getLatestSchemaVersion(tableGroupId, null);
         Map<String, String> prop = tableSchema.getSchema().getProperties();
         String scope = prop.get("scope");
         String stream = prop.get("stream");
@@ -288,7 +288,7 @@ public class SQLApp {
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();
 
-        SchemaWithVersion latestSchema = client.getLatestSchema(groupId, null);
+        SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
         AvroSchema<GenericRecord> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchema().getSchemaData(), Charsets.UTF_8)));
         Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, avroSchema);
 
