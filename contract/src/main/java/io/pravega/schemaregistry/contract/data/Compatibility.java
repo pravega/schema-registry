@@ -18,15 +18,15 @@ import lombok.Data;
 
  * {@link Type#AllowAny}: allow any changes to schema without any checks performed by the registry. 
  * {@link Type#DenyAll}: disables any changes to the schema for the group.
- * {@link Type#Backward}: a new schema can read data written by last schema. 
- * {@link Type#BackwardTransitive}: a new schema can read data written by any of previous schemas. 
- * {@link Type#BackwardTill}: a new schema can read data written by any of previous schemas till schema 
+ * {@link Type#Backward}: a new schema can be used to read data written by previous schema. 
+ * {@link Type#BackwardTransitive}: a new schema can be used read data written by any of previous schemas. 
+ * {@link Type#BackwardTill}: a new schema can be used to read data written by any of previous schemas till schema 
  * identified by version {@link Compatibility#backwardTill}. 
- * {@link Type#Forward}: last schema can read data written by new schema. 
+ * {@link Type#Forward}: previous schema can be used to read data written by new schema. 
  * {@link Type#ForwardTransitive}: all previous schemas can read data written by new schema. 
  * {@link Type#ForwardTill}: All previous schemas till schema identified by version {@link Compatibility#forwardTill}
  * can read data written by new schema. 
- * {@link Type#Full}: both backward and forward.
+ * {@link Type#Full}: both backward and forward compatibility.
  * {@link Type#FullTransitive}: both backward and forward compatibility with all previous schemas.
  * {@link Type#BackwardAndForwardTill}: All previous schemas till schema identified by version {@link Compatibility#forwardTill}
  * can read data written by new schema. New schema can be used to read data written by any of previous schemas till schema 

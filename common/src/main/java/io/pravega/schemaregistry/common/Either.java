@@ -37,6 +37,7 @@ public class Either<T, K> {
     }
 
     public static <T, K> Either<T, K> right(K k) {
+        Preconditions.checkNotNull(k);
         return new Either<T, K>(null, k);
     }
     

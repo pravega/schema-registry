@@ -20,7 +20,8 @@ import java.util.Map;
  * while writing it.   
  * A codec type and schema version combination uniquely identifies encoding format for the serialized data.
  * If a custom codec type which is not identified by the enum is desired by the application, it can be specified using
- * {@link CodecType#custom} with {@link CodecType#customTypeName}.  
+ * {@link CodecType#custom} with {@link CodecType#customTypeName} and optionally user supplied key value properties via
+ * {@link CodecType#properties}.  
  */
 public enum CodecType {
         None,
@@ -36,6 +37,13 @@ public enum CodecType {
     @Setter(AccessLevel.PRIVATE)
     private Map<String, String> properties;
 
+    /**
+     * Method to create a custom CodecType with a specific customTypeName and properties. 
+     * 
+     * @param customTypeName Name of custom codec type. 
+     * @param properties User supplied key value properties. 
+     * @return CodecType.Custom with custom type name and properties set. 
+     */
     public static CodecType custom(String customTypeName, Map<String, String> properties) {
         CodecType custom = CodecType.Custom;
         custom.setCustomTypeName(customTypeName);

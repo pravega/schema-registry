@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Defines a registry client for interacting with schema registry service. 
  */
-public interface SchemaRegistryClient {
+public interface RegistryClient {
     /**
      * Adds a new group. A group refers to the name under which the schemas are registered. A group is identified by a 
      * unique name and has an associated set of group metadata {@link GroupProperties} and a list of codecs and a 
@@ -36,8 +36,8 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group that uniquely identifies the group. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
-     * @param versionBySchemaName Property to describe whether group should have schema compatibility checks performed by object types. 
-     *                            Object Types are uniquely identified by {@link SchemaInfo#name}. 
+     * @param versionBySchemaName Property to describe whether schema compatibility checks should performed for schemas that 
+     *                            share same {@link SchemaInfo#name}. Schema names identify objects of same type.  
      * @param properties          Map of properties. Example properties could include flag to indicate whether client should
      *                            encode registry service generated encoding id with payload. 
      * @return True indicates if the group was added successfully, false if it exists. 
@@ -46,7 +46,7 @@ public interface SchemaRegistryClient {
                      boolean versionBySchemaName, Map<String, String> properties);
     
     /**
-     * Api to remove group. 
+     * Remove group. 
      * 
      * @param groupId Id for the group that uniquely identifies the group. 
      */
@@ -78,7 +78,7 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group. 
      * @param validationRules New compatibility setting for the group.
      */
-    void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules);
+    void updateGroupSchemaValidationRules(String groupId, SchemaValidationRules validationRules);
     
     /**
      * Gets list of object types registered under the group. Objects are identified by {@link SchemaInfo#name}
@@ -86,7 +86,7 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group. 
      * @return List of different objects within the group.   
      */
-    List<String> getSchemaNames(String groupId);
+    List<String> getGroupSchemaNames(String groupId);
 
     /**
      * Registers schema to the group. If group is configured with {@link GroupProperties#versionBySchemaName} then 
@@ -97,7 +97,7 @@ public interface SchemaRegistryClient {
      *              
      * @return versionInfo which uniquely identifies where the schema is added in the group.   
      */
-    VersionInfo addSchema(String groupId, SchemaInfo schema);
+    VersionInfo addSchemaToGroup(String groupId, SchemaInfo schema);
 
     /**
      * Gets schema corresponding to the version. 
@@ -106,7 +106,7 @@ public interface SchemaRegistryClient {
      * @param version Version which uniquely identifies schema within a group. 
      * @return Schema info corresponding to the version info. 
      */
-    SchemaInfo getSchema(String groupId, VersionInfo version);
+    SchemaInfo getGroupSchemaFromVersion(String groupId, VersionInfo version);
 
     /**
      * Gets encoding info against the requested encoding Id. 
@@ -116,7 +116,7 @@ public interface SchemaRegistryClient {
      * @param encodingId Encoding id that uniquely identifies a schema within a group. 
      * @return Encoding info corresponding to the encoding id. 
      */
-    EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId);
+    EncodingInfo getGroupEncodingInfo(String groupId, EncodingId encodingId);
 
     /**
      * Gets an encoding id that uniquely identifies a combination of Schema version and codec type. 
@@ -126,7 +126,7 @@ public interface SchemaRegistryClient {
      * @param codecType codec type
      * @return Encoding id for the pair of version and codec type.
      */
-    EncodingId getEncodingId(String groupId, VersionInfo version, CodecType codecType);
+    EncodingId getGroupEncodingId(String groupId, VersionInfo version, CodecType codecType);
 
     /**
      * Gets latest schema and version for the group (or schemaName, if specified). 
@@ -138,7 +138,18 @@ public interface SchemaRegistryClient {
      *                 
      * @return Schema with version for the last schema that was added to the group (or schemaName).
      */
-    SchemaWithVersion getLatestSchema(String groupId, @Nullable String schemaName);
+    SchemaWithVersion getGroupLatestSchema(String groupId, @Nullable String schemaName);
+
+    /**
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
+     * the version will contain the name taken from the {@link SchemaInfo#name}. 
+     * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
+     *
+     * @param groupId Id for the group. 
+     * @param schema SchemaInfo that captures schema name and schema data. 
+     * @return VersionInfo corresponding to schema. 
+     */
+    VersionInfo getGroupVersionForSchema(String groupId, SchemaInfo schema);
 
     /**
      * Gets all schemas with corresponding versions for the group (or schemaName, if specified). 
@@ -150,32 +161,12 @@ public interface SchemaRegistryClient {
      * @param schemaName Name of schemaName. 
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
      */
-    List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaName);
-
-    /**
-     * Gets complete schema evolution history of the group with schemas, versions, rules and time for the group. 
-     * The order in the list matches the order in which schemas were evolved within the group. 
-     * 
-     * @param groupId Id for the group.
-     * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
-     */
-    List<GroupHistoryRecord> getGroupHistory(String groupId);
-
-    /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
-     * the version will contain the name taken from the {@link SchemaInfo#name}. 
-     * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
-     * 
-     * @param groupId Id for the group. 
-     * @param schema SchemaInfo that captures schema name and schema data. 
-     * @return VersionInfo corresponding to schema. 
-     */
-    VersionInfo getSchemaVersion(String groupId, SchemaInfo schema);
+    List<SchemaWithVersion> getGroupSchemaVersions(String groupId, @Nullable String schemaName);
     
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group  
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * This api performs exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
+     * This api performs exactly the same validations as {@link RegistryClient#addSchemaToGroup(String, SchemaInfo)}
      * but without registering the schema. This is primarily to be used during schema development phase to validate that 
      * the changes to schema are in compliance with validation rules for the group.  
      * 
@@ -183,7 +174,7 @@ public interface SchemaRegistryClient {
      * @param schema Schema to check for validity. 
      * @return True if it satisfies validation checks, false otherwise. 
      */
-    boolean validateSchema(String groupId, SchemaInfo schema);
+    boolean validateSchemaForGroup(String groupId, SchemaInfo schema);
 
     /**
      * Checks whether given schema can be used to read by validating it for reads against one or more existing schemas in the group  
@@ -193,7 +184,7 @@ public interface SchemaRegistryClient {
      * @param schema Schema to check to be used for reads. 
      * @return True if it can be used to read, false otherwise. 
      */
-    boolean canRead(String groupId, SchemaInfo schema);
+    boolean canReadGroupSchemasUsing(String groupId, SchemaInfo schema);
 
     /**
      * List of codecs used for encoding in the group. 
@@ -201,7 +192,7 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group. 
      * @return List of codecs used for encoding in the group. 
      */
-    List<CodecType> getCodecs(String groupId);
+    List<CodecType> getGroupCodecTypes(String groupId);
 
     /**
      * Add new codec to be used in encoding in the group. 
@@ -209,5 +200,14 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group. 
      * @param codecType codec type.
      */
-    void addCodec(String groupId, CodecType codecType);
+    void addCodecTypeToGroup(String groupId, CodecType codecType);
+
+    /**
+     * Gets complete schema evolution history of the group with schemas, versions, rules and time for the group. 
+     * The order in the list matches the order in which schemas were evolved within the group. 
+     *
+     * @param groupId Id for the group.
+     * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 
+     */
+    List<GroupHistoryRecord> getGroupHistory(String groupId);
 }
