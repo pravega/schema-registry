@@ -204,11 +204,11 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
-    public Response getEncodingInfo(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+    public Response getGroupEncodingInfo(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Encoding id that identifies a unique combination of schema and codec",required=true) @PathParam("encodingId") Integer encodingId
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getEncodingInfo(groupName,encodingId,securityContext);
+        return delegate.getGroupEncodingInfo(groupName,encodingId,securityContext);
     }
     @GET
     @Path("/{groupName}/history")
@@ -285,11 +285,11 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
-    public Response getLatestSchemaForSchemaName(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+    public Response getGroupLatestSchemaVersionForSchemaName(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Schema name",required=true) @PathParam("schemaName") String schemaName
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getLatestSchemaForSchemaName(groupName,schemaName,securityContext);
+        return delegate.getGroupLatestSchemaVersionForSchemaName(groupName,schemaName,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas/versions/{versionOrdinal}")

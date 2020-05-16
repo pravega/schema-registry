@@ -24,8 +24,8 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
-import io.pravega.schemaregistry.contract.exceptions.ResourceNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
+import io.pravega.schemaregistry.contract.exceptions.ResourceNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaToGroupRequest;
@@ -149,7 +149,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public void updateGroupSchemaValidationRules(String groupId, SchemaValidationRules validationRules) {
+    public void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules) {
         UpdateValidationRulesPolicyRequest request = new UpdateValidationRulesPolicyRequest()
                 .validationRules(ModelHelper.encode(validationRules));
 
@@ -165,7 +165,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public List<String> getGroupSchemaNames(String groupId) {
+    public List<String> getSchemaNames(String groupId) {
         Response response = proxy.getSchemaNames(groupId);
         SchemaNamesList objectsList = response.readEntity(SchemaNamesList.class);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -179,7 +179,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public VersionInfo addSchemaToGroup(String groupId, SchemaInfo schema) {
+    public VersionInfo addSchema(String groupId, SchemaInfo schema) {
         AddSchemaToGroupRequest addSchemaToGroupRequest = new AddSchemaToGroupRequest();
         addSchemaToGroupRequest.schemaInfo(ModelHelper.encode(schema));
         Response response = proxy.addSchemaToGroup(groupId, addSchemaToGroupRequest);
@@ -192,13 +192,13 @@ public class RegistryClientImpl implements RegistryClient {
         } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
             throw new SchemaTypeMismatchException("Schema type is invalid.");
         } else {
-            throw new RuntimeException("Internal Service error. Failed to addSchemaToGroup.");
+            throw new RuntimeException("Internal Service error. Failed to addSchema.");
         }
     }
 
     @SneakyThrows
     @Override
-    public SchemaInfo getGroupSchema(String groupId, VersionInfo version) {
+    public SchemaInfo getSchemaForVersion(String groupId, VersionInfo version) {
         Response response = proxy.getSchemaFromVersion(groupId, version.getOrdinal());
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
@@ -211,8 +211,8 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public EncodingInfo getGroupEncodingInfo(String groupId, EncodingId encodingId) {
-        Response response = proxy.getEncodingInfo(groupId, encodingId.getId());
+    public EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId) {
+        Response response = proxy.getGroupEncodingInfo(groupId, encodingId.getId());
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -224,7 +224,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public EncodingId getGroupEncodingId(String groupId, VersionInfo version, CodecType codecType) {
+    public EncodingId getEncodingId(String groupId, VersionInfo version, CodecType codecType) {
         GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
         getEncodingIdRequest.codecType(ModelHelper.encode(codecType))
                             .versionInfo(ModelHelper.encode(version));
@@ -232,7 +232,7 @@ public class RegistryClientImpl implements RegistryClient {
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getGroupEncodingId failed. Either Group or Version does not exist.");
+            throw new ResourceNotFoundException("getEncodingId failed. Either Group or Version does not exist.");
         } else if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
             throw new CodecNotFoundException(String.format("Codec %s not registered.", codecType));
         } else {
@@ -241,33 +241,33 @@ public class RegistryClientImpl implements RegistryClient {
     }
 
     @Override
-    public SchemaWithVersion getGroupLatestSchemaVersion(String groupId, @Nullable String schemaName) {
+    public SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaName) {
         if (schemaName == null) {
-            return getLatestSchemaForGroup(groupId);
+            return getGroupLatestSchemaVersionForGroup(groupId);
         } else {
-            return getLatestSchemaBySchemaName(groupId, schemaName);
+            return getGroupLatestSchemaVersionBySchemaName(groupId, schemaName);
         }
     }
 
     @SneakyThrows
-    private SchemaWithVersion getLatestSchemaForGroup(String groupId) {
+    private SchemaWithVersion getGroupLatestSchemaVersionForGroup(String groupId) {
         Response response = proxy.getLatestGroupSchema(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getLatestSchemaForGroup failed. Either Group or Version does not exist.");
+            throw new ResourceNotFoundException("getGroupLatestSchemaVersionForGroup failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get latest schema for group.");
         }
     }
 
     @SneakyThrows
-    private SchemaWithVersion getLatestSchemaBySchemaName(String groupId, String schemaName) {
-        Response response = proxy.getLatestSchemaForSchemaName(groupId, schemaName);
+    private SchemaWithVersion getGroupLatestSchemaVersionBySchemaName(String groupId, String schemaName) {
+        Response response = proxy.getGroupLatestSchemaVersionForSchemaName(groupId, schemaName);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-            throw new ResourceNotFoundException("getLatestSchemaForGroup failed. Either Group or Version does not exist.");
+            throw new ResourceNotFoundException("getGroupLatestSchemaVersionForGroup failed. Either Group or Version does not exist.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to get latest schema for group.");
         }
@@ -279,7 +279,7 @@ public class RegistryClientImpl implements RegistryClient {
     }
 
     @Override
-    public List<SchemaWithVersion> getGroupSchemaVersions(String groupId, @Nullable String schemaName) {
+    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaName) {
         if (schemaName == null) {
             return getGroupSchemas(groupId);
         } else {
@@ -288,7 +288,7 @@ public class RegistryClientImpl implements RegistryClient {
     }
 
     @Override
-    public List<GroupHistoryRecord> getGroupHistory(String groupId) {
+    public List<GroupHistoryRecord> getEvolutionHistory(String groupId) {
         Response response = proxy.getGroupHistory(groupId);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory history = response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory.class);
@@ -330,7 +330,7 @@ public class RegistryClientImpl implements RegistryClient {
     
     @SneakyThrows
     @Override
-    public VersionInfo getGroupVersionForSchema(String groupId, SchemaInfo schema) {
+    public VersionInfo getVersionForSchema(String groupId, SchemaInfo schema) {
         GetSchemaVersion getSchemaVersion = new GetSchemaVersion().schemaInfo(ModelHelper.encode(schema));
 
         Response response = proxy.getSchemaVersion(groupId, getSchemaVersion);
@@ -345,7 +345,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public boolean validateSchemaForGroup(String groupId, SchemaInfo schema) {
+    public boolean validateSchema(String groupId, SchemaInfo schema) {
         ValidateRequest validateRequest = new ValidateRequest()
                 .schemaInfo(ModelHelper.encode(schema));
         Response response = proxy.validate(groupId, validateRequest);
@@ -360,7 +360,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public boolean canReadGroupSchemasUsing(String groupId, SchemaInfo schema) {
+    public boolean canReadUsing(String groupId, SchemaInfo schema) {
         CanReadRequest request = new CanReadRequest().schemaInfo(ModelHelper.encode(schema));
         Response response = proxy.canRead(groupId, request);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
@@ -374,7 +374,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public List<CodecType> getGroupCodecTypes(String groupId) {
+    public List<CodecType> getCodecTypes(String groupId) {
         Response response = proxy.getCodecsList(groupId);
         CodecsList list = response.readEntity(CodecsList.class);
 
@@ -389,7 +389,7 @@ public class RegistryClientImpl implements RegistryClient {
 
     @SneakyThrows
     @Override
-    public void addCodecTypeToGroup(String groupId, CodecType codecType) {
+    public void addCodecType(String groupId, CodecType codecType) {
         AddCodec addCodec = new AddCodec().codec(ModelHelper.encode(codecType));
         Response response = proxy.addCodec(groupId, addCodec);
 
