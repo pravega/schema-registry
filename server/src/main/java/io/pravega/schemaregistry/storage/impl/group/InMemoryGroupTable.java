@@ -30,7 +30,7 @@ import java.util.stream.Collectors;
  * In memory implementation of table. 
  */
 public class InMemoryGroupTable implements GroupTable<Integer> {
-    public final int temp = 0;
+    
     @GuardedBy("$lock")
     @Getter(AccessLevel.NONE)
     final Map<TableRecords.TableKey, Value<TableRecords.TableValue, Integer>> table = new HashMap<>();
