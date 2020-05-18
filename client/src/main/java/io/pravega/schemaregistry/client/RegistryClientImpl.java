@@ -7,11 +7,10 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.client.impl;
+package io.pravega.schemaregistry.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
-import io.pravega.schemaregistry.client.RegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
