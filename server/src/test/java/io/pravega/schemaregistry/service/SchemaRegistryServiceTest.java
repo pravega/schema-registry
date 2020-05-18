@@ -90,7 +90,7 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testCreateGroup() {
         GroupProperties groupProperties = new GroupProperties(SerializationFormat.Avro,
-                SchemaValidationRules.of(Compatibility.forward()), false, Collections.singletonMap("Encode", "false"));
+                SchemaValidationRules.of(Compatibility.backwardTransitive()), false, Collections.singletonMap("Encode", "false"));
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new Boolean(true));
         }).when(store).createGroup(anyString(), any());
