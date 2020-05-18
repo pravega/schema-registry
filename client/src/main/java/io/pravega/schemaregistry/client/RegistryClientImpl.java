@@ -60,7 +60,7 @@ import java.util.stream.Collectors;
 public class RegistryClientImpl implements RegistryClient {
     private final ApiV1.GroupsApi proxy;
 
-    public RegistryClientImpl(URI uri) {
+    RegistryClientImpl(URI uri) {
         Client client = ClientBuilder.newClient(new ClientConfig());
         this.proxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(uri));
     }
