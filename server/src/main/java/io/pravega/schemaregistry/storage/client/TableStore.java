@@ -68,7 +68,7 @@ public class TableStore {
     private final AtomicReference<String> authToken;
     private final Cache<TableCacheKey, Version.VersionedRecord<?>> cache;
     private final Supplier<String> masterTokenSupplier;
-    
+
     public TableStore(ClientConfig clientConfig, Supplier<String> masterTokenSupplier, ScheduledExecutorService executor) {
         ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
         hostStore = new HostStoreImpl(clientConfig, executor);
@@ -78,8 +78,8 @@ public class TableStore {
         this.authToken = new AtomicReference<>(this.masterTokenSupplier.get());
         numOfRetries = NUM_OF_RETRIES;
         this.cache = CacheBuilder.newBuilder()
-                                 .maximumSize(10000)
-                                 .build();
+                .maximumSize(10000)
+                .build();
     }
 
     public CompletableFuture<Void> createTable(String tableName) {
@@ -87,13 +87,13 @@ public class TableStore {
 
         return Futures.toVoid(withRetries(() -> segmentHelper.createTableSegment(tableName, authToken.get(), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("create table: %s", tableName), tableName))
-                      .whenCompleteAsync((r, e) -> {
-                          if (e != null) {
-                              log.warn("create table {} threw exception", tableName, e);
-                          } else {
-                              log.debug("table {} created successfully", tableName);
-                          }
-                      }, executor);
+                .whenCompleteAsync((r, e) -> {
+                    if (e != null) {
+                        log.warn("create table {} threw exception", tableName, e);
+                    } else {
+                        log.debug("table {} created successfully", tableName);
+                    }
+                }, executor);
     }
 
     public CompletableFuture<Void> deleteTable(String tableName, boolean mustBeEmpty) {
@@ -116,13 +116,13 @@ public class TableStore {
         batch.put(key, new AbstractMap.SimpleEntry<>(value, null));
         return Futures.toVoid(updateEntries(tableName, batch)
                 .thenApply(list -> list.get(0)))
-                      .exceptionally(e -> {
-                          if (Exceptions.unwrap(e) instanceof StoreExceptions.WriteConflictException) {
-                              return null;
-                          } else {
-                              throw new CompletionException(e);
-                          }
-                      });
+                .exceptionally(e -> {
+                    if (Exceptions.unwrap(e) instanceof StoreExceptions.WriteConflictException) {
+                        return null;
+                    } else {
+                        throw new CompletionException(e);
+                    }
+                });
     }
 
     public CompletableFuture<Version> updateEntry(String tableName, byte[] key, byte[] value, Version ver) {
@@ -141,8 +141,8 @@ public class TableStore {
             }).collect(Collectors.toList());
 
             return segmentHelper.updateTableEntries(tableName, entries, authToken.get(), RequestTag.NON_EXISTENT_ID)
-                                .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
-                                                       .collect(Collectors.toList()));
+                    .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
+                            .collect(Collectors.toList()));
         }, () -> String.format("update entries : %s", tableName), tableName, true);
     }
 
@@ -153,7 +153,7 @@ public class TableStore {
                     return new Version.VersionedRecord<>(fromBytes.apply(value.getRecord()), value.getVersion());
                 });
     }
-    
+
     public CompletableFuture<List<Version.VersionedRecord<byte[]>>> getEntries(String tableName, List<byte[]> tableKeys, boolean throwOnNotFound) {
         log.info("get entries called for : {} key : {}", tableName, tableKeys);
         List<TableKey<byte[]>> keys = tableKeys.stream().map(key -> new TableKeyImpl<>(key, null)).collect(Collectors.toList());
@@ -214,7 +214,7 @@ public class TableStore {
                 IteratorState.EMPTY.toBytes());
 
         return iterator.collectRemaining(keys::add)
-                       .thenApply(v -> keys);
+                .thenApply(v -> keys);
     }
 
     public <K, T> CompletableFuture<List<Map.Entry<K, Version.VersionedRecord<T>>>> getAllEntries(String tableName,
@@ -256,7 +256,7 @@ public class TableStore {
     }
 
     public <K> CompletableFuture<Map.Entry<ByteBuf, List<K>>> getKeysPaginated(String tableName, ByteBuf continuationToken, int limit,
-                                                                                Function<byte[], K> fromByteKey) {
+                                                                               Function<byte[], K> fromByteKey) {
         log.trace("get keys paginated called for : {}", tableName);
 
         return withRetries(() ->
@@ -264,7 +264,7 @@ public class TableStore {
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApplyAsync(result -> {
                     List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(x.getKey()))
-                                          .collect(Collectors.toList());
+                            .collect(Collectors.toList());
                     log.trace("get keys paginated on table {} returned items {}", tableName, items);
                     return new AbstractMap.SimpleEntry<>(result.getState().toBytes(), items);
                 }, executor);
@@ -343,22 +343,22 @@ public class TableStore {
                                                  String tableName, boolean throwOriginalOnCfe) {
         return RetryHelper.withRetriesAsync(exceptionalCallback(futureSupplier, errorMessage, tableName, throwOriginalOnCfe),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.StoreConnectionException, numOfRetries, executor)
-                          .exceptionally(e -> {
-                              Throwable t = Exceptions.unwrap(e);
-                              if (t instanceof RetriesExhaustedException) {
-                                  throw new CompletionException(t.getCause());
-                              } else {
-                                  Throwable unwrap = Exceptions.unwrap(e);
-                                  if (unwrap instanceof WireCommandFailedException &&
-                                          (((WireCommandFailedException) unwrap).getReason().equals(ConnectionDropped) ||
-                                                  ((WireCommandFailedException) unwrap).getReason().equals(ConnectionFailed))) {
-                                      throw new CompletionException(StoreException.create(StoreException.Type.CONNECTION_ERROR,
-                                              errorMessage.get()));
-                                  } else {
-                                      throw new CompletionException(unwrap);
-                                  }
-                              }
-                          });
+                .exceptionally(e -> {
+                    Throwable t = Exceptions.unwrap(e);
+                    if (t instanceof RetriesExhaustedException) {
+                        throw new CompletionException(t.getCause());
+                    } else {
+                        Throwable unwrap = Exceptions.unwrap(e);
+                        if (unwrap instanceof WireCommandFailedException &&
+                                (((WireCommandFailedException) unwrap).getReason().equals(ConnectionDropped) ||
+                                        ((WireCommandFailedException) unwrap).getReason().equals(ConnectionFailed))) {
+                            throw new CompletionException(StoreException.create(StoreException.Type.CONNECTION_ERROR,
+                                    errorMessage.get()));
+                        } else {
+                            throw new CompletionException(unwrap);
+                        }
+                    }
+                });
     }
 
     @Data

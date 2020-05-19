@@ -31,8 +31,6 @@ public class GroupTest {
         executor = Executors.newScheduledThreadPool(5);
         groupId = "mygroup";
         integerGroupTable = new InMemoryGroupTable();
-        //Map<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, Integer>> table = new
-        // InMemoryGroupTable().table;
         integerGroup = new Group<>(groupId, integerGroupTable, executor);
     }
 
