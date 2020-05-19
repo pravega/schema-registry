@@ -1,17 +1,12 @@
 package io.pravega.schemaregistry.storage.impl.group;
 
-import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.*;
 import io.pravega.schemaregistry.storage.Etag;
-import io.pravega.schemaregistry.storage.client.Version;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -41,7 +36,7 @@ public class GroupTest {
 
     @Test
     public void testCreate() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         List<TableRecords.TableValue> recordList = integerGroupTable.table.entrySet().stream().map(
@@ -57,7 +52,7 @@ public class GroupTest {
         assertEquals(null, integerGroupTable.fromEtag(eTag));
         assertTrue(integerGroupTable.table.isEmpty());
         // non null case
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         List<Integer> integerList = integerGroupTable.table.entrySet().stream().filter(
@@ -71,28 +66,28 @@ public class GroupTest {
     }
 
     @Test
-    public void testGetObjectTypes() {
+    public void testGetSchemaNames() {
         // null case
-        List<String> stringListWithToken = integerGroup.getObjectTypes().join();
+        List<String> stringListWithToken = integerGroup.getSchemaNames().join();
         assertTrue(integerGroupTable.table.isEmpty());
         assertEquals(Collections.emptyList(), stringListWithToken);
         // non-null case
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
-        integerGroup.addSchemaToGroup(schemaInfo1, groupProperties, eTag).join();
-        stringListWithToken = integerGroup.getObjectTypes().join();
+        integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
+        stringListWithToken = integerGroup.getSchemaNames().join();
         assertEquals(2, stringListWithToken.size());
         assertEquals("anygroup", stringListWithToken.get(0));
         assertEquals("anygroup1", stringListWithToken.get(1));
@@ -100,18 +95,18 @@ public class GroupTest {
     }
 
     @Test
-    public void testAddSchemaToGroup() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+    public void testaddSchema() {
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         List<TableRecords.TableValue> tableValueListEtag = integerGroupTable.table.entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.Etag).map(
                 x -> x.getValue().getValue()).collect(
@@ -133,57 +128,57 @@ public class GroupTest {
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
         assertFalse(tableValueListSchemaInfo.isEmpty());
-        assertTrue(tableValueListSchemaInfo.get(0) instanceof TableRecords.SchemaVersionValue);
-        TableRecords.SchemaVersionValue schemaVersionValue =
-                (TableRecords.SchemaVersionValue) tableValueListSchemaInfo.get(
-                0);
+        assertTrue(tableValueListSchemaInfo.get(0) instanceof TableRecords.SchemaVersionList);
+        TableRecords.SchemaVersionList schemaVersionValue =
+                (TableRecords.SchemaVersionList) tableValueListSchemaInfo.get(
+                        0);
         assertEquals(0, schemaVersionValue.getVersions().get(0).getVersion());
 
         List<TableRecords.TableValue> tableValueListLatestSchema = integerGroupTable.table.entrySet().stream().filter(
-                x -> x.getKey() instanceof TableRecords.LatestSchemaVersionForObjectTypeKey).map(
+                x -> x.getKey() instanceof TableRecords.LatestSchemaVersionForSchemaNameKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
         assertFalse(tableValueListLatestSchema.isEmpty());
         assertTrue(tableValueListLatestSchema.get(0) instanceof TableRecords.LatestSchemaVersionValue);
         TableRecords.LatestSchemaVersionValue latestSchemaVersionValue =
                 (TableRecords.LatestSchemaVersionValue) tableValueListLatestSchema.get(
-                0);
+                        0);
         assertEquals(0, latestSchemaVersionValue.getVersion().getVersion());
 
         List<TableRecords.TableValue> tableValueListObjectTypesList =
                 integerGroupTable.table.entrySet().stream().filter(
-                x -> x.getKey() instanceof TableRecords.ObjectTypesKey).map(
-                x -> x.getValue().getValue()).collect(
-                Collectors.toList());
+                        x -> x.getKey() instanceof TableRecords.SchemaNamesKey).map(
+                        x -> x.getValue().getValue()).collect(
+                        Collectors.toList());
         assertFalse(tableValueListObjectTypesList.isEmpty());
-        assertTrue(tableValueListObjectTypesList.get(0) instanceof TableRecords.ObjectTypesListValue);
-        TableRecords.ObjectTypesListValue objectTypesListValue =
-                (TableRecords.ObjectTypesListValue) tableValueListObjectTypesList.get(
-                0);
+        assertTrue(tableValueListObjectTypesList.get(0) instanceof TableRecords.SchemaNamesListValue);
+        TableRecords.SchemaNamesListValue objectTypesListValue =
+                (TableRecords.SchemaNamesListValue) tableValueListObjectTypesList.get(
+                        0);
         assertEquals(1, tableValueListObjectTypesList.size());
-        assertEquals("mygroup", objectTypesListValue.getObjectTypes().get(0));
+        assertEquals("mygroup", objectTypesListValue.getSchemaNames().get(0));
     }
 
     @Test
     public void testGetSchemas() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
-        integerGroup.addSchemaToGroup(schemaInfo1, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         List<SchemaWithVersion> schemaWithVersionListWithToken = integerGroup.getSchemas().join();
         assertEquals(2, schemaWithVersionListWithToken.size());
-        assertEquals(SchemaType.Protobuf, schemaWithVersionListWithToken.get(0).getSchema().getSchemaType());
+        assertEquals(SchemaType.Custom, schemaWithVersionListWithToken.get(0).getSchema().getSchemaType());
         // with ObjectTypeName
         schemaWithVersionListWithToken = integerGroup.getSchemas("anygroup").join();
         assertEquals(1, schemaWithVersionListWithToken.size());
@@ -200,32 +195,32 @@ public class GroupTest {
                 Collectors.toList());
         assertEquals(2, version.size());
         List<TableRecords.TableKey> tableKeyObjectTypes = integerGroupTable.table.entrySet().stream().filter(
-                x -> x.getKey() instanceof TableRecords.ObjectTypesKey).map(
+                x -> x.getKey() instanceof TableRecords.SchemaNamesKey).map(
                 x -> x.getKey()).collect(
                 Collectors.toList());
         assertEquals(1, tableKeyObjectTypes.size());
-        TableRecords.ObjectTypesListValue objectTypesListValue = integerGroupTable.getEntry(tableKeyObjectTypes.get(0),
-                TableRecords.ObjectTypesListValue.class).join();
-        assertEquals(2, objectTypesListValue.getObjectTypes().size());
+        TableRecords.SchemaNamesListValue objectTypesListValue = integerGroupTable.getEntry(tableKeyObjectTypes.get(0),
+                TableRecords.SchemaNamesListValue.class).join();
+        assertEquals(2, objectTypesListValue.getSchemaNames().size());
     }
 
     @Test
     public void testGetVersion() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
-        integerGroup.addSchemaToGroup(schemaInfo1, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo1).join();
         List<Integer> tableValueListVersionInfo = integerGroupTable.table.entrySet().stream().filter(
@@ -251,17 +246,17 @@ public class GroupTest {
 
     @Test
     public void testCreateEncodingId() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
         integerGroup.addCodec(CodecType.GZip).join();
         eTag = integerGroup.getCurrentEtag().join();
@@ -269,9 +264,9 @@ public class GroupTest {
         integerGroup.addCodec(CodecType.Snappy).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         versionInfo = integerGroup.getVersion(schemaInfo).join();
         eTag = integerGroup.getCurrentEtag().join();
         EncodingId encodingId1 = integerGroup.createEncodingId(versionInfo, CodecType.Snappy, eTag).join();
@@ -289,17 +284,17 @@ public class GroupTest {
 
     @Test
     public void testGetEncodingInfo() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
         integerGroup.addCodec(CodecType.GZip).join();
         eTag = integerGroup.getCurrentEtag().join();
@@ -307,45 +302,45 @@ public class GroupTest {
         EncodingInfo encodingInfo = integerGroup.getEncodingInfo(encodingId).join();
         assertEquals(CodecType.GZip, encodingInfo.getCodec());
         assertEquals(versionInfo, encodingInfo.getVersionInfo());
-        assertEquals(SchemaType.Protobuf, encodingInfo.getSchemaInfo().getSchemaType());
+        assertEquals(SchemaType.Custom, encodingInfo.getSchemaInfo().getSchemaType());
     }
 
     @Test
-    public void testGetLatestSchema() {
+    public void testGetGroupLatestSchemaVersion() {
         // null case
-        SchemaWithVersion schemaWithVersion = integerGroup.getLatestSchema().join();
+        SchemaWithVersion schemaWithVersion = integerGroup.getGroupLatestSchemaVersion().join();
         assertEquals(null, schemaWithVersion);
         // non-null case
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
-        schemaWithVersion = integerGroup.getLatestSchema().join();
+        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion().join();
         assertEquals(versionInfo, schemaWithVersion.getVersion());
         assertEquals("anygroup", schemaWithVersion.getSchema().getName());
 
         // objectTypeName
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
-        integerGroup.addSchemaToGroup(schemaInfo1, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo1).join();
         // null
-        schemaWithVersion = integerGroup.getLatestSchema("anygroup2").join();
+        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup2").join();
         assertEquals(null, schemaWithVersion);
         // non-null
-        schemaWithVersion = integerGroup.getLatestSchema("anygroup1").join();
+        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup1").join();
         assertEquals(versionInfo1, schemaWithVersion.getVersion());
-        schemaWithVersion = integerGroup.getLatestSchema("anygroup").join();
+        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup").join();
         assertEquals(schemaInfo.getSchemaData(), schemaWithVersion.getSchema().getSchemaData());
     }
 
@@ -356,7 +351,7 @@ public class GroupTest {
         assertEquals(1, codecTypeList.size());
         assertEquals(CodecType.None, codecTypeList.get(0));
         // non-null
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
@@ -376,41 +371,41 @@ public class GroupTest {
 
     @Test
     public void testGetHistory() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Avro, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Avro,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
-        byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        byte[] schemaData = new byte[3];
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Avro, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData,
                 Collections.singletonMap("key1", "value1"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
-        List<SchemaEvolution> schemaEvolutionList = integerGroup.getHistory().join();
-        assertEquals(2, schemaEvolutionList.size());
-        assertEquals("anygroup", schemaEvolutionList.get(0).getSchema().getName());
-        assertEquals("anygroup1", schemaEvolutionList.get(1).getSchema().getName());
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        List<GroupHistoryRecord> groupHistoryRecords = integerGroup.getHistory().join();
+        assertEquals(2, groupHistoryRecords.size());
+        assertEquals("anygroup", groupHistoryRecords.get(0).getSchema().getName());
+        assertEquals("anygroup1", groupHistoryRecords.get(1).getSchema().getName());
         // objectType
         byte[] schemaData1 = new byte[10];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData1,
+        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData1,
                 Collections.singletonMap("key1", "value1"));
         eTag = integerGroup.getCurrentEtag().join();
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
-        schemaEvolutionList = integerGroup.getHistory("anygroup1").join();
-        assertEquals(2, schemaEvolutionList.size());
-        assertEquals(schemaData, schemaEvolutionList.get(0).getSchema().getSchemaData());
-        assertEquals(schemaData1, schemaEvolutionList.get(1).getSchema().getSchemaData());
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        groupHistoryRecords = integerGroup.getHistory("anygroup1").join();
+        assertEquals(2, groupHistoryRecords.size());
+        assertEquals(schemaData, groupHistoryRecords.get(0).getSchema().getSchemaData());
+        assertEquals(schemaData1, groupHistoryRecords.get(1).getSchema().getSchemaData());
     }
 
     @Test
     public void testUpdateValidationPolicy() {
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
@@ -426,11 +421,11 @@ public class GroupTest {
 
     @Test
     public void testGetGroupProperties(){
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         GroupProperties groupProperties = integerGroup.getGroupProperties().join();
-        assertEquals(SchemaType.Protobuf, groupProperties.getSchemaType());
+        assertEquals(SchemaType.Custom, groupProperties.getSchemaType());
         assertEquals(SchemaValidationRules.of(Compatibility.backward()), groupProperties.getSchemaValidationRules());
         assertTrue(groupProperties.isVersionBySchemaName());
         assertEquals(Collections.singletonMap("key", "value"), groupProperties.getProperties());
@@ -439,17 +434,17 @@ public class GroupTest {
     @Test
     public void testGetEncodingId(){
         //null
-        integerGroup.create(SchemaType.Protobuf, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Protobuf,
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag).join();
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
         integerGroup.addCodec(CodecType.GZip).join();
         Either<EncodingId, Etag> idEtagEither = integerGroup.getEncodingId(versionInfo, CodecType.GZip).join();
@@ -460,9 +455,9 @@ public class GroupTest {
         integerGroup.addCodec(CodecType.Snappy).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Protobuf, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
-        integerGroup.addSchemaToGroup(schemaInfo, groupProperties, eTag);
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag);
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo).join();
         eTag = integerGroup.getCurrentEtag().join();
         EncodingId encodingId1 = integerGroup.createEncodingId(versionInfo1, CodecType.Snappy, eTag).join();
