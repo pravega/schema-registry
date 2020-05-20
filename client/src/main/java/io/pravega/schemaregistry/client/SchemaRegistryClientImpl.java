@@ -57,27 +57,27 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class RegistryClientImpl implements RegistryClient {
+public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final ApiV1.GroupsApi proxy;
 
-    RegistryClientImpl(URI uri) {
+    SchemaRegistryClientImpl(URI uri) {
         Client client = ClientBuilder.newClient(new ClientConfig());
         this.proxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(uri));
     }
 
     @VisibleForTesting
-    RegistryClientImpl(ApiV1.GroupsApi proxy) {
+    SchemaRegistryClientImpl(ApiV1.GroupsApi proxy) {
         this.proxy = proxy;
     }
 
     @SneakyThrows
     @Override
-    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionBySchemaName, Map<String, String> properties) {
+    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionedBySchemaName, Map<String, String> properties) {
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaType schemaTypeModel = ModelHelper.encode(schemaType);
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .properties(properties).versionBySchemaName(versionBySchemaName)
+                                                             .properties(properties).versionedBySchemaName(versionedBySchemaName)
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
 
@@ -120,7 +120,7 @@ public class RegistryClientImpl implements RegistryClient {
                         } else {
                             SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
                             SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
-                            m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionBySchemaName(), x.getValue().getProperties()));
+                            m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionedBySchemaName(), x.getValue().getProperties()));
                         }
                     }, HashMap::putAll);
             continuationToken = entity.getContinuationToken();

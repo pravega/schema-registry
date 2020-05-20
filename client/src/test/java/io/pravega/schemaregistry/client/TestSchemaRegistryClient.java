@@ -48,11 +48,11 @@ import static org.junit.Assert.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
-public class TestRegistryClient {
+public class TestSchemaRegistryClient {
     @Test
     public void testGroup() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         
         // add group
@@ -79,7 +79,7 @@ public class TestRegistryClient {
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .versionBySchemaName(false);
+                                                       .versionedBySchemaName(false);
         String groupName = "mygroup";
         ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupName, mygroup));
         doReturn(groupList).when(response).readEntity(eq(ListGroupsResponse.class));
@@ -96,7 +96,7 @@ public class TestRegistryClient {
     @Test
     public void testListGroup() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
@@ -104,7 +104,7 @@ public class TestRegistryClient {
                                                        .schemaType(new io.pravega.schemaregistry.contract.generated.rest.model.SchemaType()
                                                                .schemaType(io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .versionBySchemaName(false);
+                                                       .versionedBySchemaName(false);
         String groupId = "mygroup";
         ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupId, mygroup));
         doReturn(response).when(proxy).listGroups(null, 100);
@@ -124,7 +124,7 @@ public class TestRegistryClient {
     @Test
     public void testRemoveGroup() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).deleteGroup(anyString());
         doReturn(Response.Status.NO_CONTENT.getStatusCode()).when(response).getStatus();
@@ -140,7 +140,7 @@ public class TestRegistryClient {
     @Test
     public void testGetGroupProperties() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getGroupProperties(anyString());
 
@@ -151,7 +151,7 @@ public class TestRegistryClient {
                                                                .schemaType(
                                                                        io.pravega.schemaregistry.contract.generated.rest.model.SchemaType.SchemaTypeEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
-                                                       .versionBySchemaName(false);
+                                                       .versionedBySchemaName(false);
         doReturn(mygroup).when(response).readEntity(eq(GroupProperties.class));
         io.pravega.schemaregistry.contract.data.GroupProperties groupProperties = client.getGroupProperties("mygroup");
         assertEquals(groupProperties.getSchemaType(), SchemaType.Any);
@@ -170,7 +170,7 @@ public class TestRegistryClient {
     @Test
     public void testUpdateSchemaValidationRules() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).updateSchemaValidationRules(anyString(), any());
 
@@ -198,7 +198,7 @@ public class TestRegistryClient {
     @Test
     public void testSchemaNamesApi() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getSchemaNames(anyString());
 
@@ -226,7 +226,7 @@ public class TestRegistryClient {
     @Test
     public void testAddSchema() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).addSchema(anyString(), any());
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
@@ -264,7 +264,7 @@ public class TestRegistryClient {
     @Test
     public void testGetSchema() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getSchemaFromVersion(anyString(), anyInt());
 
@@ -291,7 +291,7 @@ public class TestRegistryClient {
     @Test
     public void testGetEncodingInfo() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getEncodingInfo(anyString(), anyInt());
 
@@ -323,7 +323,7 @@ public class TestRegistryClient {
     @Test
     public void testGetEncodingId() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getEncodingId(anyString(), any());
 
@@ -352,7 +352,7 @@ public class TestRegistryClient {
     @Test
     public void testGetLatestSchemaForGroup() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getLatestSchema(anyString());
 
@@ -381,7 +381,7 @@ public class TestRegistryClient {
     @Test
     public void testGetLatestSchemaBySchemaName() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getLatestSchemaForSchemaName(anyString(), anyString());
 
@@ -410,7 +410,7 @@ public class TestRegistryClient {
     @Test
     public void testGroupEvolutionHistory() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getGroupHistory(anyString());
 
@@ -447,7 +447,7 @@ public class TestRegistryClient {
     @Test
     public void testGetHistoryBySchemaName() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getSchemasForSchemaName(anyString(), anyString());
 
@@ -468,7 +468,7 @@ public class TestRegistryClient {
     @Test
     public void testGetSchemaVersion() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getSchemaVersion(anyString(), any());
 
@@ -496,7 +496,7 @@ public class TestRegistryClient {
     @Test
     public void testValidateSchema() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).validate(anyString(), any());
 
@@ -522,7 +522,7 @@ public class TestRegistryClient {
     @Test
     public void testCanRead() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).canRead(anyString(), any());
 
@@ -548,7 +548,7 @@ public class TestRegistryClient {
     @Test
     public void testGetCodecs() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).getCodecsList(anyString());
 
@@ -576,7 +576,7 @@ public class TestRegistryClient {
     @Test
     public void testAddCodec() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        RegistryClientImpl client = new RegistryClientImpl(proxy);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
         doReturn(response).when(proxy).addCodec(anyString(), any());
 

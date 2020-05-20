@@ -37,8 +37,8 @@ public class GroupProperties   {
   @JsonProperty("schemaValidationRules")
   private SchemaValidationRules schemaValidationRules = null;
 
-  @JsonProperty("versionBySchemaName")
-  private Boolean versionBySchemaName = null;
+  @JsonProperty("versionedBySchemaName")
+  private Boolean versionedBySchemaName = null;
 
   @JsonProperty("properties")
   private Map<String, String> properties = null;
@@ -83,24 +83,24 @@ public class GroupProperties   {
     this.schemaValidationRules = schemaValidationRules;
   }
 
-  public GroupProperties versionBySchemaName(Boolean versionBySchemaName) {
-    this.versionBySchemaName = versionBySchemaName;
+  public GroupProperties versionedBySchemaName(Boolean versionedBySchemaName) {
+    this.versionedBySchemaName = versionedBySchemaName;
     return this;
   }
 
   /**
    * Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.
-   * @return versionBySchemaName
+   * @return versionedBySchemaName
    **/
-  @JsonProperty("versionBySchemaName")
+  @JsonProperty("versionedBySchemaName")
   @ApiModelProperty(required = true, value = "Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.")
   @NotNull
-  public Boolean isVersionBySchemaName() {
-    return versionBySchemaName;
+  public Boolean isVersionedBySchemaName() {
+    return versionedBySchemaName;
   }
 
-  public void setVersionBySchemaName(Boolean versionBySchemaName) {
-    this.versionBySchemaName = versionBySchemaName;
+  public void setVersionBySchemaName(Boolean versionedBySchemaName) {
+    this.versionedBySchemaName = versionedBySchemaName;
   }
 
   public GroupProperties properties(Map<String, String> properties) {
@@ -142,13 +142,13 @@ public class GroupProperties   {
     GroupProperties groupProperties = (GroupProperties) o;
     return Objects.equals(this.schemaType, groupProperties.schemaType) &&
         Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
-        Objects.equals(this.versionBySchemaName, groupProperties.versionBySchemaName) &&
+        Objects.equals(this.versionedBySchemaName, groupProperties.versionedBySchemaName) &&
         Objects.equals(this.properties, groupProperties.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaType, schemaValidationRules, versionBySchemaName, properties);
+    return Objects.hash(schemaType, schemaValidationRules, versionedBySchemaName, properties);
   }
 
 
@@ -159,7 +159,7 @@ public class GroupProperties   {
     
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
-    sb.append("    versionBySchemaName: ").append(toIndentedString(versionBySchemaName)).append("\n");
+    sb.append("    versionedBySchemaName: ").append(toIndentedString(versionedBySchemaName)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");
     return sb.toString();

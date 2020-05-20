@@ -478,7 +478,7 @@ Metadata for a group.
 | ---- | ---- | ----------- | -------- |
 | schemaType | [SchemaType](#schematype) | Schema type for the group. | Yes |
 | schemaValidationRules | [SchemaValidationRules](#schemavalidationrules) | Validation rules to apply while registering new schema. | Yes |
-| versionBySchemaName | boolean | Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name. | Yes |
+| versionedBySchemaName | boolean | Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name. | Yes |
 | properties | object | User defined Key value strings. | No |
 
 #### SchemaType

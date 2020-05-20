@@ -21,7 +21,7 @@ import java.util.Objects;
 /**
  * Encapsulates properties of a schema. 
  * {@link SchemaInfo#name} object type represented by the schema. This is used to identify the exact object type 
- * and used if a group needs to be divided in different evolution subsets by object types. (ref: {@link GroupProperties#versionBySchemaName}). 
+ * and used if a group needs to be divided in different evolution subsets by object types. (ref: {@link GroupProperties#versionedBySchemaName}). 
  * {@link SchemaInfo#schemaType} Serialization format.
  * {@link SchemaInfo#schemaData} Schema as an array of 8-bit unsigned bytes. This is schema-type specific and to be consumed
  * by schema-type specific parsers. 

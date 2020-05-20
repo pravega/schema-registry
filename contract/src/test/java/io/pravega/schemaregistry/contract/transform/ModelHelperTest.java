@@ -87,7 +87,7 @@ public class ModelHelperTest {
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1, 1));
         io.pravega.schemaregistry.contract.data.SchemaValidationRules schemaValidationRules = io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(rule);
         io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties.builder()
-                                                                                                                              .schemaType(schemaType).schemaValidationRules(schemaValidationRules).versionBySchemaName(true).properties(Collections.emptyMap()).build();
+                                                                                                                              .schemaType(schemaType).schemaValidationRules(schemaValidationRules).versionedBySchemaName(true).properties(Collections.emptyMap()).build();
         io.pravega.schemaregistry.contract.data.CodecType codecType = io.pravega.schemaregistry.contract.data.CodecType.custom("codec", Collections.emptyMap());
 
         // encode test
@@ -136,7 +136,7 @@ public class ModelHelperTest {
         GroupProperties groupProperties = ModelHelper.encode(prop);
         assertEquals(groupProperties.getSchemaType(), type);
         assertEquals(groupProperties.getSchemaValidationRules(), rules);
-        assertEquals(groupProperties.isVersionBySchemaName(), prop.isVersionBySchemaName());
+        assertEquals(groupProperties.isVersionedBySchemaName(), prop.isVersionedBySchemaName());
         assertEquals(groupProperties.getProperties(), prop.getProperties());
     }
 

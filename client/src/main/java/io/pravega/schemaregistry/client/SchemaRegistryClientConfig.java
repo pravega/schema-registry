@@ -19,17 +19,17 @@ import java.net.URI;
  */
 @Data
 @Builder
-public class RegistryClientConfig {
+public class SchemaRegistryClientConfig {
     /**
      * URI for connecting with registry client.
      */
     private final URI schemaRegistryUri;
 
-    private RegistryClientConfig(URI schemaRegistryUri) {
+    private SchemaRegistryClientConfig(URI schemaRegistryUri) {
         this.schemaRegistryUri = schemaRegistryUri;
     }
 
-    public static final class RegistryClientConfigBuilder {
+    public static final class SchemaRegistryClientConfigBuilder {
         private URI schemaRegistryUri = URI.create("http://localhost:9092");
     }
 }

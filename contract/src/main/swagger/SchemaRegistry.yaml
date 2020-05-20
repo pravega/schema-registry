@@ -83,13 +83,13 @@ paths:
                   type: string
                   minLength: 0
                   maxLength: 40
-              versionBySchemaName:
+              versionedBySchemaName:
                 type: boolean
             required:
                 - groupName
                 - schemaType
                 - validationRules
-                - versionBySchemaName   
+                - versionedBySchemaName   
       responses:
         201:
           description: Successfully added group
@@ -660,7 +660,7 @@ definitions:
       schemaValidationRules:
           description: Validation rules to apply while registering new schema.    
           $ref: "#/definitions/SchemaValidationRules"
-      versionBySchemaName:
+      versionedBySchemaName:
           description: Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.     
           type: boolean
       properties:
@@ -672,7 +672,7 @@ definitions:
           maxLength: 40
     required:
       - schemaType
-      - versionBySchemaName
+      - versionedBySchemaName
       - schemaValidationRules      
   SchemaType:
     type: object
