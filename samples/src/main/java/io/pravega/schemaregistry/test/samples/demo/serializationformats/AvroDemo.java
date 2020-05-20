@@ -27,9 +27,9 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.RegistryClient;
-import io.pravega.schemaregistry.client.RegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -101,13 +101,13 @@ public class AvroDemo {
 
     private final ClientConfig clientConfig;
 
-    private final RegistryClient client;
+    private final SchemaRegistryClient client;
     private final String id;
 
     public AvroDemo() {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
-        RegistryClientConfig config = new RegistryClientConfig(URI.create("http://localhost:9092"));
-        client = RegistryClientFactory.createRegistryClient(config);
+        SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build();
+        client = SchemaRegistryClientFactory.createRegistryClient(config);
         id = Long.toString(System.currentTimeMillis());
     }
     

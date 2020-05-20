@@ -21,9 +21,9 @@ import io.pravega.client.stream.ReaderConfig;
 import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.RegistryClient;
-import io.pravega.schemaregistry.client.RegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -62,9 +62,9 @@ import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 public class SQLApp {
-    private  final RegistryClient client;
+    private  final SchemaRegistryClient client;
     private  final ClientConfig clientConfig;
-    public SQLApp(ClientConfig clientConfig, RegistryClient client) {
+    public SQLApp(ClientConfig clientConfig, SchemaRegistryClient client) {
         this.clientConfig = clientConfig;
         this.client = client;
     }
@@ -98,8 +98,8 @@ public class SQLApp {
         String registryUri = cmd.getOptionValue("registryUri");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerUri)).build();
-        RegistryClientConfig config = new RegistryClientConfig(URI.create(registryUri));
-        RegistryClient client = RegistryClientFactory.createRegistryClient(config);
+        SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(registryUri)).build();
+        SchemaRegistryClient client = SchemaRegistryClientFactory.createRegistryClient(config);
 
         while (true) {
             System.out.println("sql> ");

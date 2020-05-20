@@ -9,7 +9,10 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.protobuf.DescriptorProtos;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
@@ -35,6 +38,8 @@ import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.Schema;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -54,6 +59,7 @@ import java.util.stream.Collectors;
 public class SchemaRegistryService {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                        .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     private final SchemaStore store;
 
@@ -121,7 +127,7 @@ public class SchemaRegistryService {
      * Gets group's properties.
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#versionBySchemaName} that specifies if schemas are evolved by object type.
+     * {@link GroupProperties#versionedBySchemaName} that specifies if schemas are evolved by object type.
      * Object types are uniquely identified by {@link SchemaInfo#name}.
      * {@link GroupProperties#properties} properties for a group.
      *
@@ -200,7 +206,7 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Adds schema to the group. If group is configured with {@link GroupProperties#versionBySchemaName}, then
+     * Adds schema to the group. If group is configured with {@link GroupProperties#versionedBySchemaName}, then
      * the {@link SchemaInfo#name} is used to filter previous schemas and apply schema validation policy against schemas
      * of object type.
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in
@@ -327,7 +333,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets latest schema and version for the group (or schemaName, if specified).
-     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName needs to be supplied to
+     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName needs to be supplied to
      * get the latest schema for the object type.
      *
      * @param group          Name of group.
@@ -361,7 +367,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets all schemas with corresponding versions for the group (or schemaName, if specified).
-     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName name needs to be supplied to
+     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName name needs to be supplied to
      * get the latest schema for the schemaName. {@link SchemaInfo#name} is used as the schemaName name.
      * The order in the list matches the order in which schemas were evolved within the group.
      *
@@ -396,7 +402,7 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionedBySchemaName}
      * the schemaName is taken from the {@link SchemaInfo#name}.
      * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
      *
@@ -422,7 +428,7 @@ public class SchemaRegistryService {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * If {@link GroupProperties#versionBySchemaName} is set, the validation is performed against schemas with same
+     * If {@link GroupProperties#versionedBySchemaName} is set, the validation is performed against schemas with same
      * object type identified by {@link SchemaInfo#name}.
      *
      * @param group  Name of group.
@@ -554,7 +560,7 @@ public class SchemaRegistryService {
                                                   || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.FullTransitive)));
 
         if (fetchAll) {
-            if (groupProperties.isVersionBySchemaName()) {
+            if (groupProperties.isVersionedBySchemaName()) {
                 schemasFuture = store.listSchemasByName(group, schema.getName());
             } else {
                 schemasFuture = store.listSchemas(group);
@@ -577,13 +583,13 @@ public class SchemaRegistryService {
                                                   }
                                               }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
-                if (groupProperties.isVersionBySchemaName()) {
+                if (groupProperties.isVersionedBySchemaName()) {
                     schemasFuture = store.listSchemasByName(group, schema.getName(), till);
                 } else {
                     schemasFuture = store.listSchemas(group, till);
                 }
             } else {
-                if (groupProperties.isVersionBySchemaName()) {
+                if (groupProperties.isVersionedBySchemaName()) {
                     schemasFuture = store.getGroupLatestSchemaVersion(group, schema.getName())
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {
@@ -598,6 +604,7 @@ public class SchemaRegistryService {
 
     private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
                                        List<SchemaWithVersion> schemasWithVersion) {
+        Preconditions.checkArgument(validateSchemaData(schema));
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
 
         List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema).collect(Collectors.toList());
@@ -647,6 +654,43 @@ public class SchemaRegistryService {
         }
         // if no rules are set, we will come here. 
         return true;
+    }
+
+    private boolean validateSchemaData(SchemaInfo schemaInfo) {
+        boolean isValid = true;
+        try {
+            String schemaString;
+            switch (schemaInfo.getSchemaType()) {
+                case Protobuf:
+                    DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+                    int nameStart = schemaInfo.getName().lastIndexOf(".");
+                    String name = schemaInfo.getName().substring(nameStart + 1);
+                    String pckg = nameStart < 0 ? "" : schemaInfo.getName().substring(0, nameStart);
+
+                    isValid = fileDescriptorSet.getFileList().stream()
+                                               .anyMatch(x -> pckg.startsWith(x.getPackage()) &&
+                                                       x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)));
+                    break;
+                case Avro: 
+                    schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+                    Schema schema = new Schema.Parser().parse(schemaString);
+                    isValid = schema.getFullName().equals(schemaInfo.getName());
+                    break;
+                case Json: 
+                    schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+                    OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+                    break;
+                case Custom:
+                case Any:
+                default:
+                    isValid = true;
+                    break;
+            }
+        } catch (Exception e) {
+            log.info("unable to parse schema {}", e.getMessage());
+            isValid = false;
+        }
+        return isValid;
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {

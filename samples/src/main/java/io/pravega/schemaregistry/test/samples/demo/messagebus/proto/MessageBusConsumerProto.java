@@ -26,9 +26,9 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.RegistryClient;
-import io.pravega.schemaregistry.client.RegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
@@ -57,15 +57,15 @@ import java.util.Map;
 
 public class MessageBusConsumerProto {
     private final ClientConfig clientConfig;
-    private final RegistryClient client;
+    private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
     private final EventStreamReader<GeneratedMessageV3> reader;
 
     private MessageBusConsumerProto(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
-        RegistryClientConfig config = new RegistryClientConfig(URI.create(registryUri));
-        client = RegistryClientFactory.createRegistryClient(config);
+        SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri((URI.create(registryUri))).build();
+        client = SchemaRegistryClientFactory.createRegistryClient(config);
         this.scope = scope;
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);

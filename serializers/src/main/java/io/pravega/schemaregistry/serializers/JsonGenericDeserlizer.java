@@ -16,7 +16,7 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import lombok.SneakyThrows;
@@ -30,7 +30,7 @@ class JsonGenericDeserlizer extends AbstractPravegaDeserializer<JSonGenericObjec
     private final ObjectMapper objectMapper;
     private final LoadingCache<SchemaInfo, JsonSchema> knownSchemas;
 
-    JsonGenericDeserlizer(String groupId, RegistryClient client,
+    JsonGenericDeserlizer(String groupId, SchemaRegistryClient client,
                           SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, null, false, decoder, encodingCache);
         this.objectMapper = new ObjectMapper();

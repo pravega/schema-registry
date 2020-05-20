@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import lombok.Data;
@@ -31,11 +31,11 @@ public class EncodingCache {
     
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
     
-    private EncodingCache(String groupId, RegistryClient registryClient) {
+    private EncodingCache(String groupId, SchemaRegistryClient schemaRegistryClient) {
         encodingCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
             public EncodingInfo load(EncodingId key) {
-                return registryClient.getEncodingInfo(groupId, key);
+                return schemaRegistryClient.getEncodingInfo(groupId, key);
             }
         });
     }
@@ -46,12 +46,12 @@ public class EncodingCache {
     }
 
     @Synchronized
-    public static EncodingCache getEncodingCacheForGroup(String groupId, RegistryClient registryClient) {
-        Key key = new Key(registryClient, groupId);
+    public static EncodingCache getEncodingCacheForGroup(String groupId, SchemaRegistryClient schemaRegistryClient) {
+        Key key = new Key(schemaRegistryClient, groupId);
         if (GROUP_CACHE_MAP.containsKey(key)) {
             return GROUP_CACHE_MAP.get(key);
         } else {
-            EncodingCache value = new EncodingCache(groupId, registryClient);
+            EncodingCache value = new EncodingCache(groupId, schemaRegistryClient);
             GROUP_CACHE_MAP.put(key, value);
             return value;
         }
@@ -59,7 +59,7 @@ public class EncodingCache {
     
     @Data
     private static class Key {
-        private final RegistryClient client;
+        private final SchemaRegistryClient client;
         private final String groupId;
     }
 }

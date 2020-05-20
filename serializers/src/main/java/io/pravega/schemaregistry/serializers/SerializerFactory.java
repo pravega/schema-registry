@@ -15,8 +15,8 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
-import io.pravega.schemaregistry.client.RegistryClientFactory;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -62,12 +62,12 @@ public class SerializerFactory {
     public static <T> Serializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
+        registerCodec(schemaRegistryClient, config);
         String groupId = config.getGroupId();
-        return new AvroSerializer<>(groupId, registryClient, schemaData, config.getCodec(), config.isAutoRegisterSchema());
+        return new AvroSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(), config.isAutoRegisterSchema());
     }
 
     /**
@@ -86,16 +86,16 @@ public class SerializerFactory {
                                                                            AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
         String groupId = config.getGroupId();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        return new AvroDeserlizer<>(groupId, registryClient, schemaData, config.getDecoder(), encodingCache);
+        return new AvroDeserlizer<>(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
     }
 
     /**
@@ -113,13 +113,13 @@ public class SerializerFactory {
     public static Serializer<GenericRecord> avroGenericDeserializer(SerializerConfig config,
                                                                     @Nullable AvroSchema<GenericRecord> schemaData) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        failOnCodecMismatch(schemaRegistryClient, config);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        return new AvroGenericDeserlizer(groupId, registryClient, schemaData, config.getDecoder(), encodingCache);
+        return new AvroGenericDeserlizer(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
     }
 
     /**
@@ -136,13 +136,13 @@ public class SerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
+        registerCodec(schemaRegistryClient, config);
         Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new AvroSerializer<>(groupId, registryClient, x.getValue(), config.getCodec(),
+                        x -> new AvroSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
                                 config.isAutoRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
@@ -162,17 +162,17 @@ public class SerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getName(),
-                        x -> new AvroDeserlizer<>(groupId, registryClient, x, config.getDecoder(), encodingCache)));
-        return new MultiplexedDeserializer<>(groupId, registryClient, deserializerMap, config.getDecoder(), 
+                        x -> new AvroDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
+        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(), 
                 encodingCache);
     }
 
@@ -192,19 +192,19 @@ public class SerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getName(),
-                        x -> new AvroDeserlizer<>(groupId, registryClient, x, config.getDecoder(), encodingCache)));
-        AbstractPravegaDeserializer<GenericRecord> genericDeserializer = new AvroGenericDeserlizer(groupId, registryClient,
+                        x -> new AvroDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
+        AbstractPravegaDeserializer<GenericRecord> genericDeserializer = new AvroGenericDeserlizer(groupId, schemaRegistryClient,
                 null, config.getDecoder(), encodingCache);
-        return new MultiplexedAndGenericDeserializer<>(groupId, registryClient, deserializerMap, genericDeserializer, 
+        return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer, 
                 config.getDecoder(), encodingCache);
     }
     // endregion
@@ -227,11 +227,11 @@ public class SerializerFactory {
     public static <T extends Message> Serializer<T> protobufSerializer(SerializerConfig config,
                                                                        ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
-        return new ProtobufSerializer<>(groupId, registryClient, schemaData, config.getCodec(),
+        registerCodec(schemaRegistryClient, config);
+        return new ProtobufSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(),
                 config.isAutoRegisterSchema());
     }
 
@@ -250,15 +250,15 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<T> protobufDeserializer(SerializerConfig config,
                                                                                     ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         // schema can be null in which case deserialization will happen into dynamic message
-        return new ProtobufDeserlizer<>(groupId, registryClient, schemaData, config.getDecoder(), encodingCache);
+        return new ProtobufDeserlizer<>(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
     }
 
     /**
@@ -273,16 +273,16 @@ public class SerializerFactory {
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
     public static Serializer<DynamicMessage> protobufGenericDeserializer(SerializerConfig config, ProtobufSchema<DynamicMessage> schema) {
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
         String groupId = config.getGroupId();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        return new ProtobufGenericDeserlizer(groupId, registryClient, schema, config.getDecoder(), encodingCache);
+        return new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache);
     }
 
     /**
@@ -296,13 +296,13 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<T> protobufMultiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
+        registerCodec(schemaRegistryClient, config);
         Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new ProtobufSerializer<>(groupId, registryClient, x.getValue(), config.getCodec(),
+                        x -> new ProtobufSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
                                 config.isAutoRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
@@ -319,17 +319,17 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<T> protobufMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getName(),
-                        x -> new ProtobufDeserlizer<>(groupId, registryClient, x, config.getDecoder(), encodingCache)));
-        return new MultiplexedDeserializer<>(groupId, registryClient, deserializerMap, config.getDecoder(), encodingCache);
+                        x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
+        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(), encodingCache);
     }
 
     /**
@@ -344,19 +344,19 @@ public class SerializerFactory {
     public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> protobufTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getName(),
-                        x -> new ProtobufDeserlizer<>(groupId, registryClient, x, config.getDecoder(), encodingCache)));
-        ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, registryClient, null, 
+                        x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
+        ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, 
                 config.getDecoder(), encodingCache);
-        return new MultiplexedAndGenericDeserializer<>(groupId, registryClient, deserializerMap, genericDeserializer, 
+        return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer, 
                 config.getDecoder(), encodingCache);
     }
     //endregion
@@ -378,11 +378,11 @@ public class SerializerFactory {
      */
     public static <T> Serializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
-        return new JsonSerializer<>(groupId, registryClient, schemaData, config.getCodec(),
+        registerCodec(schemaRegistryClient, config);
+        return new JsonSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(),
                 config.isAutoRegisterSchema());
     }
 
@@ -400,15 +400,15 @@ public class SerializerFactory {
      */
     public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         // schema can be null in which case deserialization will happen into dynamic message
-        return new JsonDeserlizer<>(groupId, registryClient, schemaData, config.getDecoder(), encodingCache);
+        return new JsonDeserlizer<>(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
     }
 
     /**
@@ -421,15 +421,15 @@ public class SerializerFactory {
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
     public static Serializer<JSonGenericObject> jsonGenericDeserializer(SerializerConfig config) {
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
         String groupId = config.getGroupId();
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        return new JsonGenericDeserlizer(groupId, registryClient, config.getDecoder(), 
+        return new JsonGenericDeserlizer(groupId, schemaRegistryClient, config.getDecoder(), 
                 encodingCache);
     }
 
@@ -444,13 +444,13 @@ public class SerializerFactory {
     public static <T> Serializer<T> jsonMultiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
+        registerCodec(schemaRegistryClient, config);
         Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new JsonSerializer<>(groupId, registryClient, x.getValue(), config.getCodec(),
+                        x -> new JsonSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
                                 config.isAutoRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
@@ -467,17 +467,17 @@ public class SerializerFactory {
     public static <T> Serializer<T> jsonMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getName(),
-                        x -> new JsonDeserlizer<>(groupId, registryClient, x, config.getDecoder(), 
+                        x -> new JsonDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), 
                                 encodingCache)));
-        return new MultiplexedDeserializer<>(groupId, registryClient,
+        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient,
                 deserializerMap, config.getDecoder(), encodingCache);
     }
 
@@ -493,20 +493,20 @@ public class SerializerFactory {
     public static <T> Serializer<Either<T, JSonGenericObject>> jsonTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
         Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getName(),
-                        x -> new JsonDeserlizer<>(groupId, registryClient, x, config.getDecoder(), encodingCache)));
-        JsonGenericDeserlizer genericDeserializer = new JsonGenericDeserlizer(groupId, registryClient, config.getDecoder(),
+                        x -> new JsonDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
+        JsonGenericDeserlizer genericDeserializer = new JsonGenericDeserlizer(groupId, schemaRegistryClient, config.getDecoder(),
                 encodingCache);
 
-        return new MultiplexedAndGenericDeserializer<>(groupId, registryClient,
+        return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient,
                 deserializerMap, genericDeserializer, config.getDecoder(), encodingCache);
     }
     //endregion
@@ -526,11 +526,11 @@ public class SerializerFactory {
     public static <T> Serializer<T> customSerializer(SerializerConfig config, SchemaContainer<T> schema, PravegaSerializer<T> serializer) {
 
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        registerCodec(registryClient, config);
-        return new AbstractPravegaSerializer<T>(groupId, registryClient,
+        registerCodec(schemaRegistryClient, config);
+        return new AbstractPravegaSerializer<T>(groupId, schemaRegistryClient,
                 schema, config.getCodec(), config.isAutoRegisterSchema()) {
             @Override
             protected void serialize(T var, SchemaInfo schema, OutputStream outputStream) {
@@ -553,14 +553,14 @@ public class SerializerFactory {
                                                        PravegaDeserializer<T> deserializer) {
 
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
+        failOnCodecMismatch(schemaRegistryClient, config);
 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        return new AbstractPravegaDeserializer<T>(groupId, registryClient, schema, false,
+        return new AbstractPravegaDeserializer<T>(groupId, schemaRegistryClient, schema, false,
                 config.getDecoder(), encodingCache) {
             @Override
             protected T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
@@ -580,24 +580,24 @@ public class SerializerFactory {
      */
     public static Serializer<Object> multiFormatGenericDeserializer(SerializerConfig config) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config); 
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        failOnCodecMismatch(schemaRegistryClient, config); 
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), registryClient,
+        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), schemaRegistryClient,
                 config.getDecoder(), encodingCache);
-        AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, registryClient, null, config.getDecoder(),
+        AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoder(),
                 encodingCache);
-        AbstractPravegaDeserializer avro = new AvroGenericDeserlizer(groupId, registryClient, null, config.getDecoder(),
+        AbstractPravegaDeserializer avro = new AvroGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoder(),
                 encodingCache);
 
         Map<SchemaType, AbstractPravegaDeserializer> map = new HashMap<>();
         map.put(SchemaType.Json, json);
         map.put(SchemaType.Avro, avro);
         map.put(SchemaType.Protobuf, protobuf);
-        return new MultipleFormatGenericDeserializer(groupId, registryClient, map, config.getDecoder(),
+        return new MultipleFormatGenericDeserializer(groupId, schemaRegistryClient, map, config.getDecoder(),
                 encodingCache);
     }
     
@@ -610,35 +610,35 @@ public class SerializerFactory {
      */
     public static Serializer<String> deserializerAsJsonString(SerializerConfig config) {
         String groupId = config.getGroupId();
-        RegistryClient registryClient = config.getRegistryConfigOrClient().isLeft() ?
-                RegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
+                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
-        failOnCodecMismatch(registryClient, config);
-        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, registryClient);
+        failOnCodecMismatch(schemaRegistryClient, config);
+        EncodingCache encodingCache = EncodingCache.getEncodingCacheForGroup(groupId, schemaRegistryClient);
 
-        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), registryClient,
+        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), schemaRegistryClient,
                 config.getDecoder(), encodingCache);
-        AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, registryClient, null, config.getDecoder(),
+        AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoder(),
                 encodingCache);
-        AbstractPravegaDeserializer avro = new AvroGenericDeserlizer(groupId, registryClient, null, config.getDecoder(),
+        AbstractPravegaDeserializer avro = new AvroGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoder(),
                 encodingCache);
 
         Map<SchemaType, AbstractPravegaDeserializer> map = new HashMap<>();
         map.put(SchemaType.Json, json);
         map.put(SchemaType.Avro, avro);
         map.put(SchemaType.Protobuf, protobuf);
-        return new MultipleFormatJsonStringDeserializer(groupId, registryClient, map, config.getDecoder(),
+        return new MultipleFormatJsonStringDeserializer(groupId, schemaRegistryClient, map, config.getDecoder(),
                 encodingCache);
     }
     // endregion
     
-    private static void registerCodec(RegistryClient client, SerializerConfig config) {
+    private static void registerCodec(SchemaRegistryClient client, SerializerConfig config) {
         if (config.isAutoRegisterCodec()) {
             client.addCodecType(config.getGroupId(), config.getCodec().getCodecType());
         }
     }
 
-    private static void failOnCodecMismatch(RegistryClient client, SerializerConfig config) {
+    private static void failOnCodecMismatch(SchemaRegistryClient client, SerializerConfig config) {
         if (config.isFailOnCodecMismatch()) {
             List<CodecType> codecsInGroup = client.getCodecTypes(config.getGroupId());
             if (!config.getDecoder().getCodecs().containsAll(codecsInGroup)) {

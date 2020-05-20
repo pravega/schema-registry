@@ -27,7 +27,7 @@ import java.util.Map;
 /**
  * Defines a registry client for interacting with schema registry service. 
  */
-public interface RegistryClient {
+public interface SchemaRegistryClient {
     /**
      * Adds a new group. A group refers to the name under which the schemas are registered. A group is identified by a 
      * unique name and has an associated set of group metadata {@link GroupProperties} and a list of codecs and a 
@@ -36,14 +36,14 @@ public interface RegistryClient {
      * @param groupId Id for the group that uniquely identifies the group. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
-     * @param versionBySchemaName Property to describe whether schema compatibility checks should performed for schemas that 
+     * @param versionedBySchemaName Property to describe whether schema compatibility checks should performed for schemas that 
      *                            share same {@link SchemaInfo#name}. Schema names identify objects of same type.  
      * @param properties          Map of properties. Example properties could include flag to indicate whether client should
      *                            encode registry service generated encoding id with payload. 
      * @return True indicates if the group was added successfully, false if it exists. 
      */
     boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules,
-                     boolean versionBySchemaName, Map<String, String> properties);
+                     boolean versionedBySchemaName, Map<String, String> properties);
     
     /**
      * Remove group. 
@@ -63,7 +63,7 @@ public interface RegistryClient {
      * Get group properties for the group. 
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#versionBySchemaName} that specifies if schemas should be exclusively validated against 
+     * {@link GroupProperties#versionedBySchemaName} that specifies if schemas should be exclusively validated against 
      * schemas that have the same {@link SchemaInfo#name}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
      * 
@@ -89,7 +89,7 @@ public interface RegistryClient {
     List<String> getSchemaNames(String groupId);
 
     /**
-     * Registers schema to the group. If group is configured with {@link GroupProperties#versionBySchemaName} then 
+     * Registers schema to the group. If group is configured with {@link GroupProperties#versionedBySchemaName} then 
      * the {@link SchemaInfo#name} is used for validating against existing group schemas that share the same name. 
      * 
      * @param groupId Id for the group. 
@@ -130,7 +130,7 @@ public interface RegistryClient {
 
     /**
      * Gets latest schema and version for the group (or schemaName, if specified). 
-     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName name needs to be supplied to 
+     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName name needs to be supplied to 
      * get the latest schema for the schemaName. 
      * 
      * @param groupId Id for the group. 
@@ -141,7 +141,7 @@ public interface RegistryClient {
     SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaName);
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionBySchemaName}
+     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionedBySchemaName}
      * the version will contain the name taken from the {@link SchemaInfo#name}. 
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      *
@@ -153,7 +153,7 @@ public interface RegistryClient {
 
     /**
      * Gets all schemas with corresponding versions for the group (or schemaName, if specified). 
-     * For groups configured with {@link GroupProperties#versionBySchemaName}, the schemaName name needs to be supplied to 
+     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName name needs to be supplied to 
      * get the latest schema for the schemaName. {@link SchemaInfo#name} is used as the schemaName name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
@@ -166,7 +166,7 @@ public interface RegistryClient {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group  
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * This api performs exactly the same validations as {@link RegistryClient#addSchema(String, SchemaInfo)}
+     * This api performs exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
      * but without registering the schema. This is primarily to be used during schema development phase to validate that 
      * the changes to schema are in compliance with validation rules for the group.  
      * 

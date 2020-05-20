@@ -38,14 +38,16 @@ public class JSONSchema<T> implements SchemaContainer<T> {
 
     private final SchemaInfo schemaInfo;
     
-    private JSONSchema(JsonSchema schema, String schemaString, Class<T> tClass) {
-        this(schema, schemaString, tClass, tClass);
+    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass) {
+        this(schema, name, schemaString, tClass, tClass);
     }
     
-    private JSONSchema(JsonSchema schema, String schemaString, Class<T> tClass, Class<? extends T> tDerivedClass) {
+    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass, Class<? extends T> tDerivedClass) {
+        String schemaName = name != null ? name : schema.getId();
+        // Add empty name if the name is not supplied and cannot be extracted from the json schema id. 
+        schemaName = schemaName != null ? schemaName : "";
         this.schemaString = schemaString;
-        String schemaId = schema.getId() == null ? "" : schema.getId();
-        this.schemaInfo = new SchemaInfo(schemaId, SchemaType.Json, getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(schemaName, SchemaType.Json, getSchemaBytes(), ImmutableMap.of());
         this.tClass = tClass;
         this.tDerivedClass = tDerivedClass;
         this.schema = schema;
@@ -66,20 +68,21 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchema schema = schemaGen.generateSchema(tClass);
         String schemaString = objectMapper.writeValueAsString(schema);
         
-        return new JSONSchema<>(schema, schemaString, tClass);    
+        return new JSONSchema<>(schema, null, schemaString, tClass);    
     }
-
+    
     /**
      * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
      *
+     * @param name schema name.
      * @param schemaString Schema string to use. 
      * @return Returns an JSONSchema with {@link Object} type. 
      */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
-    public static JSONSchema<Object> of(String schemaString) {
+    public static JSONSchema<Object> of(String name, String schemaString) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);  
-        return new JSONSchema<>(schema, schemaString, Object.class);
+        return new JSONSchema<>(schema, name, schemaString, Object.class);
     }
     
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
@@ -89,7 +92,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchema schema = schemaGen.generateSchema(tDerivedClass);
         String schemaString = objectMapper.writeValueAsString(schema);
 
-        return new JSONSchema<>(schema, schemaString, tClass, tDerivedClass);
+        return new JSONSchema<>(schema, null, schemaString, tClass, tDerivedClass);
     }
 
     /**
@@ -104,7 +107,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         String schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
         
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
-        return new JSONSchema<>(schema, schemaString, Object.class);
+        return new JSONSchema<>(schema, schemaInfo.getName(), schemaString, Object.class);
     }
 
     private byte[] getSchemaBytes() {

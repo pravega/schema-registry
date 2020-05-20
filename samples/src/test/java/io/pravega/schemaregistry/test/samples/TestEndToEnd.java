@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.test.samples;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -98,7 +98,7 @@ public abstract class TestEndToEnd {
     public void testEndToEnd() {
         SchemaStore store = getStore();
         SchemaRegistryService service = new SchemaRegistryService(store, executor);
-        RegistryClient client = new PassthruRegistryClient(service);
+        SchemaRegistryClient client = new PassthruSchemaRegistryClient(service);
         
         String group = "group";
 

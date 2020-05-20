@@ -56,7 +56,7 @@ public class InMemoryGroups implements Groups<Integer> {
                     
                     return new Group<>(group, kvFactory.get(), executor);
                 });
-        return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isVersionBySchemaName(), 
+        return grp.create(groupProperties.getSchemaType(), groupProperties.getProperties(), groupProperties.isVersionedBySchemaName(), 
                 groupProperties.getSchemaValidationRules()).thenApply(v -> true);
     }
 

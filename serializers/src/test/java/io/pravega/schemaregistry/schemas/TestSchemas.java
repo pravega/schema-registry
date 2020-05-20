@@ -89,7 +89,7 @@ public class TestSchemas {
         assertNotNull(schema.getSchema());
         assertEquals(schema.getSchemaInfo().getSchemaType(), SchemaType.Json);
 
-        JSONSchema<Object> schema2 = JSONSchema.of(JSON_SCHEMA_STRING);
+        JSONSchema<Object> schema2 = JSONSchema.of("Person", JSON_SCHEMA_STRING);
         assertNotNull(schema2.getSchema());
         assertEquals(schema2.getSchemaInfo().getSchemaType(), SchemaType.Json);
         

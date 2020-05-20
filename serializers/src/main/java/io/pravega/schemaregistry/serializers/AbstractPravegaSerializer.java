@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.common.util.BitConverter;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -37,13 +37,13 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     private final SchemaInfo schemaInfo;
     private final AtomicReference<EncodingId> encodingId;
     private final AtomicBoolean encodeHeader;
-    private final RegistryClient client;
+    private final SchemaRegistryClient client;
     @Getter
     private final Codec codec;
     private final boolean registerSchema;
 
     protected AbstractPravegaSerializer(String groupId,
-                                        RegistryClient client,
+                                        SchemaRegistryClient client,
                                         SchemaContainer<T> schema,
                                         Codec codec, 
                                         boolean registerSchema) {

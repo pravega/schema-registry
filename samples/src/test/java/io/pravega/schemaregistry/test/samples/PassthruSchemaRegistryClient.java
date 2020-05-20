@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.test.samples;
 
 import io.pravega.schemaregistry.MapWithToken;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -28,17 +28,17 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-public class PassthruRegistryClient implements RegistryClient {
+public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     private final SchemaRegistryService service;
 
-    public PassthruRegistryClient(SchemaRegistryService service) {
+    public PassthruSchemaRegistryClient(SchemaRegistryService service) {
         this.service = service;
     }
     
     @Override
     public boolean addGroup(String group, SchemaType schemaType, SchemaValidationRules validationRules,
-                            boolean versionBySchemaName, Map<String, String> properties) {
-        return service.createGroup(group, new GroupProperties(schemaType, validationRules, versionBySchemaName, properties)).join();
+                            boolean versionedBySchemaName, Map<String, String> properties) {
+        return service.createGroup(group, new GroupProperties(schemaType, validationRules, versionedBySchemaName, properties)).join();
     }
 
     @Override

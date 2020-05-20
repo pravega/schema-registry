@@ -30,7 +30,7 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.RegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
@@ -124,7 +124,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     private final SchemaStore schemaStore;
     private final ScheduledExecutorService executor;
     private final SchemaRegistryService service;
-    private final RegistryClient client;
+    private final SchemaRegistryClient client;
     private final PravegaStandaloneUtils pravegaStandaloneUtils;
     private Random random;
 
@@ -137,7 +137,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
 
         service = new SchemaRegistryService(schemaStore, executor);
-        client = new PassthruRegistryClient(service);
+        client = new PassthruSchemaRegistryClient(service);
         random = new Random();
     }
     

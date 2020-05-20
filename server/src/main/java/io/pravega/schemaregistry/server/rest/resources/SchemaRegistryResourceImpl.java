@@ -121,7 +121,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
             SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
             SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
             GroupProperties properties = new GroupProperties(
-                    schemaType, validationRules, createGroupRequest.isVersionBySchemaName(), createGroupRequest.getProperties());
+                    schemaType, validationRules, createGroupRequest.isVersionedBySchemaName(), createGroupRequest.getProperties());
             String groupName = createGroupRequest.getGroupName();
             return registryService.createGroup(groupName, properties)
                                   .thenApply(createStatus -> {

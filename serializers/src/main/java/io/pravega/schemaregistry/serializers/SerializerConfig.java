@@ -9,8 +9,8 @@
  */
 package io.pravega.schemaregistry.serializers;
 
-import io.pravega.schemaregistry.client.RegistryClient;
-import io.pravega.schemaregistry.client.RegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
@@ -42,10 +42,10 @@ public class SerializerConfig {
      */
     private final String groupId;
     /**
-     * Either the registry client or the {@link RegistryClientConfig} that can be used for creating a new registry client.
+     * Either the registry client or the {@link SchemaRegistryClientConfig} that can be used for creating a new registry client.
      * Exactly one of the two option has to be supplied. 
      */
-    private final Either<RegistryClientConfig, RegistryClient> registryConfigOrClient;
+    private final Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient;
     /**
      * Flag to tell the serializer if the schema should be automatically registered before using it in {@link io.pravega.client.stream.EventStreamWriter}. 
      * It is recommended to register keep this flag as false in production systems and manage schema evolution explicitly and

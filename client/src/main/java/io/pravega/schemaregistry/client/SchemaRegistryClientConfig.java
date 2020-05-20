@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.client;
 
+import lombok.Builder;
 import lombok.Data;
 
 import java.net.URI;
@@ -17,15 +18,18 @@ import java.net.URI;
  * Registry client configuration used to create registry client. 
  */
 @Data
-public class RegistryClientConfig {
-    private final URI schemaRegistryUri;
-
+@Builder
+public class SchemaRegistryClientConfig {
     /**
      * URI for connecting with registry client.
-     * 
-     * @return return schema registry uri. 
      */
-    public URI getSchemaRegistryUri() {
-        return schemaRegistryUri;
+    private final URI schemaRegistryUri;
+
+    private SchemaRegistryClientConfig(URI schemaRegistryUri) {
+        this.schemaRegistryUri = schemaRegistryUri;
+    }
+
+    public static final class SchemaRegistryClientConfigBuilder {
+        private URI schemaRegistryUri = URI.create("http://localhost:9092");
     }
 }

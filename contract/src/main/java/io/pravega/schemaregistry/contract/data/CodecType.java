@@ -16,9 +16,10 @@ import lombok.Setter;
 import java.util.Map;
 
 /**
- * Defines different types of codecs that can be used for encoding the data. Encoding includes things like compressing data 
- * while writing it.   
- * A codec type and schema version combination uniquely identifies encoding format for the serialized data.
+ * Defines different types of codecs that can be used for encoding the data. Codecs can be used for compressing data 
+ * or encode the serialized data in the desired format.
+ * A codec type and schema version combination uniquely identifies encoding format for the serialized data which is expressed
+ * as {@link EncodingInfo}.
  * If a custom codec type which is not identified by the enum is desired by the application, it can be specified using
  * {@link CodecType#custom} with {@link CodecType#customTypeName} and optionally user supplied key value properties via
  * {@link CodecType#properties}.  

@@ -279,7 +279,7 @@ public class Group<V> {
         TableRecords.SchemaInfoKey schemaInfoKey = new TableRecords.SchemaInfoKey(getFingerprint(schemaInfo));
         keys.add(schemaInfoKey);
 
-        if (prop.isVersionBySchemaName()) {
+        if (prop.isVersionedBySchemaName()) {
             keys.add(new TableRecords.LatestSchemaVersionForSchemaNameKey(schemaInfo.getName()));
             keys.add(SCHEMA_NAMES_KEY);
         }
@@ -292,7 +292,7 @@ public class Group<V> {
             int nextOrdinal = latest == null ? 0 : latest.getVersion().getOrdinal() + 1;
             int nextVersion;
 
-            if (prop.isVersionBySchemaName()) {
+            if (prop.isVersionedBySchemaName()) {
                 TableRecords.LatestSchemaVersionValue objectLatestVersion = (TableRecords.LatestSchemaVersionValue) values.get(2).getValue();
                 nextVersion = objectLatestVersion == null ? 0 : objectLatestVersion.getVersion().getVersion() + 1;
             } else {
@@ -324,7 +324,7 @@ public class Group<V> {
             entries.add(new AbstractMap.SimpleEntry<>(LATEST_SCHEMA_VERSION_KEY,
                     new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), latestVersion)));
 
-            if (prop.isVersionBySchemaName()) {
+            if (prop.isVersionedBySchemaName()) {
                 // 3.1 latest for object type
                 V objectLatestVersionVersion = values.get(2).getVersion();
                 entries.add(new AbstractMap.SimpleEntry<>(new TableRecords.LatestSchemaVersionForSchemaNameKey(
@@ -333,7 +333,7 @@ public class Group<V> {
             }
 
             // 4. object types list
-            if (prop.isVersionBySchemaName()) {
+            if (prop.isVersionedBySchemaName()) {
                 TableRecords.SchemaNamesListValue schemaNamesValue = (TableRecords.SchemaNamesListValue) values.get(3).getValue();
                 V schemaNameVersion = values.get(3).getVersion();
 
