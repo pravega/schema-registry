@@ -158,6 +158,36 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     }
 
     @Test
+    public void testGetGroupHistory() throws ExecutionException, InterruptedException {
+        byte[] schemaData = new byte[0];
+        io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
+                new io.pravega.schemaregistry.contract.data.SchemaInfo(
+                        "schemaName", SchemaType.Avro, schemaData,
+                        Collections.singletonMap("key", "value"));
+        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", 5, 5),
+                SchemaValidationRules.of(Compatibility.allowAny()), 100, "describeSchema");
+        List<GroupHistoryRecord> groupHistoryRecords = new ArrayList<>();
+        groupHistoryRecords.add(groupHistoryRecord);
+        doAnswer(x -> CompletableFuture.completedFuture(groupHistoryRecords)).when(service).getGroupHistory(
+                anyString(), eq(null));
+        String groupName = "mygroup";
+        Response response = target(GROUPS + "/" + groupName + "/history").request().async().get().get();
+        assertEquals(200, response.getStatus());
+        GroupHistory groupHistory = response.readEntity(GroupHistory.class);
+        assertEquals(1, groupHistory.getHistory().size());
+        assertEquals("describeSchema",groupHistory.getHistory().get(0).getSchemaString());
+        // GroupNotFound Exception
+        doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
+                service).getGroupHistory(anyString(), eq(null));
+        response = target(GROUPS + "/" + groupName + "/history").request().async().get().get();
+        assertEquals(404, response.getStatus());
+        // Runtime Exception
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getGroupHistory(anyString(), eq(null));
+        response = target(GROUPS + "/" + groupName + "/history").request().async().get().get();
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
     public void testCanRead() throws ExecutionException, InterruptedException {
         doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(anyString(), any());
         CanReadRequest canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
@@ -224,6 +254,26 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     }
 
     @Test
+    public void testGetSchemaValidationRules() throws ExecutionException, InterruptedException {
+        String groupName = "mygroup";
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom, SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE, Collections.singletonMap("key", "value"));
+        doAnswer(x -> CompletableFuture.completedFuture(groupProperties)).when(service).getGroupProperties(anyString());
+        Response response = target(GROUPS + "/" + groupName + "/rules").request().async().get().get();
+        assertEquals(200, response.getStatus());
+        assertEquals(SchemaValidationRules.of(Compatibility.backward()), ModelHelper.decode(response.readEntity(
+                io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules.class)));
+        // GroupNotFound Exception
+        doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
+                service).getGroupProperties(anyString());
+        response = target(GROUPS + "/" + groupName + "/rules").request().async().get().get();
+        assertEquals(404, response.getStatus());
+        // Runtime Exception
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getGroupProperties(anyString());
+        response = target(GROUPS + "/" + groupName + "/rules").request().async().get().get();
+        assertEquals(500, response.getStatus());
+    }
+
+    @Test
     public void testGetGroupSchemas() throws ExecutionException, InterruptedException {
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
@@ -278,7 +328,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 GROUPS + "/" + groupName + "/schemas" + "/versions" + "/latest").request().async().get().get();
         assertEquals(500, response.getStatus());
     }
-
 
     @Test
     public void testAddSchemaToGroupIfAbsent() throws ExecutionException, InterruptedException {
