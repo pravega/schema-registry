@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.client;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
+import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -49,8 +50,9 @@ import org.glassfish.jersey.client.proxy.WebResourceFactory;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestFilter;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -60,9 +62,15 @@ import java.util.stream.Collectors;
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final ApiV1.GroupsApi proxy;
 
-    SchemaRegistryClientImpl(URI uri) {
+    SchemaRegistryClientImpl(SchemaRegistryClientConfig config) {
         Client client = ClientBuilder.newClient(new ClientConfig());
-        this.proxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(uri));
+        if (config.isAuthEnabled()) {
+            client.register((ClientRequestFilter) context -> {
+                context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
+                        AuthHelper.getCredentials(config.getAuthMethod(), config.getAuthToken()));
+            });
+        }
+        this.proxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(config.getSchemaRegistryUri()));
     }
 
     @VisibleForTesting
@@ -72,12 +80,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     @Override
-    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionedBySchemaName, Map<String, String> properties) {
+    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionBySchemaName, Map<String, String> properties) {
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaType schemaTypeModel = ModelHelper.encode(schemaType);
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .properties(properties).versionedBySchemaName(versionedBySchemaName)
+                                                             .properties(properties).versionedBySchemaName(versionBySchemaName)
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
 
@@ -115,14 +123,14 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             ListGroupsResponse entity = response.readEntity(ListGroupsResponse.class);
             Map<String, GroupProperties> map = entity.getGroups().entrySet().stream()
                                                      .collect(HashMap::new, (m, x) -> {
-                        if (x.getValue() == null) {
-                            m.put(x.getKey(), null);
-                        } else {
-                            SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
-                            SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
-                            m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionedBySchemaName(), x.getValue().getProperties()));
-                        }
-                    }, HashMap::putAll);
+                                                         if (x.getValue() == null) {
+                                                             m.put(x.getKey(), null);
+                                                         } else {
+                                                             SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
+                                                             SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
+                                                             m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionedBySchemaName(), x.getValue().getProperties()));
+                                                         }
+                                                     }, HashMap::putAll);
             continuationToken = entity.getContinuationToken();
             result.putAll(map);
 
@@ -326,7 +334,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             throw new RuntimeException("Internal Service error. Failed to get schema versions for group.");
         }
     }
-    
+
     @SneakyThrows
     @Override
     public VersionInfo getVersionForSchema(String groupId, SchemaInfo schema) {

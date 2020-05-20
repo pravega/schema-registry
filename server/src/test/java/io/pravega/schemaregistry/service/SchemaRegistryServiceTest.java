@@ -59,7 +59,7 @@ public class SchemaRegistryServiceTest {
         }).when(store).listGroups(any(), anyInt());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new GroupProperties(SchemaType.Avro, 
-                    SchemaValidationRules.of(Compatibility.backward()), false, Collections.singletonMap("Encode", "false")));
+                    SchemaValidationRules.of(Compatibility.backward()), false, Collections.emptyMap()));
         }).when(store).getGroupProperties(eq("grp1"));
         
         doAnswer(x -> {

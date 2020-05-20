@@ -15,7 +15,9 @@ import lombok.Data;
 
 /**
  * Defines different Compatibility policy options for schema evolution for schemas within a group.
-
+ * The choice of compatibility policy tells the Schema Registry service whether a schema should be accepted to evolve
+ * into new schema by comparing it with one or more existing versions of the schema. 
+ * 
  * {@link Type#AllowAny}: allow any changes to schema without any checks performed by the registry. 
  * {@link Type#DenyAll}: disables any changes to the schema for the group.
  * {@link Type#Backward}: a new schema can be used to read data written by previous schema. 

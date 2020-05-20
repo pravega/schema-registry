@@ -12,6 +12,7 @@ rootProject.name = 'schema-registry'
 
 include 'client',
         'common',
+        'auth',
         'contract',
         'serializers',
         'server',

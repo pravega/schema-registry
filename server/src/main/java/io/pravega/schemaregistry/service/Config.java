@@ -18,6 +18,8 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Properties;
+
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
@@ -44,12 +46,20 @@ public final class Config {
 
     public static final String SERVICE_HOST;
     public static final int SERVICE_PORT;
-    
     public static final String PRAVEGA_CONTROLLER_URI;
-    
     public static final int THREAD_POOL_SIZE;
-    
     public static final String STORE_TYPE;
+
+    public static final boolean TLS_ENABLED;
+    public static final String TLS_KEY_FILE;
+    public static final String TLS_KEY_PASSWORD_FILE;
+    public static final String TLS_CERT_FILE;
+    public static final String TLS_TRUST_STORE;
+
+    public static final boolean AUTHORIZATION_ENABLED;
+    public static final String USER_PASSWORD_FILE;
+
+    public static final ServiceConfig SERVICE_CONFIG;
 
     //endregion
 
@@ -58,12 +68,19 @@ public final class Config {
     private static final Property<String> PROPERTY_REST_IP = Property.named("service.restIp", "0.0.0.0");
     private static final Property<Integer> PROPERTY_REST_PORT = Property.named("service.restPort", 9092);
     
-    private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPoolSize", 50);
-    
     private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.controller.url", "tcp://localhost:9090");
-    
     private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.storeType", "Pravega");
-    
+    private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPoolSize", 50);
+
+    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("auth.tlsEnabled", false);
+    private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("auth.tlsCertFile", "");
+    private static final Property<String> PROPERTY_TLS_TRUST_STORE = Property.named("auth.tlsTrustStore", "");
+    private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("auth.tlsKeyFile", "");
+    private static final Property<String> PROPERTY_TLS_KEY_PASSWORD_FILE = Property.named("auth.tlsKeyPasswordFile", "");
+
+    private static final Property<Boolean> PROPERTY_AUTHORIZATION_ENABLED = Property.named("auth.enabled", false);
+    private static final Property<String> PROPERTY_AUTHORIZATION_PASSWORD_FILE = Property.named("auth.userPasswordFile", "");
+
     private static final String COMPONENT_CODE = "schema-registry";
 
     //endregion
@@ -78,10 +95,20 @@ public final class Config {
         SERVICE_PORT = p.getInt(PROPERTY_REST_PORT);
 
         PRAVEGA_CONTROLLER_URI = p.get(PROPERTY_PRAVEGA_CONTROLLER_URL);
-        
+
         THREAD_POOL_SIZE = p.getInt(PROPERTY_THREAD_POOL_SIZE);
-        
         STORE_TYPE = p.get(PROPERTY_STORE_TYPE);
+
+        TLS_ENABLED = p.getBoolean(PROPERTY_TLS_ENABLED);
+        TLS_KEY_FILE = p.get(PROPERTY_TLS_KEY_FILE);
+        TLS_KEY_PASSWORD_FILE = p.get(PROPERTY_TLS_KEY_PASSWORD_FILE);
+        TLS_CERT_FILE = p.get(PROPERTY_TLS_CERT_FILE);
+        TLS_TRUST_STORE = p.get(PROPERTY_TLS_TRUST_STORE);
+
+        AUTHORIZATION_ENABLED = p.getBoolean(PROPERTY_AUTHORIZATION_ENABLED);
+        USER_PASSWORD_FILE = p.get(PROPERTY_AUTHORIZATION_PASSWORD_FILE);
+
+        SERVICE_CONFIG = createServiceConfig();
     }
 
     private static Properties loadConfiguration() {
@@ -161,7 +188,21 @@ public final class Config {
 
         return resolved;
     }
-    
+
+    private static ServiceConfig createServiceConfig() {
+        return ServiceConfig.builder()
+                            .host(Config.SERVICE_HOST)
+                                   .port(Config.SERVICE_PORT)
+                                   .authEnabled(Config.AUTHORIZATION_ENABLED)
+                                   .userPasswordFile(Config.USER_PASSWORD_FILE)
+                                   .tlsEnabled(Config.TLS_ENABLED)
+                                   .tlsCertFile(Config.TLS_CERT_FILE)
+                                   .tlsKeyFilePath(Config.TLS_KEY_FILE)
+                                   .tlsKeyFilePath(Config.TLS_KEY_PASSWORD_FILE)
+                                   .tlsTrustStore(Config.TLS_TRUST_STORE)
+                                   .build();
+    }
+
     //endregion
 }
 
