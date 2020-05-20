@@ -63,7 +63,8 @@ import static javax.ws.rs.core.Response.Status;
  */
 @Slf4j
 public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
-
+    private static final int DEFAULT_LIST_GROUPS_LIMIT = 100;
+    
     @Context
     HttpHeaders headers;
 
@@ -77,7 +78,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     public void listGroups(String continuationToken, Integer limit, SecurityContext securityContext,
                            AsyncResponse asyncResponse) throws NotFoundException {
         log.info("List Groups called");
-        withCompletion("listGroups", () -> registryService.listGroups(ContinuationToken.fromString(continuationToken), limit)
+        int limitUnboxed = limit == null ? DEFAULT_LIST_GROUPS_LIMIT : limit;
+        withCompletion("listGroups", () -> registryService.listGroups(ContinuationToken.fromString(continuationToken), limitUnboxed)
                                                           .thenApply(result -> {
                                                               ListGroupsResponse groupsList = new ListGroupsResponse();
                                                               result.getMap().forEach((x, y) -> {
