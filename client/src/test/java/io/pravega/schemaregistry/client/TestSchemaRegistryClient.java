@@ -427,7 +427,7 @@ public class TestSchemaRegistryClient {
         GroupHistory history = new GroupHistory();
         history.addHistoryItem(groupHistoryRecord);
         doReturn(history).when(response).readEntity(GroupHistory.class);
-        List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getEvolutionHistory("mygroup");
+        List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getGroupHistory("mygroup");
         assertEquals(1, groupHistoryList.size());
         assertEquals(schemaValidationRules, groupHistoryList.get(0).getRules());
         assertEquals(schemaInfo, groupHistoryList.get(0).getSchema());
@@ -437,11 +437,11 @@ public class TestSchemaRegistryClient {
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEvolutionHistory("mygroup"), e -> e instanceof ResourceNotFoundException);
+                () -> client.getGroupHistory("mygroup"), e -> e instanceof ResourceNotFoundException);
         //Runtime Exception
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEvolutionHistory("mygroup"), e -> e instanceof RuntimeException);
+                () -> client.getGroupHistory("mygroup"), e -> e instanceof RuntimeException);
     }
 
     @Test

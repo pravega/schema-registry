@@ -164,7 +164,7 @@ paths:
       tags:
       - "Group"
       operationId: getSchemaValidationRules
-      description: Fetch the properties of an existing Group
+      description: Fetch the schema validation rules configured for the Group
       produces:
         - application/json
       responses:
@@ -241,7 +241,7 @@ paths:
       tags:
       - "Schema"
       operationId: getSchemas
-      description: Fetch the properties of an existing Group
+      description: Get all schema versions for the group 
       produces:
         - application/json
       responses:
@@ -341,7 +341,7 @@ paths:
       tags:
       - "Schema"
       operationId: getSchemaFromVersion
-      description: Fetch the properties of an existing Group
+      description: Get schema from the version ordinal that uniquely identifies the schema in the group. 
       produces:
         - application/json
       responses:
@@ -349,6 +349,20 @@ paths:
           description: Schema corresponding to the version
           schema:
             $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details  
+    delete:
+      tags:
+      - "Schema"
+      operationId: deleteSchemaVersion
+      description: Delete schema version from the group.
+      produces:
+        - application/json
+      responses:
+        204:
+          description: Schema corresponding to the version
         404:
           description: Group with given name not found
         500:
@@ -364,7 +378,7 @@ paths:
       tags:
       - "Schema"
       operationId: getLatestSchema
-      description: Fetch the properties of an existing Group
+      description: Get latest schema for the group.
       produces:
         - application/json
       responses:
@@ -496,7 +510,7 @@ paths:
       tags:
       - "Schema"
       operationId: getLatestSchemaForSchemaName
-      description: Fetch the properties of an existing Group
+      description: Get latest schema for the schemaName for the group. 
       produces:
         - application/json
       responses:
@@ -519,7 +533,7 @@ paths:
       tags:
       - "Encoding"
       operationId: getEncodingId
-      description: Fetch the properties of an existing Group
+      description: Get an encoding id that uniquely identifies a schema version and codec pair. 
       consumes:
         - application/json
       parameters:
@@ -567,7 +581,7 @@ paths:
       tags:
       - "Encoding"
       operationId: getEncodingInfo
-      description: Fetch the properties of an existing Group
+      description: Get the encoding information corresponding to the encoding id. 
       produces:
         - application/json
       responses:
@@ -590,7 +604,7 @@ paths:
       tags:
       - "Codecs"
       operationId: getCodecsList
-      description: Fetch the properties of an existing Group
+      description: Get codecs for the group. 
       produces:
         - application/json
       responses:
@@ -606,7 +620,7 @@ paths:
       tags:
       - "Codecs"
       operationId: addCodec
-      description: Adds a new codec to the group
+      description: Adds a new codec to the group.
       consumes:
         - application/json
       parameters:

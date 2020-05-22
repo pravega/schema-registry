@@ -99,7 +99,7 @@ public class GroupProperties   {
     return versionedBySchemaName;
   }
 
-  public void setVersionBySchemaName(Boolean versionedBySchemaName) {
+  public void setVersionedBySchemaName(Boolean versionedBySchemaName) {
     this.versionedBySchemaName = versionedBySchemaName;
   }
 

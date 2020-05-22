@@ -41,6 +41,7 @@ public abstract class GroupsApiService {
     public abstract Response canRead(String groupName,CanReadRequest canReadRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response createGroup(CreateGroupRequest createGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response deleteSchemaVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getCodecsList(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingInfo(String groupName,Integer encodingId,SecurityContext securityContext) throws NotFoundException;
