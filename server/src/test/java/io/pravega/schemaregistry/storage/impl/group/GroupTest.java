@@ -438,7 +438,7 @@ public class GroupTest {
         GroupProperties groupProperties = integerGroup.getGroupProperties().join();
         assertEquals(SchemaType.Custom, groupProperties.getSchemaType());
         assertEquals(SchemaValidationRules.of(Compatibility.backward()), groupProperties.getSchemaValidationRules());
-        assertTrue(groupProperties.isVersionBySchemaName());
+        assertTrue(groupProperties.isVersionedBySchemaName());
         assertEquals(Collections.singletonMap("key", "value"), groupProperties.getProperties());
     }
 
