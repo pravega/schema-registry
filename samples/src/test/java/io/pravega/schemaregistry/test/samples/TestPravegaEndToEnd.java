@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.test.samples;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.schemaregistry.service.Config;
+import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import org.junit.Before;

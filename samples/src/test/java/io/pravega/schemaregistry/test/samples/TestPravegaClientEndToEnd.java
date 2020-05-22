@@ -39,6 +39,7 @@ import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;

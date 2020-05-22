@@ -7,7 +7,7 @@
  * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.test.samples;
+package io.pravega.schemaregistry.pravegastandalone;
 
 import io.pravega.local.LocalPravegaEmulator;
 import lombok.SneakyThrows;
@@ -15,7 +15,7 @@ import lombok.Synchronized;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-class PravegaStandaloneUtils {
+public class PravegaStandaloneUtils {
     private static final AtomicReference<PravegaStandaloneUtils> SINGLETON = new AtomicReference<>();
     private final LocalPravegaEmulator localPravega;
 
@@ -36,14 +36,14 @@ class PravegaStandaloneUtils {
     }
 
     @Synchronized
-    static PravegaStandaloneUtils startPravega() {
+    public static PravegaStandaloneUtils startPravega() {
         if (SINGLETON.get() == null) {
             SINGLETON.set(new PravegaStandaloneUtils());
         }
         return SINGLETON.get();
     }
 
-    String getControllerURI() {
+    public String getControllerURI() {
         return localPravega.getInProcPravegaCluster().getControllerURI();
     }
 }
