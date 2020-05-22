@@ -116,7 +116,7 @@ public class SchemaRegistryServiceTest {
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getGroupProperties(anyString());
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> service.getGroupProperties("mygroup"), e -> e instanceof RuntimeException);
+                () -> service.getGroupProperties("mygroup").join(), e -> e instanceof RuntimeException);
     }
 
     @Test
@@ -131,6 +131,12 @@ public class SchemaRegistryServiceTest {
             return CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Avro, SchemaValidationRules.of(Compatibility.forward()), false, Collections.singletonMap("Encode", "false")));
         }).when(store).getGroupProperties(anyString());
         service.updateSchemaValidationRules("mygroup", SchemaValidationRules.of(Compatibility.backward()), SchemaValidationRules.of(Compatibility.forward()));
+        doAnswer(x -> CompletableFuture.completedFuture(
+                new GroupProperties(SerializationFormat.Avro, SchemaValidationRules.of(Compatibility.forward()), false,
+                        Collections.singletonMap("Encode", "false")))).when(store).getGroupProperties(anyString());
+        service.updateSchemaValidationRules("mygroup", SchemaValidationRules.of(Compatibility.backward()), null).join();
+        service.updateSchemaValidationRules("mygroup", SchemaValidationRules.of(Compatibility.backward()),
+                SchemaValidationRules.of(Compatibility.forward())).join();
         // PreconditionFailed Exception
         doAnswer(x -> CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Avro, SchemaValidationRules.of
                 (Compatibility.backward()), false, Collections.singletonMap("Encode", "false")))).when(store).getGroupProperties(anyString());
@@ -279,7 +285,7 @@ public class SchemaRegistryServiceTest {
         AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getEncodingId("mygroup", versionInfo, CodecType.GZip).join(), e -> e instanceof StoreExceptions.DataNotFoundException);
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getEncodingId(anyString(), any(), any());
-        AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getEncodingId("mygroup",any(), any()).join(), e -> e instanceof RuntimeException);
+        AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getEncodingId("mygroup",versionInfo, CodecType.GZip).join(), e -> e instanceof RuntimeException);
     }
 
     @Test

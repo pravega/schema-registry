@@ -73,11 +73,12 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()),
                 false, Collections.singletonMap("Encode", Boolean.toString(false)));
+        ContinuationToken continuationToken = ContinuationToken.EMPTY;
         doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();
             map.put("group1", group1);
             map.put("group2", null);
-            return CompletableFuture.completedFuture(new MapWithToken<>(map, null));
+            return CompletableFuture.completedFuture(new MapWithToken<>(map, continuationToken));
         }).when(service).listGroups(any(), anyInt());
 
         Future<Response> future = target(GROUPS).queryParam("limit", 100).request().async().get();
@@ -89,7 +90,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         doAnswer(x ->
             Futures.failedFuture(new RuntimeException())
         ).when(service).listGroups(any(), anyInt());
-        response = target(GROUPS).request().async().get().get();
+        response = target(GROUPS).queryParam("limit", 100).request().async().get().get();
         assertEquals(response.getStatus(), 500);
     }
 
@@ -127,8 +128,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         doAnswer(x -> CompletableFuture.completedFuture(null)).when(service).deleteGroup(anyString());
         Response response = target(GROUPS + "/" + groupName).request().async().delete().get();
         assertEquals(204, response.getStatus());
-        //GroupNotFound Exception
-        // corresponding code not there in ResourceImpl
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).deleteGroup(anyString());
         response = target(GROUPS + "/" + groupName).request().async().delete().get();
@@ -154,36 +153,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getGroupProperties(anyString());
         response = target(GROUPS + "/" + groupName).request().async().get().get();
-        assertEquals(500, response.getStatus());
-    }
-
-    @Test
-    public void testGetGroupHistory() throws ExecutionException, InterruptedException {
-        byte[] schemaData = new byte[0];
-        io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
-                new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SchemaType.Avro, schemaData,
-                        Collections.singletonMap("key", "value"));
-        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", 5, 5),
-                SchemaValidationRules.of(Compatibility.allowAny()), 100, "describeSchema");
-        List<GroupHistoryRecord> groupHistoryRecords = new ArrayList<>();
-        groupHistoryRecords.add(groupHistoryRecord);
-        doAnswer(x -> CompletableFuture.completedFuture(groupHistoryRecords)).when(service).getGroupHistory(
-                anyString(), eq(null));
-        String groupName = "mygroup";
-        Response response = target(GROUPS + "/" + groupName + "/history").request().async().get().get();
-        assertEquals(200, response.getStatus());
-        GroupHistory groupHistory = response.readEntity(GroupHistory.class);
-        assertEquals(1, groupHistory.getHistory().size());
-        assertEquals("describeSchema",groupHistory.getHistory().get(0).getSchemaString());
-        // GroupNotFound Exception
-        doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                service).getGroupHistory(anyString(), eq(null));
-        response = target(GROUPS + "/" + groupName + "/history").request().async().get().get();
-        assertEquals(404, response.getStatus());
-        // Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getGroupHistory(anyString(), eq(null));
-        response = target(GROUPS + "/" + groupName + "/history").request().async().get().get();
         assertEquals(500, response.getStatus());
     }
 
@@ -256,7 +225,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     @Test
     public void testGetSchemaValidationRules() throws ExecutionException, InterruptedException {
         String groupName = "mygroup";
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom, SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE, Collections.singletonMap("key", "value"));
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom, SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE, Collections.singletonMap("key", "value"));
         doAnswer(x -> CompletableFuture.completedFuture(groupProperties)).when(service).getGroupProperties(anyString());
         Response response = target(GROUPS + "/" + groupName + "/rules").request().async().get().get();
         assertEquals(200, response.getStatus());
@@ -421,11 +390,11 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
                 service).getSchema(anyString(), anyInt());
-        response = target(GROUPS + "/" + groupName + "/schemas/versions" + version).request().async().get().get();
+        response = target(GROUPS + "/" + groupName + "/schemas/versions/" + version).request().async().get().get();
         assertEquals(404, response.getStatus());
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getSchema(anyString(), anyInt());
-        response = target(GROUPS + "/" + groupName + "/schemas/versions" + version).request().async().get().get();
+        response = target(GROUPS + "/" + groupName + "/schemas/versions/" + version).request().async().get().get();
         assertEquals(500, response.getStatus());
     }
 

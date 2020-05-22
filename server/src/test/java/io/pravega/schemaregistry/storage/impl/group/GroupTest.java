@@ -1,3 +1,12 @@
+/**
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+ * <p>
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ */
 package io.pravega.schemaregistry.storage.impl.group;
 
 import io.pravega.schemaregistry.common.Either;
@@ -7,6 +16,8 @@ import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Executors;
@@ -309,7 +320,7 @@ public class GroupTest {
     public void testGetGroupLatestSchemaVersion() {
         // null case
         SchemaWithVersion schemaWithVersion = integerGroup.getGroupLatestSchemaVersion().join();
-        assertEquals(null, schemaWithVersion);
+        assertNull(schemaWithVersion);
         // non-null case
         integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
@@ -336,12 +347,12 @@ public class GroupTest {
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo1).join();
         // null
         schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup2").join();
-        assertEquals(null, schemaWithVersion);
+        assertNull(schemaWithVersion);
         // non-null
         schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup1").join();
         assertEquals(versionInfo1, schemaWithVersion.getVersion());
         schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup").join();
-        assertEquals(schemaInfo.getSchemaData(), schemaWithVersion.getSchema().getSchemaData());
+        assertTrue(Arrays.equals(schemaInfo.getSchemaData(), schemaWithVersion.getSchema().getSchemaData()));
     }
 
     @Test
@@ -399,8 +410,8 @@ public class GroupTest {
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         groupHistoryRecords = integerGroup.getHistory("anygroup1").join();
         assertEquals(2, groupHistoryRecords.size());
-        assertEquals(schemaData, groupHistoryRecords.get(0).getSchema().getSchemaData());
-        assertEquals(schemaData1, groupHistoryRecords.get(1).getSchema().getSchemaData());
+        assertTrue(Arrays.equals(schemaData, groupHistoryRecords.get(0).getSchema().getSchemaData()));
+        assertTrue(Arrays.equals(schemaData1, groupHistoryRecords.get(1).getSchema().getSchemaData()));
     }
 
     @Test
