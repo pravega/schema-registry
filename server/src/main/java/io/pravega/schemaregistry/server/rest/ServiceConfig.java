@@ -30,10 +30,10 @@ public class ServiceConfig implements ServerConfig {
     private final String tlsKeyPasswordFilePath;
     private final boolean authEnabled;
     private final String userPasswordFile;
-    
-    private ServiceConfig(String host, int port, boolean tlsEnabled, String tlsCertFile, String tlsTrustStore, 
-                          String tlsKeyFilePath, String tlsKeyPasswordFilePath, boolean authEnabled, String userPasswordFile) {
-        this.userPasswordFile = userPasswordFile;
+    private final String tokenSigningKey;
+
+    private ServiceConfig(String host, int port, boolean tlsEnabled, String tlsCertFile, String tlsTrustStore,
+                          String tlsKeyFilePath, String tlsKeyPasswordFilePath, boolean authEnabled, String userPasswordFile, String tokenSigningKey) {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
         Exceptions.checkArgument(!tlsEnabled || (!Strings.isNullOrEmpty(tlsCertFile) &&
@@ -47,17 +47,16 @@ public class ServiceConfig implements ServerConfig {
         this.tlsKeyPasswordFilePath = tlsKeyPasswordFilePath;
         this.tlsTrustStore = tlsTrustStore;
         this.authEnabled = authEnabled;
+        this.userPasswordFile = userPasswordFile;
+        this.tokenSigningKey = tokenSigningKey;
     }
 
     public static final class ServiceConfigBuilder {
         private String host = "0.0.0.0";
         private int port = 9092;
         private boolean tlsEnabled = false;
-        private String tlsCertFile = "";
-        private String tlsKeyFilePath = "";
-        private String tlsKeyPasswordFilePath = "";
-        private String tlsTrustStore = "";
         private boolean authEnabled = false;
+        private String tokenSigningKey = "";
     }
     
     @Override
@@ -68,6 +67,7 @@ public class ServiceConfig implements ServerConfig {
         return new StringBuilder(String.format("%s(", getClass().getSimpleName()))
                 .append(String.format("host: %s, ", host))
                 .append(String.format("port: %d, ", port))
+                .append(String.format("authEnabled: %b, ", authEnabled))
                 .toString();
     }
 }

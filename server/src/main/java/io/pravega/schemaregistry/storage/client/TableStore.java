@@ -28,7 +28,6 @@ import io.pravega.common.util.ContinuationTokenAsyncIterator;
 import io.pravega.common.util.RetriesExhaustedException;
 import io.pravega.controller.server.SegmentHelper;
 import io.pravega.controller.server.WireCommandFailedException;
-import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
 import io.pravega.controller.store.host.HostStoreException;
 import io.pravega.controller.store.stream.PravegaTablesStoreHelper;
 import io.pravega.controller.store.stream.StoreException;
@@ -64,19 +63,19 @@ public class TableStore {
     private static final int NUM_OF_RETRIES = 15; // approximately 1 minute worth of retries
     private final SegmentHelper segmentHelper;
     private final HostStoreImpl hostStore;
-    private final GrpcAuthHelper authHelper;
     private final int numOfRetries;
     private final ScheduledExecutorService executor;
     private final AtomicReference<String> authToken;
     private final Cache<TableCacheKey, Version.VersionedRecord<?>> cache;
-
-    public TableStore(ClientConfig clientConfig, GrpcAuthHelper authHelper, ScheduledExecutorService executor) {
+    private final Supplier<String> masterTokenSupplier;
+    
+    public TableStore(ClientConfig clientConfig, Supplier<String> masterTokenSupplier, ScheduledExecutorService executor) {
         ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
-        this.authHelper = authHelper;
         hostStore = new HostStoreImpl(clientConfig, executor);
         segmentHelper = new SegmentHelper(connectionFactory, hostStore);
         this.executor = executor;
-        this.authToken = new AtomicReference<>(authHelper.retrieveMasterToken());
+        this.masterTokenSupplier = masterTokenSupplier;
+        this.authToken = new AtomicReference<>(this.masterTokenSupplier.get());
         numOfRetries = NUM_OF_RETRIES;
         this.cache = CacheBuilder.newBuilder()
                                  .maximumSize(10000)
@@ -141,7 +140,7 @@ public class TableStore {
                 return new TableEntryImpl<>(new TableKeyImpl<>(x.getKey(), version), x.getValue().getKey());
             }).collect(Collectors.toList());
 
-            return segmentHelper.updateTableEntries(tableName, entries, authHelper.retrieveMasterToken(), RequestTag.NON_EXISTENT_ID)
+            return segmentHelper.updateTableEntries(tableName, entries, authToken.get(), RequestTag.NON_EXISTENT_ID)
                                 .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
                                                        .collect(Collectors.toList()));
         }, () -> String.format("update entries : %s", tableName), tableName, true);
@@ -309,7 +308,7 @@ public class TableStore {
                         hostStore.invalidateCache(tableName);
                         break;
                     case AuthFailed:
-                        authToken.set(authHelper.retrieveMasterToken());
+                        authToken.set(this.masterTokenSupplier.get());
                         toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, wcfe, errorMessage);
                         break;
                     case SegmentDoesNotExist:

@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.service;
 
 import io.pravega.client.ClientConfig;
 import io.pravega.schemaregistry.server.rest.RestServer;
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.schemaregistry.storage.StoreType;
@@ -28,8 +29,9 @@ public class Main {
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(Config.THREAD_POOL_SIZE);
 
         SchemaStore schemaStore;
+        ServiceConfig serviceConfig = Config.SERVICE_CONFIG;
         if (Config.STORE_TYPE.equals(StoreType.Pravega.name())) {
-            schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
+            schemaStore = SchemaStoreFactory.createPravegaStore(serviceConfig, clientConfig, executor);
         } else if (Config.STORE_TYPE.equals(StoreType.Pravega.name())) {
             schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
         } else {
@@ -38,7 +40,7 @@ public class Main {
         
         SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
 
-        RestServer restServer = new RestServer(service, Config.SERVICE_CONFIG);
+        RestServer restServer = new RestServer(service, serviceConfig);
         restServer.startAsync();
         log.info("Awaiting start of REST server");
         restServer.awaitRunning();

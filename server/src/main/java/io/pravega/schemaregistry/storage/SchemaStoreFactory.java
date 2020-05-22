@@ -10,13 +10,18 @@
 package io.pravega.schemaregistry.storage;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.controller.server.rpc.auth.GrpcAuthHelper;
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
 import io.pravega.schemaregistry.storage.impl.groups.PravegaKVGroups;
+import io.pravega.shared.security.token.JsonWebToken;
 
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
+
+import static io.pravega.auth.AuthHandler.Permissions.READ_UPDATE;
 
 /**
  * Factory for creating schema store of different types. 
@@ -26,8 +31,21 @@ public class SchemaStoreFactory {
         return new SchemaStoreImpl<>(new InMemoryGroups(executor));
     }
     
-    public static SchemaStore createPravegaStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
-        TableStore tableStore = new TableStore(clientConfig, GrpcAuthHelper.getDisabledAuthHelper(), executor);
+    public static SchemaStore createPravegaStore(ServiceConfig serviceConfig, ClientConfig clientConfig, ScheduledExecutorService executor) {
+        TableStore tableStore = new TableStore(clientConfig, () -> retrieveMasterToken(serviceConfig), executor);
         return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor));
     }
+
+    private static String retrieveMasterToken(ServiceConfig config) {
+        if (config.isAuthEnabled()) {
+            Map<String, Object> customClaims = new HashMap<>();
+            customClaims.put("*", String.valueOf(READ_UPDATE));
+
+            return new JsonWebToken("segmentstoreresource", "segmentstore", config.getTokenSigningKey().getBytes(),
+                    null, customClaims).toCompactString();
+        } else {
+            return "";
+        }
+    }
+
 }
