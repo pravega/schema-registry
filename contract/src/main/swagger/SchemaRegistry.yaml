@@ -207,7 +207,7 @@ paths:
           description: Write conflict 
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas:
+  /groups/{groupName}/schemas/names:
     parameters:
       - in: path
         name: groupName
@@ -237,6 +237,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: schemaName
+        type: string
+        description: Schema Name
     get:
       tags:
       - "Schema"
@@ -374,6 +378,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: schemaName
+        type: string
+        description: Schema Name
     get:
       tags:
       - "Schema"
@@ -462,62 +470,6 @@ paths:
           description: Schema can be used to read
           canRead:
              $ref: "#/definitions/CanRead"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/{schemaName}/versions:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: schemaName
-        description: Schema name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getSchemasForSchemaName
-      description: Fetch all schemas registered with the given schema name
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Versioned history of schemas registered under the group of specified schema type
-          schema:
-            $ref: "#/definitions/SchemaVersionsList"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/{schemaName}/versions/latest:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: schemaName
-        description: Schema name 
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getLatestSchemaForSchemaName
-      description: Get latest schema for the schemaName for the group. 
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Found latest schema in name
-          schema:
-            $ref: "#/definitions/SchemaWithVersion"
         404:
           description: Group with given name not found
         500:

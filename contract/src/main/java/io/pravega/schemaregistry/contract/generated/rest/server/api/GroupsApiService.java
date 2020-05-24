@@ -37,7 +37,7 @@ import javax.validation.constraints.*;
 
 public abstract class GroupsApiService {
     public abstract Response addCodec(String groupName,AddCodec addCodec,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response addSchema(String groupName,AddSchemaRequest addSchemaRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response addSchema(String groupName,AddSchemaRequest addSchemaRequest, String schemaName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response canRead(String groupName,CanReadRequest canReadRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response createGroup(CreateGroupRequest createGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName,SecurityContext securityContext) throws NotFoundException;
@@ -47,14 +47,12 @@ public abstract class GroupsApiService {
     public abstract Response getEncodingInfo(String groupName,Integer encodingId,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupHistory(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupProperties(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getLatestSchema(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getLatestSchemaForSchemaName(String groupName,String schemaName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getLatestSchema(String groupName, String schemaName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaFromVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaNames(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaValidationRules(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaVersion(String groupName,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemas(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemasForSchemaName(String groupName,String schemaName,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemas(String groupName, String schemaName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response listGroups( String continuationToken, Integer limit,SecurityContext securityContext) throws NotFoundException;
     public abstract Response updateSchemaValidationRules(String groupName,UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response validate(String groupName,ValidateRequest validateRequest,SecurityContext securityContext) throws NotFoundException;
