@@ -181,7 +181,7 @@ public class ApiV1 {
                                  @ApiParam(value = "Schema Name") @QueryParam("schemaName") String schemaName);
         
         @GET
-        @Path("/{groupName}/schemas")
+        @Path("/{groupName}/schemas/names")
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch all schema names under a Group.", response = SchemaNamesList.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
