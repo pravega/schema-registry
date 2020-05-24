@@ -291,7 +291,7 @@ paths:
           description: Invalid schema type
         500:
           description: Internal server error while creating a Group
-  /groups/{groupName}/schemas/versions/search:
+  /groups/{groupName}/schemas/versions/find:
     parameters:
       - in: path
         name: groupName

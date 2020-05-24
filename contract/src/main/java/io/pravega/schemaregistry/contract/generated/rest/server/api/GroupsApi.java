@@ -327,7 +327,7 @@ public class GroupsApi  {
         return delegate.getSchemaValidationRules(groupName,securityContext);
     }
     @POST
-    @Path("/{groupName}/schemas/versions/search")
+    @Path("/{groupName}/schemas/versions/find")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchema", response = VersionInfo.class, tags={ "Schema", })

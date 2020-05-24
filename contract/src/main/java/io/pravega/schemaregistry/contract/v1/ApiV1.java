@@ -235,7 +235,7 @@ public class ApiV1 {
         Response getSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
 
         @POST
-        @Path("/{groupName}/schemas/versions/search")
+        @Path("/{groupName}/schemas/versions/find")
         @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags = {"Schema", })
@@ -464,7 +464,7 @@ public class ApiV1 {
         void getSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
-        @Path("/{groupName}/schemas/versions/search")
+        @Path("/{groupName}/schemas/versions/find")
         @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Get the version for the schema if it is registered.", response = VersionInfo.class, tags = {"Schema", })
