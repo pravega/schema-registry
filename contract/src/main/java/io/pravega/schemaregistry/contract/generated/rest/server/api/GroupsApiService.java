@@ -22,7 +22,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaNamesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
-import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
@@ -54,6 +54,6 @@ public abstract class GroupsApiService {
     public abstract Response getSchemaVersion(String groupName,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemas(String groupName, String schemaName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response listGroups( String continuationToken, Integer limit,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response updateSchemaValidationRules(String groupName,UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response updateSchemaValidationRules(String groupName,UpdateValidationRulesRequest updateValidationRulesRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response validate(String groupName,ValidateRequest validateRequest,SecurityContext securityContext) throws NotFoundException;
 }

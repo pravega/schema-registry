@@ -185,7 +185,7 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: UpdateValidationRulesPolicyRequest
+          name: UpdateValidationRulesRequest
           description: update group policy
           required: true
           schema:

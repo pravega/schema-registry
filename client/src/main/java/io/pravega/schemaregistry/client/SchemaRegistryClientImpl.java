@@ -37,7 +37,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaNamesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
@@ -149,7 +149,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @SneakyThrows
     @Override
     public void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules) {
-        UpdateValidationRulesPolicyRequest request = new UpdateValidationRulesPolicyRequest()
+        UpdateValidationRulesRequest request = new UpdateValidationRulesRequest()
                 .validationRules(ModelHelper.encode(validationRules));
 
         Response response = proxy.updateSchemaValidationRules(groupId, request);

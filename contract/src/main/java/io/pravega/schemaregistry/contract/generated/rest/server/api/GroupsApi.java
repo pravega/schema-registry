@@ -24,7 +24,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaNamesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
-import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesPolicyRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
@@ -389,10 +389,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response updateSchemaValidationRules(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "update group policy" ,required=true) UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest
+,@ApiParam(value = "update group policy" ,required=true) UpdateValidationRulesRequest updateValidationRulesRequest
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.updateSchemaValidationRules(groupName,updateValidationRulesPolicyRequest,securityContext);
+        return delegate.updateSchemaValidationRules(groupName,updateValidationRulesRequest,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions/validate")
