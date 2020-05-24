@@ -22,17 +22,17 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * UpdateValidationRulesPolicyRequest
+ * UpdateValidationRulesRequest
  */
 
-public class UpdateValidationRulesPolicyRequest   {
+public class UpdateValidationRulesRequest   {
   @JsonProperty("validationRules")
   private SchemaValidationRules validationRules = null;
 
   @JsonProperty("previousRules")
   private SchemaValidationRules previousRules = null;
 
-  public UpdateValidationRulesPolicyRequest validationRules(SchemaValidationRules validationRules) {
+  public UpdateValidationRulesRequest validationRules(SchemaValidationRules validationRules) {
     this.validationRules = validationRules;
     return this;
   }
@@ -52,7 +52,7 @@ public class UpdateValidationRulesPolicyRequest   {
     this.validationRules = validationRules;
   }
 
-  public UpdateValidationRulesPolicyRequest previousRules(SchemaValidationRules previousRules) {
+  public UpdateValidationRulesRequest previousRules(SchemaValidationRules previousRules) {
     this.previousRules = previousRules;
     return this;
   }
@@ -80,9 +80,9 @@ public class UpdateValidationRulesPolicyRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    UpdateValidationRulesPolicyRequest updateValidationRulesPolicyRequest = (UpdateValidationRulesPolicyRequest) o;
-    return Objects.equals(this.validationRules, updateValidationRulesPolicyRequest.validationRules) &&
-        Objects.equals(this.previousRules, updateValidationRulesPolicyRequest.previousRules);
+    UpdateValidationRulesRequest updateValidationRulesRequest = (UpdateValidationRulesRequest) o;
+    return Objects.equals(this.validationRules, updateValidationRulesRequest.validationRules) &&
+        Objects.equals(this.previousRules, updateValidationRulesRequest.previousRules);
   }
 
   @Override
@@ -94,7 +94,7 @@ public class UpdateValidationRulesPolicyRequest   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class UpdateValidationRulesPolicyRequest {\n");
+    sb.append("class UpdateValidationRulesRequest {\n");
     
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    previousRules: ").append(toIndentedString(previousRules)).append("\n");

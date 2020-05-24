@@ -26,14 +26,15 @@ public class TableKeySerializer extends VersionedSerializer.MultiType<TableRecor
                .serializer(TableRecords.ValidationPolicyKey.class, 2, new TableRecords.ValidationPolicyKey.Serializer())
                .serializer(TableRecords.Etag.class, 3, new TableRecords.Etag.Serializer())
                .serializer(TableRecords.GroupPropertyKey.class, 4, new TableRecords.GroupPropertyKey.Serializer())
-               .serializer(TableRecords.SchemaInfoKey.class, 5, new TableRecords.SchemaInfoKey.Serializer())
+               .serializer(TableRecords.SchemaFingerprintKey.class, 5, new TableRecords.SchemaFingerprintKey.Serializer())
                .serializer(TableRecords.EncodingInfoRecord.class, 6, new TableRecords.EncodingInfoRecord.Serializer())
                .serializer(TableRecords.EncodingIdRecord.class, 7, new TableRecords.EncodingIdRecord.Serializer())
                .serializer(TableRecords.LatestEncodingIdKey.class, 8, new TableRecords.LatestEncodingIdKey.Serializer())
                .serializer(TableRecords.LatestSchemaVersionKey.class, 9, new TableRecords.LatestSchemaVersionKey.Serializer())
                .serializer(TableRecords.LatestSchemaVersionForSchemaNameKey.class, 10, new TableRecords.LatestSchemaVersionForSchemaNameKey.Serializer())
                .serializer(TableRecords.CodecsKey.class, 11, new TableRecords.CodecsKey.Serializer())
-               .serializer(TableRecords.SchemaNamesKey.class, 12, new TableRecords.SchemaNamesKey.Serializer());
+               .serializer(TableRecords.SchemaNamesKey.class, 12, new TableRecords.SchemaNamesKey.Serializer())
+               .serializer(TableRecords.VersionDeletedRecord.class, 13, new TableRecords.VersionDeletedRecord.Serializer());
     }
 
     /**

@@ -354,7 +354,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getLatestSchema(anyString());
+        doReturn(response).when(proxy).getLatestSchema(anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
@@ -376,25 +376,17 @@ public class TestSchemaRegistryClient {
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> client.getLatestSchemaVersion("mygroup", null), e -> e instanceof RuntimeException);
-    }
-
-    @Test
-    public void testGetLatestSchemaBySchemaName() {
-        ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
-        Response response = mock(Response.class);
-        doReturn(response).when(proxy).getLatestSchemaForSchemaName(anyString(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
-        SchemaType schemaType = SchemaType.Any;
-        byte[] schemaData = new byte[0];
-        Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
-        SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
+        versionInfo = new VersionInfo("schema2", 5, 5);
+        schemaType = SchemaType.Any;
+        schemaData = new byte[0];
+        properties = new HashMap<>();
+        schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
+        schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class);
-        SchemaWithVersion schemaWithVersion1 = client.getLatestSchemaVersion("mygroup", "myobject");
+        schemaWithVersion1 = client.getLatestSchemaVersion("mygroup", "myobject");
         assertEquals(schemaWithVersion.getSchema(), schemaWithVersion1.getSchema());
         assertEquals(schemaWithVersion.getVersion(), schemaWithVersion1.getVersion());
         // NotFound Exception
@@ -406,7 +398,7 @@ public class TestSchemaRegistryClient {
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> client.getLatestSchemaVersion("mygroup", "myobject"), e -> e instanceof RuntimeException);
     }
-
+    
     @Test
     public void testGroupEvolutionHistory() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
@@ -427,7 +419,7 @@ public class TestSchemaRegistryClient {
         GroupHistory history = new GroupHistory();
         history.addHistoryItem(groupHistoryRecord);
         doReturn(history).when(response).readEntity(GroupHistory.class);
-        List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getEvolutionHistory("mygroup");
+        List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getGroupHistory("mygroup");
         assertEquals(1, groupHistoryList.size());
         assertEquals(schemaValidationRules, groupHistoryList.get(0).getRules());
         assertEquals(schemaInfo, groupHistoryList.get(0).getSchema());
@@ -437,27 +429,18 @@ public class TestSchemaRegistryClient {
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEvolutionHistory("mygroup"), e -> e instanceof ResourceNotFoundException);
+                () -> client.getGroupHistory("mygroup"), e -> e instanceof ResourceNotFoundException);
         //Runtime Exception
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEvolutionHistory("mygroup"), e -> e instanceof RuntimeException);
-    }
-
-    @Test
-    public void testGetHistoryBySchemaName() {
-        ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
-        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
-        Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemasForSchemaName(anyString(), anyString());
+                () -> client.getGroupHistory("mygroup"), e -> e instanceof RuntimeException);
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
-        SchemaType schemaType = SchemaType.Any;
-        byte[] schemaData = new byte[0];
-        Map<String, String> properties = new HashMap<>();
-        SchemaInfo schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
-        SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
+        versionInfo = new VersionInfo("schema2", 5, 5);
+        schemaType = SchemaType.Any;
+        schemaData = new byte[0];
+        properties = new HashMap<>();
+        schemaInfo = new SchemaInfo("schema1", schemaType, schemaData, properties);
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion schemaVersionAndRules = new io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion()
                 .schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo));
         SchemaVersionsList schemaList = new SchemaVersionsList();

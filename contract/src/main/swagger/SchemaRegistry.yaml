@@ -164,7 +164,7 @@ paths:
       tags:
       - "Group"
       operationId: getSchemaValidationRules
-      description: Fetch the properties of an existing Group
+      description: Fetch the schema validation rules configured for the Group
       produces:
         - application/json
       responses:
@@ -185,7 +185,7 @@ paths:
         - application/json
       parameters:
         - in: body
-          name: UpdateValidationRulesPolicyRequest
+          name: UpdateValidationRulesRequest
           description: update group policy
           required: true
           schema:
@@ -207,7 +207,7 @@ paths:
           description: Write conflict 
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas:
+  /groups/{groupName}/schemas/names:
     parameters:
       - in: path
         name: groupName
@@ -237,11 +237,15 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: schemaName
+        type: string
+        description: Schema Name
     get:
       tags:
       - "Schema"
       operationId: getSchemas
-      description: Fetch the properties of an existing Group
+      description: Get all schema versions for the group 
       produces:
         - application/json
       responses:
@@ -287,7 +291,7 @@ paths:
           description: Invalid schema type
         500:
           description: Internal server error while creating a Group
-  /groups/{groupName}/schemas/versions/search:
+  /groups/{groupName}/schemas/versions/find:
     parameters:
       - in: path
         name: groupName
@@ -341,7 +345,7 @@ paths:
       tags:
       - "Schema"
       operationId: getSchemaFromVersion
-      description: Fetch the properties of an existing Group
+      description: Get schema from the version ordinal that uniquely identifies the schema in the group. 
       produces:
         - application/json
       responses:
@@ -353,6 +357,20 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details  
+    delete:
+      tags:
+      - "Schema"
+      operationId: deleteSchemaVersion
+      description: Delete schema version from the group.
+      produces:
+        - application/json
+      responses:
+        204:
+          description: Schema corresponding to the version
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details  
   /groups/{groupName}/schemas/versions/latest:
     parameters:
       - in: path
@@ -360,11 +378,15 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: schemaName
+        type: string
+        description: Schema Name
     get:
       tags:
       - "Schema"
       operationId: getLatestSchema
-      description: Fetch the properties of an existing Group
+      description: Get latest schema for the group.
       produces:
         - application/json
       responses:
@@ -452,62 +474,6 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/{schemaName}/versions:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: schemaName
-        description: Schema name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getSchemasForSchemaName
-      description: Fetch all schemas registered with the given schema name
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Versioned history of schemas registered under the group of specified schema type
-          schema:
-            $ref: "#/definitions/SchemaVersionsList"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/{schemaName}/versions/latest:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: path
-        name: schemaName
-        description: Schema name 
-        required: true
-        type: string
-    get:
-      tags:
-      - "Schema"
-      operationId: getLatestSchemaForSchemaName
-      description: Fetch the properties of an existing Group
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Found latest schema in name
-          schema:
-            $ref: "#/definitions/SchemaWithVersion"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
   /groups/{groupName}/encodings:
     parameters:
       - in: path
@@ -519,7 +485,7 @@ paths:
       tags:
       - "Encoding"
       operationId: getEncodingId
-      description: Fetch the properties of an existing Group
+      description: Get an encoding id that uniquely identifies a schema version and codec pair. 
       consumes:
         - application/json
       parameters:
@@ -567,7 +533,7 @@ paths:
       tags:
       - "Encoding"
       operationId: getEncodingInfo
-      description: Fetch the properties of an existing Group
+      description: Get the encoding information corresponding to the encoding id. 
       produces:
         - application/json
       responses:
@@ -590,7 +556,7 @@ paths:
       tags:
       - "Codecs"
       operationId: getCodecsList
-      description: Fetch the properties of an existing Group
+      description: Get codecs for the group. 
       produces:
         - application/json
       responses:
@@ -606,7 +572,7 @@ paths:
       tags:
       - "Codecs"
       operationId: addCodec
-      description: Adds a new codec to the group
+      description: Adds a new codec to the group.
       consumes:
         - application/json
       parameters:

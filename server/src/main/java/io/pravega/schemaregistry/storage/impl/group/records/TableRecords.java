@@ -42,7 +42,8 @@ public interface TableRecords {
             ? extends ObjectBuilder<? extends TableValue>>> SERIALIZERS_BY_KEY_TYPE =
             ImmutableMap.<Class<? extends TableKey>, VersionedSerializer.WithBuilder<? extends TableValue, ? extends ObjectBuilder<? extends TableValue>>>builder()
                     .put(VersionKey.class, SchemaRecord.SERIALIZER)
-                    .put(SchemaInfoKey.class, SchemaVersionList.SERIALIZER)
+                    .put(VersionDeletedRecord.class, VersionDeletedRecord.SERIALIZER)
+                    .put(SchemaFingerprintKey.class, SchemaVersionList.SERIALIZER)
                     .put(GroupPropertyKey.class, GroupPropertiesRecord.SERIALIZER)
                     .put(ValidationPolicyKey.class, ValidationRecord.SERIALIZER)
                     .put(Etag.class, Etag.SERIALIZER)
@@ -263,18 +264,18 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class SchemaInfoKey implements TableKey {
+    class SchemaFingerprintKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final long fingerprint;
 
-        private static class SchemaInfoKeyBuilder implements ObjectBuilder<SchemaInfoKey> {
+        private static class SchemaFingerprintKeyBuilder implements ObjectBuilder<SchemaFingerprintKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaInfoKey, SchemaInfoKey.SchemaInfoKeyBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaFingerprintKey, SchemaFingerprintKey.SchemaFingerprintKeyBuilder> {
             @Override
-            protected SchemaInfoKey.SchemaInfoKeyBuilder newBuilder() {
-                return SchemaInfoKey.builder();
+            protected SchemaFingerprintKey.SchemaFingerprintKeyBuilder newBuilder() {
+                return SchemaFingerprintKey.builder();
             }
 
             @Override
@@ -287,11 +288,11 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(SchemaInfoKey e, RevisionDataOutput target) throws IOException {
+            private void write00(SchemaFingerprintKey e, RevisionDataOutput target) throws IOException {
                 target.writeLong(e.fingerprint);
             }
 
-            private void read00(RevisionDataInput source, SchemaInfoKey.SchemaInfoKeyBuilder b) throws IOException {
+            private void read00(RevisionDataInput source, SchemaFingerprintKey.SchemaFingerprintKeyBuilder b) throws IOException {
                 b.fingerprint(source.readLong());
             }
         }
@@ -372,6 +373,49 @@ public interface TableRecords {
             }
 
             private void read00(RevisionDataInput source, VersionKey.VersionKeyBuilder b) throws IOException {
+                b.ordinal(source.readInt());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class VersionDeletedRecord implements TableKey, TableValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final int ordinal;
+
+        @SneakyThrows
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class VersionDeletedRecordBuilder implements ObjectBuilder<VersionDeletedRecord> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<VersionDeletedRecord, VersionDeletedRecord.VersionDeletedRecordBuilder> {
+            @Override
+            protected VersionDeletedRecord.VersionDeletedRecordBuilder newBuilder() {
+                return VersionDeletedRecord.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(VersionDeletedRecord e, RevisionDataOutput target) throws IOException {
+                target.writeInt(e.ordinal);
+            }
+
+            private void read00(RevisionDataInput source, VersionDeletedRecord.VersionDeletedRecordBuilder b) throws IOException {
                 b.ordinal(source.readInt());
             }
         }

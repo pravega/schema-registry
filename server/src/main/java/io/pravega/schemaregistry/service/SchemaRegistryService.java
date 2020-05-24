@@ -275,6 +275,27 @@ public class SchemaRegistryService {
     }
 
     /**
+     * Delete schema corresponding to the version.
+     *
+     * @param group   Name of group.
+     * @param versionOrdinal Version which uniquely identifies schema within a group.
+     * @return CompletableFuture that holds Schema info corresponding to the version info.
+     */
+    public CompletableFuture<Void> deleteSchema(String group, int versionOrdinal) {
+        log.info("Group {}, delete schema for version {} .", group, versionOrdinal);
+        return RETRY.runAsync(() -> store.getGroupEtag(group)
+                                         .thenCompose(etag ->
+                                                 store.deleteSchema(group, versionOrdinal, etag)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, schema for verison {} deleted.", group, versionOrdinal);
+                        } else {
+                            log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
+                        }
+                    })), executor);
+    }
+
+    /**
      * Gets encoding info against the requested encoding Id.
      * Encoding Info uniquely identifies a combination of a schemaInfo and codecType.
      *
@@ -342,24 +363,24 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group, @Nullable String schemaName) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getGroupLatestSchemaVersion for {}.", group, schemaName);
+        log.info("Group {}, getLatestSchemaVersion for {}.", group, schemaName);
 
         if (schemaName == null) {
-            return store.getGroupLatestSchemaVersion(group)
+            return store.getLatestSchemaVersion(group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, getGroupLatestSchemaVersion = {}.", group, r.getVersion());
+                                log.info("Group {}, getLatestSchemaVersion = {}.", group, r.getVersion());
                             } else {
-                                log.warn("Group {}, getGroupLatestSchemaVersion failed with error", e, group);
+                                log.warn("Group {}, getLatestSchemaVersion failed with error", e, group);
                             }
                         });
         } else {
-            return store.getGroupLatestSchemaVersion(group, schemaName)
+            return store.getLatestSchemaVersion(group, schemaName)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, getGroupLatestSchemaVersion = {}.", group, schemaName, r.getVersion());
+                                log.info("Group {}, object type = {}, getLatestSchemaVersion = {}.", group, schemaName, r.getVersion());
                             } else {
-                                log.warn("Group {}, object type = {}, getGroupLatestSchemaVersion failed with error", e, group, schemaName);
+                                log.warn("Group {}, object type = {}, getLatestSchemaVersion failed with error", e, group, schemaName);
                             }
                         });
         }
@@ -385,7 +406,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {}, object type = {}, history size = {}.", group, schemaName, r.size());
                             } else {
-                                log.warn("Group {}, object type = {}, getGroupLatestSchemaVersion failed with error", e, group, schemaName);
+                                log.warn("Group {}, object type = {}, getLatestSchemaVersion failed with error", e, group, schemaName);
                             }
                         });
         } else {
@@ -394,7 +415,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {}, history size = {}.", group, r.size());
                             } else {
-                                log.warn("Group {}, getGroupLatestSchemaVersion failed with error", e, group);
+                                log.warn("Group {}, getLatestSchemaVersion failed with error", e, group);
                             }
                         });
 
@@ -590,10 +611,10 @@ public class SchemaRegistryService {
                 }
             } else {
                 if (groupProperties.isVersionedBySchemaName()) {
-                    schemasFuture = store.getGroupLatestSchemaVersion(group, schema.getName())
+                    schemasFuture = store.getLatestSchemaVersion(group, schema.getName())
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {
-                    schemasFuture = store.getGroupLatestSchemaVersion(group)
+                    schemasFuture = store.getLatestSchemaVersion(group)
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 }
             }

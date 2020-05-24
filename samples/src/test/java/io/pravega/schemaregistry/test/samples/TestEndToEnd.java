@@ -12,15 +12,20 @@ package io.pravega.schemaregistry.test.samples;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
+import io.pravega.schemaregistry.storage.StoreExceptions;
+import io.pravega.test.common.AssertExtensions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -113,14 +118,22 @@ public abstract class TestEndToEnd {
         SchemaInfo schemaInfo = new SchemaInfo(myTest, SchemaType.Avro, 
                 schema1.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
 
-        client.addSchema(group, schemaInfo);
-
+        VersionInfo version1 = client.addSchema(group, schemaInfo);
+        assertEquals(version1.getVersion(), 0);
+        assertEquals(version1.getOrdinal(), 0);
+        assertEquals(version1.getSchemaName(), myTest);
         // attempt to add an existing schema
-        client.addSchema(group, schemaInfo);
+        version1 = client.addSchema(group, schemaInfo);
+        assertEquals(version1.getVersion(), 0);
+        assertEquals(version1.getOrdinal(), 0);
+        assertEquals(version1.getSchemaName(), myTest);
 
         SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SchemaType.Avro,
                 schema2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
-        client.addSchema(group, schemaInfo2);
+        VersionInfo version2 = client.addSchema(group, schemaInfo2);
+        assertEquals(version2.getVersion(), 1);
+        assertEquals(version2.getOrdinal(), 1);
+        assertEquals(version2.getSchemaName(), myTest);
 
         client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()));
 
@@ -139,18 +152,50 @@ public abstract class TestEndToEnd {
         String myTest2 = "MyTest2";
         SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SchemaType.Avro,
                 schemaTest2.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
-        client.addSchema(group, schemaInfo4);
+        VersionInfo version3 = client.addSchema(group, schemaInfo4);
+        assertEquals(version3.getVersion(), 0);
+        assertEquals(version3.getOrdinal(), 2);
+        assertEquals(version3.getSchemaName(), myTest2);
 
         List<String> schemaNames = client.getSchemaNames(group);
         assertEquals(schemaNames.size(), 2);
         assertTrue(schemaNames.contains(myTest));
         assertTrue(schemaNames.contains(myTest2));
-        List<GroupHistoryRecord> groupEvolutionHistory = client.getEvolutionHistory(group);
+        List<GroupHistoryRecord> groupEvolutionHistory = client.getGroupHistory(group);
         assertEquals(groupEvolutionHistory.size(), 3);
         List<SchemaWithVersion> myTestHistory = client.getSchemaVersions(group, myTest);
         assertEquals(myTestHistory.size(), 2);
         List<SchemaWithVersion> myTest2History = client.getSchemaVersions(group, myTest2);
         assertEquals(myTest2History.size(), 1);
+        
+        // delete schemainfo2
+        EncodingId encodingId = client.getEncodingId(group, version2, CodecType.None);
+        assertEquals(encodingId.getId(), 0);
+        client.deleteSchemaVersion(group, version2);
+        SchemaInfo schema = client.getSchemaForVersion(group, version2);
+        assertEquals(schema, schemaInfo2);
+        AssertExtensions.assertThrows("", () -> client.getVersionForSchema(group, schemaInfo2), 
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException);
+        encodingId = client.getEncodingId(group, version2, CodecType.None);
+        assertEquals(encodingId.getId(), 0);
+        AssertExtensions.assertThrows("", () -> client.getEncodingId(group, version2, CodecType.GZip),
+                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException);
+        
+        groupEvolutionHistory = client.getGroupHistory(group);
+        assertEquals(groupEvolutionHistory.size(), 2);
+
+        myTestHistory = client.getSchemaVersions(group, myTest);
+        assertEquals(myTestHistory.size(), 1);
+        SchemaWithVersion schemaWithVersion = client.getLatestSchemaVersion(group, myTest);
+        assertEquals(schemaWithVersion.getVersion(), version1);
+        
+        schemaWithVersion = client.getLatestSchemaVersion(group, null);
+        assertEquals(schemaWithVersion.getVersion(), version3);
+        
+        // add the schema again. it should get a new version
+        VersionInfo version4 = client.addSchema(group, schemaInfo2);
+        assertEquals(version4.getOrdinal(), 3);
+        assertEquals(version4.getVersion(), 2);
     }
 
     abstract SchemaStore getStore();

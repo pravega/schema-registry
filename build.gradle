@@ -190,7 +190,6 @@ project('contract') {
         compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
         compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
-
     }
 
     javadoc {
@@ -279,6 +278,7 @@ project('server') {
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
         compile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
@@ -306,6 +306,8 @@ project('samples') {
         compile project(':client')
         compile project(':server') 
         compile project(':serializers')
+        compile group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile files(project(':server').sourceSets.test.output.classesDir)

@@ -38,8 +38,8 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     // for immutable keys check in the local cache. If its not in the cache, fetch it from the store and load it 
     // in the cache. 
     private static final List<Class<? extends TableRecords.TableKey>> IMMUTABLE_RECORDS =
-            Lists.newArrayList(TableRecords.VersionKey.class, TableRecords.GroupPropertyKey.class,
-                    TableRecords.EncodingIdRecord.class, TableRecords.EncodingInfoRecord.class);
+            Lists.newArrayList(TableRecords.VersionKey.class, TableRecords.VersionDeletedRecord.class, 
+                    TableRecords.GroupPropertyKey.class, TableRecords.EncodingIdRecord.class, TableRecords.EncodingInfoRecord.class);
 
     private final TableStore tablesStore;
     private final String tableName;
