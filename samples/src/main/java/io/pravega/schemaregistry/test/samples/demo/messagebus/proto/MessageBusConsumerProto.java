@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.test.samples.demo.messagebus.proto;
@@ -26,9 +26,9 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
@@ -51,7 +51,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -69,7 +68,7 @@ public class MessageBusConsumerProto {
         this.scope = scope;
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
-        initialize(groupId);
+        initialize();
         this.reader = createReader(groupId);
     }
 
@@ -131,16 +130,11 @@ public class MessageBusConsumerProto {
         }
     }
     
-    private void initialize(String groupId) {
+    private void initialize() {
         // create stream
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
-        SchemaType schemaType = SchemaType.Protobuf;
-        client.addGroup(groupId, schemaType,
-                SchemaValidationRules.of(Compatibility.allowAny()),
-                true, Collections.emptyMap());
     }
 
     @SneakyThrows
@@ -156,6 +150,9 @@ public class MessageBusConsumerProto {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
+                                                            .autoCreateGroup(SchemaType.Avro,
+                                                                    SchemaValidationRules.of(Compatibility.allowAny()),
+                                                                    true)
                                                             .autoRegisterSchema(true)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.test.samples.demo.messagebus.avro;
@@ -24,13 +24,11 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
@@ -44,7 +42,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
-import java.util.Collections;
 
 public class GenericConsumer {
     private final ClientConfig clientConfig;
@@ -60,7 +57,7 @@ public class GenericConsumer {
         this.scope = scope;
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
-        initialize(groupId);
+        initialize();
         this.reader = createReader(groupId);
     }
 
@@ -113,16 +110,11 @@ public class GenericConsumer {
         }
     }
     
-    private void initialize(String groupId) {
+    private void initialize() {
         // create stream
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
-        SchemaType schemaType = SchemaType.Avro;
-        client.addGroup(groupId, schemaType,
-                SchemaValidationRules.of(Compatibility.backward()),
-                true, Collections.emptyMap());
     }
 
     private EventStreamReader<GenericRecord> createReader(String groupId) {
@@ -130,6 +122,7 @@ public class GenericConsumer {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
+                                                            .autoCreateGroup(SchemaType.Avro, true)
                                                             .autoRegisterSchema(true)
                                                             .registryConfigOrClient(Either.right(client))
                                                             .build();

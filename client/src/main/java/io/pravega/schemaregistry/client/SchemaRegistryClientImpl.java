@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.client;
@@ -80,12 +80,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     @Override
-    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionBySchemaName, Map<String, String> properties) {
+    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean versionedBySchemaName, Map<String, String> properties) {
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaType schemaTypeModel = ModelHelper.encode(schemaType);
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
         CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .properties(properties).versionedBySchemaName(versionBySchemaName)
+                                                             .properties(properties).versionedBySchemaName(versionedBySchemaName)
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
 
@@ -123,14 +123,14 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             ListGroupsResponse entity = response.readEntity(ListGroupsResponse.class);
             Map<String, GroupProperties> map = entity.getGroups().entrySet().stream()
                                                      .collect(HashMap::new, (m, x) -> {
-                                                         if (x.getValue() == null) {
-                                                             m.put(x.getKey(), null);
-                                                         } else {
-                                                             SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
-                                                             SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
-                                                             m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionedBySchemaName(), x.getValue().getProperties()));
-                                                         }
-                                                     }, HashMap::putAll);
+                        if (x.getValue() == null) {
+                            m.put(x.getKey(), null);
+                        } else {
+                            SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
+                            SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
+                            m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isVersionedBySchemaName(), x.getValue().getProperties()));
+                        }
+                    }, HashMap::putAll);
             continuationToken = entity.getContinuationToken();
             result.putAll(map);
 

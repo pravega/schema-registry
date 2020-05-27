@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.test.samples.demo.sql;
@@ -21,16 +21,14 @@ import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
-import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericData;
@@ -44,7 +42,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -65,19 +62,18 @@ public class Writer1 {
     private static final Random RANDOM = new Random();
     
     private final ClientConfig clientConfig;
-    private final SchemaRegistryClient client;
+    private final SchemaRegistryClientConfig config;
     private final String scope;
     private final String stream;
     private final EventStreamWriter<GenericRecord> writer;
 
     private Writer1(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
-        SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(registryUri)).build();
-        client = SchemaRegistryClientFactory.createRegistryClient(config);
+        this.config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(registryUri)).build();
         this.scope = scope;
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
-        initialize(groupId);
+        initialize();
         this.writer = createWriter(groupId);
     }
 
@@ -131,17 +127,11 @@ public class Writer1 {
         }, executor);
     }
 
-    private void initialize(String groupId) {
+    private void initialize() {
         // create stream
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-
-        SchemaType schemaType = SchemaType.Avro;
-        client.addGroup(groupId, schemaType,
-                SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.emptyMap());
-        client.getGroupProperties(groupId);
     }
 
     private EventStreamWriter<GenericRecord> createWriter(String groupId) {
@@ -149,8 +139,10 @@ public class Writer1 {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
+                                                            .autoCreateGroup(SchemaType.Avro, SchemaValidationRules.of(Compatibility.backward()), 
+                                                                    false)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryConfigOrClient(Either.left(config))
                                                             .build();
 
         AvroSchema<GenericRecord> schema = AvroSchema.of(SCHEMA);
