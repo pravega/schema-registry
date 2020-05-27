@@ -32,3 +32,29 @@ spec:
             httpGet:
               path: /ping
               port: rest
+          {{- if or .Values.authentication.enabled .Values.tls.enabled }}
+          volumeMounts:
+          {{- if .Values.authentication.enabled }}
+          - name: {{ include "auth-volume.name" . }}
+            mountPath: {{ include "auth-volume.path" . }}
+            readOnly: true
+          {{- end }}
+          {{- if .Values.tls.enabled }}
+          - name: {{ include "tls-volume.name" . }}
+            mountPath: {{ include "tls-volume.path" . }}
+            readOnly: true
+          {{- end }}
+          {{- end }}
+      {{- if or .Values.authentication.enabled .Values.tls.enabled }}
+      volumes:
+      {{- if .Values.authentication.enabled }}
+      - name: {{ include "auth-volume.name" . }}
+        secret:
+          secretName: {{ .Values.authentication.passwordAuthSecret }}
+      {{- end }}
+      {{- if .Values.tls.enabled }}
+      - name: {{ include "tls-volume.name" . }}
+        secret:
+          secretName: {{ .Values.tls.secret }}
+      {{- end }}
+      {{- end }}

@@ -16,3 +16,21 @@ service:
 controller:
   ip: localhost
   port: 9090
+
+authentication:
+  enabled: false
+  # following values are considered only when
+  # authentication is enabled
+  passwordAuthSecret:
+  userPasswordFile:
+  tokenSigningKey:
+
+tls:
+  enabled: false
+  # following values are considered only when
+  # tls is enabled
+  secret:
+  certFile:
+  trustStore:
+  keyFile:
+  keyPasswordFile:

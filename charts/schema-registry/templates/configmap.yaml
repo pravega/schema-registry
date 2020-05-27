@@ -4,3 +4,15 @@ metadata:
   name: {{ include "schema-registry.configmap" . }}
 data:
   "CONTROLLER_URL": "tcp://{{ .Values.controller.ip }}:{{ .Values.controller.port }}"
+  "AUTHORIZATION_ENABLED": "{{ .Values.authentication.enabled }}"
+  "TLS_ENABLED": "{{ .Values.tls.enabled }}"
+  {{- if .Values.authentication.enabled }}
+  "USER_PASSWORD_FILE": "{{ include "auth-volume.path" . }}/{{ .Values.authentication.userPasswordFile }}"
+  "TOKEN_SIGNING_KEY": "{{ .Values.authentication.tokenSigningKey }}"
+  {{- end }}
+  {{- if .Values.tls.enabled }}
+  "TLS_CERT_FILE": "{{ include "tls-volume.path" . }}/{{ .Values.tls.certFile }}"
+  "TLS_TRUST_STORE": "{{ .Values.tls.trustStore }}"
+  "TLS_KEY_FILE": "{{ include "tls-volume.path" . }}/{{ .Values.tls.keyFile }}"
+  "TLS_KEY_PASSWORD_FILE": "{{ include "tls-volume.path" . }}/{{ .Values.tls.keyPasswordFile }}"
+  {{- end }}
