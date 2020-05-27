@@ -97,7 +97,7 @@ public class MessageBusProducerProto {
             cmd = parser.parse(options, args);
         } catch (ParseException e) {
             System.out.println(e.getMessage());
-            formatter.printHelp("avro-producer", options);
+            formatter.printHelp("protobuf-producer", options);
             
             System.exit(-1);
         }
@@ -168,7 +168,7 @@ public class MessageBusProducerProto {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(SchemaType.Avro,
+                                                            .autoCreateGroup(SchemaType.Protobuf,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
                                                             .autoRegisterSchema(true)

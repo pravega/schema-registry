@@ -72,7 +72,7 @@ public class SerDeDemo {
     }
 
     public static void main(String[] args) {
-        String filePath = args[0];
+        String filePath = args.length == 0 ? "" : args[0];
         SerDeDemo serDeDemo = new SerDeDemo("tcp://localhost:9090", "http://localhost:9092", 
                 UUID.randomUUID().toString(), UUID.randomUUID().toString(), filePath);
         EventStreamWriter<MyPojo> writer = serDeDemo.createWriter();

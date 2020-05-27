@@ -134,11 +134,13 @@ public class Group<V> {
     private CompletableFuture<List<TableRecords.SchemaRecord>> getSchemaRecords(int fromPos) {
         return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, TableRecords.LatestSchemaVersionValue.class)
                          .thenCompose(latestPos -> {
+                             int endPos = latestPos == null ? 0 : latestPos.getVersion().getOrdinal() + 1;
+
                              List<TableRecords.TableKey> keys = new ArrayList<>();
-                             List<TableRecords.VersionKey> versionKeys = IntStream.range(fromPos, latestPos.getVersion().getOrdinal() + 1)
+                             List<TableRecords.VersionKey> versionKeys = IntStream.range(fromPos, endPos)
                                                                                   .boxed().map(TableRecords.VersionKey::new)
                                                                                   .collect(Collectors.toList());
-                             List<TableRecords.VersionDeletedRecord> deletedKeys = IntStream.range(fromPos, latestPos.getVersion().getOrdinal() + 1)
+                             List<TableRecords.VersionDeletedRecord> deletedKeys = IntStream.range(fromPos, endPos)
                                                                                             .boxed().map(TableRecords.VersionDeletedRecord::new)
                                                                                             .collect(Collectors.toList());
                              keys.addAll(versionKeys);
