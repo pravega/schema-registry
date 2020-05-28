@@ -16,7 +16,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -24,7 +24,7 @@ import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.contract.exceptions.ResourceNotFoundException;
-import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
+import io.pravega.schemaregistry.contract.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
@@ -69,12 +69,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     @SneakyThrows
     @Override
-    public boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules, boolean allowMultipleSchemas, Map<String, String> properties) {
-        io.pravega.schemaregistry.contract.generated.rest.model.SchemaType schemaTypeModel = ModelHelper.encode(schemaType);
+    public boolean addGroup(String groupId, SerializationFormat serializationFormat, SchemaValidationRules validationRules, boolean allowMultipleTypes, Map<String, String> properties) {
+        io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat serializationFormatModel = ModelHelper.encode(serializationFormat);
 
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules compatibility = ModelHelper.encode(validationRules);
-        CreateGroupRequest request = new CreateGroupRequest().schemaType(schemaTypeModel)
-                                                             .properties(properties).allowMultipleSchemas(allowMultipleSchemas)
+        CreateGroupRequest request = new CreateGroupRequest().serializationFormat(serializationFormatModel)
+                                                             .properties(properties).allowMultipleTypes(allowMultipleTypes)
                                                              .groupName(groupId)
                                                              .validationRules(compatibility);
 
@@ -115,9 +115,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                         if (x.getValue() == null) {
                             m.put(x.getKey(), null);
                         } else {
-                            SchemaType schemaType = ModelHelper.decode(x.getValue().getSchemaType());
+                            SerializationFormat serializationFormat = ModelHelper.decode(x.getValue().getSerializationFormat());
                             SchemaValidationRules rules = ModelHelper.decode(x.getValue().getSchemaValidationRules());
-                            m.put(x.getKey(), new GroupProperties(schemaType, rules, x.getValue().isAllowMultipleSchemas(), x.getValue().getProperties()));
+                            m.put(x.getKey(), new GroupProperties(serializationFormat, rules, x.getValue().isAllowMultipleTypes(), x.getValue().getProperties()));
                         }
                     }, HashMap::putAll);
             continuationToken = entity.getContinuationToken();
@@ -186,7 +186,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
             throw new IncompatibleSchemaException("Schema is incompatible.");
         } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
-            throw new SchemaTypeMismatchException("Schema type is invalid.");
+            throw new SerializationFormatMismatchException("Schema type is invalid.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to addSchema.");
         }
@@ -247,8 +247,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaName) {
-        Response response = groupProxy.getLatestSchema(groupId, schemaName);
+    public SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String type) {
+        Response response = groupProxy.getLatestSchema(groupId, type);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             return processLatestSchemaResponse(response);
         } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
@@ -264,8 +264,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaName) {
-        Response response = groupProxy.getSchemaVersions(groupId, schemaName);
+    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String type) {
+        Response response = groupProxy.getSchemaVersions(groupId, type);
         if (response.getStatus() == Response.Status.OK.getStatusCode()) {
             SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
             return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());

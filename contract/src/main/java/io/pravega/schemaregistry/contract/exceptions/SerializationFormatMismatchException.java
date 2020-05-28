@@ -12,8 +12,8 @@ package io.pravega.schemaregistry.contract.exceptions;
 /**
  * Exception thrown when a schema type is different from the group property's schema type. 
  */
-public class SchemaTypeMismatchException extends RuntimeException {
-    public SchemaTypeMismatchException(String message) {
+public class SerializationFormatMismatchException extends RuntimeException {
+    public SerializationFormatMismatchException(String message) {
         super(message);
     }
 }

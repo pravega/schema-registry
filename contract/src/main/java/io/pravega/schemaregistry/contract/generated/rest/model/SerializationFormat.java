@@ -22,15 +22,15 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use schemaType.Custom and supply customTypeName.
+ * Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use serializationFormat.Custom and supply customTypeName.
  */
-@ApiModel(description = "Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use schemaType.Custom and supply customTypeName.")
+@ApiModel(description = "Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use serializationFormat.Custom and supply customTypeName.")
 
-public class SchemaType   {
+public class SerializationFormat   {
   /**
-   * Gets or Sets schemaType
+   * Gets or Sets serializationFormat
    */
-  public enum SchemaTypeEnum {
+  public enum SerializationFormatEnum {
     AVRO("Avro"),
     
     PROTOBUF("Protobuf"),
@@ -43,7 +43,7 @@ public class SchemaType   {
 
     private String value;
 
-    SchemaTypeEnum(String value) {
+    SerializationFormatEnum(String value) {
       this.value = value;
     }
 
@@ -54,8 +54,8 @@ public class SchemaType   {
     }
 
     @JsonCreator
-    public static SchemaTypeEnum fromValue(String text) {
-      for (SchemaTypeEnum b : SchemaTypeEnum.values()) {
+    public static SerializationFormatEnum fromValue(String text) {
+      for (SerializationFormatEnum b : SerializationFormatEnum.values()) {
         if (String.valueOf(b.value).equals(text)) {
           return b;
         }
@@ -64,33 +64,33 @@ public class SchemaType   {
     }
   }
 
-  @JsonProperty("schemaType")
-  private SchemaTypeEnum schemaType = null;
+  @JsonProperty("serializationFormat")
+  private SerializationFormatEnum serializationFormat = null;
 
   @JsonProperty("customTypeName")
   private String customTypeName = null;
 
-  public SchemaType schemaType(SchemaTypeEnum schemaType) {
-    this.schemaType = schemaType;
+  public SerializationFormat serializationFormat(SerializationFormatEnum serializationFormat) {
+    this.serializationFormat = serializationFormat;
     return this;
   }
 
   /**
-   * Get schemaType
-   * @return schemaType
+   * Get serializationFormat
+   * @return serializationFormat
    **/
-  @JsonProperty("schemaType")
+  @JsonProperty("serializationFormat")
   @ApiModelProperty(required = true, value = "")
   @NotNull
-  public SchemaTypeEnum getSchemaType() {
-    return schemaType;
+  public SerializationFormatEnum getSerializationFormat() {
+    return serializationFormat;
   }
 
-  public void setSchemaType(SchemaTypeEnum schemaType) {
-    this.schemaType = schemaType;
+  public void setSerializationFormat(SerializationFormatEnum serializationFormat) {
+    this.serializationFormat = serializationFormat;
   }
 
-  public SchemaType customTypeName(String customTypeName) {
+  public SerializationFormat customTypeName(String customTypeName) {
     this.customTypeName = customTypeName;
     return this;
   }
@@ -118,23 +118,23 @@ public class SchemaType   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaType schemaType = (SchemaType) o;
-    return Objects.equals(this.schemaType, schemaType.schemaType) &&
-        Objects.equals(this.customTypeName, schemaType.customTypeName);
+    SerializationFormat serializationFormat = (SerializationFormat) o;
+    return Objects.equals(this.serializationFormat, serializationFormat.serializationFormat) &&
+        Objects.equals(this.customTypeName, serializationFormat.customTypeName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaType, customTypeName);
+    return Objects.hash(serializationFormat, customTypeName);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaType {\n");
+    sb.append("class SerializationFormat {\n");
     
-    sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
+    sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
     sb.append("    customTypeName: ").append(toIndentedString(customTypeName)).append("\n");
     sb.append("}");
     return sb.toString();

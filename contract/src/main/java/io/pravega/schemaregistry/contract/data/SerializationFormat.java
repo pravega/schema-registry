@@ -17,11 +17,11 @@ import lombok.Setter;
  * Different types of serialization formats used for serializing data. 
  * Registry supports Avro, Protobuf and Json schema types but any custom type could be used with the registry using custom type. 
  *
- * If a schema type is not present in the enum it can be specified using {@link SchemaType#custom} with {@link SchemaType#customTypeName}. 
+ * If a schema type is not present in the enum it can be specified using {@link SerializationFormat#custom} with {@link SerializationFormat#customTypeName}. 
  * Allowed values of {@link Compatibility} mode with custom type are AllowAny or DenyAll.
  */
 
-public enum SchemaType {
+public enum SerializationFormat {
     Avro,
     Protobuf,
     Json,
@@ -35,10 +35,10 @@ public enum SchemaType {
     /**
      * Method to define a custom schema type with a custom name. 
      * @param customTypeName Custom type name. 
-     * @return {@link SchemaType#Custom} with supplied custom type name. 
+     * @return {@link SerializationFormat#Custom} with supplied custom type name. 
      */
-    public static SchemaType custom(String customTypeName) {
-        SchemaType type = SchemaType.Custom;
+    public static SerializationFormat custom(String customTypeName) {
+        SerializationFormat type = SerializationFormat.Custom;
         type.setCustomTypeName(customTypeName);
         return type;
     }

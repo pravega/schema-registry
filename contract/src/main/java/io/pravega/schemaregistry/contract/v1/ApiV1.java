@@ -166,7 +166,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         Response getSchemaVersions(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                   @ApiParam(value = "Schema Name") @QueryParam("schemaName") String schemaName);
+                                   @ApiParam(value = "Type") @QueryParam("type") String type);
 
         @GET
         @Path("/{groupName}/schemas/versions/latest")
@@ -177,14 +177,14 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         Response getLatestSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                 @ApiParam(value = "Schema Name") @QueryParam("schemaName") String schemaName);
+                                 @ApiParam(value = "Type") @QueryParam("type") String type);
 
         @GET
         @Path("/{groupName}/schemas")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by schema names under a Group.", response = SchemaVersionsList.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group.", response = SchemaVersionsList.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by schema names under the group", response = SchemaVersionsList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#type under the group", response = SchemaVersionsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         public Response getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
@@ -392,7 +392,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getSchemaVersions(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                               @ApiParam(value = "Schema Name") @QueryParam("schemaName") String schemaName,
+                               @ApiParam(value = "Type") @QueryParam("type") String type,
                                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
@@ -404,15 +404,15 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getLatestSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                             @ApiParam(value = "Schema Name") @QueryParam("schemaName") String schemaName,
+                             @ApiParam(value = "Type") @QueryParam("type") String type,
                              @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}/schemas")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by schema names under a Group.", response = SchemaVersionsList.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group.", response = SchemaVersionsList.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by schema names under the group", response = SchemaVersionsList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#type under the group", response = SchemaVersionsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         public void getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;

@@ -19,11 +19,11 @@ import java.util.Map;
 /**
  * Different configuration choices for a group. 
  * 
- * {@link GroupProperties#schemaType} identifies the serialization format and schema type used to describe the schema.
+ * {@link GroupProperties#serializationFormat} identifies the serialization format and schema type used to describe the schema.
  * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
- * {@link GroupProperties#allowMultipleSchemas} that specifies if multiple schemas with distinct {@link SchemaInfo#name} 
+ * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas with distinct {@link SchemaInfo#type} 
  * are allowed to coexist within the group. A schema describes an object and each object type is distinctly identified by
- * {@link SchemaInfo#name}. Registry service validates new schema with existing schema versions of the same name and versions
+ * {@link SchemaInfo#type}. Registry service validates new schema with existing schema versions of the same name and versions
  * it accordingly. Allowing multiple schemas, each versioned independently, allows applications to use schema registry groups
  * for streaming scenarios like event sourcing, or message bus where different types of events could be written to the same
  * stream. Similarly, a group with multiple schemas can be used to describe a database catalog with each schema representing 
@@ -36,14 +36,14 @@ import java.util.Map;
 @Builder
 @AllArgsConstructor
 public class GroupProperties {
-    private final SchemaType schemaType;
+    private final SerializationFormat serializationFormat;
     private final SchemaValidationRules schemaValidationRules;
-    private final boolean allowMultipleSchemas;
+    private final boolean allowMultipleTypes;
     private final Map<String, String> properties;
 
     public static final class GroupPropertiesBuilder {
         private SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.fullTransitive());
-        private boolean allowMultipleSchemas = false;
+        private boolean allowMultipleTypes = false;
         private Map<String, String> properties = Collections.emptyMap();
 
         public GroupPropertiesBuilder compatibility(Compatibility compatibility) {

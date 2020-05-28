@@ -41,7 +41,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response addSchema(String groupName, AddSchemaRequest addSchemaRequest,  String schemaName, SecurityContext securityContext) throws NotFoundException {
+    public Response addSchema(String groupName, AddSchemaRequest addSchemaRequest,  String type, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -91,7 +91,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getLatestSchema(String groupName,  String schemaName, SecurityContext securityContext) throws NotFoundException {
+    public Response getLatestSchema(String groupName,  String type, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
@@ -111,7 +111,7 @@ public class GroupsApiServiceImpl extends GroupsApiService {
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }
     @Override
-    public Response getSchemaVersions(String groupName,  String schemaName, SecurityContext securityContext) throws NotFoundException {
+    public Response getSchemaVersions(String groupName,  String type, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

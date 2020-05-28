@@ -16,8 +16,8 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
@@ -31,36 +31,36 @@ import javax.validation.constraints.*;
 @ApiModel(description = "Metadata for a group.")
 
 public class GroupProperties   {
-  @JsonProperty("schemaType")
-  private SchemaType schemaType = null;
+  @JsonProperty("serializationFormat")
+  private SerializationFormat serializationFormat = null;
 
   @JsonProperty("schemaValidationRules")
   private SchemaValidationRules schemaValidationRules = null;
 
-  @JsonProperty("allowMultipleSchemas")
-  private Boolean allowMultipleSchemas = null;
+  @JsonProperty("allowMultipleTypes")
+  private Boolean allowMultipleTypes = null;
 
   @JsonProperty("properties")
   private Map<String, String> properties = null;
 
-  public GroupProperties schemaType(SchemaType schemaType) {
-    this.schemaType = schemaType;
+  public GroupProperties serializationFormat(SerializationFormat serializationFormat) {
+    this.serializationFormat = serializationFormat;
     return this;
   }
 
   /**
    * Schema type for the group.
-   * @return schemaType
+   * @return serializationFormat
    **/
-  @JsonProperty("schemaType")
+  @JsonProperty("serializationFormat")
   @ApiModelProperty(required = true, value = "Schema type for the group.")
   @NotNull
-  public SchemaType getSchemaType() {
-    return schemaType;
+  public SerializationFormat getSerializationFormat() {
+    return serializationFormat;
   }
 
-  public void setSchemaType(SchemaType schemaType) {
-    this.schemaType = schemaType;
+  public void setSerializationFormat(SerializationFormat serializationFormat) {
+    this.serializationFormat = serializationFormat;
   }
 
   public GroupProperties schemaValidationRules(SchemaValidationRules schemaValidationRules) {
@@ -83,24 +83,24 @@ public class GroupProperties   {
     this.schemaValidationRules = schemaValidationRules;
   }
 
-  public GroupProperties allowMultipleSchemas(Boolean allowMultipleSchemas) {
-    this.allowMultipleSchemas = allowMultipleSchemas;
+  public GroupProperties allowMultipleTypes(Boolean allowMultipleTypes) {
+    this.allowMultipleTypes = allowMultipleTypes;
     return this;
   }
 
   /**
    * Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.
-   * @return allowMultipleSchemas
+   * @return allowMultipleTypes
    **/
-  @JsonProperty("allowMultipleSchemas")
+  @JsonProperty("allowMultipleTypes")
   @ApiModelProperty(required = true, value = "Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.")
   @NotNull
-  public Boolean isAllowMultipleSchemas() {
-    return allowMultipleSchemas;
+  public Boolean isAllowMultipleTypes() {
+    return allowMultipleTypes;
   }
 
-  public void setAllowMultipleSchemas(Boolean allowMultipleSchemas) {
-    this.allowMultipleSchemas = allowMultipleSchemas;
+  public void setAllowMultipleTypes(Boolean allowMultipleTypes) {
+    this.allowMultipleTypes = allowMultipleTypes;
   }
 
   public GroupProperties properties(Map<String, String> properties) {
@@ -140,15 +140,15 @@ public class GroupProperties   {
       return false;
     }
     GroupProperties groupProperties = (GroupProperties) o;
-    return Objects.equals(this.schemaType, groupProperties.schemaType) &&
+    return Objects.equals(this.serializationFormat, groupProperties.serializationFormat) &&
         Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
-        Objects.equals(this.allowMultipleSchemas, groupProperties.allowMultipleSchemas) &&
+        Objects.equals(this.allowMultipleTypes, groupProperties.allowMultipleTypes) &&
         Objects.equals(this.properties, groupProperties.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaType, schemaValidationRules, allowMultipleSchemas, properties);
+    return Objects.hash(serializationFormat, schemaValidationRules, allowMultipleTypes, properties);
   }
 
 
@@ -157,9 +157,9 @@ public class GroupProperties   {
     StringBuilder sb = new StringBuilder();
     sb.append("class GroupProperties {\n");
     
-    sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
+    sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
-    sb.append("    allowMultipleSchemas: ").append(toIndentedString(allowMultipleSchemas)).append("\n");
+    sb.append("    allowMultipleTypes: ").append(toIndentedString(allowMultipleTypes)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");
     return sb.toString();
