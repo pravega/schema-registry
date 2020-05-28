@@ -18,12 +18,12 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
-import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
+import io.pravega.schemaregistry.contract.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
@@ -37,7 +37,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaNamesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
@@ -131,10 +130,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     public void createGroup(CreateGroupRequest createGroupRequest, SecurityContext securityContext,
                             AsyncResponse asyncResponse) throws NotFoundException {
         withCompletion("createGroup", READ_UPDATE, AuthResources.ROOT, asyncResponse, () -> {
-            SchemaType schemaType = ModelHelper.decode(createGroupRequest.getSchemaType());
+            SerializationFormat serializationFormat = ModelHelper.decode(createGroupRequest.getSerializationFormat());
             SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
             GroupProperties properties = new GroupProperties(
-                    schemaType, validationRules, createGroupRequest.isVersionedBySchemaName(), createGroupRequest.getProperties());
+                    serializationFormat, validationRules, createGroupRequest.isAllowMultipleTypes(), createGroupRequest.getProperties());
             String groupName = createGroupRequest.getGroupName();
             return registryService.createGroup(groupName, properties)
                                   .thenApply(createStatus -> {
@@ -278,7 +277,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getSchemas(String groupName, String schemaName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersions(String groupName, String schemaName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get group schemas called for group {}", groupName);
         withCompletion("getSchemas", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getGroupHistory(groupName, null)
@@ -354,7 +353,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                               } else if (unwrap instanceof IncompatibleSchemaException) {
                                                   log.info("addSchema incompatible schema {}", groupName);
                                                   return Response.status(Status.CONFLICT).build();
-                                              } else if (unwrap instanceof SchemaTypeMismatchException) {
+                                              } else if (unwrap instanceof SerializationFormatMismatchException) {
                                                   log.info("addSchema schema type mismatched {}", groupName);
                                                   return Response.status(Status.EXPECTATION_FAILED).build();
                                               } else {
@@ -532,28 +531,29 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
     
     @Override
-    public void getSchemaNames(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("getSchemaNames called for group {} ", groupName);
-        withCompletion("getObjects", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
-                () -> registryService.getSchemaNames(groupName)
-                                     .thenApply(schemaNames -> {
-                                         SchemaNamesList schemaNamesList = new SchemaNamesList().objects(schemaNames);
-                                         log.info("Found object types {} for group {} ", schemaNamesList, groupName);
-                                         return Response.status(Status.OK).entity(schemaNamesList).build();
-                                     })
-                                     .exceptionally(exception -> {
-                                         if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} not found", groupName);
-                                             return Response.status(Status.NOT_FOUND).build();
-                                         }
-                                         log.warn("getSchemaNames failed with exception: ", exception);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+    public void getSchemas(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+        log.info("getSchemas called for group {} ", groupName);
+        withCompletion("getSchemas", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+                () -> registryService.getSchemas(groupName)
+                                                          .thenApply(schemas -> {
+                                                              SchemaVersionsList schemaList = new SchemaVersionsList()
+                                                                      .schemas(schemas.stream().map(ModelHelper::encode).collect(Collectors.toList()));
+                                                              List<String> names = schemaList.getSchemas().stream().map(x -> x.getSchemaInfo().getType()).collect(Collectors.toList());
+                                                              log.info("Found schemas {} for group {} ", names, groupName);
+                                                              return Response.status(Status.OK).entity(schemaList).build();
+                                                          })
+                                                          .exceptionally(exception -> {
+                                                              if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                                                  log.warn("Group {} not found", groupName);
+                                                                  return Response.status(Status.NOT_FOUND).build();
+                                                              }
+                                                              log.warn("getSchemas failed with exception: ", exception);
+                                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                          }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
                 });
-
     }
 
     @Override
@@ -630,7 +630,6 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                     asyncResponse.resume(response);
                     return response;
                 });
-
     }
 
     /**

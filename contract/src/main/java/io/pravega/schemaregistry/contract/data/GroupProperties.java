@@ -19,29 +19,31 @@ import java.util.Map;
 /**
  * Different configuration choices for a group. 
  * 
- * {@link GroupProperties#schemaType} identifies the serialization format and schema type used to describe the schema.
+ * {@link GroupProperties#serializationFormat} identifies the serialization format and schema type used to describe the schema.
  * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
- * {@link GroupProperties#versionedBySchemaName} that specifies if schemas have validation rules applied for schemas that share the 
- * same {@link SchemaInfo#name} which represents the object type. This ensures that the registry can support scenarios like 
- * event sourcing, or message bus where different types of events could be written to the same
- * stream. The users can register new versions of each distinct type of schema, and the registry will check for compatibility 
+ * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas with distinct {@link SchemaInfo#type} 
+ * are allowed to coexist within the group. A schema describes an object and each object type is distinctly identified by
+ * {@link SchemaInfo#type}. Registry service validates new schema with existing schema versions of the same name and versions
+ * it accordingly. Allowing multiple schemas, each versioned independently, allows applications to use schema registry groups
+ * for streaming scenarios like event sourcing, or message bus where different types of events could be written to the same
+ * stream. Similarly, a group with multiple schemas can be used to describe a database catalog with each schema representing 
+ * a different table. 
+ * The users can register new versions of each distinct type of schema, and the registry will check for compatibility 
  * for each type independently.
- * If versionedBySchemaName is set to true, then schemas are validate against other schemas in the group that share the same 
- * {@link SchemaInfo#name}.  
  * {@link GroupProperties#properties} This is general purpose key value string to include any additional user defined information for the group. 
  */
 @Data
 @Builder
 @AllArgsConstructor
 public class GroupProperties {
-    private final SchemaType schemaType;
+    private final SerializationFormat serializationFormat;
     private final SchemaValidationRules schemaValidationRules;
-    private final boolean versionedBySchemaName;
+    private final boolean allowMultipleTypes;
     private final Map<String, String> properties;
 
     public static final class GroupPropertiesBuilder {
         private SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.fullTransitive());
-        private boolean versionedBySchemaName = false;
+        private boolean allowMultipleTypes = false;
         private Map<String, String> properties = Collections.emptyMap();
 
         public GroupPropertiesBuilder compatibility(Compatibility compatibility) {

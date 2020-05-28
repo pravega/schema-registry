@@ -18,7 +18,7 @@ import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -98,7 +98,7 @@ public class SerializerConfig {
         private boolean autoRegisterCodec = false;
         private boolean failOnCodecMismatch = false;
 
-        private GroupProperties groupProperties = new GroupProperties(SchemaType.Any,
+        private GroupProperties groupProperties = new GroupProperties(SerializationFormat.Any,
                 SchemaValidationRules.of(Compatibility.fullTransitive()), false, Collections.emptyMap());
 
         public SerializerConfigBuilder decoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
@@ -106,17 +106,17 @@ public class SerializerConfig {
             return this;
         }
 
-        public SerializerConfigBuilder autoCreateGroup(SchemaType schemaType) {
-            return autoCreateGroup(schemaType, true);
+        public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat) {
+            return autoCreateGroup(serializationFormat, true);
         }
 
-        public SerializerConfigBuilder autoCreateGroup(SchemaType schemaType, boolean versionedBySchemaName) {
-            return autoCreateGroup(schemaType, SchemaValidationRules.of(Compatibility.fullTransitive()), versionedBySchemaName);
+        public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, boolean allowMultipleTypes) {
+            return autoCreateGroup(serializationFormat, SchemaValidationRules.of(Compatibility.fullTransitive()), allowMultipleTypes);
         }
 
-        public SerializerConfigBuilder autoCreateGroup(SchemaType schemaType, SchemaValidationRules rules, boolean versionedBySchemaName) {
+        public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, SchemaValidationRules rules, boolean allowMultipleTypes) {
             this.autoCreateGroup = true;
-            this.groupProperties = new GroupProperties(schemaType, rules, versionedBySchemaName, Collections.emptyMap());
+            this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes, Collections.emptyMap());
             return this;
         }
     }

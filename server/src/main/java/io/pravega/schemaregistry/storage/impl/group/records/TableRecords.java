@@ -18,7 +18,7 @@ import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.AllArgsConstructor;
@@ -48,12 +48,12 @@ public interface TableRecords {
                     .put(ValidationPolicyKey.class, ValidationRecord.SERIALIZER)
                     .put(Etag.class, Etag.SERIALIZER)
                     .put(CodecsKey.class, CodecsListValue.SERIALIZER)
-                    .put(SchemaNamesKey.class, SchemaNamesListValue.SERIALIZER)
+                    .put(SchemaTypesKey.class, SchemaTypesListValue.SERIALIZER)
                     .put(EncodingIdRecord.class, EncodingInfoRecord.SERIALIZER)
                     .put(EncodingInfoRecord.class, EncodingIdRecord.SERIALIZER)
                     .put(LatestEncodingIdKey.class, LatestEncodingIdValue.SERIALIZER)
                     .put(LatestSchemaVersionKey.class, LatestSchemaVersionValue.SERIALIZER)
-                    .put(LatestSchemaVersionForSchemaNameKey.class, LatestSchemaVersionValue.SERIALIZER)
+                    .put(LatestSchemaVersionForTypeKey.class, LatestSchemaVersionValue.SERIALIZER)
                     .build();
 
     interface TableKey {
@@ -103,8 +103,8 @@ public interface TableRecords {
     class GroupPropertiesRecord implements TableValue {
         public static final GroupPropertiesRecord.Serializer SERIALIZER = new GroupPropertiesRecord.Serializer();
 
-        private final SchemaType schemaType;
-        private final boolean versionedBySchemaName;
+        private final SerializationFormat serializationFormat;
+        private final boolean allowMultipleTypes;
         private final Map<String, String> properties;
 
         @Override
@@ -133,14 +133,14 @@ public interface TableRecords {
             }
 
             private void write00(GroupPropertiesRecord e, RevisionDataOutput target) throws IOException {
-                SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.schemaType));
-                target.writeBoolean(e.versionedBySchemaName);
+                SerializationFormatRecord.SERIALIZER.serialize(target, new SerializationFormatRecord(e.serializationFormat));
+                target.writeBoolean(e.allowMultipleTypes);
                 target.writeMap(e.properties, DataOutput::writeUTF, DataOutput::writeUTF);
             }
 
             private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
-                b.schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
-                 .versionedBySchemaName(source.readBoolean())
+                b.serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat())
+                 .allowMultipleTypes(source.readBoolean())
                  .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
             }
         }
@@ -554,16 +554,16 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class SchemaNamesKey implements TableKey {
+    class SchemaTypesKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private static class SchemaNamesKeyBuilder implements ObjectBuilder<SchemaNamesKey> {
+        private static class SchemaTypesKeyBuilder implements ObjectBuilder<SchemaTypesKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaNamesKey, SchemaNamesKey.SchemaNamesKeyBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaTypesKey, SchemaTypesKey.SchemaTypesKeyBuilder> {
             @Override
-            protected SchemaNamesKey.SchemaNamesKeyBuilder newBuilder() {
-                return SchemaNamesKey.builder();
+            protected SchemaTypesKey.SchemaTypesKeyBuilder newBuilder() {
+                return SchemaTypesKey.builder();
             }
 
             @Override
@@ -576,10 +576,10 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(SchemaNamesKey e, RevisionDataOutput target) throws IOException {
+            private void write00(SchemaTypesKey e, RevisionDataOutput target) throws IOException {
             }
 
-            private void read00(RevisionDataInput source, SchemaNamesKey.SchemaNamesKeyBuilder b) throws IOException {
+            private void read00(RevisionDataInput source, SchemaTypesKey.SchemaTypesKeyBuilder b) throws IOException {
             }
         }
     }
@@ -587,10 +587,10 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class SchemaNamesListValue implements TableValue {
+    class SchemaTypesListValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final List<String> schemaNames;
+        private final List<String> types;
 
         @SneakyThrows
         @Override
@@ -598,13 +598,13 @@ public interface TableRecords {
             return SERIALIZER.serialize(this).getCopy();
         }
 
-        private static class SchemaNamesListValueBuilder implements ObjectBuilder<SchemaNamesListValue> {
+        private static class SchemaTypesListValueBuilder implements ObjectBuilder<SchemaTypesListValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaNamesListValue, SchemaNamesListValue.SchemaNamesListValueBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaTypesListValue, SchemaTypesListValue.SchemaTypesListValueBuilder> {
             @Override
-            protected SchemaNamesListValue.SchemaNamesListValueBuilder newBuilder() {
-                return SchemaNamesListValue.builder();
+            protected SchemaTypesListValue.SchemaTypesListValueBuilder newBuilder() {
+                return SchemaTypesListValue.builder();
             }
 
             @Override
@@ -617,12 +617,12 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(SchemaNamesListValue e, RevisionDataOutput target) throws IOException {
-                target.writeCollection(e.schemaNames, DataOutput::writeUTF);
+            private void write00(SchemaTypesListValue e, RevisionDataOutput target) throws IOException {
+                target.writeCollection(e.types, DataOutput::writeUTF);
             }
 
-            private void read00(RevisionDataInput source, SchemaNamesListValue.SchemaNamesListValueBuilder b) throws IOException {
-                b.schemaNames(Lists.newArrayList(source.readCollection(DataInput::readUTF)));
+            private void read00(RevisionDataInput source, SchemaTypesListValue.SchemaTypesListValueBuilder b) throws IOException {
+                b.types(Lists.newArrayList(source.readCollection(DataInput::readUTF)));
             }
         }
     }
@@ -752,18 +752,18 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class LatestSchemaVersionForSchemaNameKey implements TableKey {
+    class LatestSchemaVersionForTypeKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final String schemaName;
+        private final String type;
 
-        private static class LatestSchemaVersionForSchemaNameKeyBuilder implements ObjectBuilder<LatestSchemaVersionForSchemaNameKey> {
+        private static class LatestSchemaVersionForTypeKeyBuilder implements ObjectBuilder<LatestSchemaVersionForTypeKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemaVersionForSchemaNameKey, LatestSchemaVersionForSchemaNameKey.LatestSchemaVersionForSchemaNameKeyBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemaVersionForTypeKey, LatestSchemaVersionForTypeKey.LatestSchemaVersionForTypeKeyBuilder> {
             @Override
-            protected LatestSchemaVersionForSchemaNameKey.LatestSchemaVersionForSchemaNameKeyBuilder newBuilder() {
-                return LatestSchemaVersionForSchemaNameKey.builder();
+            protected LatestSchemaVersionForTypeKey.LatestSchemaVersionForTypeKeyBuilder newBuilder() {
+                return LatestSchemaVersionForTypeKey.builder();
             }
 
             @Override
@@ -776,12 +776,12 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(LatestSchemaVersionForSchemaNameKey e, RevisionDataOutput target) throws IOException {
-                target.writeUTF(e.schemaName);
+            private void write00(LatestSchemaVersionForTypeKey e, RevisionDataOutput target) throws IOException {
+                target.writeUTF(e.type);
             }
 
-            private void read00(RevisionDataInput source, LatestSchemaVersionForSchemaNameKey.LatestSchemaVersionForSchemaNameKeyBuilder b) throws IOException {
-                b.schemaName(source.readUTF());
+            private void read00(RevisionDataInput source, LatestSchemaVersionForTypeKey.LatestSchemaVersionForTypeKeyBuilder b) throws IOException {
+                b.type(source.readUTF());
             }
         }
     }

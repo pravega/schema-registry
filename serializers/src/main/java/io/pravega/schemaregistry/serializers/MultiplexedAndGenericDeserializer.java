@@ -35,8 +35,8 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     @Override
     protected Either<T, G> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        if (deserializers.containsKey(writerSchema.getName())) {
-            return Either.left(deserializers.get(writerSchema.getName()).deserialize(inputStream, writerSchema, readerSchema));
+        if (deserializers.containsKey(writerSchema.getType())) {
+            return Either.left(deserializers.get(writerSchema.getType()).deserialize(inputStream, writerSchema, readerSchema));
         } else {
             return Either.right(genericDeserializer.deserialize(inputStream, writerSchema, readerSchema));
         }

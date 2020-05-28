@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.server.rest.resources;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
@@ -62,7 +62,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
 
     @Test
     public void groups() throws ExecutionException, InterruptedException {
-        GroupProperties group1 = new GroupProperties(SchemaType.Avro,
+        GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()),
                 false, Collections.singletonMap("Encode", Boolean.toString(false)));
         doAnswer(x -> {
@@ -108,8 +108,8 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         // can read
         doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any());
         CanReadRequest canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
-                .schemaName("name")
-                .schemaType(ModelHelper.encode(SchemaType.Avro))
+                .type("name")
+                .serializationFormat(ModelHelper.encode(SerializationFormat.Avro))
                 .schemaData(new byte[0])
                 .properties(Collections.emptyMap())
         );
@@ -119,7 +119,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         assertTrue(response.readEntity(CanRead.class).isCompatible());
 
         canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
-                .schemaName("name")
+                .type("name")
                 .schemaData(new byte[0])
                 .properties(Collections.emptyMap())
         );

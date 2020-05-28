@@ -16,7 +16,7 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
@@ -39,7 +39,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         this.parser = parser;
         this.descriptorProto = fileDescriptorSet;
-        this.schemaInfo = new SchemaInfo(name, SchemaType.Protobuf, getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(name, SerializationFormat.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
     
     private byte[] getSchemaBytes() {
@@ -114,7 +114,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     public static ProtobufSchema<DynamicMessage> from(SchemaInfo schemaInfo) {
         DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
 
-        return new ProtobufSchema<>(schemaInfo.getName(), null, fileDescriptorSet);
+        return new ProtobufSchema<>(schemaInfo.getType(), null, fileDescriptorSet);
     }
 }
 

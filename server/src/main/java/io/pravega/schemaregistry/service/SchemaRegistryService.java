@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.service;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DescriptorProtos;
@@ -24,14 +25,14 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
-import io.pravega.schemaregistry.contract.exceptions.SchemaTypeMismatchException;
+import io.pravega.schemaregistry.contract.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
 import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
@@ -39,7 +40,6 @@ import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 
 import javax.annotation.Nullable;
 import java.util.Collections;
@@ -47,6 +47,7 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -107,7 +108,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(groupProperties != null);
-        Preconditions.checkArgument(validateRules(groupProperties.getSchemaType(), groupProperties.getSchemaValidationRules()));
+        Preconditions.checkArgument(validateRules(groupProperties.getSerializationFormat(), groupProperties.getSchemaValidationRules()));
         log.info("create group called for {} with group properties {}", group, groupProperties);
         return store.createGroup(group, groupProperties)
                     .whenComplete((r, e) -> {
@@ -125,10 +126,10 @@ public class SchemaRegistryService {
 
     /**
      * Gets group's properties.
-     * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
+     * {@link GroupProperties#serializationFormat} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#versionedBySchemaName} that specifies if schemas are evolved by object type.
-     * Object types are uniquely identified by {@link SchemaInfo#name}.
+     * {@link GroupProperties#allowMultipleTypes} that specifies multiple schemas with distinct {@link SchemaInfo#type} can
+     * be registered.
      * {@link GroupProperties#properties} properties for a group.
      *
      * @param group Name of group.
@@ -186,29 +187,30 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets list of object types registered under the group. Object types are identified by {@link SchemaInfo#name}
+     * Gets list of latest schema versions for all schemas registered in the group. Schemas representing different 
+     * object types are identified by {@link SchemaInfo#type}
      *
      * @param group Name of group.
-     * @return CompletableFuture which holds list of object types upon completion.
+     * @return CompletableFuture which holds list of latest schema versions for different schemas upon completion.
      */
-    public CompletableFuture<List<String>> getSchemaNames(String group) {
+    public CompletableFuture<List<SchemaWithVersion>> getSchemas(String group) {
         Preconditions.checkArgument(group != null);
-        log.info("getSchemaNames called for group {}. New validation rules {}", group);
+        log.info("getSchemas called for group {}. New validation rules {}", group);
 
-        return store.listSchemaNames(group)
+        return store.getLatestSchemas(group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {} getSchemaNames {}.", group, r);
+                            log.info("Group {} getSchemas {}.", group, r);
                         } else {
-                            log.warn("getSchemaNames for group {} request failed with error", e, group);
+                            log.warn("getSchemas for group {} request failed with error", e, group);
                         }
                     });
     }
 
     /**
-     * Adds schema to the group. If group is configured with {@link GroupProperties#versionedBySchemaName}, then
-     * the {@link SchemaInfo#name} is used to filter previous schemas and apply schema validation policy against schemas
-     * of object type.
+     * Adds schema to the group. If group is configured with {@link GroupProperties#allowMultipleTypes}, then
+     * the {@link SchemaInfo#type} is used to filter previous schemas and apply schema validation policy against all 
+     * previous versions of schema.
      * Schema validation rules that are sent to the registry should be a super set of Validation rules set in
      * {@link GroupProperties#schemaValidationRules}
      *
@@ -219,8 +221,12 @@ public class SchemaRegistryService {
     public CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schema) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schema != null);
-        log.info("addSchema called for group {}. schema {}", schema.getName());
+        log.info("addSchema called for group {}. schema {}", schema.getType());
 
+        // TODO: 
+        // add schema to global schema table
+        // add group id to the schema-group-reference list
+        
         // 1. get group policy
         // 2. get checker for schema type.
         // validate schema against group policy + rules on schema
@@ -229,8 +235,8 @@ public class SchemaRegistryService {
                     .thenCompose(etag ->
                             store.getGroupProperties(group)
                                  .thenCompose(prop -> {
-                                     if (!schema.getSchemaType().equals(prop.getSchemaType()) && !prop.getSchemaType().equals(SchemaType.Any)) {
-                                         throw new SchemaTypeMismatchException(schema.getSchemaType().name());
+                                     if (!schema.getSerializationFormat().equals(prop.getSerializationFormat()) && !prop.getSerializationFormat().equals(SerializationFormat.Any)) {
+                                         throw new SerializationFormatMismatchException(schema.getSerializationFormat().name());
                                      }
                                      return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(group, schema),
                                              e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
@@ -239,7 +245,7 @@ public class SchemaRegistryService {
                                                          .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
                                                          .thenCompose(valid -> {
                                                              if (!valid) {
-                                                                 throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getName()));
+                                                                 throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getType()));
                                                              }
                                                              return store.addSchema(group, schema, prop, etag);
                                                          });
@@ -247,7 +253,7 @@ public class SchemaRegistryService {
                                  })), executor)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, schema {} added successfully.", group, schema.getName());
+                            log.info("Group {}, schema {} added successfully.", group, schema.getType());
                         } else {
                             log.warn("Group {}, schema {} add failed with error", e, group);
                         }
@@ -353,19 +359,20 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets latest schema and version for the group (or schemaName, if specified).
-     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName needs to be supplied to
-     * get the latest schema for the object type.
+     * Gets latest schema and version for the group (or type, if specified).
+     * For groups configured with {@link GroupProperties#allowMultipleTypes}, the type needs to be supplied to
+     * get the latest schema version for the object type described by the schema. If type is not specified, latest schema
+     * for the group is returned.
      *
      * @param group          Name of group.
-     * @param schemaName Object type.
+     * @param type Object type.
      * @return CompletableFuture that holds Schema with version for the last schema that was added to the group.
      */
-    public CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group, @Nullable String schemaName) {
+    public CompletableFuture<SchemaWithVersion> getGroupLatestSchemaVersion(String group, @Nullable String type) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getLatestSchemaVersion for {}.", group, schemaName);
+        log.info("Group {}, getLatestSchemaVersion for {}.", group, type);
 
-        if (schemaName == null) {
+        if (type == null) {
             return store.getLatestSchemaVersion(group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
@@ -375,38 +382,38 @@ public class SchemaRegistryService {
                             }
                         });
         } else {
-            return store.getLatestSchemaVersion(group, schemaName)
+            return store.getLatestSchemaVersion(group, type)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, getLatestSchemaVersion = {}.", group, schemaName, r.getVersion());
+                                log.info("Group {}, object type = {}, getLatestSchemaVersion = {}.", group, type, r.getVersion());
                             } else {
-                                log.warn("Group {}, object type = {}, getLatestSchemaVersion failed with error", e, group, schemaName);
+                                log.warn("Group {}, object type = {}, getLatestSchemaVersion failed with error", e, group, type);
                             }
                         });
         }
     }
 
     /**
-     * Gets all schemas with corresponding versions for the group (or schemaName, if specified).
-     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName name needs to be supplied to
-     * get the latest schema for the schemaName. {@link SchemaInfo#name} is used as the schemaName name.
+     * Gets all schemas with corresponding versions for the group (or type, if specified). 
+     * If type is not specified all schemas with their respective versions in the group are listed. 
+     * Otherwise, only schema versions for the schema identified by type are listed.  
      * The order in the list matches the order in which schemas were evolved within the group.
      *
-     * @param group          Name of group.
-     * @param schemaName Object type.
+     * @param group      Name of group.
+     * @param type Object type.
      * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
      */
-    public CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String group, @Nullable String schemaName) {
+    public CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String group, @Nullable String type) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getGroupHistory for {}.", group, schemaName);
+        log.info("Group {}, getGroupHistory for {}.", group, type);
 
-        if (schemaName != null) {
-            return store.getGroupHistoryForSchemaName(group, schemaName)
+        if (type != null) {
+            return store.getGroupHistoryForType(group, type)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, history size = {}.", group, schemaName, r.size());
+                                log.info("Group {}, object type = {}, history size = {}.", group, type, r.size());
                             } else {
-                                log.warn("Group {}, object type = {}, getLatestSchemaVersion failed with error", e, group, schemaName);
+                                log.warn("Group {}, object type = {}, getLatestSchemaVersion failed with error", e, group, type);
                             }
                         });
         } else {
@@ -423,18 +430,17 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionedBySchemaName}
-     * the schemaName is taken from the {@link SchemaInfo#name}.
+     * Gets version corresponding to the schema.
      * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
      *
      * @param group  Name of group.
-     * @param schema SchemaInfo that captures schema name and schema data.
+     * @param schema SchemaInfo that captures format and structure of the data.
      * @return CompletableFuture that holds VersionInfo corresponding to schema.
      */
     public CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schema) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schema != null);
-        log.info("Group {}, getSchemaVersion for {}.", group, schema.getName());
+        log.info("Group {}, getSchemaVersion for {}.", group, schema.getType());
 
         return store.getSchemaVersion(group, schema)
                     .whenComplete((r, e) -> {
@@ -449,8 +455,8 @@ public class SchemaRegistryService {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * If {@link GroupProperties#versionedBySchemaName} is set, the validation is performed against schemas with same
-     * object type identified by {@link SchemaInfo#name}.
+     * If {@link GroupProperties#allowMultipleTypes} is set, the validation is performed against schemas with same
+     * object type identified by {@link SchemaInfo#type}.
      *
      * @param group  Name of group.
      * @param schema Schema to check for validity.
@@ -459,7 +465,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> validateSchema(String group, SchemaInfo schema) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schema != null);
-        log.info("Group {}, validateSchema for {}.", group, schema.getName());
+        log.info("Group {}, validateSchema for {}.", group, schema.getType());
 
         return store.getGroupProperties(group)
                     .thenCompose(prop -> getSchemasForValidation(group, schema, prop)
@@ -483,7 +489,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> canRead(String group, SchemaInfo schema) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schema != null);
-        log.info("Group {}, canRead for {}.", group, schema.getName());
+        log.info("Group {}, canRead for {}.", group, schema.getType());
 
         return store.getGroupProperties(group)
                     .thenCompose(prop -> getSchemasForValidation(group, schema, prop)
@@ -554,8 +560,8 @@ public class SchemaRegistryService {
 
     }
     
-    private boolean validateRules(SchemaType schemaType, SchemaValidationRules newRules) {
-        switch (schemaType) {
+    private boolean validateRules(SerializationFormat serializationFormat, SchemaValidationRules newRules) {
+        switch (serializationFormat) {
             case Avro:
                 return newRules.getRules().size() == 1 &&
                         newRules.getRules().entrySet().stream().allMatch(x -> x.getValue() instanceof Compatibility);
@@ -582,8 +588,8 @@ public class SchemaRegistryService {
                                                   || ((Compatibility) x).getCompatibility().equals(Compatibility.Type.FullTransitive)));
 
         if (fetchAll) {
-            if (groupProperties.isVersionedBySchemaName()) {
-                schemasFuture = store.listSchemasByName(group, schema.getName());
+            if (groupProperties.isAllowMultipleTypes()) {
+                schemasFuture = store.listSchemasByName(group, schema.getType());
             } else {
                 schemasFuture = store.listSchemas(group);
             }
@@ -605,14 +611,14 @@ public class SchemaRegistryService {
                                                   }
                                               }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
-                if (groupProperties.isVersionedBySchemaName()) {
-                    schemasFuture = store.listSchemasByName(group, schema.getName(), till);
+                if (groupProperties.isAllowMultipleTypes()) {
+                    schemasFuture = store.listSchemasByName(group, schema.getType(), till);
                 } else {
                     schemasFuture = store.listSchemas(group, till);
                 }
             } else {
-                if (groupProperties.isVersionedBySchemaName()) {
-                    schemasFuture = store.getLatestSchemaVersion(group, schema.getName())
+                if (groupProperties.isAllowMultipleTypes()) {
+                    schemasFuture = store.getLatestSchemaVersion(group, schema.getType())
                                          .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
                 } else {
                     schemasFuture = store.getLatestSchemaVersion(group)
@@ -627,10 +633,15 @@ public class SchemaRegistryService {
     private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
                                        List<SchemaWithVersion> schemasWithVersion) {
         Preconditions.checkArgument(validateSchemaData(schema));
-        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
+        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema).collect(Collectors.toList());
         Collections.reverse(schemas);
+        
+        // Verify that the type matches the type in schemas it will be validated against. 
+        if (!schemas.stream().allMatch(x -> x.getType().equals(schema.getType()))) {
+            return false;
+        }
         for (SchemaValidationRule rule : groupProperties.getSchemaValidationRules().getRules().values()) {
             if (rule instanceof Compatibility) {
                 Compatibility compatibility = (Compatibility) rule;
@@ -682,12 +693,12 @@ public class SchemaRegistryService {
         boolean isValid = true;
         try {
             String schemaString;
-            switch (schemaInfo.getSchemaType()) {
+            switch (schemaInfo.getSerializationFormat()) {
                 case Protobuf:
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
-                    int nameStart = schemaInfo.getName().lastIndexOf(".");
-                    String name = schemaInfo.getName().substring(nameStart + 1);
-                    String pckg = nameStart < 0 ? "" : schemaInfo.getName().substring(0, nameStart);
+                    int nameStart = schemaInfo.getType().lastIndexOf(".");
+                    String name = schemaInfo.getType().substring(nameStart + 1);
+                    String pckg = nameStart < 0 ? "" : schemaInfo.getType().substring(0, nameStart);
 
                     isValid = fileDescriptorSet.getFileList().stream()
                                                .anyMatch(x -> pckg.startsWith(x.getPackage()) &&
@@ -696,7 +707,7 @@ public class SchemaRegistryService {
                 case Avro: 
                     schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    isValid = schema.getFullName().equals(schemaInfo.getName());
+                    isValid = schema.getFullName().equals(schemaInfo.getType());
                     break;
                 case Json: 
                     schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
@@ -716,7 +727,7 @@ public class SchemaRegistryService {
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {
-        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSchemaType());
+        CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema)
                                                      .collect(Collectors.toList());
@@ -764,5 +775,18 @@ public class SchemaRegistryService {
         }
         // if no rules are set we will come here and return true always
         return true;
+    }
+
+    public CompletableFuture<Map<String, VersionInfo>> getSchemaReferences(SchemaInfo schemaInfo) {
+        VersionInfo emptyVersion = new VersionInfo("", -1, -1);
+        List<String> groups = new LinkedList<>();
+        return Futures.allOfWithResults(
+                groups.stream().collect(Collectors.toMap(x -> x, x -> 
+                        Futures.exceptionallyExpecting(store.getSchemaVersion(x, schemaInfo),
+                    e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, emptyVersion))))
+                .thenApply(result -> {
+                    return result.entrySet().stream().filter(x -> x.getValue().equals(emptyVersion))
+                          .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+                });
     }
 }

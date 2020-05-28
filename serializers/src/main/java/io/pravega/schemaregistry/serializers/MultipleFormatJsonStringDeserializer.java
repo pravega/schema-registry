@@ -16,7 +16,7 @@ import com.google.protobuf.util.JsonFormat;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.SneakyThrows;
 import org.apache.avro.generic.GenericRecord;
 
@@ -24,11 +24,11 @@ import java.io.InputStream;
 import java.util.Map;
 
 class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<String> {
-    private final Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers;
+    private final Map<SerializationFormat, AbstractPravegaDeserializer> genericDeserializers;
     private final ObjectMapper objectMapper = new ObjectMapper();
 
     MultipleFormatJsonStringDeserializer(String groupId, SchemaRegistryClient client,
-                                         Map<SchemaType, AbstractPravegaDeserializer> genericDeserializers,
+                                         Map<SerializationFormat, AbstractPravegaDeserializer> genericDeserializers,
                                          SerializerConfig.Decoder decoder,
                                          EncodingCache encodingCache) {
         super(groupId, client, null, false, decoder, encodingCache);
@@ -38,7 +38,7 @@ class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<S
     @Override
     protected String deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        return toJsonString(genericDeserializers.get(writerSchema.getSchemaType()).deserialize(inputStream, writerSchema, readerSchema));
+        return toJsonString(genericDeserializers.get(writerSchema.getSerializationFormat()).deserialize(inputStream, writerSchema, readerSchema));
     }
 
     @SneakyThrows

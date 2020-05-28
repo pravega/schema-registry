@@ -40,9 +40,9 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
                 DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getDescriptorProto();
                 
                 int count = descriptorSet.getFileCount();
-                int nameStart = schemaToUse.getName().lastIndexOf(".");
-                String name = schemaToUse.getName().substring(nameStart + 1);
-                String pckg = nameStart < 0 ? "" : schemaToUse.getName().substring(0, nameStart);
+                int nameStart = schemaToUse.getType().lastIndexOf(".");
+                String name = schemaToUse.getType().substring(nameStart + 1);
+                String pckg = nameStart < 0 ? "" : schemaToUse.getType().substring(0, nameStart);
                 DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet.getFileList().stream()
                         .filter(x -> pckg.startsWith(x.getPackage()) &&
                                 x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)))
@@ -59,7 +59,7 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
                 Descriptors.FileDescriptor fd = Descriptors.FileDescriptor.buildFrom(mainDescriptor, dependencyArray);
 
                 return fd.getMessageTypes().stream().filter(x -> x.getName().equals(name))
-                                                       .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getName())));
+                                                       .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getType())));
             }
         });
     }

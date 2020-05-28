@@ -19,7 +19,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
+import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
@@ -39,23 +39,23 @@ public class ModelHelper {
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
         Preconditions.checkArgument(schemaInfo != null);
-        Preconditions.checkArgument(schemaInfo.getSchemaName() != null);
-        Preconditions.checkArgument(schemaInfo.getSchemaType() != null);
+        Preconditions.checkArgument(schemaInfo.getType() != null);
+        Preconditions.checkArgument(schemaInfo.getSerializationFormat() != null);
         Preconditions.checkArgument(schemaInfo.getProperties() != null);
         Preconditions.checkArgument(schemaInfo.getSchemaData() != null);
-        io.pravega.schemaregistry.contract.data.SchemaType schemaType = decode(schemaInfo.getSchemaType());
-        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getSchemaName(),
-                schemaType, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
+        io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = decode(schemaInfo.getSerializationFormat());
+        return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getType(),
+                serializationFormat, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
-    public static io.pravega.schemaregistry.contract.data.SchemaType decode(SchemaType schemaType) {
-        Preconditions.checkArgument(schemaType != null);
-        switch (schemaType.getSchemaType()) {
+    public static io.pravega.schemaregistry.contract.data.SerializationFormat decode(SerializationFormat serializationFormat) {
+        Preconditions.checkArgument(serializationFormat != null);
+        switch (serializationFormat.getSerializationFormat()) {
             case CUSTOM:
-                Preconditions.checkArgument(schemaType.getCustomTypeName() != null);
-                return io.pravega.schemaregistry.contract.data.SchemaType.custom(schemaType.getCustomTypeName());
+                Preconditions.checkArgument(serializationFormat.getCustomTypeName() != null);
+                return io.pravega.schemaregistry.contract.data.SerializationFormat.custom(serializationFormat.getCustomTypeName());
             default:
-                return searchEnum(io.pravega.schemaregistry.contract.data.SchemaType.class, schemaType.getSchemaType().name());
+                return searchEnum(io.pravega.schemaregistry.contract.data.SerializationFormat.class, serializationFormat.getSerializationFormat().name());
         }
     }
 
@@ -117,10 +117,10 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
         Preconditions.checkArgument(versionInfo != null);
-        Preconditions.checkArgument(versionInfo.getSchemaName() != null);
+        Preconditions.checkArgument(versionInfo.getType() != null);
         Preconditions.checkArgument(versionInfo.getVersion() != null);
         Preconditions.checkArgument(versionInfo.getOrdinal() != null);
-        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getSchemaName(), versionInfo.getVersion(), versionInfo.getOrdinal());
+        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getType(), versionInfo.getVersion(), versionInfo.getOrdinal());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
@@ -152,10 +152,10 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
         Preconditions.checkArgument(groupProperties != null);
-        Preconditions.checkArgument(groupProperties.isVersionedBySchemaName() != null);
+        Preconditions.checkArgument(groupProperties.isAllowMultipleTypes() != null);
 
-        return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
-                                                                      .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).versionedBySchemaName(groupProperties.isVersionedBySchemaName())
+        return io.pravega.schemaregistry.contract.data.GroupProperties.builder().serializationFormat(decode(groupProperties.getSerializationFormat()))
+                                                                      .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).allowMultipleTypes(groupProperties.isAllowMultipleTypes())
                                                                       .properties(groupProperties.getProperties()).build();
     }
     // endregion
@@ -210,29 +210,29 @@ public class ModelHelper {
 
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
         return new GroupProperties()
-                .schemaType(encode(groupProperties.getSchemaType()))
+                .serializationFormat(encode(groupProperties.getSerializationFormat()))
                 .properties(groupProperties.getProperties())
-                .versionedBySchemaName(groupProperties.isVersionedBySchemaName())
+                .allowMultipleTypes(groupProperties.isAllowMultipleTypes())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
 
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
-        return new VersionInfo().schemaName(versionInfo.getSchemaName()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
+        return new VersionInfo().type(versionInfo.getType()).version(versionInfo.getVersion()).ordinal(versionInfo.getOrdinal());
     }
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {
         return new SchemaInfo().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData())
-                               .schemaName(schemaInfo.getName()).schemaType(encode(schemaInfo.getSchemaType()));
+                               .type(schemaInfo.getType()).serializationFormat(encode(schemaInfo.getSerializationFormat()));
     }
 
-    public static SchemaType encode(io.pravega.schemaregistry.contract.data.SchemaType schemaType) {
-        if (schemaType.equals(io.pravega.schemaregistry.contract.data.SchemaType.Custom)) {
-            Preconditions.checkArgument(schemaType.getCustomTypeName() != null);
-            SchemaType schemaTypeModel = new SchemaType().schemaType(SchemaType.SchemaTypeEnum.CUSTOM);
-            return schemaTypeModel.customTypeName(schemaType.getCustomTypeName());
+    public static SerializationFormat encode(io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat) {
+        if (serializationFormat.equals(io.pravega.schemaregistry.contract.data.SerializationFormat.Custom)) {
+            Preconditions.checkArgument(serializationFormat.getCustomTypeName() != null);
+            SerializationFormat serializationFormatModel = new SerializationFormat().serializationFormat(SerializationFormat.SerializationFormatEnum.CUSTOM);
+            return serializationFormatModel.customTypeName(serializationFormat.getCustomTypeName());
         } else {
-            return new SchemaType().schemaType(
-                    searchEnum(SchemaType.SchemaTypeEnum.class, schemaType.name()));
+            return new SerializationFormat().serializationFormat(
+                    searchEnum(SerializationFormat.SerializationFormatEnum.class, serializationFormat.name()));
         }
     }
 

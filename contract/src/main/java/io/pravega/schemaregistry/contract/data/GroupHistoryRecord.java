@@ -16,8 +16,8 @@ import lombok.Data;
  * applied while registering {@link GroupHistoryRecord#schema} and the unique {@link GroupHistoryRecord#version} identifier 
  * that was assigned to it. 
  * It also has {@link GroupHistoryRecord#timestamp} when the schema was added and includes an optional 
- * {@link GroupHistoryRecord#schemaString} which is populated only if schema type is one of {@link SchemaType#Avro}
- * {@link SchemaType#Json} or {@link SchemaType#Protobuf}. This string is just to help make the schema human readable. 
+ * {@link GroupHistoryRecord#schemaString} which is populated only if schema type is one of {@link SerializationFormat#Avro}
+ * {@link SerializationFormat#Json} or {@link SerializationFormat#Protobuf}. This string is just to help make the schema human readable. 
  */
 @Data
 public class GroupHistoryRecord {

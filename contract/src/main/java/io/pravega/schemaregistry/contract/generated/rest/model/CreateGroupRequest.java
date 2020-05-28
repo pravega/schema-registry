@@ -16,8 +16,8 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
@@ -33,8 +33,8 @@ public class CreateGroupRequest   {
   @JsonProperty("groupName")
   private String groupName = null;
 
-  @JsonProperty("schemaType")
-  private SchemaType schemaType = null;
+  @JsonProperty("serializationFormat")
+  private SerializationFormat serializationFormat = null;
 
   @JsonProperty("validationRules")
   private SchemaValidationRules validationRules = null;
@@ -42,8 +42,8 @@ public class CreateGroupRequest   {
   @JsonProperty("properties")
   private Map<String, String> properties = null;
 
-  @JsonProperty("versionedBySchemaName")
-  private Boolean versionedBySchemaName = null;
+  @JsonProperty("allowMultipleTypes")
+  private Boolean allowMultipleTypes = null;
 
   public CreateGroupRequest groupName(String groupName) {
     this.groupName = groupName;
@@ -65,24 +65,24 @@ public class CreateGroupRequest   {
     this.groupName = groupName;
   }
 
-  public CreateGroupRequest schemaType(SchemaType schemaType) {
-    this.schemaType = schemaType;
+  public CreateGroupRequest serializationFormat(SerializationFormat serializationFormat) {
+    this.serializationFormat = serializationFormat;
     return this;
   }
 
   /**
-   * Get schemaType
-   * @return schemaType
+   * Get serializationFormat
+   * @return serializationFormat
    **/
-  @JsonProperty("schemaType")
+  @JsonProperty("serializationFormat")
   @ApiModelProperty(required = true, value = "")
   @NotNull
-  public SchemaType getSchemaType() {
-    return schemaType;
+  public SerializationFormat getSerializationFormat() {
+    return serializationFormat;
   }
 
-  public void setSchemaType(SchemaType schemaType) {
-    this.schemaType = schemaType;
+  public void setSerializationFormat(SerializationFormat serializationFormat) {
+    this.serializationFormat = serializationFormat;
   }
 
   public CreateGroupRequest validationRules(SchemaValidationRules validationRules) {
@@ -132,24 +132,24 @@ public class CreateGroupRequest   {
     this.properties = properties;
   }
 
-  public CreateGroupRequest versionedBySchemaName(Boolean versionedBySchemaName) {
-    this.versionedBySchemaName = versionedBySchemaName;
+  public CreateGroupRequest allowMultipleTypes(Boolean allowMultipleTypes) {
+    this.allowMultipleTypes = allowMultipleTypes;
     return this;
   }
 
   /**
-   * Get versionedBySchemaName
-   * @return versionedBySchemaName
+   * Get allowMultipleTypes
+   * @return allowMultipleTypes
    **/
-  @JsonProperty("versionedBySchemaName")
+  @JsonProperty("allowMultipleTypes")
   @ApiModelProperty(required = true, value = "")
   @NotNull
-  public Boolean isVersionedBySchemaName() {
-    return versionedBySchemaName;
+  public Boolean isAllowMultipleTypes() {
+    return allowMultipleTypes;
   }
 
-  public void setVersionedBySchemaName(Boolean versionedBySchemaName) {
-    this.versionedBySchemaName = versionedBySchemaName;
+  public void setAllowMultipleTypes(Boolean allowMultipleTypes) {
+    this.allowMultipleTypes = allowMultipleTypes;
   }
 
 
@@ -163,15 +163,15 @@ public class CreateGroupRequest   {
     }
     CreateGroupRequest createGroupRequest = (CreateGroupRequest) o;
     return Objects.equals(this.groupName, createGroupRequest.groupName) &&
-        Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
+        Objects.equals(this.serializationFormat, createGroupRequest.serializationFormat) &&
         Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
         Objects.equals(this.properties, createGroupRequest.properties) &&
-        Objects.equals(this.versionedBySchemaName, createGroupRequest.versionedBySchemaName);
+        Objects.equals(this.allowMultipleTypes, createGroupRequest.allowMultipleTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, validationRules, properties, versionedBySchemaName);
+    return Objects.hash(groupName, serializationFormat, validationRules, properties, allowMultipleTypes);
   }
 
 
@@ -181,10 +181,10 @@ public class CreateGroupRequest   {
     sb.append("class CreateGroupRequest {\n");
     
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
-    sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
+    sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
-    sb.append("    versionedBySchemaName: ").append(toIndentedString(versionedBySchemaName)).append("\n");
+    sb.append("    allowMultipleTypes: ").append(toIndentedString(allowMultipleTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }

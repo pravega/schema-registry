@@ -37,15 +37,15 @@ public class SchemaInfoSerializer extends VersionedSerializer.WithBuilder<Schema
     }
 
     private void write00(SchemaInfo e, RevisionDataOutput target) throws IOException {
-        target.writeUTF(e.getName());
-        SchemaTypeRecord.SERIALIZER.serialize(target, new SchemaTypeRecord(e.getSchemaType()));
+        target.writeUTF(e.getType());
+        SerializationFormatRecord.SERIALIZER.serialize(target, new SerializationFormatRecord(e.getSerializationFormat()));
         target.writeArray(e.getSchemaData());
         target.writeMap(e.getProperties(), DataOutput::writeUTF, DataOutput::writeUTF);
     }
 
     private void read00(RevisionDataInput source, SchemaInfo.SchemaInfoBuilder b) throws IOException {
-        b.name(source.readUTF())
-         .schemaType(SchemaTypeRecord.SERIALIZER.deserialize(source).getSchemaType())
+        b.type(source.readUTF())
+         .serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat())
          .schemaData(source.readArray())
          .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
     }

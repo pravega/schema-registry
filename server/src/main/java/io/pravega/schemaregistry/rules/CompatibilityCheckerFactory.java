@@ -9,19 +9,19 @@
  */
 package io.pravega.schemaregistry.rules;
 
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 
 /**
  * Factory for compatibility checkers. 
  * Currently we only have implementation for avro compatibility checker. 
- * For all other SchemaType the default {@link AlwaysTrueCompatibilityChecker} is used. 
+ * For all other SerializationFormat the default {@link AlwaysTrueCompatibilityChecker} is used. 
  */
 public class CompatibilityCheckerFactory {
     private static final AvroCompatibilityChecker AVRO_COMPATIBILITY_CHECKER = new AvroCompatibilityChecker();
     private static final AlwaysTrueCompatibilityChecker ALWAYS_TRUE_COMPATIBILITY_CHECKER = new AlwaysTrueCompatibilityChecker();
     
-    public static CompatibilityChecker getCompatibilityChecker(SchemaType schemaType) {
-        if (schemaType.equals(SchemaType.Avro)) {
+    public static CompatibilityChecker getCompatibilityChecker(SerializationFormat serializationFormat) {
+        if (serializationFormat.equals(SerializationFormat.Avro)) {
             return AVRO_COMPATIBILITY_CHECKER;
         } else {
             return ALWAYS_TRUE_COMPATIBILITY_CHECKER;

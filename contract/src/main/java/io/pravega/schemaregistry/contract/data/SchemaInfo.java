@@ -20,9 +20,9 @@ import java.util.Objects;
 
 /**
  * Encapsulates properties of a schema. 
- * {@link SchemaInfo#name} object type represented by the schema. This is used to identify the exact object type 
- * and used if a group needs to be divided in different evolution subsets by object types. (ref: {@link GroupProperties#versionedBySchemaName}). 
- * {@link SchemaInfo#schemaType} Serialization format.
+ * {@link SchemaInfo#type} object type represented by the schema. This is used to identify the exact object type. 
+ * If (ref: {@link GroupProperties#allowMultipleTypes}) is set to true, the group will allow multiple schemas to coexist. 
+ * {@link SchemaInfo#serializationFormat} Serialization format.
  * {@link SchemaInfo#schemaData} Schema as an array of 8-bit unsigned bytes. This is schema-type specific and to be consumed
  * by schema-type specific parsers. 
  * {@link SchemaInfo#properties} A key value map of strings where user defined metadata can be recorded with schemas.
@@ -33,8 +33,8 @@ import java.util.Objects;
 @Builder
 @AllArgsConstructor
 public class SchemaInfo {
-    private final String name;
-    private final SchemaType schemaType;
+    private final String type;
+    private final SerializationFormat serializationFormat;
     private final byte[] schemaData;
     private final Map<String, String> properties;
 
@@ -47,8 +47,8 @@ public class SchemaInfo {
             return false;
         }
         SchemaInfo that = (SchemaInfo) o;
-        return Objects.equals(name, that.name) &&
-                schemaType == that.schemaType &&
+        return Objects.equals(type, that.type) &&
+                serializationFormat == that.serializationFormat &&
                 Arrays.equals(schemaData, that.schemaData) &&
                 Objects.equals(properties, that.properties);
     }
@@ -56,7 +56,7 @@ public class SchemaInfo {
     @Override
     public int hashCode() {
 
-        int result = Objects.hash(name, name, schemaType, properties);
+        int result = Objects.hash(type, type, serializationFormat, properties);
         result = 31 * result + Arrays.hashCode(schemaData);
         return result;
     }

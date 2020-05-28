@@ -16,8 +16,8 @@ import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaType;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
@@ -84,7 +84,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
 
     @Test
     public void groups() throws ExecutionException, InterruptedException {
-        GroupProperties group1 = new GroupProperties(SchemaType.Avro,
+        GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()),
                 false, Collections.emptyMap());
         doAnswer(x -> {

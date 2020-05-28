@@ -17,7 +17,7 @@ import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
@@ -43,11 +43,11 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     }
     
     private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass, Class<? extends T> tDerivedClass) {
-        String schemaName = name != null ? name : schema.getId();
+        String type = name != null ? name : schema.getId();
         // Add empty name if the name is not supplied and cannot be extracted from the json schema id. 
-        schemaName = schemaName != null ? schemaName : "";
+        type = type != null ? type : "";
         this.schemaString = schemaString;
-        this.schemaInfo = new SchemaInfo(schemaName, SchemaType.Json, getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(type, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
         this.tClass = tClass;
         this.tDerivedClass = tDerivedClass;
         this.schema = schema;
@@ -74,15 +74,15 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     /**
      * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
      *
-     * @param name schema name.
+     * @param type type of object.
      * @param schemaString Schema string to use. 
      * @return Returns an JSONSchema with {@link Object} type. 
      */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
-    public static JSONSchema<Object> of(String name, String schemaString) {
+    public static JSONSchema<Object> of(String type, String schemaString) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);  
-        return new JSONSchema<>(schema, name, schemaString, Object.class);
+        return new JSONSchema<>(schema, type, schemaString, Object.class);
     }
     
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
@@ -107,7 +107,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         String schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
         
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
-        return new JSONSchema<>(schema, schemaInfo.getName(), schemaString, Object.class);
+        return new JSONSchema<>(schema, schemaInfo.getType(), schemaString, Object.class);
     }
 
     private byte[] getSchemaBytes() {

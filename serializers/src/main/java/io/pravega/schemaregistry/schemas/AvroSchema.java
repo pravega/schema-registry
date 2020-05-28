@@ -13,7 +13,7 @@ import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
@@ -34,7 +34,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     private AvroSchema(Schema schema) {
         this.schema = schema;
         this.schemaInfo = new SchemaInfo(schema.getFullName(),  
-                SchemaType.Avro, getSchemaBytes(), ImmutableMap.of());
+                SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
     }
 
     /**

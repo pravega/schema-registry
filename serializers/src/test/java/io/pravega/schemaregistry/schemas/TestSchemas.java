@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.schemas;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.testobjs.DerivedUser1;
 import io.pravega.schemaregistry.testobjs.DerivedUser2;
 import io.pravega.schemaregistry.testobjs.SchemaDefinitions;
@@ -37,23 +37,23 @@ public class TestSchemas {
     public void testAvroSchema() {
         AvroSchema<GenericRecord> schema = AvroSchema.of(SchemaDefinitions.SCHEMA1);
         assertNotNull(schema.getSchema());
-        assertEquals(schema.getSchemaInfo().getSchemaType(), SchemaType.Avro);
+        assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 
         AvroSchema<User> schema2 = AvroSchema.of(User.class);
         assertNotNull(schema2.getSchema());
-        assertEquals(schema2.getSchemaInfo().getSchemaType(), SchemaType.Avro);
+        assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 
         AvroSchema<Test1> schema3 = AvroSchema.of(Test1.class);
         assertNotNull(schema3.getSchema());
-        assertEquals(schema3.getSchemaInfo().getSchemaType(), SchemaType.Avro);
+        assertEquals(schema3.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 
         AvroSchema<SpecificRecordBase> schemabase1 = AvroSchema.ofBaseType(Test1.class);
         assertNotNull(schemabase1.getSchema());
-        assertEquals(schemabase1.getSchemaInfo().getSchemaType(), SchemaType.Avro);
+        assertEquals(schemabase1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 
         AvroSchema<SpecificRecordBase> schemabase2 = AvroSchema.ofBaseType(Test2.class);
         assertNotNull(schemabase2.getSchema());
-        assertEquals(schemabase2.getSchemaInfo().getSchemaType(), SchemaType.Avro);
+        assertEquals(schemabase2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
     }
 
     @Test
@@ -65,39 +65,39 @@ public class TestSchemas {
         ProtobufSchema<DynamicMessage> schema = ProtobufSchema.of(ProtobufTest.Message1.class.getName(), descriptorSet);
         assertNull(schema.getParser());
         assertNotNull(schema.getDescriptorProto());
-        assertEquals(schema.getSchemaInfo().getSchemaType(), SchemaType.Protobuf);
+        assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         ProtobufSchema<ProtobufTest.Message1> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class, descriptorSet);
         assertNotNull(schema2.getParser());
         assertNotNull(schema2.getDescriptorProto());
-        assertEquals(schema2.getSchemaInfo().getSchemaType(), SchemaType.Protobuf);
+        assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         ProtobufSchema<GeneratedMessageV3> baseSchema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
         assertNotNull(baseSchema1.getParser());
         assertNotNull(baseSchema1.getDescriptorProto());
-        assertEquals(baseSchema1.getSchemaInfo().getSchemaType(), SchemaType.Protobuf);
+        assertEquals(baseSchema1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
         
         ProtobufSchema<GeneratedMessageV3> baseSchema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
         assertNotNull(baseSchema2.getParser());
         assertNotNull(baseSchema2.getDescriptorProto());
-        assertEquals(baseSchema2.getSchemaInfo().getSchemaType(), SchemaType.Protobuf);
+        assertEquals(baseSchema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
     }
 
     @Test
     public void testJsonSchema() {
         JSONSchema<User> schema = JSONSchema.of(User.class);
         assertNotNull(schema.getSchema());
-        assertEquals(schema.getSchemaInfo().getSchemaType(), SchemaType.Json);
+        assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
 
         JSONSchema<Object> schema2 = JSONSchema.of("Person", JSON_SCHEMA_STRING);
         assertNotNull(schema2.getSchema());
-        assertEquals(schema2.getSchemaInfo().getSchemaType(), SchemaType.Json);
+        assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
         
         JSONSchema<User> baseSchema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
         assertNotNull(baseSchema1.getSchema());
-        assertEquals(baseSchema1.getSchemaInfo().getSchemaType(), SchemaType.Json);
+        assertEquals(baseSchema1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
         JSONSchema<User> baseSchema2 = JSONSchema.ofBaseType(DerivedUser2.class, User.class);
         assertNotNull(baseSchema2.getSchema());
-        assertEquals(baseSchema2.getSchemaInfo().getSchemaType(), SchemaType.Json);
+        assertEquals(baseSchema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
     }
 }

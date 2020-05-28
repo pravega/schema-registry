@@ -20,7 +20,7 @@ import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -63,7 +63,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
-        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
@@ -132,7 +132,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
-        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
@@ -196,7 +196,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
-        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
@@ -268,7 +268,7 @@ public class SerializerTest {
         VersionInfo versionInfo2 = new VersionInfo("proto", 1, 1);
         VersionInfo versionInfo3 = new VersionInfo("json", 2, 2);
 
-        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any).build())
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
@@ -323,7 +323,7 @@ public class SerializerTest {
         ProtobufSchema<ProtobufTest.Message2> schema1 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
-        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any)
                                      .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
@@ -346,7 +346,7 @@ public class SerializerTest {
         AssertExtensions.assertThrows(IllegalArgumentException.class, () -> SerializerFactory.protobufGenericDeserializer(config, null));
 
         SchemaInfo latestSchema = client.getLatestSchemaVersion("groupId", null).getSchema();
-        ProtobufSchema<DynamicMessage> schemaDynamic = ProtobufSchema.of(latestSchema.getName(), descriptorSet);
+        ProtobufSchema<DynamicMessage> schemaDynamic = ProtobufSchema.of(latestSchema.getType(), descriptorSet);
         Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(config, schemaDynamic);
         
         DynamicMessage generic = genericDeserializer.deserialize(serialized);
@@ -360,7 +360,7 @@ public class SerializerTest {
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
-        doAnswer(x -> GroupProperties.builder().schemaType(SchemaType.Any)
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any)
                 .properties(Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(false))).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));

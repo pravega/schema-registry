@@ -26,8 +26,8 @@ import javax.validation.constraints.*;
 @ApiModel(description = "Version information object.")
 
 public class VersionInfo   {
-  @JsonProperty("schemaName")
-  private String schemaName = null;
+  @JsonProperty("type")
+  private String type = null;
 
   @JsonProperty("version")
   private Integer version = null;
@@ -35,24 +35,24 @@ public class VersionInfo   {
   @JsonProperty("ordinal")
   private Integer ordinal = null;
 
-  public VersionInfo schemaName(String schemaName) {
-    this.schemaName = schemaName;
+  public VersionInfo type(String type) {
+    this.type = type;
     return this;
   }
 
   /**
-   * Name of schema for this version. This is the name used in SchemaInfo.schemaName.
-   * @return schemaName
+   * Type of schema for this version. This is same value used in SchemaInfo#Type for the schema this version identifies.
+   * @return type
    **/
-  @JsonProperty("schemaName")
-  @ApiModelProperty(required = true, value = "Name of schema for this version. This is the name used in SchemaInfo.schemaName.")
+  @JsonProperty("type")
+  @ApiModelProperty(required = true, value = "Type of schema for this version. This is same value used in SchemaInfo#Type for the schema this version identifies.")
   @NotNull
-  public String getSchemaName() {
-    return schemaName;
+  public String getType() {
+    return type;
   }
 
-  public void setSchemaName(String schemaName) {
-    this.schemaName = schemaName;
+  public void setType(String type) {
+    this.type = type;
   }
 
   public VersionInfo version(Integer version) {
@@ -61,11 +61,11 @@ public class VersionInfo   {
   }
 
   /**
-   * Version number that uniquely identifies the schema version among all schemas in the group that share the same SchemaName.
+   * Version number that uniquely identifies the schema version among all schemas in the group that share the same Type.
    * @return version
    **/
   @JsonProperty("version")
-  @ApiModelProperty(required = true, value = "Version number that uniquely identifies the schema version among all schemas in the group that share the same SchemaName.")
+  @ApiModelProperty(required = true, value = "Version number that uniquely identifies the schema version among all schemas in the group that share the same Type.")
   @NotNull
   public Integer getVersion() {
     return version;
@@ -105,14 +105,14 @@ public class VersionInfo   {
       return false;
     }
     VersionInfo versionInfo = (VersionInfo) o;
-    return Objects.equals(this.schemaName, versionInfo.schemaName) &&
+    return Objects.equals(this.type, versionInfo.type) &&
         Objects.equals(this.version, versionInfo.version) &&
         Objects.equals(this.ordinal, versionInfo.ordinal);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaName, version, ordinal);
+    return Objects.hash(type, version, ordinal);
   }
 
 
@@ -121,7 +121,7 @@ public class VersionInfo   {
     StringBuilder sb = new StringBuilder();
     sb.append("class VersionInfo {\n");
     
-    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("    ordinal: ").append(toIndentedString(ordinal)).append("\n");
     sb.append("}");

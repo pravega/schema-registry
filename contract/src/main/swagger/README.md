@@ -40,6 +40,5 @@ https://jcenter.bintray.com/io/github/swagger2markup/swagger2markup-cli/1.3.3/sw
 
 ### Generate and save the markup documentation
 ```
-java -Dswagger2markup.markupLanguage=MARKDOWN -Dswagger2markup.generatedExamplesEnabled=true -jar swagger2markup-cli-1.3.3.jar  convert
- -i <root>/contract/src/main/swagger/schemaregistry.yaml -f <root>/documentation/src/docs/io.pravega.rest/restapis
+java -Dswagger2markup.markupLanguage=MARKDOWN -Dswagger2markup.generatedExamplesEnabled=true -jar swagger2markup-cli-1.3.3.jar  convert -i <root>/contract/src/main/swagger/schemaregistry.yaml -f <root>/documentation/src/docs/io.pravega.rest/restapis
 ```

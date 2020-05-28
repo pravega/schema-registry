@@ -19,7 +19,7 @@ import java.io.IOException;
 
 /**
  * Object that captures the version of a schema within a group.
- * It contains schema name matching {@link SchemaInfo#name} along with the registry assigned version for the schema in
+ * It contains type matching {@link SchemaInfo#type} along with the registry assigned version for the schema in
  * the group. 
  */
 public class VersionInfoSerializer extends VersionedSerializer.WithBuilder<VersionInfo, VersionInfo.VersionInfoBuilder> {
@@ -41,13 +41,13 @@ public class VersionInfoSerializer extends VersionedSerializer.WithBuilder<Versi
     }
 
     private void write00(VersionInfo e, RevisionDataOutput target) throws IOException {
-        target.writeUTF(e.getSchemaName());
+        target.writeUTF(e.getType());
         target.writeInt(e.getVersion());
         target.writeInt(e.getOrdinal());
     }
 
     private void read00(RevisionDataInput source, VersionInfo.VersionInfoBuilder b) throws IOException {
-        b.schemaName(source.readUTF())
+        b.type(source.readUTF())
          .version(source.readInt())
          .ordinal(source.readInt());
     }

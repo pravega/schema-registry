@@ -17,7 +17,7 @@ import java.util.Arrays;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaType;
+import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.HashMap;
@@ -31,11 +31,11 @@ import javax.validation.constraints.*;
 @ApiModel(description = "Schema information object that encapsulates various properties of a schema.")
 
 public class SchemaInfo   {
-  @JsonProperty("schemaName")
-  private String schemaName = null;
+  @JsonProperty("type")
+  private String type = null;
 
-  @JsonProperty("schemaType")
-  private SchemaType schemaType = null;
+  @JsonProperty("serializationFormat")
+  private SerializationFormat serializationFormat = null;
 
   @JsonProperty("schemaData")
   private byte[] schemaData = null;
@@ -43,44 +43,44 @@ public class SchemaInfo   {
   @JsonProperty("properties")
   private Map<String, String> properties = null;
 
-  public SchemaInfo schemaName(String schemaName) {
-    this.schemaName = schemaName;
+  public SchemaInfo type(String type) {
+    this.type = type;
     return this;
   }
 
   /**
    * Name of the schema. This identifies the type of object the schema payload represents.
-   * @return schemaName
+   * @return type
    **/
-  @JsonProperty("schemaName")
+  @JsonProperty("type")
   @ApiModelProperty(required = true, value = "Name of the schema. This identifies the type of object the schema payload represents.")
   @NotNull
-  public String getSchemaName() {
-    return schemaName;
+  public String getType() {
+    return type;
   }
 
-  public void setSchemaName(String schemaName) {
-    this.schemaName = schemaName;
+  public void setType(String type) {
+    this.type = type;
   }
 
-  public SchemaInfo schemaType(SchemaType schemaType) {
-    this.schemaType = schemaType;
+  public SchemaInfo serializationFormat(SerializationFormat serializationFormat) {
+    this.serializationFormat = serializationFormat;
     return this;
   }
 
   /**
    * Type of schema.
-   * @return schemaType
+   * @return serializationFormat
    **/
-  @JsonProperty("schemaType")
+  @JsonProperty("serializationFormat")
   @ApiModelProperty(required = true, value = "Type of schema.")
   @NotNull
-  public SchemaType getSchemaType() {
-    return schemaType;
+  public SerializationFormat getSerializationFormat() {
+    return serializationFormat;
   }
 
-  public void setSchemaType(SchemaType schemaType) {
-    this.schemaType = schemaType;
+  public void setSerializationFormat(SerializationFormat serializationFormat) {
+    this.serializationFormat = serializationFormat;
   }
 
   public SchemaInfo schemaData(byte[] schemaData) {
@@ -140,15 +140,15 @@ public class SchemaInfo   {
       return false;
     }
     SchemaInfo schemaInfo = (SchemaInfo) o;
-    return Objects.equals(this.schemaName, schemaInfo.schemaName) &&
-        Objects.equals(this.schemaType, schemaInfo.schemaType) &&
+    return Objects.equals(this.type, schemaInfo.type) &&
+        Objects.equals(this.serializationFormat, schemaInfo.serializationFormat) &&
         Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
         Objects.equals(this.properties, schemaInfo.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaName, schemaType, schemaData, properties);
+    return Objects.hash(type, serializationFormat, schemaData, properties);
   }
 
 
@@ -157,8 +157,8 @@ public class SchemaInfo   {
     StringBuilder sb = new StringBuilder();
     sb.append("class SchemaInfo {\n");
     
-    sb.append("    schemaName: ").append(toIndentedString(schemaName)).append("\n");
-    sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
+    sb.append("    type: ").append(toIndentedString(type)).append("\n");
+    sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
     sb.append("    schemaData: ").append(toIndentedString(schemaData)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");

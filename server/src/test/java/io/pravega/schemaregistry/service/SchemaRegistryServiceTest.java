@@ -15,7 +15,7 @@ import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaType;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -58,7 +58,7 @@ public class SchemaRegistryServiceTest {
             return CompletableFuture.completedFuture(new ListWithToken<>(groups, null));
         }).when(store).listGroups(any(), anyInt());
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new GroupProperties(SchemaType.Avro, 
+            return CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Avro, 
                     SchemaValidationRules.of(Compatibility.backward()), false, Collections.emptyMap()));
         }).when(store).getGroupProperties(eq("grp1"));
         

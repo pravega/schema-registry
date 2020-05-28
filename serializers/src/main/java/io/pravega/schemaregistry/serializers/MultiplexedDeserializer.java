@@ -31,6 +31,6 @@ class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        return deserializers.get(writerSchema.getName()).deserialize(inputStream, writerSchema, readerSchema);
+        return deserializers.get(writerSchema.getType()).deserialize(inputStream, writerSchema, readerSchema);
     }
 }
