@@ -152,10 +152,10 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
         Preconditions.checkArgument(groupProperties != null);
-        Preconditions.checkArgument(groupProperties.isVersionedBySchemaName() != null);
+        Preconditions.checkArgument(groupProperties.isAllowMultipleSchemas() != null);
 
         return io.pravega.schemaregistry.contract.data.GroupProperties.builder().schemaType(decode(groupProperties.getSchemaType()))
-                                                                      .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).versionedBySchemaName(groupProperties.isVersionedBySchemaName())
+                                                                      .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).allowMultipleSchemas(groupProperties.isAllowMultipleSchemas())
                                                                       .properties(groupProperties.getProperties()).build();
     }
     // endregion
@@ -212,7 +212,7 @@ public class ModelHelper {
         return new GroupProperties()
                 .schemaType(encode(groupProperties.getSchemaType()))
                 .properties(groupProperties.getProperties())
-                .versionedBySchemaName(groupProperties.isVersionedBySchemaName())
+                .allowMultipleSchemas(groupProperties.isAllowMultipleSchemas())
                 .schemaValidationRules(encode(groupProperties.getSchemaValidationRules()));
     }
 

@@ -83,13 +83,13 @@ paths:
                   type: string
                   minLength: 0
                   maxLength: 40
-              versionedBySchemaName:
+              allowMultipleSchemas:
                 type: boolean
             required:
                 - groupName
                 - schemaType
                 - validationRules
-                - versionedBySchemaName   
+                - allowMultipleSchemas   
       responses:
         201:
           description: Successfully added group
@@ -207,7 +207,7 @@ paths:
           description: Write conflict 
         500:
           description: Internal server error while fetching Group details
-  /groups/{groupName}/schemas/names:
+  /groups/{groupName}/schemas:
     parameters:
       - in: path
         name: groupName
@@ -217,15 +217,15 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getSchemaNames
-      description: Fetch all different objects identified by schema names under a Group. This api will return schema types.  
+      operationId: getSchemas
+      description: Fetch latest schema versions for all objects identified by schema names under a Group. 
       produces:
         - application/json
       responses:
         200:
-          description: List of objects identified by schema names under the group
+          description: Latest schemas for all objects identified by schema names under the group
           schema:
-            $ref: "#/definitions/SchemaNamesList"
+            $ref: "#/definitions/SchemaVersionsList"
         404:
           description: Group with given name not found
         500:
@@ -244,7 +244,7 @@ paths:
     get:
       tags:
       - "Schema"
-      operationId: getSchemas
+      operationId: getSchemaVersions
       description: Get all schema versions for the group 
       produces:
         - application/json
@@ -593,7 +593,7 @@ paths:
         404: 
           description: Group not found
         500:
-          description: Internal server error while creating a Group
+          description: Internal server error while creating a Group          
 definitions:
   ListGroupsResponse:
     type: object
@@ -608,14 +608,6 @@ definitions:
         type: string
     required:
       - continuationToken    
-  SchemaNamesList:
-    type: object
-    description: List of schema names. Schema names uniquely identify different object types under a group.    
-    properties:
-      objects:
-        type: array
-        items:
-          type: string      
   GroupProperties:
     type: object
     description: Metadata for a group.    
@@ -626,8 +618,8 @@ definitions:
       schemaValidationRules:
           description: Validation rules to apply while registering new schema.    
           $ref: "#/definitions/SchemaValidationRules"
-      versionedBySchemaName:
-          description: Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.     
+      allowMultipleSchemas:
+          description: Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.      
           type: boolean
       properties:
         description: User defined Key value strings.     
@@ -638,7 +630,7 @@ definitions:
           maxLength: 40
     required:
       - schemaType
-      - versionedBySchemaName
+      - allowMultipleSchemas
       - schemaValidationRules      
   SchemaType:
     type: object

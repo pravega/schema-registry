@@ -42,8 +42,8 @@ public class CreateGroupRequest   {
   @JsonProperty("properties")
   private Map<String, String> properties = null;
 
-  @JsonProperty("versionedBySchemaName")
-  private Boolean versionedBySchemaName = null;
+  @JsonProperty("allowMultipleSchemas")
+  private Boolean allowMultipleSchemas = null;
 
   public CreateGroupRequest groupName(String groupName) {
     this.groupName = groupName;
@@ -132,24 +132,24 @@ public class CreateGroupRequest   {
     this.properties = properties;
   }
 
-  public CreateGroupRequest versionedBySchemaName(Boolean versionedBySchemaName) {
-    this.versionedBySchemaName = versionedBySchemaName;
+  public CreateGroupRequest allowMultipleSchemas(Boolean allowMultipleSchemas) {
+    this.allowMultipleSchemas = allowMultipleSchemas;
     return this;
   }
 
   /**
-   * Get versionedBySchemaName
-   * @return versionedBySchemaName
+   * Get allowMultipleSchemas
+   * @return allowMultipleSchemas
    **/
-  @JsonProperty("versionedBySchemaName")
+  @JsonProperty("allowMultipleSchemas")
   @ApiModelProperty(required = true, value = "")
   @NotNull
-  public Boolean isVersionedBySchemaName() {
-    return versionedBySchemaName;
+  public Boolean isAllowMultipleSchemas() {
+    return allowMultipleSchemas;
   }
 
-  public void setVersionedBySchemaName(Boolean versionedBySchemaName) {
-    this.versionedBySchemaName = versionedBySchemaName;
+  public void setAllowMultipleSchemas(Boolean allowMultipleSchemas) {
+    this.allowMultipleSchemas = allowMultipleSchemas;
   }
 
 
@@ -166,12 +166,12 @@ public class CreateGroupRequest   {
         Objects.equals(this.schemaType, createGroupRequest.schemaType) &&
         Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
         Objects.equals(this.properties, createGroupRequest.properties) &&
-        Objects.equals(this.versionedBySchemaName, createGroupRequest.versionedBySchemaName);
+        Objects.equals(this.allowMultipleSchemas, createGroupRequest.allowMultipleSchemas);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, schemaType, validationRules, properties, versionedBySchemaName);
+    return Objects.hash(groupName, schemaType, validationRules, properties, allowMultipleSchemas);
   }
 
 
@@ -184,7 +184,7 @@ public class CreateGroupRequest   {
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
-    sb.append("    versionedBySchemaName: ").append(toIndentedString(versionedBySchemaName)).append("\n");
+    sb.append("    allowMultipleSchemas: ").append(toIndentedString(allowMultipleSchemas)).append("\n");
     sb.append("}");
     return sb.toString();
   }

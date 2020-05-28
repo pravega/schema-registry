@@ -37,8 +37,8 @@ public class GroupProperties   {
   @JsonProperty("schemaValidationRules")
   private SchemaValidationRules schemaValidationRules = null;
 
-  @JsonProperty("versionedBySchemaName")
-  private Boolean versionedBySchemaName = null;
+  @JsonProperty("allowMultipleSchemas")
+  private Boolean allowMultipleSchemas = null;
 
   @JsonProperty("properties")
   private Map<String, String> properties = null;
@@ -83,24 +83,24 @@ public class GroupProperties   {
     this.schemaValidationRules = schemaValidationRules;
   }
 
-  public GroupProperties versionedBySchemaName(Boolean versionedBySchemaName) {
-    this.versionedBySchemaName = versionedBySchemaName;
+  public GroupProperties allowMultipleSchemas(Boolean allowMultipleSchemas) {
+    this.allowMultipleSchemas = allowMultipleSchemas;
     return this;
   }
 
   /**
-   * Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.
-   * @return versionedBySchemaName
+   * Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.
+   * @return allowMultipleSchemas
    **/
-  @JsonProperty("versionedBySchemaName")
-  @ApiModelProperty(required = true, value = "Flag to indicate whether to version schemas within the group by schema name. If set to true, addSchema will only validate against schemas that have the same schema name.")
+  @JsonProperty("allowMultipleSchemas")
+  @ApiModelProperty(required = true, value = "Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.")
   @NotNull
-  public Boolean isVersionedBySchemaName() {
-    return versionedBySchemaName;
+  public Boolean isAllowMultipleSchemas() {
+    return allowMultipleSchemas;
   }
 
-  public void setVersionedBySchemaName(Boolean versionedBySchemaName) {
-    this.versionedBySchemaName = versionedBySchemaName;
+  public void setAllowMultipleSchemas(Boolean allowMultipleSchemas) {
+    this.allowMultipleSchemas = allowMultipleSchemas;
   }
 
   public GroupProperties properties(Map<String, String> properties) {
@@ -142,13 +142,13 @@ public class GroupProperties   {
     GroupProperties groupProperties = (GroupProperties) o;
     return Objects.equals(this.schemaType, groupProperties.schemaType) &&
         Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
-        Objects.equals(this.versionedBySchemaName, groupProperties.versionedBySchemaName) &&
+        Objects.equals(this.allowMultipleSchemas, groupProperties.allowMultipleSchemas) &&
         Objects.equals(this.properties, groupProperties.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaType, schemaValidationRules, versionedBySchemaName, properties);
+    return Objects.hash(schemaType, schemaValidationRules, allowMultipleSchemas, properties);
   }
 
 
@@ -159,7 +159,7 @@ public class GroupProperties   {
     
     sb.append("    schemaType: ").append(toIndentedString(schemaType)).append("\n");
     sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
-    sb.append("    versionedBySchemaName: ").append(toIndentedString(versionedBySchemaName)).append("\n");
+    sb.append("    allowMultipleSchemas: ").append(toIndentedString(allowMultipleSchemas)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");
     return sb.toString();

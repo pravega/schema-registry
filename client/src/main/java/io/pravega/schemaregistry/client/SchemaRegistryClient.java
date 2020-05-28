@@ -36,14 +36,15 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group that uniquely identifies the group. 
      * @param schemaType Serialization format used to encode data in the group. 
      * @param validationRules Schema validation policy to apply for the group. 
-     * @param versionedBySchemaName Property to describe whether schema compatibility checks should performed for schemas that 
-     *                            share same {@link SchemaInfo#name}. Schema names identify objects of same type.  
+     * @param allowMultipleSchemas flag that tells whether multiple schemas representing distinct object types can be 
+     *                             registered with the group. Schema names identify objects of same type. 
+     *                             Schema compatibility checks are always performed for schemas that share same {@link SchemaInfo#name}. 
      * @param properties          Map of properties. Example properties could include flag to indicate whether client should
      *                            encode registry service generated encoding id with payload. 
      * @return True indicates if the group was added successfully, false if it exists. 
      */
     boolean addGroup(String groupId, SchemaType schemaType, SchemaValidationRules validationRules,
-                     boolean versionedBySchemaName, Map<String, String> properties);
+                     boolean allowMultipleSchemas, Map<String, String> properties);
     
     /**
      * Remove group. 
@@ -63,8 +64,8 @@ public interface SchemaRegistryClient {
      * Get group properties for the group. 
      * {@link GroupProperties#schemaType} which identifies the serialization format and schema type used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#versionedBySchemaName} that specifies if schemas should be exclusively validated against 
-     * schemas that have the same {@link SchemaInfo#name}. 
+     * {@link GroupProperties#allowMultipleSchemas} that specifies if multiple schemas are allowed to be registered in the group. 
+     * Schemas are validated against existing schema versions that have the same {@link SchemaInfo#name}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
      * 
      * @param groupId Id for the group.
@@ -81,16 +82,18 @@ public interface SchemaRegistryClient {
     void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules);
     
     /**
-     * Gets list of object types registered under the group. Objects are identified by {@link SchemaInfo#name}
+     * Gets list of latest schemas for each object types registered under the group. Objects are identified by {@link SchemaInfo#name}.
      * 
      * @param groupId Id for the group. 
      * @return List of different objects within the group.   
      */
-    List<String> getSchemaNames(String groupId);
+    List<SchemaWithVersion> getSchemas(String groupId);
 
     /**
-     * Registers schema to the group. If group is configured with {@link GroupProperties#versionedBySchemaName} then 
-     * the {@link SchemaInfo#name} is used for validating against existing group schemas that share the same name. 
+     * Registers schema to the group. Schemas are validated against existing schemas in the group that share the same 
+     * {@link SchemaInfo#name}.
+     * If group is configured with {@link GroupProperties#allowMultipleSchemas} then multiple schemas with distinct
+     * schema names could be registered. 
      * 
      * @param groupId Id for the group. 
      * @param schema Schema to add. 
@@ -139,8 +142,9 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets latest schema and version for the group (or schemaName, if specified). 
-     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName name needs to be supplied to 
-     * get the latest schema for the schemaName. 
+     * To get latest schema version for a specific schema identified by {@link SchemaInfo#name}, provide the schema name optionally. 
+     * Otherwise if the group is configured to allow multiple schemas {@link GroupProperties#allowMultipleSchemas}, then 
+     * and schema name is not specified, the last schema added to the group will be returned. 
      * 
      * @param groupId Id for the group. 
      * @param schemaName Name of schemaName. 
@@ -150,8 +154,7 @@ public interface SchemaRegistryClient {
     SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaName);
 
     /**
-     * Gets version corresponding to the schema. If group has been configured with {@link GroupProperties#versionedBySchemaName}
-     * the version will contain the name taken from the {@link SchemaInfo#name}. 
+     * Gets version corresponding to the schema.  
      * Version is uniquely identified by {@link SchemaInfo#schemaData}. 
      *
      * @param groupId Id for the group. 
@@ -162,7 +165,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets all schemas with corresponding versions for the group (or schemaName, if specified). 
-     * For groups configured with {@link GroupProperties#versionedBySchemaName}, the schemaName name needs to be supplied to 
+     * For groups configured with {@link GroupProperties#allowMultipleSchemas}, the schemaName name needs to be supplied to 
      * get the latest schema for the schemaName. {@link SchemaInfo#name} is used as the schemaName name. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 

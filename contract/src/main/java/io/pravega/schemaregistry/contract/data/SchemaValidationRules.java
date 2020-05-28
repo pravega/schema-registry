@@ -37,7 +37,7 @@ public class SchemaValidationRules {
     public static SchemaValidationRules of(Compatibility compatibility) {
         return new SchemaValidationRules(Collections.singletonMap(compatibility.getName(), compatibility));
     }
-
+    
     public static SchemaValidationRules of(List<SchemaValidationRule> rules) {
         Preconditions.checkNotNull(rules);
         Preconditions.checkArgument(rules.stream().allMatch(x -> x instanceof Compatibility), "Only compatibility rule is supported.");

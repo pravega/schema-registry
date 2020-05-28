@@ -16,46 +16,37 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
-import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * List of schema names. Schema names uniquely identify different object types under a group.
+ * GetSchemaReferences
  */
-@ApiModel(description = "List of schema names. Schema names uniquely identify different object types under a group.")
 
-public class SchemaNamesList   {
-  @JsonProperty("objects")
-  private List<String> objects = null;
+public class GetSchemaReferences   {
+  @JsonProperty("schemaInfo")
+  private SchemaInfo schemaInfo = null;
 
-  public SchemaNamesList objects(List<String> objects) {
-    this.objects = objects;
-    return this;
-  }
-
-  public SchemaNamesList addObjectsItem(String objectsItem) {
-    if (this.objects == null) {
-      this.objects = new ArrayList<String>();
-    }
-    this.objects.add(objectsItem);
+  public GetSchemaReferences schemaInfo(SchemaInfo schemaInfo) {
+    this.schemaInfo = schemaInfo;
     return this;
   }
 
   /**
-   * Get objects
-   * @return objects
+   * Get schemaInfo
+   * @return schemaInfo
    **/
-  @JsonProperty("objects")
-  @ApiModelProperty(value = "")
-  public List<String> getObjects() {
-    return objects;
+  @JsonProperty("schemaInfo")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
+  public SchemaInfo getSchemaInfo() {
+    return schemaInfo;
   }
 
-  public void setObjects(List<String> objects) {
-    this.objects = objects;
+  public void setSchemaInfo(SchemaInfo schemaInfo) {
+    this.schemaInfo = schemaInfo;
   }
 
 
@@ -67,22 +58,22 @@ public class SchemaNamesList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaNamesList schemaNamesList = (SchemaNamesList) o;
-    return Objects.equals(this.objects, schemaNamesList.objects);
+    GetSchemaReferences getSchemaReferences = (GetSchemaReferences) o;
+    return Objects.equals(this.schemaInfo, getSchemaReferences.schemaInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(objects);
+    return Objects.hash(schemaInfo);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaNamesList {\n");
+    sb.append("class GetSchemaReferences {\n");
     
-    sb.append("    objects: ").append(toIndentedString(objects)).append("\n");
+    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }
