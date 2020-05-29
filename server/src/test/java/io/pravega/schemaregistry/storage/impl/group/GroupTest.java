@@ -135,7 +135,7 @@ public class GroupTest {
         assertEquals(0, schemaRecord.getVersionInfo().getOrdinal());
 
         List<TableRecords.TableValue> tableValueListSchemaInfo = integerGroupTable.table.entrySet().stream().filter(
-                x -> x.getKey() instanceof TableRecords.SchemaInfoKey).map(
+                x -> x.getKey() instanceof TableRecords.SchemaFingerprintKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
         assertFalse(tableValueListSchemaInfo.isEmpty());
@@ -317,9 +317,9 @@ public class GroupTest {
     }
 
     @Test
-    public void testGetGroupLatestSchemaVersion() {
+    public void testgetLatestSchemaVersion() {
         // null case
-        SchemaWithVersion schemaWithVersion = integerGroup.getGroupLatestSchemaVersion().join();
+        SchemaWithVersion schemaWithVersion = integerGroup.getLatestSchemaVersion().join();
         assertNull(schemaWithVersion);
         // non-null case
         integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
@@ -334,7 +334,7 @@ public class GroupTest {
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
-        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion().join();
+        schemaWithVersion = integerGroup.getLatestSchemaVersion().join();
         assertEquals(versionInfo, schemaWithVersion.getVersion());
         assertEquals("anygroup", schemaWithVersion.getSchema().getName());
 
@@ -346,12 +346,12 @@ public class GroupTest {
         integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo1).join();
         // null
-        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup2").join();
+        schemaWithVersion = integerGroup.getLatestSchemaVersion("anygroup2").join();
         assertNull(schemaWithVersion);
         // non-null
-        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup1").join();
+        schemaWithVersion = integerGroup.getLatestSchemaVersion("anygroup1").join();
         assertEquals(versionInfo1, schemaWithVersion.getVersion());
-        schemaWithVersion = integerGroup.getGroupLatestSchemaVersion("anygroup").join();
+        schemaWithVersion = integerGroup.getLatestSchemaVersion("anygroup").join();
         assertTrue(Arrays.equals(schemaInfo.getSchemaData(), schemaWithVersion.getSchema().getSchemaData()));
     }
 

@@ -177,7 +177,7 @@ public class SchemaRegistryServiceTest {
             return CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Protobuf, SchemaValidationRules.of(Compatibility.forward()), false, Collections.singletonMap("Encode", "false")));
         }).when(store).getGroupProperties(anyString());
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(anyString(), any(),
@@ -194,7 +194,7 @@ public class SchemaRegistryServiceTest {
 
         // IncompatibleSchema Exception
         doAnswer(x -> CompletableFuture.completedFuture(
-                new GroupProperties(SerializationFormat.Protobuf, SchemaValidationRules.of(Compatibility.forward()), false,
+                new GroupProperties(SerializationFormat.Custom, SchemaValidationRules.of(Compatibility.forward()), false,
                         Collections.singletonMap("Encode", "false")))).when(store).getGroupProperties(anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
@@ -218,11 +218,11 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetSchema(){
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         doAnswer(x -> CompletableFuture.completedFuture(schemaInfo)).when(store).getSchema(anyString(), anyInt());
         SchemaInfo schemaInfo1 = service.getSchema("mygroup", 7).join();
-        assertEquals(SerializationFormat.Protobuf, schemaInfo1.getSerializationFormat());
+        assertEquals(SerializationFormat.Custom, schemaInfo1.getSerializationFormat());
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
@@ -237,7 +237,7 @@ public class SchemaRegistryServiceTest {
     public void testGetEncodingInfo(){
         EncodingId encodingId = new EncodingId(7);
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 5);
         EncodingInfo encodingInfo = new EncodingInfo(versionInfo, schemaInfo, CodecType.GZip);
@@ -286,13 +286,14 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetLatestSchema(){
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Protobuf, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 5);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(anyString());
         SchemaWithVersion schemaWithVersion1 = service.getGroupLatestSchemaVersion("mygroup", null).join();
         assertEquals(SerializationFormat.Protobuf, schemaWithVersion1.getSchema().getSerializationFormat());
+        assertEquals(SerializationFormat.Custom, schemaWithVersion1.getSchema().getSerializationFormat());
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(store).getLatestSchemaVersion(anyString());
         AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getGroupLatestSchemaVersion("mygroup", null).join(), e -> e instanceof StoreExceptions.DataNotFoundException);
@@ -301,7 +302,6 @@ public class SchemaRegistryServiceTest {
         AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getGroupLatestSchemaVersion("mygroup", null).join(), e -> e instanceof RuntimeException);
 
         // with objectType
-
         doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(anyString(), any());
         schemaWithVersion1 = service.getGroupLatestSchemaVersion("mygroup", "objectType").join();
         assertEquals(SerializationFormat.Protobuf, schemaWithVersion1.getSchema().getSerializationFormat());
@@ -310,6 +310,14 @@ public class SchemaRegistryServiceTest {
         AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getGroupLatestSchemaVersion("mygroup", "objectType").join(), e -> e instanceof StoreExceptions.DataNotFoundException);
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getLatestSchemaVersion(anyString(), any());
+        doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(anyString(), anyString());
+        schemaWithVersion1 = service.getGroupLatestSchemaVersion("mygroup", "objectType").join();
+        assertEquals(SerializationFormat.Custom, schemaWithVersion1.getSchema().getSerializationFormat());
+        // GroupNotFound Exception
+        doAnswer(x -> Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(store).getLatestSchemaVersion(anyString(), anyString());
+        AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getGroupLatestSchemaVersion("mygroup", "objectType").join(), e -> e instanceof StoreExceptions.DataNotFoundException);
+        // Runtime Exception
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getLatestSchemaVersion(anyString(), anyString());
         AssertExtensions.assertThrows("An Exception should have been thrown", () -> service.getGroupLatestSchemaVersion("mygroup", "objectType").join(), e -> e instanceof RuntimeException);
     }
 
@@ -372,13 +380,13 @@ public class SchemaRegistryServiceTest {
     public void testValidateSchema(){
         doAnswer(x -> {
             return CompletableFuture.completedFuture(
-                    new GroupProperties(SerializationFormat.Protobuf, SchemaValidationRules.of(Compatibility.forward()), false,
+                    new GroupProperties(SerializationFormat.Custom, SchemaValidationRules.of(Compatibility.forward()), false,
                             Collections.singletonMap("Encode", "false")));
         }).when(store).getGroupProperties(anyString());
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SerializationFormat.Protobuf, schemaData,
+                        "schemaName", SerializationFormat.Custom, schemaData,
                         Collections.singletonMap("key", "value"));
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
@@ -402,7 +410,7 @@ public class SchemaRegistryServiceTest {
                         Collections.singletonMap("key", "value"));
         doAnswer(x -> {
             return CompletableFuture.completedFuture(
-                    new GroupProperties(SerializationFormat.Protobuf, SchemaValidationRules.of(Compatibility.forward()), false,
+                    new GroupProperties(SerializationFormat.Custom, SchemaValidationRules.of(Compatibility.forward()), false,
                             Collections.singletonMap("Encode", "false")));
         }).when(store).getGroupProperties(anyString());
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);

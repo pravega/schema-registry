@@ -41,7 +41,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
             Lists.newArrayList(TableRecords.VersionKey.class, TableRecords.VersionDeletedRecord.class, 
                     TableRecords.GroupPropertyKey.class, TableRecords.EncodingIdRecord.class, TableRecords.EncodingInfoRecord.class);
 
-    private final TableStore tablesStore;
+    final TableStore tablesStore;
     private final String tableName;
 
     public PravegaKVGroupTable(String groupName, String id, TableStore tablesStore) {
