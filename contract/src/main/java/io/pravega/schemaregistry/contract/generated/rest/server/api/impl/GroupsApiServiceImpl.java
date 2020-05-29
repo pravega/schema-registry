@@ -5,6 +5,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.*;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
@@ -20,6 +21,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
