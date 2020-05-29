@@ -430,8 +430,8 @@ paths:
         - application/json
       responses:
         200:
-          description: Schema is valid
-          valid:
+          description: Schema validation response 
+          schema:
              $ref: "#/definitions/Valid"
         404:
           description: Group with given name not found
@@ -468,7 +468,7 @@ paths:
       responses:
         200:
           description: Schema can be used to read
-          canRead:
+          schema:
              $ref: "#/definitions/CanRead"
         404:
           description: Group with given name not found
