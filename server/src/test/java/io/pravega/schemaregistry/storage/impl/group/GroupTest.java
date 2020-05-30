@@ -421,17 +421,19 @@ public class GroupTest {
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
         integerGroup.updateValidationPolicy(SchemaValidationRules.of(Compatibility.forward()), eTag).join();
-        List<TableRecords.TableValue> validationRecord = integerGroupTable.table.entrySet().stream().filter(x -> x.getKey() instanceof TableRecords.ValidationPolicyKey).map(x -> x.getValue().getValue()).collect(Collectors.toList());
+        List<TableRecords.TableValue> validationRecord = integerGroupTable.table.entrySet().stream().filter(
+                x -> x.getKey() instanceof TableRecords.ValidationPolicyKey).map(x -> x.getValue().getValue()).collect(
+                Collectors.toList());
         assertEquals(1, validationRecord.size());
         TableRecords.ValidationRecord validationRecord1 = (TableRecords.ValidationRecord) validationRecord.get(0);
         assertEquals(SchemaValidationRules.of(Compatibility.forward()), validationRecord1.getValidationRules());
         // when unchanged
         eTag = integerGroup.getCurrentEtag().join();
-        assertEquals(null, integerGroup.updateValidationPolicy(SchemaValidationRules.of(Compatibility.forward()), eTag).join());
+        assertNull(integerGroup.updateValidationPolicy(SchemaValidationRules.of(Compatibility.forward()), eTag).join());
     }
 
     @Test
-    public void testGetGroupProperties(){
+    public void testGetGroupProperties() {
         integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
@@ -443,7 +445,7 @@ public class GroupTest {
     }
 
     @Test
-    public void testGetEncodingId(){
+    public void testGetEncodingId() {
         //null
         integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
@@ -478,5 +480,39 @@ public class GroupTest {
         idEtagEither = integerGroup.getEncodingId(versionInfo1, CodecType.Snappy).join();
         assertTrue(idEtagEither.isLeft());
         assertEquals(encodingId1, idEtagEither.getLeft());
+    }
+
+    @Test
+    public void testDeleteSchema() {
+        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+                SchemaValidationRules.of(
+                        Compatibility.backward())).join();
+        Etag eTag = integerGroup.getCurrentEtag().join();
+        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+                SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
+                Collections.singletonMap("key", "value"));
+        byte[] schemaData = new byte[0];
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+                Collections.singletonMap("key", "value"));
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        eTag = integerGroup.getCurrentEtag().join();
+        schemaData = new byte[5];
+        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+                Collections.singletonMap("key1", "value1"));
+        integerGroup.addSchema(schemaInfo, groupProperties, eTag);
+        VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
+        eTag = integerGroup.getCurrentEtag().join();
+        integerGroup.deleteSchema(versionInfo.getOrdinal(), eTag).join();
+        List<TableRecords.TableValue> deletedOrdinalList = integerGroupTable.table.entrySet().stream().filter(
+                x -> x.getKey() instanceof TableRecords.VersionDeletedRecord).map(x -> x.getValue().getValue()).collect(
+                Collectors.toList());
+        assertEquals(1, deletedOrdinalList.size());
+        TableRecords.VersionDeletedRecord versionDeletedRecord =
+                (TableRecords.VersionDeletedRecord) deletedOrdinalList.get(
+                0);
+        assertEquals(versionInfo.getOrdinal(), versionDeletedRecord.getOrdinal());
+        // already deleted
+        eTag = integerGroup.getCurrentEtag().join();
+        assertNull(integerGroup.deleteSchema(versionInfo.getOrdinal(), eTag).join());
     }
 }
