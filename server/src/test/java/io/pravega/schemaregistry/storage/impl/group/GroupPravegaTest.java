@@ -188,6 +188,59 @@ public class GroupPravegaTest {
                         TableRecords.SchemaNamesListValue.class)).join().getRecord();
         assertEquals(1, schemaNamesListValue.getSchemaNames().size());
         assertEquals("anygroup", schemaNamesListValue.getSchemaNames().get(0));
+        //multiple schemas
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+                Collections.singletonMap("key1", "value1"));
+        etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
+        pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
+        VersionInfo versionInfo1 = pravegaKVGroups.getGroup(groupName).join().getVersion(schemaInfo1).join();
+        SchemaInfo schemaInfo2 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+                Collections.singletonMap("key1", "value1"));
+        etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
+        pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
+        VersionInfo versionInfo2 = pravegaKVGroups.getGroup(groupName).join().getVersion(schemaInfo2).join();
+        //versionInfo key
+        schemaRecord = tableStore.getEntry(String.format("table-%s/metadata/0", gv.getId()),
+                new TableKeySerializer().toBytes(new TableRecords.VersionKey(versionInfo1.getOrdinal())),
+                x -> TableRecords.fromBytes(TableRecords.VersionKey.class, x,
+                        TableRecords.SchemaRecord.class)).join().getRecord();
+        assertEquals("anygroup", schemaRecord.getSchemaInfo().getName());
+        schemaRecord = tableStore.getEntry(String.format("table-%s/metadata/0", gv.getId()),
+                new TableKeySerializer().toBytes(new TableRecords.VersionKey(versionInfo2.getOrdinal())),
+                x -> TableRecords.fromBytes(TableRecords.VersionKey.class, x,
+                        TableRecords.SchemaRecord.class)).join().getRecord();
+        assertEquals("anygroup1",schemaRecord.getSchemaInfo().getName());
+        assertEquals(Collections.singletonMap("key1", "value1"),schemaRecord.getSchemaInfo().getProperties());
+        // schemaInfokey
+        schemaVersionList = tableStore.getEntry(
+                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(
+                        new TableRecords.SchemaFingerprintKey(HASH.hashBytes(schemaInfo1.getSchemaData()).asLong())),
+                x -> TableRecords.fromBytes(TableRecords.SchemaFingerprintKey.class, x,
+                        TableRecords.SchemaVersionList.class)).join().getRecord();
+        assertEquals(3, schemaVersionList.getVersions().size());
+        //LatestSchemaVersionKey
+        latestSchemaVersionValue = tableStore.getEntry(
+                String.format("table-%s/metadata/0", gv.getId()),
+                new TableKeySerializer().toBytes(LATEST_SCHEMA_VERSION_KEY),
+                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionKey.class, x,
+                        TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
+        assertEquals("anygroup1", latestSchemaVersionValue.getVersion().getSchemaName());
+        assertEquals(versionInfo2.getOrdinal(), latestSchemaVersionValue.getVersion().getOrdinal());
+        //LatestSchemaVersionForObjectName
+        latestSchemaVersionValue1 = tableStore.getEntry(
+                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(
+                        new TableRecords.LatestSchemaVersionForSchemaNameKey(schemaInfo.getName())),
+                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForSchemaNameKey.class, x,
+                        TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
+        assertTrue(latestSchemaVersionValue1.getVersion().equals(schemaVersionList.getVersions().get(1)));
+        //SchemaNamesKey
+        schemaNamesListValue = tableStore.getEntry(
+                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(SCHEMA_NAMES_KEY),
+                x -> TableRecords.fromBytes(TableRecords.SchemaNamesKey.class, x,
+                        TableRecords.SchemaNamesListValue.class)).join().getRecord();
+        assertEquals(2, schemaNamesListValue.getSchemaNames().size());
+        assertEquals("anygroup", schemaNamesListValue.getSchemaNames().get(0));
+        assertEquals("anygroup1",schemaNamesListValue.getSchemaNames().get(1));
     }
 
     @Test
@@ -564,19 +617,3 @@ public class GroupPravegaTest {
         assertNull(pravegaKVGroups.getGroup(groupName).join().deleteSchema(versionInfo.getOrdinal(), eTag).join());
     }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
