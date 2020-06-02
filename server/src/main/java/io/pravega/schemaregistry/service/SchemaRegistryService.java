@@ -126,7 +126,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets group's properties.
-     * {@link GroupProperties#serializationFormat} which identifies the serialization format and schema type used to describe the schema.
+     * {@link GroupProperties#serializationFormat} which identifies the serialization format used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#allowMultipleTypes} that specifies multiple schemas with distinct {@link SchemaInfo#type} can
      * be registered.
@@ -224,7 +224,7 @@ public class SchemaRegistryService {
         log.info("addSchema called for group {}. schema {}", schema.getType());
         
         // 1. get group policy
-        // 2. get checker for schema type.
+        // 2. get checker for serialization format.
         // validate schema against group policy + rules on schema
         // 3. conditionally update the schema
         return RETRY.runAsync(() -> store.getGroupEtag(group)
@@ -697,13 +697,13 @@ public class SchemaRegistryService {
                     String pckg = nameStart < 0 ? "" : schemaInfo.getType().substring(0, nameStart);
 
                     isValid = fileDescriptorSet.getFileList().stream()
-                                               .anyMatch(x -> pckg.startsWith(x.getPackage()) &&
+                                               .anyMatch(x -> x.getPackage().startsWith(pckg) &&
                                                        x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)));
                     break;
                 case Avro: 
                     schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    isValid = schema.getFullName().equals(schemaInfo.getType());
+                    isValid = schema.getName().endsWith(schemaInfo.getType());
                     break;
                 case Json: 
                     schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);

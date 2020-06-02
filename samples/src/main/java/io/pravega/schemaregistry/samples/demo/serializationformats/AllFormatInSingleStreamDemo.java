@@ -54,7 +54,7 @@ import java.util.Collections;
 import java.util.Scanner;
 
 /**
- * This sample writes objects of all json protobuf and avro formats into a single stream. For this the `schema type` property
+ * This sample writes objects of all json protobuf and avro formats into a single stream. For this the `serialization format` property
  * of the group is set as {@link SerializationFormat#Any}. 
  * During reads it uses {@link SerializerFactory#multiFormatGenericDeserializer(SerializerConfig)} to deserialize them into generic records 
  * of each type and the reader returns the common base class {@link Object}. 

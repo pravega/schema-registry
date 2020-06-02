@@ -194,7 +194,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
             throw new IncompatibleSchemaException("Schema is incompatible.");
         } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
-            throw new SerializationFormatMismatchException("Schema type is invalid.");
+            throw new SerializationFormatMismatchException("SerializationFormat is invalid.");
         } else {
             throw new RuntimeException("Internal Service error. Failed to addSchema.");
         }

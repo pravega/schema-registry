@@ -277,7 +277,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getSchemaVersions(String groupName, String schemaName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersions(String groupName, String type, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get group schemas called for group {}", groupName);
         withCompletion("getSchemas", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getGroupHistory(groupName, null)
@@ -306,7 +306,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getLatestSchema(String groupName, String schemaName, SecurityContext securityContext,
+    public void getLatestSchema(String groupName, String type, SecurityContext securityContext,
                                 AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get latest group schema called for group {}", groupName);
         withCompletion("getLatestSchema", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
@@ -354,7 +354,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                                   log.info("addSchema incompatible schema {}", groupName);
                                                   return Response.status(Status.CONFLICT).build();
                                               } else if (unwrap instanceof SerializationFormatMismatchException) {
-                                                  log.info("addSchema schema type mismatched {}", groupName);
+                                                  log.info("addSchema serialization format mismatched {}", groupName);
                                                   return Response.status(Status.EXPECTATION_FAILED).build();
                                               } else {
                                                   log.warn("addSchema failed with exception: ", unwrap);

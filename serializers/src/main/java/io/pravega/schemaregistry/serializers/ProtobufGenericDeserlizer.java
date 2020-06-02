@@ -44,7 +44,7 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
                 String name = schemaToUse.getType().substring(nameStart + 1);
                 String pckg = nameStart < 0 ? "" : schemaToUse.getType().substring(0, nameStart);
                 DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet.getFileList().stream()
-                        .filter(x -> pckg.startsWith(x.getPackage()) &&
+                        .filter(x -> x.getPackage().startsWith(pckg) &&
                                 x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)))
                         .findAny().orElseThrow(IllegalArgumentException::new);
                 

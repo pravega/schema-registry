@@ -103,7 +103,7 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid serialization format", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchema(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName

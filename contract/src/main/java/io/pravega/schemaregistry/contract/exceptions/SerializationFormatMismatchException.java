@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.contract.exceptions;
 
 /**
- * Exception thrown when a schema type is different from the group property's schema type. 
+ * Exception thrown when a serialization format is different from the group property's serialization format. 
  */
 public class SerializationFormatMismatchException extends RuntimeException {
     public SerializationFormatMismatchException(String message) {

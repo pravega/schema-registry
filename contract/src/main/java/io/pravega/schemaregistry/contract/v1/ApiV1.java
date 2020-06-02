@@ -82,7 +82,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to the group", response = VersionInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid serialization format", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
         Response addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                            @ApiParam(value = "Add new schema to group", required = true) AddSchemaRequest addSchemaRequest);
@@ -308,7 +308,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to the group", response = VersionInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid serialization format", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
         void addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                        @ApiParam(value = "Add new schema to group", required = true) AddSchemaRequest addSchemaRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;

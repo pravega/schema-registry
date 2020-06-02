@@ -133,7 +133,7 @@ public class AvroDemo {
             streamManager.createScope(scope);
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
-            System.out.println("adding new group with: \nschema type = avro\n compatibiity = backward");
+            System.out.println("adding new group with: \nserialization format = avro\n compatibiity = backward");
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
             client.addGroup(groupId, serializationFormat,

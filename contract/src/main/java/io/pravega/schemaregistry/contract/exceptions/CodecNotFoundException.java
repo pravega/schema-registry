@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.contract.exceptions;
 
 /**
- * Exception thrown when a schema type is different from the group property's schema type. 
+ * Exception thrown when a codec is not found. 
  */
 public class CodecNotFoundException extends RuntimeException {
     public CodecNotFoundException(String message) {
