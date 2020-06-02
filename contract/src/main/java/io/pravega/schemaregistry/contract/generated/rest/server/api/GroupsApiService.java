@@ -7,6 +7,7 @@ import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
@@ -22,6 +23,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
@@ -40,14 +42,14 @@ public abstract class GroupsApiService {
     public abstract Response canRead(String groupName,CanReadRequest canReadRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response createGroup(CreateGroupRequest createGroupRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response deleteSchemaVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response deleteSchemaVersion(String groupName,Integer versionOrdinal,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getCodecsList(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingInfo(String groupName,Integer encodingId,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupHistory(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getGroupProperties(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getLatestSchema(String groupName, String type,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response getSchemaFromVersion(String groupName,Integer version,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaFromVersion(String groupName,Integer versionOrdinal,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaValidationRules(String groupName,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaVersion(String groupName,GetSchemaVersion getSchemaVersion,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getSchemaVersions(String groupName, String type,SecurityContext securityContext) throws NotFoundException;

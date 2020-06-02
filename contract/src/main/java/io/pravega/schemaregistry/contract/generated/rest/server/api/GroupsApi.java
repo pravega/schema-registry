@@ -9,6 +9,7 @@ import io.swagger.jaxrs.*;
 
 import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
@@ -24,6 +25,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 
@@ -115,9 +117,9 @@ public class GroupsApi  {
     @Path("/{groupName}/schemas/versions/canRead")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = Void.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema can be used to read", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Response to tell whether schema can be used to read existing schemas", response = CanRead.class),
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
@@ -170,10 +172,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response deleteSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Version ordinal",required=true) @PathParam("version") Integer version
+,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteSchemaVersion(groupName,version,securityContext);
+        return delegate.deleteSchemaVersion(groupName,versionOrdinal,securityContext);
     }
     @GET
     @Path("/{groupName}/codecs")
@@ -288,10 +290,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSchemaFromVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Version ordinal",required=true) @PathParam("version") Integer version
+,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersion(groupName,version,securityContext);
+        return delegate.getSchemaFromVersion(groupName,versionOrdinal,securityContext);
     }
     @GET
     @Path("/{groupName}/rules")
@@ -397,9 +399,9 @@ public class GroupsApi  {
     @Path("/{groupName}/schemas/versions/validate")
     @Consumes({ "application/json" })
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema is compatible with schemas in the registry for current policy setting.", response = Void.class, tags={ "Schema", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema is compatible with schemas in the registry for current policy setting.", response = Valid.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema is valid", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema validation response", response = Valid.class),
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         

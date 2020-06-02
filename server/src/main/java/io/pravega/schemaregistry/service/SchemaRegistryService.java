@@ -222,10 +222,6 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schema != null);
         log.info("addSchema called for group {}. schema {}", schema.getType());
-
-        // TODO: 
-        // add schema to global schema table
-        // add group id to the schema-group-reference list
         
         // 1. get group policy
         // 2. get checker for schema type.

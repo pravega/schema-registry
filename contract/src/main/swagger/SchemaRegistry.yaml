@@ -336,7 +336,7 @@ paths:
         required: true
         type: string
       - in: path
-        name: version
+        name: versionOrdinal
         description: Version ordinal
         required: true
         type: integer
@@ -467,7 +467,7 @@ paths:
         - application/json
       responses:
         200:
-          description: Schema can be used to read
+          description: Response to tell whether schema can be used to read existing schemas
           schema:
              $ref: "#/definitions/CanRead"
         404:
