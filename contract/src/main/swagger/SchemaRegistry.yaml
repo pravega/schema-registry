@@ -288,7 +288,7 @@ paths:
         409:
           description: Incompatible schema
         417:
-          description: Invalid schema type
+          description: Invalid serialization format
         500:
           description: Internal server error while creating a Group
   /groups/{groupName}/schemas/versions/find:
@@ -336,7 +336,7 @@ paths:
         required: true
         type: string
       - in: path
-        name: version
+        name: versionOrdinal
         description: Version ordinal
         required: true
         type: integer
@@ -467,7 +467,7 @@ paths:
         - application/json
       responses:
         200:
-          description: Schema can be used to read
+          description: Response to tell whether schema can be used to read existing schemas
           schema:
              $ref: "#/definitions/CanRead"
         404:
@@ -613,7 +613,7 @@ definitions:
     description: Metadata for a group.    
     properties:
       serializationFormat:
-          description: Schema type for the group.    
+          description: serialization format for the group.    
           $ref: "#/definitions/SerializationFormat"
       schemaValidationRules:
           description: Validation rules to apply while registering new schema.    
@@ -634,7 +634,7 @@ definitions:
       - schemaValidationRules      
   SerializationFormat:
     type: object
-    description: Schema type enum that lists different schema types supported by the service. To use additional Schema Type, use serializationFormat.Custom and supply customTypeName.  
+    description: Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.  
     properties:
       serializationFormat:
         type: string
@@ -863,7 +863,7 @@ definitions:
           type: integer
           format: int64
         schemaString:
-          description: Schema as json string for schema types that registry service understands.
+          description: Schema as json string for serialization formats that registry service understands.
           type: string
       required:
         - schemaInfo

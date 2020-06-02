@@ -19,7 +19,7 @@ import java.util.Map;
 /**
  * Different configuration choices for a group. 
  * 
- * {@link GroupProperties#serializationFormat} identifies the serialization format and schema type used to describe the schema.
+ * {@link GroupProperties#serializationFormat} identifies the serialization format used to describe the schema.
  * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
  * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas with distinct {@link SchemaInfo#type} 
  * are allowed to coexist within the group. A schema describes an object and each object type is distinctly identified by

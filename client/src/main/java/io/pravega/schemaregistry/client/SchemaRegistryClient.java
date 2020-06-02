@@ -62,14 +62,14 @@ public interface SchemaRegistryClient {
     
     /**
      * Get group properties for the group. 
-     * {@link GroupProperties#serializationFormat} which identifies the serialization format and schema type used to describe the schema.
+     * {@link GroupProperties#serializationFormat} which identifies the serialization format is used to describe the schema.
      * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas are allowed to be registered in the group. 
      * Schemas are validated against existing schema versions that have the same {@link SchemaInfo#type}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
      * 
      * @param groupId Id for the group.
-     * @return Group properties which includes property like Schema Type and compatibility policy. 
+     * @return Group properties which includes property like Serialization format and compatibility policy. 
      */
     GroupProperties getGroupProperties(String groupId);
 

@@ -103,7 +103,7 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
         
-        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid schema type", response = Void.class),
+        @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid serialization format", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response addSchema(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
@@ -119,7 +119,7 @@ public class GroupsApi  {
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags={ "Schema", })
     @io.swagger.annotations.ApiResponses(value = { 
-        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema can be used to read", response = CanRead.class),
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Response to tell whether schema can be used to read existing schemas", response = CanRead.class),
         
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
@@ -172,10 +172,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response deleteSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Version ordinal",required=true) @PathParam("version") Integer version
+,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteSchemaVersion(groupName,version,securityContext);
+        return delegate.deleteSchemaVersion(groupName,versionOrdinal,securityContext);
     }
     @GET
     @Path("/{groupName}/codecs")
@@ -290,10 +290,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getSchemaFromVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
-,@ApiParam(value = "Version ordinal",required=true) @PathParam("version") Integer version
+,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersion(groupName,version,securityContext);
+        return delegate.getSchemaFromVersion(groupName,versionOrdinal,securityContext);
     }
     @GET
     @Path("/{groupName}/rules")

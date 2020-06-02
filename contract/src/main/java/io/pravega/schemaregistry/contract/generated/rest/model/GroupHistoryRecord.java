@@ -130,11 +130,11 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Schema as json string for schema types that registry service understands.
+   * Schema as json string for serialization format that registry service understands.
    * @return schemaString
    **/
   @JsonProperty("schemaString")
-  @ApiModelProperty(value = "Schema as json string for schema types that registry service understands.")
+  @ApiModelProperty(value = "Schema as json string for serialization formats that registry service understands.")
   public String getSchemaString() {
     return schemaString;
   }
