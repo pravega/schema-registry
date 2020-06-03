@@ -57,7 +57,7 @@ public class SerializerTest {
     public void testAvroSerializers() {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
 
-        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
         AvroSchema<Test2> schema2 = AvroSchema.of(Test2.class);
 
@@ -123,7 +123,7 @@ public class SerializerTest {
     @Test
     public void testProtobufSerializers() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
-        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
@@ -190,7 +190,7 @@ public class SerializerTest {
     @Test
     public void testJsonSerializers() {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
-        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
         JSONSchema<DerivedUser2> schema2 = JSONSchema.of(DerivedUser2.class);
 
@@ -259,7 +259,7 @@ public class SerializerTest {
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
-        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
         ProtobufSchema<ProtobufTest.Message2> schema2 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
         JSONSchema<DerivedUser1> schema3 = JSONSchema.of(DerivedUser1.class);
@@ -316,7 +316,7 @@ public class SerializerTest {
     @Test
     public void testNoEncodingProto() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
-        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
@@ -356,7 +356,7 @@ public class SerializerTest {
     @Test
     public void testNoEncodingJson() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
-        SerializerConfig config = SerializerConfig.builder().registryConfigOrClient(Either.right(client)).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);

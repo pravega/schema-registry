@@ -172,7 +172,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
@@ -284,7 +284,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     true)
                                                             .autoRegisterSchema(true)
                                                             .autoRegisterCodec(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
@@ -311,7 +311,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                            .autoRegisterSchema(true)
                                            .autoRegisterCodec(true)
                                            .codec(CodecFactory.gzip())
-                                           .registryConfigOrClient(Either.right(client))
+                                           .registryClient(client)
                                            .build();
 
         Serializer<Test1> serializer3 = SerializerFactory.avroSerializer(serializerConfig, schema3);
@@ -331,7 +331,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                            .autoRegisterSchema(true)
                                            .autoRegisterCodec(true)
                                            .codec(CodecFactory.snappy())
-                                           .registryConfigOrClient(Either.right(client))
+                                           .registryClient(client)
                                            .build();
 
         Serializer<Test1> serializer4 = SerializerFactory.avroSerializer(serializerConfig, schema3);
@@ -349,7 +349,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region reader
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
-                                           .registryConfigOrClient(Either.right(client))
+                                           .registryClient(client)
                                            .build();
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream + System.currentTimeMillis();
@@ -390,7 +390,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                            .autoRegisterSchema(true)
                                            .autoRegisterCodec(true)
                                            .codec(myCodec)
-                                           .registryConfigOrClient(Either.right(client))
+                                           .registryClient(client)
                                            .build();
 
         Serializer<Test1> serializer5 = SerializerFactory.avroSerializer(serializerConfig, schema3);
@@ -412,7 +412,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
                                                              .decoder(myCodec.getCodecType(), myCodec::decode)
-                                                             .registryConfigOrClient(Either.right(client))
+                                                             .registryClient(client)
                                                              .build();
 
         Serializer<GenericRecord> deserializer2 = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
@@ -462,7 +462,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         
         // region writer
@@ -527,7 +527,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
@@ -594,7 +594,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
@@ -711,7 +711,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     false)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
@@ -816,7 +816,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
@@ -932,7 +932,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     false)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
@@ -1004,7 +1004,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();

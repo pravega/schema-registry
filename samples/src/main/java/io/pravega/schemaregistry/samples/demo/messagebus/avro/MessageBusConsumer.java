@@ -25,9 +25,8 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
-import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.Type1;
 import io.pravega.schemaregistry.samples.generated.Type2;
@@ -142,7 +141,7 @@ public class MessageBusConsumer {
                                                             .groupId(groupId)
                                                             .autoCreateGroup(SerializationFormat.Avro,true)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();

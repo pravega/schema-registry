@@ -27,20 +27,20 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.samples.generated.Test1;
 import io.pravega.schemaregistry.samples.generated.Test2;
 import io.pravega.schemaregistry.samples.generated.Test3;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.samples.generated.Test1;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
@@ -146,7 +146,7 @@ public class AvroDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
 
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
@@ -268,7 +268,7 @@ public class AvroDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
 
             // region writer
@@ -332,7 +332,7 @@ public class AvroDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
             // region writer
             Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
@@ -397,7 +397,7 @@ public class AvroDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
             // region writer
             Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();

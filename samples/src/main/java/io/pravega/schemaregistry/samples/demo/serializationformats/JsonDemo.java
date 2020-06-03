@@ -26,22 +26,22 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.serializers.JSonGenericObject;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
 import io.pravega.schemaregistry.samples.demo.objects.User;
+import io.pravega.schemaregistry.schemas.JSONSchema;
+import io.pravega.schemaregistry.serializers.JSonGenericObject;
+import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 
@@ -110,7 +110,7 @@ public class JsonDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
             // region writer
             Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
@@ -181,7 +181,7 @@ public class JsonDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
             // region writer
             Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();

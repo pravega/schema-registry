@@ -25,9 +25,9 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
 import io.pravega.schemaregistry.storage.Etag;
@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
@@ -81,27 +82,40 @@ public class Group<V> {
         this.executor = executor;
     }
 
-    public CompletableFuture<Void> create(SerializationFormat serializationFormat, Map<String, String> properties,
+    public CompletableFuture<Boolean> create(SerializationFormat serializationFormat, Map<String, String> properties,
                                           boolean allowMultipleTypes, SchemaValidationRules schemaValidationRules) {
+        List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
+        entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, null)));
 
-        return groupTable.addEntry(ETAG, ETAG)
-                         .thenCompose(v -> {
-                             TableRecords.GroupPropertiesRecord groupProp = new TableRecords.GroupPropertiesRecord(serializationFormat, allowMultipleTypes, properties);
-                             TableRecords.ValidationRecord validationRecord = new TableRecords.ValidationRecord(schemaValidationRules);
-                             CompletableFuture<Void> addProp = Futures.exceptionallyExpecting(groupTable.addEntry(GROUP_PROPERTY_KEY, groupProp),
-                                     e -> Exceptions.unwrap(e) instanceof StoreExceptions.WriteConflictException, null);
-                             CompletableFuture<Void> addPolicy = Futures.exceptionallyExpecting(groupTable.addEntry(VALIDATION_POLICY_KEY, validationRecord),
-                                     e -> Exceptions.unwrap(e) instanceof StoreExceptions.WriteConflictException, null);
+        TableRecords.GroupPropertiesRecord groupProp = new TableRecords.GroupPropertiesRecord(serializationFormat, allowMultipleTypes, properties);
+        entries.add(new AbstractMap.SimpleEntry<>(GROUP_PROPERTY_KEY, new GroupTable.Value<>(groupProp, null)));
 
-                             return CompletableFuture.allOf(addProp, addPolicy)
-                                                     .whenComplete((r, e) -> {
-                                                         if (e == null) {
-                                                             log.info("group {} properties created", groupId);
-                                                         } else {
-                                                             log.error("failed to create group {}", e, groupId);
-                                                         }
-                                                     });
-                         });
+        TableRecords.ValidationRecord validationRecord = new TableRecords.ValidationRecord(schemaValidationRules);
+        entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(validationRecord, null)));
+
+        return Futures.exceptionallyComposeExpecting(groupTable.updateEntries(entries).thenApply(x -> true), 
+                      e -> Exceptions.unwrap(e) instanceof StoreExceptions.WriteConflictException, 
+                () -> compareWithExisting(groupProp, validationRecord))
+                      .handle((r, e) -> {
+                          if (e == null) {
+                              log.info("group {} properties created", groupId);
+                              return r;
+                          } else {
+                              log.error("failed to create group {}", e, groupId);
+                              throw new CompletionException(e);
+                          }
+                      });
+    }
+
+    private CompletableFuture<Boolean> compareWithExisting(TableRecords.GroupPropertiesRecord groupProp, 
+                                                           TableRecords.ValidationRecord validationRecord) {
+        List<TableRecords.TableKey> keys = Lists.newArrayList(GROUP_PROPERTY_KEY, VALIDATION_POLICY_KEY);
+        return groupTable.getEntries(keys, TableRecords.TableValue.class)
+                .thenApply(entries -> {
+                    TableRecords.GroupPropertiesRecord prop = (TableRecords.GroupPropertiesRecord) entries.get(0);
+                    TableRecords.ValidationRecord validation = (TableRecords.ValidationRecord) entries.get(1);
+                    return prop.equals(groupProp) && validationRecord.equals(validation);
+                });
     }
 
     public CompletableFuture<Etag> getCurrentEtag() {

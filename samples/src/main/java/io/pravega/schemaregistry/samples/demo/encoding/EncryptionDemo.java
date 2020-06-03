@@ -27,14 +27,13 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.Test1;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
@@ -118,7 +117,7 @@ public class EncryptionDemo {
                                                             .autoRegisterSchema(true)
                                                             .autoRegisterCodec(true)
                                                             .codec(myCodec)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         Serializer<Test1> serializer5 = SerializerFactory.avroSerializer(serializerConfig, schema3);
@@ -142,7 +141,7 @@ public class EncryptionDemo {
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
                                                              .decoder(myCodec.getCodecType(), myCodec::decode)
-                                                             .registryConfigOrClient(Either.right(client))
+                                                             .registryClient(client)
                                                              .build();
 
         Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);

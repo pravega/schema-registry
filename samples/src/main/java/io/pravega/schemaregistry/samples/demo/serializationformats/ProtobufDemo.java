@@ -29,14 +29,14 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.ProtobufTest;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
@@ -110,7 +110,7 @@ public class ProtobufDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
             // region writer
             Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
@@ -194,7 +194,7 @@ public class ProtobufDemo {
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .autoRegisterSchema(true)
-                                                                .registryConfigOrClient(Either.right(client))
+                                                                .registryClient(client)
                                                                 .build();
             // region writer
             Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();

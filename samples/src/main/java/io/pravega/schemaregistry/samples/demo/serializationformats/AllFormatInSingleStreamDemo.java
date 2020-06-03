@@ -28,12 +28,13 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
-import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.samples.demo.objects.Address;
+import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.samples.generated.ProtobufTest;
 import io.pravega.schemaregistry.samples.generated.Type1;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -41,8 +42,6 @@ import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.samples.demo.objects.Address;
-import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.shared.NameUtils;
 import lombok.SneakyThrows;
 
@@ -141,7 +140,7 @@ public class AllFormatInSingleStreamDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         Serializer<Object> deserializer = SerializerFactory.multiFormatGenericDeserializer(serializerConfig);
@@ -162,7 +161,7 @@ public class AllFormatInSingleStreamDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         AvroSchema<Type1> avro = AvroSchema.of(Type1.class);
@@ -180,7 +179,7 @@ public class AllFormatInSingleStreamDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
 
         JSONSchema<DerivedUser1> avro = JSONSchema.of(DerivedUser1.class);
@@ -203,7 +202,7 @@ public class AllFormatInSingleStreamDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoRegisterSchema(true)
-                                                            .registryConfigOrClient(Either.right(client))
+                                                            .registryClient(client)
                                                             .build();
         // region writer
         Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);

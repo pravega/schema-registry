@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
@@ -18,8 +19,8 @@ import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -96,7 +97,8 @@ public class SerializerConfig {
 
         private boolean autoRegisterSchema = false;
         private boolean autoRegisterCodec = false;
-        private boolean failOnCodecMismatch = false;
+        private boolean failOnCodecMismatch = true;
+        private Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient = null;
 
         private GroupProperties groupProperties = new GroupProperties(SerializationFormat.Any,
                 SchemaValidationRules.of(Compatibility.fullTransitive()), false, Collections.emptyMap());
@@ -117,6 +119,18 @@ public class SerializerConfig {
         public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, SchemaValidationRules rules, boolean allowMultipleTypes) {
             this.autoCreateGroup = true;
             this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes, Collections.emptyMap());
+            return this;
+        }
+        
+        public SerializerConfigBuilder registryClient(SchemaRegistryClient client) {
+            Preconditions.checkArgument(client != null);
+            this.registryConfigOrClient = Either.right(client);
+            return this;
+        }
+        
+        public SerializerConfigBuilder registryConfig(SchemaRegistryClientConfig config) {
+            Preconditions.checkArgument(config != null);
+            this.registryConfigOrClient = Either.left(config);
             return this;
         }
     }
