@@ -35,7 +35,7 @@ public class SchemaRegistryClientConfig {
         this.authToken = authToken;
     }
 
-    public static final class SchemaRegistryConfigBuilder {
+    public static final class SchemaRegistryClientConfigBuilder {
         private URI schemaRegistryUri = URI.create("http://localhost:9092");
         private boolean authEnabled = false;
     }
