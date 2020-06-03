@@ -47,7 +47,7 @@ public class GroupTest {
 
     @Test
     public void testCreate() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         List<TableRecords.TableValue> recordList = integerGroupTable.table.entrySet().stream().map(
@@ -63,7 +63,7 @@ public class GroupTest {
         assertEquals(null, integerGroupTable.fromEtag(eTag));
         assertTrue(integerGroupTable.table.isEmpty());
         // non null case
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         List<Integer> integerList = integerGroupTable.table.entrySet().stream().filter(
@@ -77,45 +77,45 @@ public class GroupTest {
     }
 
     @Test
-    public void testGetSchemaNames() {
+    public void testgetTypes() {
         // null case
-        List<String> stringListWithToken = integerGroup.getSchemaNames().join();
+        List<SchemaWithVersion> schemaWithVersionList = integerGroup.getLatestSchemas().join();
         assertTrue(integerGroupTable.table.isEmpty());
-        assertEquals(Collections.emptyList(), stringListWithToken);
+        assertEquals(Collections.emptyList(), schemaWithVersionList);
         // non-null case
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
         integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
-        stringListWithToken = integerGroup.getSchemaNames().join();
-        assertEquals(2, stringListWithToken.size());
-        assertEquals("anygroup", stringListWithToken.get(0));
-        assertEquals("anygroup1", stringListWithToken.get(1));
+        schemaWithVersionList = integerGroup.getLatestSchemas().join();
+        assertEquals(2, schemaWithVersionList.size());
+        assertEquals("anygroup", schemaWithVersionList.get(0));
+        assertEquals("anygroup1", schemaWithVersionList.get(1));
 
     }
 
     @Test
     public void testaddSchema() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         List<TableRecords.TableValue> tableValueListEtag = integerGroupTable.table.entrySet().stream().filter(
@@ -131,7 +131,7 @@ public class GroupTest {
         assertFalse(tableValueListVersionInfo.isEmpty());
         assertTrue(tableValueListVersionInfo.get(0) instanceof TableRecords.SchemaRecord);
         TableRecords.SchemaRecord schemaRecord = (TableRecords.SchemaRecord) tableValueListVersionInfo.get(0);
-        assertEquals("mygroup", schemaRecord.getSchemaInfo().getName());
+        assertEquals("mygroup", schemaRecord.getSchemaInfo().getType());
         assertEquals(0, schemaRecord.getVersionInfo().getOrdinal());
 
         List<TableRecords.TableValue> tableValueListSchemaInfo = integerGroupTable.table.entrySet().stream().filter(
@@ -146,7 +146,7 @@ public class GroupTest {
         assertEquals(0, schemaVersionValue.getVersions().get(0).getVersion());
 
         List<TableRecords.TableValue> tableValueListLatestSchema = integerGroupTable.table.entrySet().stream().filter(
-                x -> x.getKey() instanceof TableRecords.LatestSchemaVersionForSchemaNameKey).map(
+                x -> x.getKey() instanceof TableRecords.LatestSchemaVersionForTypeKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
         assertFalse(tableValueListLatestSchema.isEmpty());
@@ -158,38 +158,38 @@ public class GroupTest {
 
         List<TableRecords.TableValue> tableValueListObjectTypesList =
                 integerGroupTable.table.entrySet().stream().filter(
-                        x -> x.getKey() instanceof TableRecords.SchemaNamesKey).map(
+                        x -> x.getKey() instanceof TableRecords.SchemaTypesKey).map(
                         x -> x.getValue().getValue()).collect(
                         Collectors.toList());
         assertFalse(tableValueListObjectTypesList.isEmpty());
-        assertTrue(tableValueListObjectTypesList.get(0) instanceof TableRecords.SchemaNamesListValue);
-        TableRecords.SchemaNamesListValue objectTypesListValue =
-                (TableRecords.SchemaNamesListValue) tableValueListObjectTypesList.get(
+        assertTrue(tableValueListObjectTypesList.get(0) instanceof TableRecords.SchemaTypesListValue);
+        TableRecords.SchemaTypesListValue objectTypesListValue =
+                (TableRecords.SchemaTypesListValue) tableValueListObjectTypesList.get(
                         0);
         assertEquals(1, tableValueListObjectTypesList.size());
-        assertEquals("mygroup", objectTypesListValue.getSchemaNames().get(0));
+        assertEquals("mygroup", objectTypesListValue.getTypes().get(0));
     }
 
     @Test
     public void testGetSchemas() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
         integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         List<SchemaWithVersion> schemaWithVersionListWithToken = integerGroup.getSchemas().join();
         assertEquals(2, schemaWithVersionListWithToken.size());
-        assertEquals(SchemaType.Custom, schemaWithVersionListWithToken.get(0).getSchema().getSchemaType());
+        assertEquals(SerializationFormat.Custom, schemaWithVersionListWithToken.get(0).getSchema().getSerializationFormat());
         // with ObjectTypeName
         schemaWithVersionListWithToken = integerGroup.getSchemas("anygroup").join();
         assertEquals(1, schemaWithVersionListWithToken.size());
@@ -206,28 +206,28 @@ public class GroupTest {
                 Collectors.toList());
         assertEquals(2, version.size());
         List<TableRecords.TableKey> tableKeyObjectTypes = integerGroupTable.table.entrySet().stream().filter(
-                x -> x.getKey() instanceof TableRecords.SchemaNamesKey).map(
+                x -> x.getKey() instanceof TableRecords.SchemaTypesKey).map(
                 x -> x.getKey()).collect(
                 Collectors.toList());
         assertEquals(1, tableKeyObjectTypes.size());
-        TableRecords.SchemaNamesListValue objectTypesListValue = integerGroupTable.getEntry(tableKeyObjectTypes.get(0),
-                TableRecords.SchemaNamesListValue.class).join();
-        assertEquals(2, objectTypesListValue.getSchemaNames().size());
+        TableRecords.SchemaTypesListValue objectTypesListValue = integerGroupTable.getEntry(tableKeyObjectTypes.get(0),
+                TableRecords.SchemaTypesListValue.class).join();
+        assertEquals(2, objectTypesListValue.getTypes().size());
     }
 
     @Test
     public void testGetVersion() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
@@ -257,15 +257,15 @@ public class GroupTest {
 
     @Test
     public void testCreateEncodingId() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
@@ -275,7 +275,7 @@ public class GroupTest {
         integerGroup.addCodec(CodecType.Snappy).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         versionInfo = integerGroup.getVersion(schemaInfo).join();
@@ -295,15 +295,15 @@ public class GroupTest {
 
     @Test
     public void testGetEncodingInfo() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
@@ -313,7 +313,7 @@ public class GroupTest {
         EncodingInfo encodingInfo = integerGroup.getEncodingInfo(encodingId).join();
         assertEquals(CodecType.GZip, encodingInfo.getCodec());
         assertEquals(versionInfo, encodingInfo.getVersionInfo());
-        assertEquals(SchemaType.Custom, encodingInfo.getSchemaInfo().getSchemaType());
+        assertEquals(SerializationFormat.Custom, encodingInfo.getSchemaInfo().getSerializationFormat());
     }
 
     @Test
@@ -322,26 +322,26 @@ public class GroupTest {
         SchemaWithVersion schemaWithVersion = integerGroup.getLatestSchemaVersion().join();
         assertNull(schemaWithVersion);
         // non-null case
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
         schemaWithVersion = integerGroup.getLatestSchemaVersion().join();
         assertEquals(versionInfo, schemaWithVersion.getVersion());
-        assertEquals("anygroup", schemaWithVersion.getSchema().getName());
+        assertEquals("anygroup", schemaWithVersion.getSchema().getType());
 
         // objectTypeName
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo1).join();
@@ -362,7 +362,7 @@ public class GroupTest {
         assertEquals(1, codecTypeList.size());
         assertEquals(CodecType.None, codecTypeList.get(0));
         // non-null
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
@@ -382,29 +382,29 @@ public class GroupTest {
 
     @Test
     public void testGetHistory() {
-        integerGroup.create(SchemaType.Avro, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Avro, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Avro,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[3];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Avro, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Avro, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Avro, schemaData,
                 Collections.singletonMap("key1", "value1"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         List<GroupHistoryRecord> groupHistoryRecords = integerGroup.getHistory().join();
         assertEquals(2, groupHistoryRecords.size());
-        assertEquals("anygroup", groupHistoryRecords.get(0).getSchema().getName());
-        assertEquals("anygroup1", groupHistoryRecords.get(1).getSchema().getName());
+        assertEquals("anygroup", groupHistoryRecords.get(0).getSchema().getType());
+        assertEquals("anygroup1", groupHistoryRecords.get(1).getSchema().getType());
         // objectType
         byte[] schemaData1 = new byte[10];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData1,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Avro, schemaData1,
                 Collections.singletonMap("key1", "value1"));
         eTag = integerGroup.getCurrentEtag().join();
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
@@ -416,7 +416,7 @@ public class GroupTest {
 
     @Test
     public void testUpdateValidationPolicy() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
@@ -434,28 +434,28 @@ public class GroupTest {
 
     @Test
     public void testGetGroupProperties() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         GroupProperties groupProperties = integerGroup.getGroupProperties().join();
-        assertEquals(SchemaType.Custom, groupProperties.getSchemaType());
+        assertEquals(SerializationFormat.Custom, groupProperties.getSerializationFormat());
         assertEquals(SchemaValidationRules.of(Compatibility.backward()), groupProperties.getSchemaValidationRules());
-        assertTrue(groupProperties.isVersionedBySchemaName());
+        assertTrue(groupProperties.isAllowMultipleTypes());
         assertEquals(Collections.singletonMap("key", "value"), groupProperties.getProperties());
     }
 
     @Test
     public void testGetEncodingId() {
         //null
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();
@@ -468,7 +468,7 @@ public class GroupTest {
         integerGroup.addCodec(CodecType.Snappy).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag);
         VersionInfo versionInfo1 = integerGroup.getVersion(schemaInfo).join();
@@ -484,20 +484,20 @@ public class GroupTest {
 
     @Test
     public void testDeleteSchema() {
-        integerGroup.create(SchemaType.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
+        integerGroup.create(SerializationFormat.Custom, Collections.singletonMap("key", "value"), Boolean.TRUE,
                 SchemaValidationRules.of(
                         Compatibility.backward())).join();
         Etag eTag = integerGroup.getCurrentEtag().join();
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Custom,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Custom,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = integerGroup.getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         integerGroup.addSchema(schemaInfo, groupProperties, eTag);
         VersionInfo versionInfo = integerGroup.getVersion(schemaInfo).join();

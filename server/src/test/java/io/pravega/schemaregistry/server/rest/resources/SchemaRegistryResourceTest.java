@@ -169,15 +169,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                                                                                        .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
         Response response = future.get();
         assertTrue(response.readEntity(CanRead.class).isCompatible());
-        canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
-                .type("name")
-                .schemaData(new byte[0])
-                .properties(Collections.emptyMap())
-        );
-        future = target(GROUPS).path("mygroup").path("schemas/versions/canRead").request().async()
-                                                .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
-        response = future.get();
-        assertEquals(400, response.getStatus());
         assertEquals(200, response.getStatus());
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
@@ -525,15 +516,17 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SerializationFormat.Custom, schemaData,
+                        "schemaName", SerializationFormat.custom("custom1"), schemaData,
                         Collections.singletonMap("key", "value"));
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
-        List<SchemaWithVersion> schemaWithVersionList = new ArrayList<>();
-        schemaWithVersionList.add(schemaWithVersion);
-        doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersionList)).when(service).getSchemas(anyString());
+        List<SchemaWithVersion> schemaWitheVersions = new ArrayList<>();
+        schemaWitheVersions.add(schemaWithVersion);
+        doAnswer(x -> CompletableFuture.completedFuture(schemaWitheVersions)).when(service).getSchemas(anyString());
         Response response = target(GROUPS + "/" + groupName + "/schemas").request().async().get().get();
-        assertEquals("schemaName", response.readEntity(SchemaVersionsList.class).getSchemas().get(0).getSchemaInfo().getType());
+        List<io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion> schemaWithVersionList1 = response.readEntity(SchemaVersionsList.class).getSchemas();
+        assertEquals("schemaName", schemaWithVersionList1.get(0).getSchemaInfo().getType());
+        assertEquals(1, schemaWithVersionList1.size());
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
                 service).getSchemas(anyString());
@@ -541,7 +534,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         assertEquals(404, response.getStatus());
         //Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getSchemas(anyString());
-        response = target(GROUPS + "/" + groupName + "/schemas/names").request().async().get().get();
+        response = target(GROUPS + "/" + groupName + "/schemas").request().async().get().get();
         assertEquals(500, response.getStatus());
     }
 

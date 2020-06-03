@@ -40,7 +40,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import static org.junit.Assert.*;
 
 public class GroupPravegaTest {
-    private static final TableRecords.SchemaNamesKey SCHEMA_NAMES_KEY = new TableRecords.SchemaNamesKey();
+    private static final TableRecords.SchemaTypesKey SCHEMA_TYPES_KEY = new TableRecords.SchemaTypesKey();
     private static final TableKeySerializer KEY_SERIALIZER = new TableKeySerializer();
     private static final HashFunction HASH = Hashing.murmur3_128();
     private static final TableRecords.LatestSchemaVersionKey LATEST_SCHEMA_VERSION_KEY =
@@ -80,11 +80,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testCreate() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         assertTrue(tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord().getState().equals(GroupsValue.State.Active));
@@ -92,11 +93,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testGetCurrentEtag() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         Etag etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         assertTrue(tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
@@ -110,42 +112,49 @@ public class GroupPravegaTest {
     }
 
     @Test
-    public void testGetSchemaNames() {
+    public void testGetLatestSchemas() {
         //null case
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
-        List<String> schemaNamesList = pravegaKVGroups.getGroup(groupName).join().getSchemaNames().join();
-        assertTrue(schemaNamesList.isEmpty());
+        List<SchemaWithVersion> schemaWithVersionList = pravegaKVGroups.getGroup(
+                groupName).join().getLatestSchemas().join();
+        assertTrue(schemaWithVersionList.isEmpty());
         //non-null case
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
+        schemaWithVersionList = pravegaKVGroups.getGroup(groupName).join().getLatestSchemas().join();
+        assertEquals(1, schemaWithVersionList.size());
+        assertEquals("anygroup", schemaWithVersionList.get(0).getSchema().getType());
+        // two schemas
         etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
-        schemaNamesList = pravegaKVGroups.getGroup(groupName).join().getSchemaNames().join();
-        assertEquals(2, schemaNamesList.size());
-        assertEquals("anygroup", schemaNamesList.get(0));
-        assertEquals("anygroup1", schemaNamesList.get(1));
+        schemaWithVersionList = pravegaKVGroups.getGroup(groupName).join().getLatestSchemas().join();
+        assertEquals(2, schemaWithVersionList.size());
+        assertEquals("anygroup", schemaWithVersionList.get(0).getSchema().getType());
+        assertEquals("anygroup1", schemaWithVersionList.get(1).getSchema().getType());
     }
 
     @Test
     public void testAddSchema() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
@@ -157,7 +166,7 @@ public class GroupPravegaTest {
                 new TableKeySerializer().toBytes(new TableRecords.VersionKey(0)),
                 x -> TableRecords.fromBytes(TableRecords.VersionKey.class, x,
                         TableRecords.SchemaRecord.class)).join().getRecord();
-        assertEquals("anygroup", schemaRecord.getSchemaInfo().getName());
+        assertEquals("anygroup", schemaRecord.getSchemaInfo().getType());
         //schemaInfo key
         TableRecords.SchemaVersionList schemaVersionList = tableStore.getEntry(
                 String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(
@@ -165,36 +174,36 @@ public class GroupPravegaTest {
                 x -> TableRecords.fromBytes(TableRecords.SchemaFingerprintKey.class, x,
                         TableRecords.SchemaVersionList.class)).join().getRecord();
         assertEquals(1, schemaVersionList.getVersions().size());
-        assertEquals("anygroup", schemaVersionList.getVersions().get(0).getSchemaName());
+        assertEquals("anygroup", schemaVersionList.getVersions().get(0).getType());
         //LatestSchemaVersionKey
         TableRecords.LatestSchemaVersionValue latestSchemaVersionValue = tableStore.getEntry(
                 String.format("table-%s/metadata/0", gv.getId()),
                 new TableKeySerializer().toBytes(LATEST_SCHEMA_VERSION_KEY),
                 x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionKey.class, x,
                         TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
-        assertEquals("anygroup", latestSchemaVersionValue.getVersion().getSchemaName());
+        assertEquals("anygroup", latestSchemaVersionValue.getVersion().getType());
         assertEquals(0, latestSchemaVersionValue.getVersion().getOrdinal());
-        //LatestSchemaVersionForSchemaNameKey
+        //LatestSchemaVersionForTypeKey
         TableRecords.LatestSchemaVersionValue latestSchemaVersionValue1 = tableStore.getEntry(
                 String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(
-                        new TableRecords.LatestSchemaVersionForSchemaNameKey(schemaInfo.getName())),
-                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForSchemaNameKey.class, x,
+                        new TableRecords.LatestSchemaVersionForTypeKey(schemaInfo.getType())),
+                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForTypeKey.class, x,
                         TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
         assertTrue(latestSchemaVersionValue.equals(latestSchemaVersionValue1));
         // ObjectTypes/SchemaNames key
-        TableRecords.SchemaNamesListValue schemaNamesListValue = tableStore.getEntry(
-                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(SCHEMA_NAMES_KEY),
-                x -> TableRecords.fromBytes(TableRecords.SchemaNamesKey.class, x,
-                        TableRecords.SchemaNamesListValue.class)).join().getRecord();
-        assertEquals(1, schemaNamesListValue.getSchemaNames().size());
-        assertEquals("anygroup", schemaNamesListValue.getSchemaNames().get(0));
+        TableRecords.SchemaTypesListValue SchemaTypesListValue = tableStore.getEntry(
+                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(SCHEMA_TYPES_KEY),
+                x -> TableRecords.fromBytes(TableRecords.SchemaTypesKey.class, x,
+                        TableRecords.SchemaTypesListValue.class)).join().getRecord();
+        assertEquals(1, SchemaTypesListValue.getTypes().size());
+        assertEquals("anygroup", SchemaTypesListValue.getTypes().get(0));
         //multiple schemas
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
         VersionInfo versionInfo1 = pravegaKVGroups.getGroup(groupName).join().getVersion(schemaInfo1).join();
-        SchemaInfo schemaInfo2 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo2 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
@@ -204,13 +213,13 @@ public class GroupPravegaTest {
                 new TableKeySerializer().toBytes(new TableRecords.VersionKey(versionInfo1.getOrdinal())),
                 x -> TableRecords.fromBytes(TableRecords.VersionKey.class, x,
                         TableRecords.SchemaRecord.class)).join().getRecord();
-        assertEquals("anygroup", schemaRecord.getSchemaInfo().getName());
+        assertEquals("anygroup", schemaRecord.getSchemaInfo().getType());
         schemaRecord = tableStore.getEntry(String.format("table-%s/metadata/0", gv.getId()),
                 new TableKeySerializer().toBytes(new TableRecords.VersionKey(versionInfo2.getOrdinal())),
                 x -> TableRecords.fromBytes(TableRecords.VersionKey.class, x,
                         TableRecords.SchemaRecord.class)).join().getRecord();
-        assertEquals("anygroup1",schemaRecord.getSchemaInfo().getName());
-        assertEquals(Collections.singletonMap("key1", "value1"),schemaRecord.getSchemaInfo().getProperties());
+        assertEquals("anygroup1", schemaRecord.getSchemaInfo().getType());
+        assertEquals(Collections.singletonMap("key1", "value1"), schemaRecord.getSchemaInfo().getProperties());
         // schemaInfokey
         schemaVersionList = tableStore.getEntry(
                 String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(
@@ -224,53 +233,58 @@ public class GroupPravegaTest {
                 new TableKeySerializer().toBytes(LATEST_SCHEMA_VERSION_KEY),
                 x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionKey.class, x,
                         TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
-        assertEquals("anygroup1", latestSchemaVersionValue.getVersion().getSchemaName());
+        assertEquals("anygroup1", latestSchemaVersionValue.getVersion().getType());
         assertEquals(versionInfo2.getOrdinal(), latestSchemaVersionValue.getVersion().getOrdinal());
         //LatestSchemaVersionForObjectName
         latestSchemaVersionValue1 = tableStore.getEntry(
                 String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(
-                        new TableRecords.LatestSchemaVersionForSchemaNameKey(schemaInfo.getName())),
-                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForSchemaNameKey.class, x,
+                        new TableRecords.LatestSchemaVersionForTypeKey(schemaInfo.getType())),
+                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForTypeKey.class, x,
                         TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
         assertTrue(latestSchemaVersionValue1.getVersion().equals(schemaVersionList.getVersions().get(1)));
         //SchemaNamesKey
-        schemaNamesListValue = tableStore.getEntry(
-                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(SCHEMA_NAMES_KEY),
-                x -> TableRecords.fromBytes(TableRecords.SchemaNamesKey.class, x,
-                        TableRecords.SchemaNamesListValue.class)).join().getRecord();
-        assertEquals(2, schemaNamesListValue.getSchemaNames().size());
-        assertEquals("anygroup", schemaNamesListValue.getSchemaNames().get(0));
-        assertEquals("anygroup1",schemaNamesListValue.getSchemaNames().get(1));
+        SchemaTypesListValue = tableStore.getEntry(
+                String.format("table-%s/metadata/0", gv.getId()), new TableKeySerializer().toBytes(SCHEMA_TYPES_KEY),
+                x -> TableRecords.fromBytes(TableRecords.SchemaTypesKey.class, x,
+                        TableRecords.SchemaTypesListValue.class)).join().getRecord();
+        assertEquals(2, SchemaTypesListValue.getTypes().size());
+        assertEquals("anygroup", SchemaTypesListValue.getTypes().get(0));
+        assertEquals("anygroup1", SchemaTypesListValue.getTypes().get(1));
     }
 
     @Test
     public void testGetSchemas() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
+        List<SchemaWithVersion> schemaWitheVersionList = pravegaKVGroups.getGroup(groupName).join().getSchemas().join();
+        assertEquals(1, schemaWitheVersionList.size());
+        assertEquals("anygroup", schemaWitheVersionList.get(0).getSchema().getType());
+        //two schemas
         etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
-        List<SchemaWithVersion> schemaWitheVersionList = pravegaKVGroups.getGroup(groupName).join().getSchemas().join();
+        schemaWitheVersionList = pravegaKVGroups.getGroup(groupName).join().getSchemas().join();
         assertEquals(2, schemaWitheVersionList.size());
-        assertEquals("anygroup", schemaWitheVersionList.get(0).getSchema().getName());
-        assertEquals("anygroup1", schemaWitheVersionList.get(1).getSchema().getName());
+        assertEquals("anygroup", schemaWitheVersionList.get(0).getSchema().getType());
+        assertEquals("anygroup1", schemaWitheVersionList.get(1).getSchema().getType());
         schemaWitheVersionList = pravegaKVGroups.getGroup(groupName).join().getSchemas(1).join();
         assertEquals(1, schemaWitheVersionList.size());
-        assertEquals("anygroup1", schemaWitheVersionList.get(0).getSchema().getName());
+        assertEquals("anygroup1", schemaWitheVersionList.get(0).getSchema().getType());
         schemaWitheVersionList = pravegaKVGroups.getGroup(groupName).join().getSchemas(0).join();
         assertEquals(2, schemaWitheVersionList.size());
         schemaData = new byte[3];
-        SchemaInfo schemaInfo2 = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo2 = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
@@ -282,18 +296,19 @@ public class GroupPravegaTest {
 
     @Test
     public void testGetVersion() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
-        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo1 = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag etag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
@@ -313,11 +328,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testAddCodec() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
@@ -332,11 +348,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testGetCodecTypes() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
@@ -358,16 +375,17 @@ public class GroupPravegaTest {
 
     @Test
     public void testCreateEncodingId() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
@@ -388,14 +406,15 @@ public class GroupPravegaTest {
 
     @Test
     public void testGetEncodingInfo() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
@@ -413,17 +432,18 @@ public class GroupPravegaTest {
     @Test
     public void testGetEncodingId() {
         //null
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
         Etag eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = pravegaKVGroups.getGroup(groupName).join().getVersion(schemaInfo).join();
@@ -450,11 +470,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testGetLatestSchemaVersion() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
@@ -463,20 +484,20 @@ public class GroupPravegaTest {
         //non-null
         Etag eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        schemaInfo = new SchemaInfo("anygroup", SchemaType.Custom, schemaData,
+        schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key1", "value1"));
         eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Custom, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Custom, schemaData,
                 Collections.singletonMap("key", "value"));
         eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         SchemaWithVersion schemaWithVersion = pravegaKVGroups.getGroup(
                 groupName).join().getLatestSchemaVersion().join();
-        assertEquals("anygroup1", schemaWithVersion.getSchema().getName());
+        assertEquals("anygroup1", schemaWithVersion.getSchema().getType());
         TableRecords.LatestSchemaVersionValue latestSchemaVersionValue = tableStore.getEntry(
                 String.format("table-%s/metadata/0", gv.getId()),
                 new TableKeySerializer().toBytes(LATEST_SCHEMA_VERSION_KEY),
@@ -486,40 +507,41 @@ public class GroupPravegaTest {
         // withObjectName
         schemaWithVersion = pravegaKVGroups.getGroup(groupName).join().getLatestSchemaVersion("anygroup").join();
         assertEquals(Collections.singletonMap("key1", "value1"), schemaWithVersion.getSchema().getProperties());
-        TableRecords.LatestSchemaVersionForSchemaNameKey key = new TableRecords.LatestSchemaVersionForSchemaNameKey(
+        TableRecords.LatestSchemaVersionForTypeKey key = new TableRecords.LatestSchemaVersionForTypeKey(
                 "anygroup");
         latestSchemaVersionValue = tableStore.getEntry(String.format("table-%s/metadata/0", gv.getId()),
                 new TableKeySerializer().toBytes(key),
-                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForSchemaNameKey.class, x,
+                x -> TableRecords.fromBytes(TableRecords.LatestSchemaVersionForTypeKey.class, x,
                         TableRecords.LatestSchemaVersionValue.class)).join().getRecord();
         assertTrue(latestSchemaVersionValue.getVersion().equals(schemaWithVersion.getVersion()));
     }
 
     @Test
     public void testGetHistory() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.Avro,
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Avro, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Avro,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         byte[] schemaData = new byte[3];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Avro, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Avro, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Avro, schemaData,
                 Collections.singletonMap("key1", "value1"));
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         List<GroupHistoryRecord> groupHistoryRecords = pravegaKVGroups.getGroup(groupName).join().getHistory().join();
         assertEquals(2, groupHistoryRecords.size());
-        assertEquals("anygroup", groupHistoryRecords.get(0).getSchema().getName());
-        assertEquals("anygroup1", groupHistoryRecords.get(1).getSchema().getName());
+        assertEquals("anygroup", groupHistoryRecords.get(0).getSchema().getType());
+        assertEquals("anygroup1", groupHistoryRecords.get(1).getSchema().getType());
         // objectType
         byte[] schemaData1 = new byte[10];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData1,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Avro, schemaData1,
                 Collections.singletonMap("key1", "value1"));
         eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
@@ -531,11 +553,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testUpdateValidationPolicy() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
@@ -556,11 +579,12 @@ public class GroupPravegaTest {
 
     @Test
     public void testGetGroupProperties() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
@@ -575,30 +599,31 @@ public class GroupPravegaTest {
                 x -> TableRecords.fromBytes(
                         TableRecords.GroupPropertyKey.class, x,
                         TableRecords.GroupPropertiesRecord.class)).join().getRecord();
-        GroupProperties groupProperties2 = new GroupProperties(groupPropertiesRecord.getSchemaType(),
-                validationRecord.getValidationRules(), groupPropertiesRecord.isVersionedBySchemaName(),
+        GroupProperties groupProperties2 = new GroupProperties(groupPropertiesRecord.getSerializationFormat(),
+                validationRecord.getValidationRules(), groupPropertiesRecord.isAllowMultipleTypes(),
                 groupPropertiesRecord.getProperties());
         assertEquals(groupProperties2, groupProperties1);
     }
 
     @Test
     public void testDeleteSchema() {
-        GroupProperties groupProperties = new GroupProperties(SchemaType.custom("custom1"),
+        GroupProperties groupProperties = new GroupProperties(SerializationFormat.custom("custom1"),
                 SchemaValidationRules.of(Compatibility.backward()), Boolean.TRUE,
                 Collections.singletonMap("key", "value"));
         pravegaKVGroups.addNewGroup(groupName, groupProperties).join();
-        pravegaKVGroups.getGroup(groupName).join().create(SchemaType.Custom, Collections.singletonMap("key", "value"),
+        pravegaKVGroups.getGroup(groupName).join().create(SerializationFormat.Custom,
+                Collections.singletonMap("key", "value"),
                 Boolean.TRUE, SchemaValidationRules.of(Compatibility.backward())).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, groupName.getBytes(Charsets.UTF_8),
                 GroupsValue::fromBytes).join().getRecord();
         byte[] schemaData = new byte[3];
-        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SchemaType.Avro, schemaData,
+        SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Avro, schemaData,
                 Collections.singletonMap("key", "value"));
         Etag eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         eTag = pravegaKVGroups.getGroup(groupName).join().getCurrentEtag().join();
         schemaData = new byte[5];
-        schemaInfo = new SchemaInfo("anygroup1", SchemaType.Avro, schemaData,
+        schemaInfo = new SchemaInfo("anygroup1", SerializationFormat.Avro, schemaData,
                 Collections.singletonMap("key1", "value1"));
         pravegaKVGroups.getGroup(groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         VersionInfo versionInfo = pravegaKVGroups.getGroup(groupName).join().getVersion(schemaInfo).join();
