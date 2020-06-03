@@ -33,7 +33,7 @@ import java.util.stream.Collectors;
  * Pravega tables based index implementation.
  */
 public class PravegaKVGroupTable implements GroupTable<Version> {
-    private static final String TABLE_NAME_FORMAT = "table-%s/metadata/0";
+    private static final String TABLE_NAME_FORMAT = "schema-registry/%s.#.metadata/0";
     private static final TableKeySerializer KEY_SERIALIZER = new TableKeySerializer();
     // for immutable keys check in the local cache. If its not in the cache, fetch it from the store and load it 
     // in the cache. 
