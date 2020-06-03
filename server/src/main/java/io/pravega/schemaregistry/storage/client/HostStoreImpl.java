@@ -18,6 +18,8 @@ import io.pravega.client.stream.impl.ControllerImplConfig;
 import io.pravega.common.cluster.Host;
 import io.pravega.controller.store.host.HostControllerStore;
 import io.pravega.controller.store.host.HostStoreException;
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -30,6 +32,7 @@ import java.util.concurrent.ScheduledExecutorService;
  * Whenever table client is released, replace this class with table client.  
  */
 class HostStoreImpl implements HostControllerStore {
+    @Getter(AccessLevel.PACKAGE)
     private final ControllerImpl controller;
     private final LoadingCache<String, Host> cache;
 

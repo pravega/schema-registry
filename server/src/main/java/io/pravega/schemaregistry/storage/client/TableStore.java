@@ -60,6 +60,7 @@ import static io.pravega.controller.server.WireCommandFailedException.Reason.Con
  */
 @Slf4j
 public class TableStore {
+    public static final String SCHEMA_REGISTRY_SCOPE = "schema-registry";
     private static final int NUM_OF_RETRIES = 15; // approximately 1 minute worth of retries
     private final SegmentHelper segmentHelper;
     private final HostStoreImpl hostStore;
@@ -68,6 +69,7 @@ public class TableStore {
     private final AtomicReference<String> authToken;
     private final Cache<TableCacheKey, Version.VersionedRecord<?>> cache;
     private final Supplier<String> masterTokenSupplier;
+    private final CompletableFuture<Void> createScope;
     
     public TableStore(ClientConfig clientConfig, Supplier<String> masterTokenSupplier, ScheduledExecutorService executor) {
         ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
@@ -80,12 +82,17 @@ public class TableStore {
         this.cache = CacheBuilder.newBuilder()
                                  .maximumSize(10000)
                                  .build();
+        this.createScope = createScope(); 
     }
-
+    
+    public CompletableFuture<Void> createScope() {
+        return Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE));
+    }
+    
     public CompletableFuture<Void> createTable(String tableName) {
         log.debug("create table called for table: {}", tableName);
 
-        return Futures.toVoid(withRetries(() -> segmentHelper.createTableSegment(tableName, authToken.get(), RequestTag.NON_EXISTENT_ID),
+        return Futures.toVoid(withRetries(() -> createScope.thenCompose(v -> segmentHelper.createTableSegment(tableName, authToken.get(), RequestTag.NON_EXISTENT_ID)),
                 () -> String.format("create table: %s", tableName), tableName))
                       .whenCompleteAsync((r, e) -> {
                           if (e != null) {

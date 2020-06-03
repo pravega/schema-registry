@@ -33,7 +33,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
 
 public class PravegaKVGroups implements Groups<Version> {
-    private static final String GROUPS = "schema-registry/groups/0";
+    private static final String GROUPS = TableStore.SCHEMA_REGISTRY_SCOPE + "/groups/0";
 
     private final TableStore tableStore;
     private final ScheduledExecutorService executor;
