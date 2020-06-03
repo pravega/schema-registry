@@ -100,8 +100,9 @@ public class GroupTest {
         integerGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         schemaWithVersionList = integerGroup.getLatestSchemas().join();
         assertEquals(2, schemaWithVersionList.size());
-        assertEquals("anygroup", schemaWithVersionList.get(0));
-        assertEquals("anygroup1", schemaWithVersionList.get(1));
+
+        assertEquals("anygroup", schemaWithVersionList.get(0).getSchema().getType());
+        assertEquals("anygroup1", schemaWithVersionList.get(1).getSchema().getType());
 
     }
 

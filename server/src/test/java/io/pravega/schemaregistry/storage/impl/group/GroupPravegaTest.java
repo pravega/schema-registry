@@ -75,6 +75,7 @@ public class GroupPravegaTest {
 
     @After
     public void tearDown() {
+        pravegaKVGroups.deleteGroup(groupName).join();
         executor.shutdownNow();
     }
 
@@ -321,6 +322,7 @@ public class GroupPravegaTest {
                         new TableRecords.SchemaFingerprintKey(HASH.hashBytes(schemaInfo.getSchemaData()).asLong())),
                 x -> TableRecords.fromBytes(TableRecords.SchemaFingerprintKey.class, x,
                         TableRecords.SchemaVersionList.class)).join().getRecord();
+
         assertEquals(2, schemaVersionList.getVersions().size());
         assertTrue(versionInfo.equals(schemaVersionList.getVersions().get(0)));
         assertTrue(versionInfo1.equals(schemaVersionList.getVersions().get(1)));
