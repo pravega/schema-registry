@@ -9,12 +9,9 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
-import lombok.AllArgsConstructor;
+import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
 import lombok.Data;
-
-import java.util.Collections;
-import java.util.Map;
 
 /**
  * Different configuration choices for a group. 
@@ -32,19 +29,42 @@ import java.util.Map;
  * for each type independently.
  * {@link GroupProperties#properties} This is general purpose key value string to include any additional user defined information for the group. 
  */
-@Data
 @Builder
-@AllArgsConstructor
+@Data
 public class GroupProperties {
+    /**
+     * Serialization format allowed for the group. 
+     */
     private final SerializationFormat serializationFormat;
+    /**
+     * Schema validation rules to be applied for the group. 
+     */
     private final SchemaValidationRules schemaValidationRules;
+    /**
+     * Flag to indicate whether multiple types of schemas can be added to the group or not. If set to false, all schemas
+     * added to the group should have the same {@link SchemaInfo#type}.
+     */
     private final boolean allowMultipleTypes;
-    private final Map<String, String> properties;
+    /**
+     * User defined key value strings for any metadata they want to associate with the group. 
+     */
+    private final ImmutableMap<String, String> properties;
 
+    public GroupProperties(SerializationFormat serializationFormat, SchemaValidationRules schemaValidationRules, boolean allowMultipleTypes) {
+        this(serializationFormat, schemaValidationRules, allowMultipleTypes, ImmutableMap.of());
+    }
+
+    public GroupProperties(SerializationFormat serializationFormat, SchemaValidationRules schemaValidationRules, boolean allowMultipleTypes, ImmutableMap<String, String> properties) {
+        this.serializationFormat = serializationFormat;
+        this.schemaValidationRules = schemaValidationRules;
+        this.allowMultipleTypes = allowMultipleTypes;
+        this.properties = properties;
+    }
+    
     public static final class GroupPropertiesBuilder {
         private SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.fullTransitive());
         private boolean allowMultipleTypes = false;
-        private Map<String, String> properties = Collections.emptyMap();
+        private ImmutableMap<String, String> properties = ImmutableMap.of();
 
         public GroupPropertiesBuilder compatibility(Compatibility compatibility) {
             this.schemaValidationRules = SchemaValidationRules.of(compatibility);

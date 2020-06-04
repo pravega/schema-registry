@@ -9,8 +9,8 @@
  */
 package io.pravega.schemaregistry.contract.transform;
 
+import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -37,8 +37,8 @@ public class ModelHelperTest {
         VersionInfo version = new VersionInfo().type("a").version(1).ordinal(1);
         Compatibility compatibility = new Compatibility().name(Compatibility.class.getSimpleName())
                                                          .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL).backwardTill(version).forwardTill(version);
-        CodecType codec = new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM).customTypeName("custom");
-        
+        String codecType = "custom";
+
         // decodes
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = ModelHelper.decode(type);
         assertEquals(serializationFormat, io.pravega.schemaregistry.contract.data.SerializationFormat.Custom);
@@ -52,20 +52,16 @@ public class ModelHelperTest {
 
         io.pravega.schemaregistry.contract.data.Compatibility compatibilityDecoded = ModelHelper.decode(compatibility);
         assertEquals(compatibilityDecoded.getCompatibility(), io.pravega.schemaregistry.contract.data.Compatibility.Type.BackwardAndForwardTill);
-        
+
         io.pravega.schemaregistry.contract.data.SchemaValidationRules rulesDecoded = ModelHelper.decode(rules);
         assertEquals(rulesDecoded.getRules().size(), 0);
         
-        io.pravega.schemaregistry.contract.data.CodecType codecType = ModelHelper.decode(new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM).customTypeName("custom"));
-        assertEquals(codecType, io.pravega.schemaregistry.contract.data.CodecType.Custom);
-        assertEquals(codecType.getCustomTypeName(), "custom");
-
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(version);
         assertEquals(versionInfo.getType(), version.getType());
         assertEquals(versionInfo.getVersion(), version.getVersion().intValue());
-        
-        io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo = ModelHelper.decode(new EncodingInfo().schemaInfo(schema).versionInfo(version).codecType(codec));
-        assertEquals(encodingInfo.getCodec(), io.pravega.schemaregistry.contract.data.CodecType.Custom);
+
+        io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo = ModelHelper.decode(new EncodingInfo().schemaInfo(schema).versionInfo(version).codecType(codecType));
+        assertEquals(encodingInfo.getCodecType(), "custom");
         assertEquals(encodingInfo.getVersionInfo(), versionInfo);
         assertEquals(encodingInfo.getSchemaInfo(), schemaInfo);
         io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion = ModelHelper.decode(new SchemaWithVersion().schemaInfo(schema).version(version));
@@ -80,44 +76,42 @@ public class ModelHelperTest {
     public void testEncode() {
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = io.pravega.schemaregistry.contract.data.SerializationFormat.custom("custom");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                "name", serializationFormat, new byte[0], Collections.emptyMap());
+                "name", serializationFormat, new byte[0], ImmutableMap.of());
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 1);
         io.pravega.schemaregistry.contract.data.Compatibility rule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 0),
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1, 1));
         io.pravega.schemaregistry.contract.data.SchemaValidationRules schemaValidationRules = io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(rule);
-        io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties.builder()
-                                                                                                                              .serializationFormat(serializationFormat).schemaValidationRules(schemaValidationRules).allowMultipleTypes(true).properties(Collections.emptyMap()).build();
-        io.pravega.schemaregistry.contract.data.CodecType codecType = io.pravega.schemaregistry.contract.data.CodecType.custom("codec", Collections.emptyMap());
+        io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties
+                .builder().serializationFormat(serializationFormat).schemaValidationRules(schemaValidationRules)
+                .allowMultipleTypes(true).properties(ImmutableMap.of()).build();
+        String codecType = "codecType";
 
         // encode test
         VersionInfo version = ModelHelper.encode(versionInfo);
         assertEquals(version.getVersion().intValue(), versionInfo.getVersion());
         assertEquals(version.getType(), versionInfo.getType());
-        
+
         SerializationFormat type = ModelHelper.encode(serializationFormat);
         assertEquals(type.getSerializationFormat(), SerializationFormat.SerializationFormatEnum.CUSTOM);
-        
+
         SchemaInfo schema = ModelHelper.encode(schemaInfo);
         assertEquals(schema.getType(), schemaInfo.getType());
         assertEquals(schema.getProperties(), schemaInfo.getProperties());
         assertTrue(Arrays.equals(schema.getSchemaData(), schemaInfo.getSchemaData()));
         assertEquals(schema.getSerializationFormat(), type);
-        
+
         EncodingId encodingId = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.EncodingId(0));
         assertEquals(encodingId.getEncodingId().intValue(), 0);
         
-        CodecType codec = ModelHelper.encode(codecType);
-        assertEquals(codec.getCodecType(), CodecType.CodecTypeEnum.CUSTOM);
-        
         EncodingInfo encodingInfo = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.EncodingInfo(versionInfo, schemaInfo, codecType));
-        assertEquals(encodingInfo.getCodecType(), codec);
+        assertEquals(encodingInfo.getCodecType(), codecType);
         assertEquals(encodingInfo.getVersionInfo(), version);
         assertEquals(encodingInfo.getSchemaInfo(), schema);
 
         SchemaValidationRules rules = ModelHelper.encode(schemaValidationRules);
         assertEquals(rules.getRules().size(), 1);
-        
+
         io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord schemaEvolution = ModelHelper.encode(new GroupHistoryRecord(
                 schemaInfo, versionInfo, schemaValidationRules, 100L, ""));
         assertEquals(schemaEvolution.getSchemaInfo(), schema);
@@ -128,11 +122,11 @@ public class ModelHelperTest {
 
         Compatibility compatibility = ModelHelper.encode(rule);
         assertEquals(compatibility.getPolicy(), Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL);
-        
+
         SchemaWithVersion schemaWithVersion = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.SchemaWithVersion(schemaInfo, versionInfo));
         assertEquals(schemaWithVersion.getSchemaInfo(), schema);
         assertEquals(schemaWithVersion.getVersion(), version);
-        
+
         GroupProperties groupProperties = ModelHelper.encode(prop);
         assertEquals(groupProperties.getSerializationFormat(), type);
         assertEquals(groupProperties.getSchemaValidationRules(), rules);

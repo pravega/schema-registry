@@ -28,8 +28,4 @@ public class SchemaRegistryClientConfig {
     private SchemaRegistryClientConfig(URI schemaRegistryUri) {
         this.schemaRegistryUri = schemaRegistryUri;
     }
-
-    public static final class SchemaRegistryClientConfigBuilder {
-        private URI schemaRegistryUri = URI.create("http://localhost:9092");
-    }
 }

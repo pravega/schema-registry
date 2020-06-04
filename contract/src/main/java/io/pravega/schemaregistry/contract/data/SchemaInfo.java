@@ -9,13 +9,13 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.pravega.common.ObjectBuilder;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.Arrays;
-import java.util.Map;
 import java.util.Objects;
 
 /**
@@ -31,12 +31,32 @@ import java.util.Objects;
  */
 @Data
 @Builder
-@AllArgsConstructor
 public class SchemaInfo {
+    /**
+     * Identifies the object type that is represented by the schema. 
+     */
     private final String type;
+    /**
+     * Serialization format that this schema is intended to be used for. 
+     */
     private final SerializationFormat serializationFormat;
+    /**
+     * Schema as an array of 8-bit unsigned bytes. 
+     */
     private final byte[] schemaData;
-    private final Map<String, String> properties;
+    /**
+     * User defined key value strings that users can use to add any additional metadata to the schema. 
+     */
+    private final ImmutableMap<String, String> properties;
+
+    public SchemaInfo(String type, SerializationFormat serializationFormat, byte[] schemaData, ImmutableMap<String, String> properties) {
+        Preconditions.checkArgument(type != null);
+        Preconditions.checkArgument(serializationFormat != SerializationFormat.Any);
+        this.type = type;
+        this.serializationFormat = serializationFormat;
+        this.schemaData = schemaData;
+        this.properties = properties;
+    }
 
     @Override
     public boolean equals(Object o) {

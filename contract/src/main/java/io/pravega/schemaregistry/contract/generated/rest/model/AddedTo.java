@@ -16,47 +16,46 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * Response object for listCodecTypes.
+ * Map of Group names to versionInfos in the group. This is for all the groups where the schema is registered.
  */
-@ApiModel(description = "Response object for listCodecTypes.")
+@ApiModel(description = "Map of Group names to versionInfos in the group. This is for all the groups where the schema is registered.")
 
-public class CodecsList   {
-  @JsonProperty("codecTypes")
-  private List<CodecType> codecTypes = null;
+public class AddedTo   {
+  @JsonProperty("groups")
+  private Map<String, VersionInfo> groups = new HashMap<String, VersionInfo>();
 
-  public CodecsList codecTypes(List<CodecType> codecTypes) {
-    this.codecTypes = codecTypes;
+  public AddedTo groups(Map<String, VersionInfo> groups) {
+    this.groups = groups;
     return this;
   }
 
-  public CodecsList addCodecTypesItem(CodecType codecTypesItem) {
-    if (this.codecTypes == null) {
-      this.codecTypes = new ArrayList<CodecType>();
-    }
-    this.codecTypes.add(codecTypesItem);
+  public AddedTo putGroupsItem(String key, VersionInfo groupsItem) {
+    this.groups.put(key, groupsItem);
     return this;
   }
 
   /**
-   * List of codecTypes.
-   * @return codecTypes
+   * Get groups
+   * @return groups
    **/
-  @JsonProperty("codecTypes")
-  @ApiModelProperty(value = "List of codecTypes.")
-  public List<CodecType> getCodecTypes() {
-    return codecTypes;
+  @JsonProperty("groups")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
+  public Map<String, VersionInfo> getGroups() {
+    return groups;
   }
 
-  public void setCodecTypes(List<CodecType> codecTypes) {
-    this.codecTypes = codecTypes;
+  public void setGroups(Map<String, VersionInfo> groups) {
+    this.groups = groups;
   }
 
 
@@ -68,22 +67,22 @@ public class CodecsList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CodecsList codecsList = (CodecsList) o;
-    return Objects.equals(this.codecTypes, codecsList.codecTypes);
+    AddedTo addedTo = (AddedTo) o;
+    return Objects.equals(this.groups, addedTo.groups);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(codecTypes);
+    return Objects.hash(groups);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CodecsList {\n");
+    sb.append("class AddedTo {\n");
     
-    sb.append("    codecTypes: ").append(toIndentedString(codecTypes)).append("\n");
+    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
     sb.append("}");
     return sb.toString();
   }

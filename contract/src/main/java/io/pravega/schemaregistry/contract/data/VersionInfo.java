@@ -20,14 +20,25 @@ import lombok.Data;
  * {@link VersionInfo#version} the registry assigned monotonically increasing version number for the schema for specific object type.
  * Since the version number is per object type, so type and version number forms a unique pair. 
  * {@link VersionInfo#ordinal} Absolute ordinal of the schema for all schemas in the group. This uniquely identifies the 
- * schema within a group. 
+ * version within a group. 
  */
 @Data
 @Builder
 @AllArgsConstructor
 public class VersionInfo {
+    /**
+     * Object type which is declared in the corresponding {@link SchemaInfo#type} for the schemainfo that is identified 
+     * by this version info. 
+     */
     private final String type;
+    /**
+     * A version number that identifies the position of schema among other schemas in the group that share the same 'type'.
+     */
     private final int version;
+    /**
+     * A position identifier that uniquely identifies the schema within a group and represents the order in which this
+     * schema was included in the group. 
+     */
     private final int ordinal;
 
     public static class VersionInfoBuilder implements ObjectBuilder<VersionInfo> {

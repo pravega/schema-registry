@@ -49,11 +49,11 @@ public class GroupProperties   {
   }
 
   /**
-   * Serialization format for the group.
+   * serialization format for the group.
    * @return serializationFormat
    **/
   @JsonProperty("serializationFormat")
-  @ApiModelProperty(required = true, value = "Serialization format for the group.")
+  @ApiModelProperty(required = true, value = "serialization format for the group.")
   @NotNull
   public SerializationFormat getSerializationFormat() {
     return serializationFormat;

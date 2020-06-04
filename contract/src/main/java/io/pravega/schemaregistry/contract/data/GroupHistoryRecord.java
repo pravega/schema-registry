@@ -21,10 +21,26 @@ import lombok.Data;
  */
 @Data
 public class GroupHistoryRecord {
+    /**
+     * Schema information object for the schema that was added to the group.
+     */
     private final SchemaInfo schema;
+    /**
+     * Version information object that uniquely identifies the schema in the group. 
+     */
     private final VersionInfo version;
+    /**
+     * Validation rules that were applied at the time when the schema was registered. 
+     */
     private final SchemaValidationRules rules;
+    /**
+     * Service's Time when the schema was registered. 
+     */
     private final long timestamp;
+    /**
+     * A json format string representing the schema. This string will be populated only for serialization formats 
+     * that the service can parse. 
+     */
     private final String schemaString;
 }
 

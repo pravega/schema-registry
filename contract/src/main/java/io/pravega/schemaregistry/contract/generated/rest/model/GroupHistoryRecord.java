@@ -130,7 +130,7 @@ public class GroupHistoryRecord   {
   }
 
   /**
-   * Schema as json string for serialization format that registry service understands.
+   * Schema as json string for serialization formats that registry service understands.
    * @return schemaString
    **/
   @JsonProperty("schemaString")

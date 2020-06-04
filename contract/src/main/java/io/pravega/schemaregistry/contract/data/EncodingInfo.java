@@ -18,7 +18,16 @@ import lombok.Data;
  */
 @Data
 public class EncodingInfo {
+    /**
+     * Version of the schema which is used in encoding the data. 
+     */
     private final VersionInfo versionInfo;
+    /**
+     * Actual schema which is used in encoding the data. 
+     */
     private final SchemaInfo schemaInfo;
-    private final CodecType codec;
+    /**
+     * Codec type which is used in encoding the data. 
+     */
+    private final String codecType;
 }

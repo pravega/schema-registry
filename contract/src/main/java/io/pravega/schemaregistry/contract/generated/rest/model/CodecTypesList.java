@@ -16,37 +16,46 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.ArrayList;
+import java.util.List;
 import javax.validation.constraints.*;
 
 /**
- * CanReadRequest
+ * Response object for listCodecTypes.
  */
+@ApiModel(description = "Response object for listCodecTypes.")
 
-public class CanReadRequest   {
-  @JsonProperty("schemaInfo")
-  private SchemaInfo schemaInfo = null;
+public class CodecTypesList   {
+  @JsonProperty("codecTypes")
+  private List<String> codecTypes = null;
 
-  public CanReadRequest schemaInfo(SchemaInfo schemaInfo) {
-    this.schemaInfo = schemaInfo;
+  public CodecTypesList codecTypes(List<String> codecTypes) {
+    this.codecTypes = codecTypes;
+    return this;
+  }
+
+  public CodecTypesList addCodecTypesItem(String codecTypesItem) {
+    if (this.codecTypes == null) {
+      this.codecTypes = new ArrayList<String>();
+    }
+    this.codecTypes.add(codecTypesItem);
     return this;
   }
 
   /**
-   * Get schemaInfo
-   * @return schemaInfo
+   * List of codecTypes.
+   * @return codecTypes
    **/
-  @JsonProperty("schemaInfo")
-  @ApiModelProperty(required = true, value = "")
-  @NotNull
-  public SchemaInfo getSchemaInfo() {
-    return schemaInfo;
+  @JsonProperty("codecTypes")
+  @ApiModelProperty(value = "List of codecTypes.")
+  public List<String> getCodecTypes() {
+    return codecTypes;
   }
 
-  public void setSchemaInfo(SchemaInfo schemaInfo) {
-    this.schemaInfo = schemaInfo;
+  public void setCodecTypes(List<String> codecTypes) {
+    this.codecTypes = codecTypes;
   }
 
 
@@ -58,22 +67,22 @@ public class CanReadRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CanReadRequest canReadRequest = (CanReadRequest) o;
-    return Objects.equals(this.schemaInfo, canReadRequest.schemaInfo);
+    CodecTypesList codecTypesList = (CodecTypesList) o;
+    return Objects.equals(this.codecTypes, codecTypesList.codecTypes);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo);
+    return Objects.hash(codecTypes);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CanReadRequest {\n");
+    sb.append("class CodecTypesList {\n");
     
-    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
+    sb.append("    codecTypes: ").append(toIndentedString(codecTypes)).append("\n");
     sb.append("}");
     return sb.toString();
   }

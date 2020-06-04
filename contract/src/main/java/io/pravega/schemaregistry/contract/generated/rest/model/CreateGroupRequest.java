@@ -16,13 +16,9 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
+import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
@@ -33,17 +29,8 @@ public class CreateGroupRequest   {
   @JsonProperty("groupName")
   private String groupName = null;
 
-  @JsonProperty("serializationFormat")
-  private SerializationFormat serializationFormat = null;
-
-  @JsonProperty("validationRules")
-  private SchemaValidationRules validationRules = null;
-
-  @JsonProperty("properties")
-  private Map<String, String> properties = null;
-
-  @JsonProperty("allowMultipleTypes")
-  private Boolean allowMultipleTypes = null;
+  @JsonProperty("groupProperties")
+  private GroupProperties groupProperties = null;
 
   public CreateGroupRequest groupName(String groupName) {
     this.groupName = groupName;
@@ -65,91 +52,24 @@ public class CreateGroupRequest   {
     this.groupName = groupName;
   }
 
-  public CreateGroupRequest serializationFormat(SerializationFormat serializationFormat) {
-    this.serializationFormat = serializationFormat;
+  public CreateGroupRequest groupProperties(GroupProperties groupProperties) {
+    this.groupProperties = groupProperties;
     return this;
   }
 
   /**
-   * Get serializationFormat
-   * @return serializationFormat
+   * Get groupProperties
+   * @return groupProperties
    **/
-  @JsonProperty("serializationFormat")
+  @JsonProperty("groupProperties")
   @ApiModelProperty(required = true, value = "")
   @NotNull
-  public SerializationFormat getSerializationFormat() {
-    return serializationFormat;
+  public GroupProperties getGroupProperties() {
+    return groupProperties;
   }
 
-  public void setSerializationFormat(SerializationFormat serializationFormat) {
-    this.serializationFormat = serializationFormat;
-  }
-
-  public CreateGroupRequest validationRules(SchemaValidationRules validationRules) {
-    this.validationRules = validationRules;
-    return this;
-  }
-
-  /**
-   * Get validationRules
-   * @return validationRules
-   **/
-  @JsonProperty("validationRules")
-  @ApiModelProperty(required = true, value = "")
-  @NotNull
-  public SchemaValidationRules getValidationRules() {
-    return validationRules;
-  }
-
-  public void setValidationRules(SchemaValidationRules validationRules) {
-    this.validationRules = validationRules;
-  }
-
-  public CreateGroupRequest properties(Map<String, String> properties) {
-    this.properties = properties;
-    return this;
-  }
-
-  public CreateGroupRequest putPropertiesItem(String key, String propertiesItem) {
-    if (this.properties == null) {
-      this.properties = new HashMap<String, String>();
-    }
-    this.properties.put(key, propertiesItem);
-    return this;
-  }
-
-  /**
-   * Get properties
-   * @return properties
-   **/
-  @JsonProperty("properties")
-  @ApiModelProperty(value = "")
-  public Map<String, String> getProperties() {
-    return properties;
-  }
-
-  public void setProperties(Map<String, String> properties) {
-    this.properties = properties;
-  }
-
-  public CreateGroupRequest allowMultipleTypes(Boolean allowMultipleTypes) {
-    this.allowMultipleTypes = allowMultipleTypes;
-    return this;
-  }
-
-  /**
-   * Get allowMultipleTypes
-   * @return allowMultipleTypes
-   **/
-  @JsonProperty("allowMultipleTypes")
-  @ApiModelProperty(required = true, value = "")
-  @NotNull
-  public Boolean isAllowMultipleTypes() {
-    return allowMultipleTypes;
-  }
-
-  public void setAllowMultipleTypes(Boolean allowMultipleTypes) {
-    this.allowMultipleTypes = allowMultipleTypes;
+  public void setGroupProperties(GroupProperties groupProperties) {
+    this.groupProperties = groupProperties;
   }
 
 
@@ -163,15 +83,12 @@ public class CreateGroupRequest   {
     }
     CreateGroupRequest createGroupRequest = (CreateGroupRequest) o;
     return Objects.equals(this.groupName, createGroupRequest.groupName) &&
-        Objects.equals(this.serializationFormat, createGroupRequest.serializationFormat) &&
-        Objects.equals(this.validationRules, createGroupRequest.validationRules) &&
-        Objects.equals(this.properties, createGroupRequest.properties) &&
-        Objects.equals(this.allowMultipleTypes, createGroupRequest.allowMultipleTypes);
+        Objects.equals(this.groupProperties, createGroupRequest.groupProperties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groupName, serializationFormat, validationRules, properties, allowMultipleTypes);
+    return Objects.hash(groupName, groupProperties);
   }
 
 
@@ -181,10 +98,7 @@ public class CreateGroupRequest   {
     sb.append("class CreateGroupRequest {\n");
     
     sb.append("    groupName: ").append(toIndentedString(groupName)).append("\n");
-    sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
-    sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
-    sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
-    sb.append("    allowMultipleTypes: ").append(toIndentedString(allowMultipleTypes)).append("\n");
+    sb.append("    groupProperties: ").append(toIndentedString(groupProperties)).append("\n");
     sb.append("}");
     return sb.toString();
   }

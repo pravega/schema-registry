@@ -21,12 +21,8 @@ basePath: "/v1"
 tags:
 - name: "Group"
   description: "Group related APIs"
-- name: "Schema"
+- name: "Schemas"
   description: "Schema related APIs"
-- name: "Codecs"
-  description: "Codecs related APIs"
-- name: "Encoding"
-  description: "Encoding related APIs"
 schemes:
   - http
 paths:
@@ -72,24 +68,12 @@ paths:
             type: object
             properties:
               groupName:
-                type: string
-              serializationFormat:
-                  $ref: "#/definitions/SerializationFormat"
-              validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
-              properties:
-                type: object
-                additionalProperties:
                   type: string
-                  minLength: 0
-                  maxLength: 40
-              allowMultipleTypes:
-                type: boolean
+              groupProperties:
+                  $ref: "#/definitions/GroupProperties"
             required:
                 - groupName
-                - serializationFormat
-                - validationRules
-                - allowMultipleTypes   
+                - groupProperties
       responses:
         201:
           description: Successfully added group
@@ -152,7 +136,7 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while fetching Group history
   /groups/{groupName}/rules:
     parameters:
       - in: path
@@ -160,22 +144,6 @@ paths:
         description: Group name
         required: true
         type: string
-    get:
-      tags:
-      - "Group"
-      operationId: getSchemaValidationRules
-      description: Fetch the schema validation rules configured for the Group
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Found Group schema validation rules
-          schema:
-            $ref: "#/definitions/SchemaValidationRules"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
     put:
       tags:
       - "Group"
@@ -206,7 +174,7 @@ paths:
         409:
           description: Write conflict 
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while updating Group's schema validation rules 
   /groups/{groupName}/schemas:
     parameters:
       - in: path
@@ -214,11 +182,15 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: type
+        type: string
+        description: Type of object
     get:
       tags:
-      - "Schema"
+      - "Group"
       operationId: getSchemas
-      description: Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. 
+      description: Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned. 
       produces:
         - application/json
       responses:
@@ -229,7 +201,7 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while fetching Group's latest schemas
   /groups/{groupName}/schemas/versions:
     parameters:
       - in: path
@@ -243,7 +215,7 @@ paths:
         description: Type of object the schema describes. 
     get:
       tags:
-      - "Schema"
+      - "Group"
       operationId: getSchemaVersions
       description: Get all schema versions for the group 
       produces:
@@ -256,26 +228,28 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while fetching Group schema versions
+  /groups/{groupName}/schemas/versions:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
     post:
       tags:
-      - "Schema"
+      - "Group"
       operationId: addSchema
       description: Adds a new schema to the group
       consumes:
         - application/json
       parameters:
         - in: body
-          name: AddSchemaRequest
+          name: schemaInfo
           description: Add new schema to group
           required: true
           schema:
-            type: object
-            properties:
-              schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
-            required:
-              - schemaInfo      
+              $ref: "#/definitions/SchemaInfo"
       produces:
         - application/json
       responses:
@@ -290,7 +264,7 @@ paths:
         417:
           description: Invalid serialization format
         500:
-          description: Internal server error while creating a Group
+          description: Internal server error while adding schema to group
   /groups/{groupName}/schemas/versions/find:
     parameters:
       - in: path
@@ -300,23 +274,18 @@ paths:
         type: string
     post:
       tags:
-      - "Schema"
+      - "Group"
       operationId: getSchemaVersion
       description: Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchema   
       consumes:
         - application/json
       parameters:
         - in: body
-          name: GetSchemaVersion
+          name: schemaInfo
           description: Get schema corresponding to the version
           required: true
           schema:
-            type: object
-            properties:
-              schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
-            required:
-              - schemaInfo      
+              $ref: "#/definitions/SchemaInfo"
       produces:
         - application/json
       responses:
@@ -327,7 +296,7 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error fetching version for schema
   /groups/{groupName}/schemas/versions/{versionOrdinal}:
     parameters:
       - in: path
@@ -343,7 +312,7 @@ paths:
         format: int32
     get:
       tags:
-      - "Schema"
+      - "Group"
       operationId: getSchemaFromVersion
       description: Get schema from the version ordinal that uniquely identifies the schema in the group. 
       produces:
@@ -356,10 +325,10 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details  
+          description: Internal server error while fetching schema from version  
     delete:
       tags:
-      - "Schema"
+      - "Group"
       operationId: deleteSchemaVersion
       description: Delete schema version from the group.
       produces:
@@ -370,7 +339,7 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details  
+          description: Internal server error while deleting schema from group  
   /groups/{groupName}/schemas/versions/latest:
     parameters:
       - in: path
@@ -407,7 +376,7 @@ paths:
         type: string
     post:
       tags:
-      - "Schema"
+      - "Group"
       operationId: validate
       description: Checks if given schema is compatible with schemas in the registry for current policy setting. 
       consumes:
@@ -436,7 +405,7 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while trying to validate schema
   /groups/{groupName}/schemas/versions/canRead:
     parameters:
       - in: path
@@ -446,23 +415,18 @@ paths:
         type: string
     post:
       tags:
-      - "Schema"
+      - "Group"
       operationId: canRead
       description: Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
       consumes:
         - application/json
       parameters:
         - in: body
-          name: CanReadRequest
+          name: schemaInfo
           description: Checks if schema can be used to read the data in the stream based on compatibility rules. 
           required: true
           schema:
-            type: object
-            properties:
-              schemaInfo:
-                  $ref: "#/definitions/SchemaInfo"
-            required:
-              - schemaInfo
+              $ref: "#/definitions/SchemaInfo"
       produces:
         - application/json
       responses:
@@ -473,7 +437,7 @@ paths:
         404:
           description: Group with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while checking schema for readability
   /groups/{groupName}/encodings:
     parameters:
       - in: path
@@ -483,9 +447,9 @@ paths:
         type: string
     put:
       tags:
-      - "Encoding"
+      - "Group"
       operationId: getEncodingId
-      description: Get an encoding id that uniquely identifies a schema version and codec pair. 
+      description: Get an encoding id that uniquely identifies a schema version and codec type pair. 
       consumes:
         - application/json
       parameters:
@@ -499,7 +463,7 @@ paths:
               versionInfo:
                   $ref: "#/definitions/VersionInfo"
               codecType:
-                  $ref: "#/definitions/CodecType"
+                  type: string
             required:
               - versionInfo
               - codecType
@@ -511,11 +475,11 @@ paths:
           schema:
             $ref: "#/definitions/EncodingId"
         404:
-          description: Group or encoding id with given name not found
+          description: Group with given name or version not found
         412:
-          description: Codec not registered
+          description: Codec type not registered
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while getting encoding id
   /groups/{groupName}/encodings/{encodingId}:
     parameters:
       - in: path
@@ -525,13 +489,13 @@ paths:
         type: string
       - in: path
         name: encodingId
-        description: Encoding id that identifies a unique combination of schema and codec
+        description: Encoding id that identifies a unique combination of schema and codec type
         required: true
         type: integer
         format: int32
     get:
       tags:
-      - "Encoding"
+      - "Group"
       operationId: getEncodingInfo
       description: Get the encoding information corresponding to the encoding id. 
       produces:
@@ -544,8 +508,8 @@ paths:
         404:
           description: Group or encoding id with given name not found
         500:
-          description: Internal server error while fetching Group details
-  /groups/{groupName}/codecs:
+          description: Internal server error while getting encoding info corresponding to encoding id
+  /groups/{groupName}/codecTypes:
     parameters:
       - in: path
         name: groupName
@@ -554,46 +518,68 @@ paths:
         type: string
     get:
       tags:
-      - "Codecs"
-      operationId: getCodecsList
-      description: Get codecs for the group. 
+      - "Group"
+      operationId: getCodecTypesList
+      description: Get codecTypes for the group. 
       produces:
         - application/json
       responses:
         200:
-          description: Found Codecs
+          description: Found CodecTypes
           schema:
-            $ref: "#/definitions/CodecsList"
+            $ref: "#/definitions/CodecTypesList"
         404:
           description: Group or encoding id with given name not found
         500:
-          description: Internal server error while fetching Group details
+          description: Internal server error while fetching codecTypes registered
     post:
       tags:
-      - "Codecs"
-      operationId: addCodec
-      description: Adds a new codec to the group.
+      - "Group"
+      operationId: addCodecType
+      description: Adds a new codecType to the group.
       consumes:
         - application/json
       parameters:
         - in: body
-          name: AddCodec
-          description: The codec
+          name: codecType
+          description: The codecType
           required: true
           schema:
-            type: object
-            properties:
-              codec:
-                  $ref: "#/definitions/CodecType"
-            required:
-              - codec      
+              type: string
       responses:
         201:
-          description: Successfully added codec to group
+          description: Successfully added codecType to group
         404: 
           description: Group not found
         500:
-          description: Internal server error while creating a Group          
+          description: Internal server error while registering codectype to a Group          
+  /schemas/addedTo:
+    parameters:
+    post:
+      tags:
+      - "Schema"
+      operationId: getSchemaReferences
+      description: Gets a map of groups to version info where the schema if it is registered. SchemaInfo#properties is ignored while comparing the schema.   
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Get schema references for the supplied schema
+          required: true
+          schema:
+              $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema version
+          schema:
+            $ref: "#/definitions/AddedTo"
+        404:
+          description: Schema not found
+        500:
+          description: Internal server error while fetching Schema references
 definitions:
   ListGroupsResponse:
     type: object
@@ -714,33 +700,9 @@ definitions:
         type: array
         items:
           $ref: "#/definitions/SchemaWithVersion"
-  CodecType:
-    type: object
-    description: Type of codec. For custom codec use codecType.Custom with customTypeName and optionally additional properties. 
-    properties:
-      codecType:
-        description: Code Type enum.
-        type: string
-        enum:
-          - None
-          - Snappy
-          - Gzip
-          - Custom
-      customTypeName:
-        description: Custom type name when codecType.custom is chosen. 
-        type: string
-      properties:
-        description: Optional additional key value string for codecType.cusom.
-        type: object
-        additionalProperties:
-          type: string
-          minLength: 0
-          maxLength: 40
-    required:
-      - codecType      
   EncodingId:
     type: object
-    description: Encoding id that uniquely identifies a schema version and codec pair. 
+    description: Encoding id that uniquely identifies a schema version and codec type pair. 
     properties:
       encodingId:
         type: integer
@@ -750,7 +712,7 @@ definitions:
       - encodingId    
   EncodingInfo:
     type: object
-    description: Encoding information object that resolves the schema version and codec used for corresponding encoding id. 
+    description: Encoding information object that resolves the schema version and codec type used for corresponding encoding id. 
     properties:
       schemaInfo:
           description: Schema information object.
@@ -759,8 +721,8 @@ definitions:
           description: Version information object.
           $ref: "#/definitions/VersionInfo"        
       codecType:
-          description: Codec type object.
-          $ref: "#/definitions/CodecType"
+          description: Codec type.
+          type: string
     required:
       - schemaInfo
       - versionInfo
@@ -818,7 +780,7 @@ definitions:
           propertyName: name
           mapping:
             Compatibility: '#/definitions/Compatibility'
-  CodecsList:
+  CodecTypesList:
     type: object
     description: Response object for listCodecTypes.
     properties:
@@ -826,7 +788,7 @@ definitions:
         type: array
         description: List of codecTypes.
         items:
-          $ref: "#/definitions/CodecType"
+          type: string
   Valid:
     type: object
     description: Response object for validateSchema api.
@@ -878,3 +840,13 @@ definitions:
         description: Chronological list of Group History records.
         items:
           $ref: "#/definitions/GroupHistoryRecord"
+  AddedTo:
+    type: object
+    description: Map of Group names to versionInfos in the group. This is for all the groups where the schema is registered.   
+    properties:
+      groups:
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/VersionInfo"
+    required:
+      - groups    
