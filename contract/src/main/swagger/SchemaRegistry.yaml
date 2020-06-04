@@ -340,33 +340,6 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while deleting schema from group  
-  /groups/{groupName}/schemas/versions/latest:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-      - in: query
-        name: type
-        type: string
-        description: Type of object
-    get:
-      tags:
-      - "Schema"
-      operationId: getLatestSchema
-      description: Get latest schema for the group.
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Found Group properties
-          schema:
-            $ref: "#/definitions/SchemaWithVersion"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group details
   /groups/{groupName}/schemas/versions/validate:
     parameters:
       - in: path
