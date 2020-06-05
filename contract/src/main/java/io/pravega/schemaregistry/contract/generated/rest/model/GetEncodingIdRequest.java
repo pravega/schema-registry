@@ -16,7 +16,6 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -31,7 +30,7 @@ public class GetEncodingIdRequest   {
   private VersionInfo versionInfo = null;
 
   @JsonProperty("codecType")
-  private CodecType codecType = null;
+  private String codecType = null;
 
   public GetEncodingIdRequest versionInfo(VersionInfo versionInfo) {
     this.versionInfo = versionInfo;
@@ -53,7 +52,7 @@ public class GetEncodingIdRequest   {
     this.versionInfo = versionInfo;
   }
 
-  public GetEncodingIdRequest codecType(CodecType codecType) {
+  public GetEncodingIdRequest codecType(String codecType) {
     this.codecType = codecType;
     return this;
   }
@@ -65,11 +64,11 @@ public class GetEncodingIdRequest   {
   @JsonProperty("codecType")
   @ApiModelProperty(required = true, value = "")
   @NotNull
-  public CodecType getCodecType() {
+  public String getCodecType() {
     return codecType;
   }
 
-  public void setCodecType(CodecType codecType) {
+  public void setCodecType(String codecType) {
     this.codecType = codecType;
   }
 

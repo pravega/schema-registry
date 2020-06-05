@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.samples.demo.serializationformats;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -30,10 +31,11 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -49,7 +51,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -97,9 +98,9 @@ public class ProtobufDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
             SerializationFormat serializationFormat = SerializationFormat.Protobuf;
-            client.addGroup(groupId, serializationFormat,
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
                     SchemaValidationRules.of(Compatibility.allowAny()),
-                    false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders)));
+                    false, ImmutableMap.of(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders))));
 
             Path path = Paths.get("samples/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);
@@ -179,9 +180,9 @@ public class ProtobufDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
             SerializationFormat serializationFormat = SerializationFormat.Protobuf;
-            client.addGroup(groupId, serializationFormat,
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
                     SchemaValidationRules.of(Compatibility.allowAny()),
-                    true, Collections.emptyMap());
+                    true));
 
             Path path = Paths.get("samples/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);

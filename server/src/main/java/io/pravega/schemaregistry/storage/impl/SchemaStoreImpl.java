@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.storage.impl;
 
 import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -26,6 +25,7 @@ import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.Group;
 import io.pravega.schemaregistry.storage.impl.groups.Groups;
+import io.pravega.schemaregistry.storage.impl.schemas.Schemas;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -33,9 +33,11 @@ import java.util.concurrent.CompletableFuture;
 
 public class SchemaStoreImpl<T> implements SchemaStore {
     private final Groups<T> groups;
+    private final Schemas<T> schemas;
 
-    public SchemaStoreImpl(Groups<T> groups) {
+    public SchemaStoreImpl(Groups<T> groups, Schemas<T> schemas) {
         this.groups = groups;
+        this.schemas = schemas;
     }
     
     // region schema store
@@ -118,7 +120,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     
     @Override
     public CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
-        return getGroup(group).thenCompose(grp -> grp.addSchema(schemaInfo, prop, etag));
+        return schemas.addNewSchema(schemaInfo, group)
+                .thenCompose(v -> getGroup(group).thenCompose(grp -> grp.addSchema(schemaInfo, prop, etag)));
     }
 
     @Override
@@ -127,12 +130,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Either<EncodingId, Etag>> getEncodingId(String group, VersionInfo versionInfo, CodecType codecType) {
+    public CompletableFuture<Either<EncodingId, Etag>> getEncodingId(String group, VersionInfo versionInfo, String codecType) {
         return getGroup(group).thenCompose(grp -> grp.getEncodingId(versionInfo, codecType));
     }
 
     @Override
-    public CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, CodecType codecType, 
+    public CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, String codecType, 
                                                           Etag etag) {
         return getGroup(group).thenCompose(grp -> grp.createEncodingId(versionInfo, codecType, etag));
     }
@@ -143,13 +146,13 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<CodecType>> getCodecTypes(String group) {
+    public CompletableFuture<List<String>> getCodecTypes(String group) {
         return getGroup(group).thenCompose(Group::getCodecTypes);
     }
 
     @Override
-    public CompletableFuture<Void> addCodec(String group, CodecType codecType) {
-        return getGroup(group).thenCompose(grp -> grp.addCodec(codecType));
+    public CompletableFuture<Void> addCodecType(String group, String codecType) {
+        return getGroup(group).thenCompose(grp -> grp.addCodecType(codecType));
     }
 
     @Override
@@ -160,6 +163,11 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     @Override
     public CompletableFuture<List<GroupHistoryRecord>> getGroupHistoryForType(String group, String type) {
         return getGroup(group).thenCompose(grp -> grp.getHistory(type));
+    }
+
+    @Override
+    public CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo) {
+        return schemas.getGroupsUsing(schemaInfo);
     }
 
     // endregion

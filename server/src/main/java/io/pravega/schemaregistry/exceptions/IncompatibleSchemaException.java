@@ -7,13 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.exceptions;
+package io.pravega.schemaregistry.exceptions;
 
 /**
- * Exception thrown when conditional updates to an entity are attempted and condition fails. 
+ * Exception thrown when a schema fails the compatibility checks for the group's compatibility policy. 
  */
-public class PreconditionFailedException extends RuntimeException {
-    public PreconditionFailedException(String message) {
+public class IncompatibleSchemaException extends RuntimeException {
+    public IncompatibleSchemaException(String message) {
         super(message);
     }
 }

@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.group.records;
 
+import com.google.common.collect.ImmutableMap;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
@@ -46,7 +47,9 @@ public class SchemaInfoSerializer extends VersionedSerializer.WithBuilder<Schema
     private void read00(RevisionDataInput source, SchemaInfo.SchemaInfoBuilder b) throws IOException {
         b.type(source.readUTF())
          .serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat())
-         .schemaData(source.readArray())
-         .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
+         .schemaData(source.readArray());
+        ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
+        source.readMap(DataInput::readUTF, DataInput::readUTF, mapBuilder);
+        b.properties(mapBuilder.build());
     }
 }

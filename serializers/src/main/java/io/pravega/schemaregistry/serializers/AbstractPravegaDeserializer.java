@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.serializers;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -27,6 +26,8 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
+
+import static io.pravega.schemaregistry.codec.CodecFactory.MIME_NONE;
 
 @Slf4j
 abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
@@ -90,7 +91,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     public T deserialize(ByteBuffer data) {
         if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
-            CodecType codecType = CodecType.None;
+            String codecType = MIME_NONE;
             if (skipHeaders) {
                 int currentPos = data.position();
                 data.position(currentPos + HEADER_SIZE);
@@ -98,7 +99,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                 byte protocol = data.get();
                 EncodingId encodingId = new EncodingId(data.getInt());
                 EncodingInfo encodingInfo = encodingCache.getGroupEncodingInfo(encodingId);
-                codecType = encodingInfo.getCodec();
+                codecType = encodingInfo.getCodecType();
                 writerSchema = encodingInfo.getSchemaInfo();
             }
             

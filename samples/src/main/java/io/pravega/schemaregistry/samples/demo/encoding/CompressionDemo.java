@@ -27,12 +27,12 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.schemas.AvroSchema;
@@ -48,7 +48,6 @@ import org.apache.avro.generic.GenericRecordBuilder;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
@@ -71,8 +70,8 @@ public class CompressionDemo {
     private static final String MYCOMPRESSION = "mycompression";
     private static final Codec MY_CODEC = new Codec() {
         @Override
-        public CodecType getCodecType() {
-            return CodecType.custom(MYCOMPRESSION, Collections.emptyMap());
+        public String getCodecType() {
+            return MYCOMPRESSION;
         }
 
         @Override
@@ -150,7 +149,7 @@ public class CompressionDemo {
             System.out.println("2. Snappy");
             System.out.println("3. None");
             System.out.println("4. Custom");
-            System.out.println("5. Print all codecs");
+            System.out.println("5. Print all codecTypes");
             System.out.println("6. Read all");
             System.out.println("7. exit");
             Scanner in = new Scanner(System.in);
@@ -186,7 +185,7 @@ public class CompressionDemo {
                         demo.writeCustom(generateBigString(size));
                         break;
                     case 5:
-                        demo.printAllCodecs();
+                        demo.printAllCodecTypes();
                         break;
                     case 6:
                         demo.readMessages();
@@ -211,12 +210,13 @@ public class CompressionDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
-            client.addGroup(groupId, serializationFormat, SchemaValidationRules.of(Compatibility.backward()), true, Collections.emptyMap());
+            client.addGroup(groupId, 
+                    new GroupProperties(serializationFormat, SchemaValidationRules.of(Compatibility.backward()), true));
         }
     }
 
-    private void printAllCodecs() {
-        List<CodecType> list = client.getCodecTypes(groupId);
+    private void printAllCodecTypes() {
+        List<String> list = client.getCodecTypes(groupId);
         System.out.println(list);
     }
     

@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.samples;
 
+import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -31,15 +32,23 @@ import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
-import io.pravega.schemaregistry.contract.data.CodecType;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
+import io.pravega.schemaregistry.samples.demo.objects.Address;
+import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
+import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
+import io.pravega.schemaregistry.samples.demo.objects.User;
+import io.pravega.schemaregistry.samples.generated.ProtobufTest;
+import io.pravega.schemaregistry.samples.generated.Test1;
+import io.pravega.schemaregistry.samples.generated.Test2;
+import io.pravega.schemaregistry.samples.generated.Test3;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
@@ -50,14 +59,6 @@ import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
-import io.pravega.schemaregistry.samples.demo.objects.Address;
-import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
-import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
-import io.pravega.schemaregistry.samples.demo.objects.User;
-import io.pravega.schemaregistry.samples.generated.ProtobufTest;
-import io.pravega.schemaregistry.samples.generated.Test1;
-import io.pravega.schemaregistry.samples.generated.Test2;
-import io.pravega.schemaregistry.samples.generated.Test3;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
@@ -76,7 +77,6 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -319,10 +319,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String bigString = generateBigString(100);
         writer3.writeEvent(new Test1(bigString, 1)).join();
 
-        List<CodecType> list = client.getCodecTypes(groupId);
+        List<String> list = client.getCodecTypes(groupId);
         assertEquals(2, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.None)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_NONE)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_GZIP)));
         // endregion
         
         // region writer with codec snappy
@@ -341,9 +341,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         list = client.getCodecTypes(groupId);
         assertEquals(3, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.None)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Snappy)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_NONE)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_GZIP)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_SNAPPY)));
         // endregion
         
         // region reader
@@ -371,8 +371,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String mycodec = "mycodec";
         Codec myCodec = new Codec() {
             @Override
-            public CodecType getCodecType() {
-                return CodecType.custom(mycodec, Collections.emptyMap());
+            public String getCodecType() {
+                return mycodec;
             }
 
             @Override
@@ -401,10 +401,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         list = client.getCodecTypes(groupId);
         assertEquals(4, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.None)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.GZip)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Snappy)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecType.Custom) && x.getCustomTypeName().equals(mycodec)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_NONE)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_GZIP)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_SNAPPY)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(mycodec)));
         reader.close();
 
         // region new reader with additional codec
@@ -799,8 +799,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
         streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Protobuf;
-        client.addGroup(groupId, serializationFormat,
-                SchemaValidationRules.of(Compatibility.allowAny()), true, Collections.emptyMap());
+        client.addGroup(groupId, new GroupProperties(serializationFormat,
+                SchemaValidationRules.of(Compatibility.allowAny()), true));
 
         Path path = Paths.get("resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
@@ -920,9 +920,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
         streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Json;
-        client.addGroup(groupId, serializationFormat,
+        client.addGroup(groupId, new GroupProperties(serializationFormat,
                 SchemaValidationRules.of(Compatibility.allowAny()), 
-                false, Collections.singletonMap(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders)));
+                false, ImmutableMap.of(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders))));
         
         JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
 

@@ -15,11 +15,10 @@ import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -32,7 +31,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Index Records with different implementations for {@link TableKey} and {@link TableValue}.
@@ -47,7 +45,7 @@ public interface TableRecords {
                     .put(GroupPropertyKey.class, GroupPropertiesRecord.SERIALIZER)
                     .put(ValidationPolicyKey.class, ValidationRecord.SERIALIZER)
                     .put(Etag.class, Etag.SERIALIZER)
-                    .put(CodecsKey.class, CodecsListValue.SERIALIZER)
+                    .put(CodecTypesKey.class, CodecTypesListValue.SERIALIZER)
                     .put(SchemaTypesKey.class, SchemaTypesListValue.SERIALIZER)
                     .put(EncodingIdRecord.class, EncodingInfoRecord.SERIALIZER)
                     .put(EncodingInfoRecord.class, EncodingIdRecord.SERIALIZER)
@@ -476,16 +474,16 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class CodecsKey implements TableKey {
+    class CodecTypesKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private static class CodecsKeyBuilder implements ObjectBuilder<CodecsKey> {
+        private static class CodecTypesKeyBuilder implements ObjectBuilder<CodecTypesKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<CodecsKey, CodecsKey.CodecsKeyBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypesKey, CodecTypesKey.CodecTypesKeyBuilder> {
             @Override
-            protected CodecsKey.CodecsKeyBuilder newBuilder() {
-                return CodecsKey.builder();
+            protected CodecTypesKey.CodecTypesKeyBuilder newBuilder() {
+                return CodecTypesKey.builder();
             }
 
             @Override
@@ -498,10 +496,10 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(CodecsKey e, RevisionDataOutput target) throws IOException {
+            private void write00(CodecTypesKey e, RevisionDataOutput target) throws IOException {
             }
 
-            private void read00(RevisionDataInput source, CodecsKey.CodecsKeyBuilder b) throws IOException {
+            private void read00(RevisionDataInput source, CodecTypesKey.CodecTypesKeyBuilder b) throws IOException {
             }
         }
     }
@@ -509,10 +507,10 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class CodecsListValue implements TableValue {
+    class CodecTypesListValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final List<CodecType> codecs;
+        private final List<String> codecTypes;
 
         @SneakyThrows
         @Override
@@ -520,13 +518,13 @@ public interface TableRecords {
             return SERIALIZER.serialize(this).getCopy();
         }
 
-        private static class CodecsListValueBuilder implements ObjectBuilder<CodecsListValue> {
+        private static class CodecTypesListValueBuilder implements ObjectBuilder<CodecTypesListValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<CodecsListValue, CodecsListValue.CodecsListValueBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypesListValue, CodecTypesListValue.CodecTypesListValueBuilder> {
             @Override
-            protected CodecsListValue.CodecsListValueBuilder newBuilder() {
-                return CodecsListValue.builder();
+            protected CodecTypesListValue.CodecTypesListValueBuilder newBuilder() {
+                return CodecTypesListValue.builder();
             }
 
             @Override
@@ -539,14 +537,12 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(CodecsListValue e, RevisionDataOutput target) throws IOException {
-                target.writeCollection(e.codecs.stream().map(CodecTypeRecord::new).collect(Collectors.toList()),
-                        CodecTypeRecord.SERIALIZER::serialize);
+            private void write00(CodecTypesListValue e, RevisionDataOutput target) throws IOException {
+                target.writeCollection(e.codecTypes, DataOutput::writeUTF);
             }
 
-            private void read00(RevisionDataInput source, CodecsListValue.CodecsListValueBuilder b) throws IOException {
-                b.codecs(source.readCollection(CodecTypeRecord.SERIALIZER::deserialize)
-                               .stream().map(CodecTypeRecord::getCodecType).collect(Collectors.toList()));
+            private void read00(RevisionDataInput source, CodecTypesListValue.CodecTypesListValueBuilder b) throws IOException {
+                b.codecTypes(Lists.newArrayList(source.readCollection(DataInput::readUTF)));
             }
         }
     }
@@ -634,7 +630,7 @@ public interface TableRecords {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final VersionInfo versionInfo;
-        private final CodecType codecType;
+        private final String codecType;
 
         @SneakyThrows
         @Override
@@ -663,12 +659,12 @@ public interface TableRecords {
 
             private void write00(EncodingInfoRecord e, RevisionDataOutput target) throws IOException {
                 VersionInfoSerializer.SERIALIZER.serialize(target, e.versionInfo);
-                CodecTypeRecord.SERIALIZER.serialize(target, new CodecTypeRecord(e.codecType));
+                target.writeUTF(e.codecType);
             }
 
             private void read00(RevisionDataInput source, EncodingInfoRecord.EncodingInfoRecordBuilder b) throws IOException {
                 b.versionInfo(VersionInfoSerializer.SERIALIZER.deserialize(source))
-                 .codecType(CodecTypeRecord.SERIALIZER.deserialize(source).getCodecType());
+                 .codecType(source.readUTF());
             }
         }
     }

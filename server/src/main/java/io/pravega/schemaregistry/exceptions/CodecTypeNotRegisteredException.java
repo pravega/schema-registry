@@ -7,13 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.exceptions;
+package io.pravega.schemaregistry.exceptions;
 
 /**
- * Exception thrown when a serialization format is different from the group property's serialization format. 
+ * Exception thrown when a codec type is not registered for the group. 
  */
-public class SerializationFormatMismatchException extends RuntimeException {
-    public SerializationFormatMismatchException(String message) {
+public class CodecTypeNotRegisteredException extends RuntimeException {
+    public CodecTypeNotRegisteredException(String message) {
         super(message);
     }
 }

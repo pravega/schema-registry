@@ -37,7 +37,6 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -86,7 +85,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
     public void groups() throws ExecutionException, InterruptedException {
         GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.emptyMap());
+                false);
         doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();
             map.put("group1", group1);

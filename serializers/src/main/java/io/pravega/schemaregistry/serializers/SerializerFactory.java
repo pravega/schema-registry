@@ -18,7 +18,6 @@ import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -654,9 +653,7 @@ public class SerializerFactory {
 
     private static void autoCreateGroup(SchemaRegistryClient client, SerializerConfig config) {
         if (config.isAutoCreateGroup()) {
-            client.addGroup(config.getGroupId(), config.getGroupProperties().getSerializationFormat(),
-                    config.getGroupProperties().getSchemaValidationRules(), config.getGroupProperties().isAllowMultipleTypes(),
-                    config.getGroupProperties().getProperties());
+            client.addGroup(config.getGroupId(), config.getGroupProperties());
         }
     }
 
@@ -668,10 +665,10 @@ public class SerializerFactory {
 
     private static void failOnCodecMismatch(SchemaRegistryClient client, SerializerConfig config) {
         if (config.isFailOnCodecMismatch()) {
-            List<CodecType> codecsInGroup = client.getCodecTypes(config.getGroupId());
-            if (!config.getDecoder().getCodecs().containsAll(codecsInGroup)) {
-                log.warn("Not all Codecs are supported by reader. Required codecs = {}", codecsInGroup);
-                throw new RuntimeException(String.format("Need all codecs in %s", codecsInGroup.toString()));
+            List<String> codecTypesInGroup = client.getCodecTypes(config.getGroupId());
+            if (!config.getDecoder().getCodecTypes().containsAll(codecTypesInGroup)) {
+                log.warn("Not all CodecTypes are supported by reader. Required codecTypes = {}", codecTypesInGroup);
+                throw new RuntimeException(String.format("Need all codecTypes in %s", codecTypesInGroup.toString()));
             }
         }
     }

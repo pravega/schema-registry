@@ -12,17 +12,16 @@ package io.pravega.schemaregistry.contract.transform;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import org.apache.commons.lang3.NotImplementedException;
 
@@ -98,23 +97,7 @@ public class ModelHelper {
                 searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()),
                 backwardTill, forwardTill);
     }
-
-    public static io.pravega.schemaregistry.contract.data.CodecType decode(CodecType codecType) {
-        Preconditions.checkArgument(codecType != null);
-        Preconditions.checkArgument(codecType.getCodecType() != null);
-        if (codecType.getCodecType().equals(CodecType.CodecTypeEnum.CUSTOM)) {
-            Preconditions.checkArgument(codecType.getCustomTypeName() != null);
-        }
-        switch (codecType.getCodecType()) {
-            case CUSTOM:
-                Preconditions.checkArgument(codecType.getCustomTypeName() != null);
-                return io.pravega.schemaregistry.contract.data.CodecType.custom(codecType.getCustomTypeName(), codecType.getProperties());
-            default:
-                return searchEnum(
-                        io.pravega.schemaregistry.contract.data.CodecType.class, codecType.getCodecType().name());
-        }
-    }
-
+    
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
         Preconditions.checkArgument(versionInfo != null);
         Preconditions.checkArgument(versionInfo.getType() != null);
@@ -126,7 +109,7 @@ public class ModelHelper {
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
         Preconditions.checkArgument(encodingInfo != null);
         return new io.pravega.schemaregistry.contract.data.EncodingInfo(decode(encodingInfo.getVersionInfo()),
-                decode(encodingInfo.getSchemaInfo()), decode(encodingInfo.getCodecType()));
+                decode(encodingInfo.getSchemaInfo()), encodingInfo.getCodecType());
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaWithVersion decode(SchemaWithVersion schemaWithVersion) {
@@ -156,7 +139,7 @@ public class ModelHelper {
 
         return io.pravega.schemaregistry.contract.data.GroupProperties.builder().serializationFormat(decode(groupProperties.getSerializationFormat()))
                                                                       .schemaValidationRules(decode(groupProperties.getSchemaValidationRules())).allowMultipleTypes(groupProperties.isAllowMultipleTypes())
-                                                                      .properties(groupProperties.getProperties()).build();
+                                                                      .properties(ImmutableMap.copyOf(groupProperties.getProperties())).build();
     }
     // endregion
 
@@ -239,21 +222,9 @@ public class ModelHelper {
     public static EncodingId encode(io.pravega.schemaregistry.contract.data.EncodingId encodingId) {
         return new EncodingId().encodingId(encodingId.getId());
     }
-
-    public static CodecType encode(io.pravega.schemaregistry.contract.data.CodecType codec) {
-        if (codec.equals(io.pravega.schemaregistry.contract.data.CodecType.Custom)) {
-            Preconditions.checkArgument(codec.getCustomTypeName() != null);
-            return new CodecType().codecType(CodecType.CodecTypeEnum.CUSTOM)
-                                  .customTypeName(codec.getCustomTypeName())
-                                  .properties(codec.getProperties());
-        } else {
-            return new CodecType().codecType(
-                    searchEnum(CodecType.CodecTypeEnum.class, codec.name()));
-        }
-    }
-
+    
     public static EncodingInfo encode(io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo) {
-        return new EncodingInfo().codecType(encode(encodingInfo.getCodec()))
+        return new EncodingInfo().codecType(encodingInfo.getCodecType())
                                  .versionInfo(encode(encodingInfo.getVersionInfo()))
                                  .schemaInfo(encode(encodingInfo.getSchemaInfo()));
     }

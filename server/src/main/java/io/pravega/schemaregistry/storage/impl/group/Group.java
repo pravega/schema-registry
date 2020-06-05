@@ -10,16 +10,15 @@
 package io.pravega.schemaregistry.storage.impl.group;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import com.google.common.hash.HashFunction;
-import com.google.common.hash.Hashing;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.util.JsonFormat;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -29,7 +28,7 @@ import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
+import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
@@ -64,11 +63,10 @@ public class Group<V> {
     private static final TableRecords.Etag ETAG = new TableRecords.Etag();
     private static final TableRecords.ValidationPolicyKey VALIDATION_POLICY_KEY = new TableRecords.ValidationPolicyKey();
     private static final TableRecords.GroupPropertyKey GROUP_PROPERTY_KEY = new TableRecords.GroupPropertyKey();
-    private static final TableRecords.CodecsKey CODECS_KEY = new TableRecords.CodecsKey();
+    private static final TableRecords.CodecTypesKey CODECS_TYPE_KEY = new TableRecords.CodecTypesKey();
     private static final TableRecords.SchemaTypesKey SCHEMA_TYPES_KEY = new TableRecords.SchemaTypesKey();
     private static final TableRecords.LatestSchemaVersionKey LATEST_SCHEMA_VERSION_KEY = new TableRecords.LatestSchemaVersionKey();
     private static final TableRecords.LatestEncodingIdKey LATEST_ENCODING_ID_KEY = new TableRecords.LatestEncodingIdKey();
-    private static final HashFunction HASH = Hashing.murmur3_128();
     private static final Retry.RetryAndThrowConditionally WRITE_CONFLICT_RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                                       .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
 
@@ -246,7 +244,7 @@ public class Group<V> {
                          });
     }
 
-    public CompletableFuture<EncodingId> createEncodingId(VersionInfo versionInfo, CodecType codecType, Etag etag) {
+    public CompletableFuture<EncodingId> createEncodingId(VersionInfo versionInfo, String codecType, Etag etag) {
         return generateNewEncodingId(versionInfo, codecType, etag);
     }
 
@@ -315,39 +313,39 @@ public class Group<V> {
                          });
     }
 
-    public CompletableFuture<List<CodecType>> getCodecTypes() {
-        return groupTable.getEntry(CODECS_KEY, TableRecords.CodecsListValue.class)
-                         .thenApply(codecs -> {
-                             if (codecs == null) {
-                                 return Collections.singletonList(CodecType.None);
+    public CompletableFuture<List<String>> getCodecTypes() {
+        return groupTable.getEntry(CODECS_TYPE_KEY, TableRecords.CodecTypesListValue.class)
+                         .thenApply(codecTypes -> {
+                             if (codecTypes == null) {
+                                 return Collections.singletonList("");
                              } else {
-                                 return codecs.getCodecs();
+                                 return codecTypes.getCodecTypes();
                              }
                          });
     }
 
-    public CompletableFuture<Void> addCodec(CodecType codecType) {
-        // get all codecs. if codec doesnt exist, add it to log. let it get synced to the table. 
+    public CompletableFuture<Void> addCodecType(String codecType) {
+        // get all codecTypes. if codec doesnt exist, add it to log. let it get synced to the table. 
         // generate encoding id will only generate if the codec is already registered.
         return WRITE_CONFLICT_RETRY.runAsync(() -> getCurrentEtag()
-                .thenCompose(etag -> groupTable.getEntryWithVersion(CODECS_KEY, TableRecords.CodecsListValue.class)
-                                               .thenCompose(rec -> addCodec(codecType, etag, rec))), executor);
+                .thenCompose(etag -> groupTable.getEntryWithVersion(CODECS_TYPE_KEY, TableRecords.CodecTypesListValue.class)
+                                               .thenCompose(rec -> addCodecType(codecType, etag, rec))), executor);
     }
 
-    private CompletionStage<Void> addCodec(CodecType codecType, Etag etag, GroupTable.Value<TableRecords.CodecsListValue, V> rec) {
-        if (rec.getValue() == null || !rec.getValue().getCodecs().contains(codecType)) {
+    private CompletionStage<Void> addCodecType(String codecType, Etag etag, GroupTable.Value<TableRecords.CodecTypesListValue, V> rec) {
+        if (rec.getValue() == null || !rec.getValue().getCodecTypes().contains(codecType)) {
             List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
             entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
             V version = rec.getVersion();
-            List<CodecType> codecs;
+            List<String> codecTypes;
             if (rec.getValue() == null) {
-                codecs = Collections.singletonList(codecType);
+                codecTypes = Collections.singletonList(codecType);
             } else {
-                codecs = new LinkedList<>(rec.getValue().getCodecs());
-                codecs.add(codecType);
+                codecTypes = new LinkedList<>(rec.getValue().getCodecTypes());
+                codecTypes.add(codecType);
             }
-            TableRecords.CodecsListValue updated = new TableRecords.CodecsListValue(codecs);
-            entries.add(new AbstractMap.SimpleEntry<>(CODECS_KEY, new GroupTable.Value<>(updated, version)));
+            TableRecords.CodecTypesListValue updated = new TableRecords.CodecTypesListValue(codecTypes);
+            entries.add(new AbstractMap.SimpleEntry<>(CODECS_TYPE_KEY, new GroupTable.Value<>(updated, version)));
 
             return groupTable.updateEntries(entries);
         } else {
@@ -466,19 +464,19 @@ public class Group<V> {
                              TableRecords.ValidationRecord validationRecord = (TableRecords.ValidationRecord) entries.get(1);
                              return new GroupProperties(properties.getSerializationFormat(), validationRecord.getValidationRules(),
                                      properties.isAllowMultipleTypes(),
-                                     properties.getProperties());
+                                     ImmutableMap.copyOf(properties.getProperties()));
                          });
     }
 
     private long getFingerprint(SchemaInfo schemaInfo) {
-        return HASH.hashBytes(schemaInfo.getSchemaData()).asLong();
+        return HashUtil.getFingerprint(schemaInfo.getSchemaData());
     }
 
-    private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, CodecType codecType, Etag etag) {
+    private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, String codecType, Etag etag) {
         return getSchema(versionInfo.getOrdinal(), true)
                 .thenCompose(schema -> getCodecTypes()
-                .thenCompose(codecs -> {
-                    if (codecs.contains(codecType)) {
+                .thenCompose(codecTypes -> {
+                    if (codecTypes.contains(codecType)) {
                         TableRecords.LatestEncodingIdKey key = new TableRecords.LatestEncodingIdKey();
                         return groupTable.getEntryWithVersion(key, TableRecords.LatestEncodingIdValue.class).thenCompose(current -> {
                             EncodingId nextEncodingId = current.getValue() == null ? new EncodingId(0) :
@@ -501,12 +499,12 @@ public class Group<V> {
                                              .thenApply(v -> nextEncodingId);
                         });
                     } else {
-                        throw new CodecNotFoundException(String.format("codec %s not registered", codecType));
+                        throw new CodecTypeNotRegisteredException(String.format("codec %s not registered", codecType));
                     }
                 }));
     }
 
-    public CompletableFuture<Either<EncodingId, Etag>> getEncodingId(VersionInfo versionInfo, CodecType codecType) {
+    public CompletableFuture<Either<EncodingId, Etag>> getEncodingId(VersionInfo versionInfo, String codecType) {
         TableRecords.EncodingInfoRecord encodingInfoIndex = new TableRecords.EncodingInfoRecord(versionInfo, codecType);
         return groupTable.getEntry(encodingInfoIndex, TableRecords.EncodingIdRecord.class)
                          .thenCompose(record -> {

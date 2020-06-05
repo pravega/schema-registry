@@ -74,7 +74,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     /**
      * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
      *
-     * @param type type of object.
+     * @param type type of object identified by {@link SchemaInfo#type}.
      * @param schemaString Schema string to use. 
      * @return Returns an JSONSchema with {@link Object} type. 
      */

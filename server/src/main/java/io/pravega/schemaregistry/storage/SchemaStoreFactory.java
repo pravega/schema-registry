@@ -16,6 +16,8 @@ import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
 import io.pravega.schemaregistry.storage.impl.groups.PravegaKVGroups;
 import io.pravega.shared.security.token.JsonWebToken;
+import io.pravega.schemaregistry.storage.impl.schemas.InMemorySchemas;
+import io.pravega.schemaregistry.storage.impl.schemas.PravegaKVSchemas;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -28,12 +30,12 @@ import static io.pravega.auth.AuthHandler.Permissions.READ_UPDATE;
  */
 public class SchemaStoreFactory {
     public static SchemaStore createInMemoryStore(ScheduledExecutorService executor) {
-        return new SchemaStoreImpl<>(new InMemoryGroups(executor));
+        return new SchemaStoreImpl<>(new InMemoryGroups(executor), new InMemorySchemas());
     }
     
     public static SchemaStore createPravegaStore(ServiceConfig serviceConfig, ClientConfig clientConfig, ScheduledExecutorService executor) {
         TableStore tableStore = new TableStore(clientConfig, () -> retrieveMasterToken(serviceConfig), executor);
-        return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor));
+        return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor), new PravegaKVSchemas(tableStore));
     }
 
     private static String retrieveMasterToken(ServiceConfig config) {

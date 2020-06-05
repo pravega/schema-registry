@@ -7,13 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.exceptions;
+package io.pravega.schemaregistry.exceptions;
 
 /**
- * Exception thrown when a schema fails the compatibility checks for the group's compatibility policy. 
+ * Exception thrown when server isnt able to find the requested resource. 
  */
-public class IncompatibleSchemaException extends RuntimeException {
-    public IncompatibleSchemaException(String message) {
+public class ResourceNotFoundException extends RuntimeException {
+    public ResourceNotFoundException(String message) {
         super(message);
     }
 }

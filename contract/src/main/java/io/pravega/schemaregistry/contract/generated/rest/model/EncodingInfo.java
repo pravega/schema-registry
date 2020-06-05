@@ -16,7 +16,6 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
@@ -24,9 +23,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Encoding information object that resolves the schema version and codec used for corresponding encoding id.
+ * Encoding information object that resolves the schema version and codec type used for corresponding encoding id.
  */
-@ApiModel(description = "Encoding information object that resolves the schema version and codec used for corresponding encoding id.")
+@ApiModel(description = "Encoding information object that resolves the schema version and codec type used for corresponding encoding id.")
 
 public class EncodingInfo   {
   @JsonProperty("schemaInfo")
@@ -36,7 +35,7 @@ public class EncodingInfo   {
   private VersionInfo versionInfo = null;
 
   @JsonProperty("codecType")
-  private CodecType codecType = null;
+  private String codecType = null;
 
   public EncodingInfo schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
@@ -78,23 +77,23 @@ public class EncodingInfo   {
     this.versionInfo = versionInfo;
   }
 
-  public EncodingInfo codecType(CodecType codecType) {
+  public EncodingInfo codecType(String codecType) {
     this.codecType = codecType;
     return this;
   }
 
   /**
-   * Codec type object.
+   * Codec type.
    * @return codecType
    **/
   @JsonProperty("codecType")
-  @ApiModelProperty(required = true, value = "Codec type object.")
+  @ApiModelProperty(required = true, value = "Codec type.")
   @NotNull
-  public CodecType getCodecType() {
+  public String getCodecType() {
     return codecType;
   }
 
-  public void setCodecType(CodecType codecType) {
+  public void setCodecType(String codecType) {
     this.codecType = codecType;
   }
 

@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.codec;
 
-import io.pravega.schemaregistry.contract.data.CodecType;
 import lombok.SneakyThrows;
 import org.xerial.snappy.Snappy;
 
@@ -21,10 +20,13 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
 /**
- * Compression factory class for creating codec. 
- * This has implementation for {@link Codec} for {@link CodecType#None}
+ * Factory class for creating codecs for codec types . 
  */
 public class CodecFactory {
+    public static final String MIME_NONE = "";
+    public static final String MIME_GZIP = "application/x-gzip";
+    public static final String MIME_SNAPPY = "application/x-snappy-framed";
+
     private static final Noop NOOP = new Noop();
     private static final GZipCodec GZIP_COMPRESSOR = new GZipCodec();
     private static final SnappyCodec SNAPPY_COMPRESSOR = new SnappyCodec();
@@ -43,8 +45,8 @@ public class CodecFactory {
 
     private static class Noop implements Codec {
         @Override
-        public CodecType getCodecType() {
-            return CodecType.None;
+        public String getCodecType() {
+            return MIME_NONE;
         }
 
         @Override
@@ -60,8 +62,8 @@ public class CodecFactory {
 
     private static class GZipCodec implements Codec {
         @Override
-        public CodecType getCodecType() {
-            return CodecType.GZip;
+        public String getCodecType() {
+            return MIME_GZIP;
         }
 
         @SneakyThrows(IOException.class)
@@ -99,8 +101,8 @@ public class CodecFactory {
 
     private static class SnappyCodec implements Codec {
         @Override
-        public CodecType getCodecType() {
-            return CodecType.Snappy;
+        public String getCodecType() {
+            return MIME_SNAPPY;
         }
 
         @SneakyThrows(IOException.class)

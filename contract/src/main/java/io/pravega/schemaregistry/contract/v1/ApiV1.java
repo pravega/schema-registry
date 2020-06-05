@@ -9,23 +9,18 @@
  */
 package io.pravega.schemaregistry.contract.v1;
 
-import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
-import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
@@ -44,9 +39,7 @@ import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
-import javax.ws.rs.core.Context;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 
 public class ApiV1 {
     @Path("/ping")
@@ -56,28 +49,28 @@ public class ApiV1 {
     }
 
     /**
-     * Sync Group apis. Identical to {@link GroupsApiAsync}. All methods in this interface are synchronou and return {@link Response} object.
+     * Sync Group apis. Identical to {@link GroupsApiAsync}. All methods in this interface are synchronous and return {@link Response} object.
      * The purposes of this interface is to be used by proxy-client.
      */
     @Path("/v1/groups")
     @io.swagger.annotations.Api(description = "the groups API")
     public interface GroupsApi {
         @POST
-        @Path("/{groupName}/codecs")
+        @Path("/{groupName}/codecTypes")
         @Consumes({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags = {"Codecs", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codecType to the group.", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codec to group", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codecType to group", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        Response addCodec(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                          @ApiParam(value = "The codec", required = true) AddCodec addCodec);
+        Response addCodecType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                              @ApiParam(value = "The codec type", required = true) String codecType);
 
         @POST
         @Path("/{groupName}/schemas/versions")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "adds a new schema to the group", response = VersionInfo.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new schema to the group", response = VersionInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to the group", response = VersionInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
@@ -85,21 +78,19 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid serialization format", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
         Response addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                           @ApiParam(value = "Add new schema to group", required = true) AddSchemaRequest addSchemaRequest);
+                           @ApiParam(value = "Add new schema to group", required = true) SchemaInfo schemaInfo);
 
         @POST
         @Path("/{groupName}/schemas/versions/canRead")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Response to tell whether schema can be used to read existing schemas", response = CanRead.class),
-
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while checking schema for readability", response = Void.class)})
         Response canRead(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                         @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) CanReadRequest canReadRequest);
+                         @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) SchemaInfo schemaInfo);
 
         @POST
         @Consumes({"application/json"})
@@ -119,25 +110,25 @@ public class ApiV1 {
         Response deleteGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
 
         @GET
-        @Path("/{groupName}/codecs")
+        @Path("/{groupName}/codecTypes")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecs for the group", response = CodecsList.class, tags = {"Codecs", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecTypes for the group.", response = CodecTypesList.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found Codecs", response = CodecsList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Found CodecTypes", response = CodecTypesList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        Response getCodecsList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching codecTypes registered", response = Void.class)})
+        Response getCodecTypesList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
 
         @GET
         @Path("/{groupName}/encodings/{encodingId}")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get the encoding information corresponding to the encoding id.", response = EncodingInfo.class, tags = {"Encoding", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get the encoding information corresponding to the encoding id.", response = EncodingInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while getting encoding info corresponding to encoding id", response = Void.class)})
         Response getEncodingInfo(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                 @ApiParam(value = "Encoding id that identifies a unique combination of schema and codec", required = true) @PathParam("encodingId") Integer encodingId);
+                                 @ApiParam(value = "Encoding id that identifies a unique combination of schema and codecType", required = true) @PathParam("encodingId") Integer encodingId);
 
         @GET
         @Path("/{groupName}")
@@ -156,8 +147,8 @@ public class ApiV1 {
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group history", response = GroupHistory.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        public Response getGroupHistory(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group history", response = Void.class)})
+        Response getGroupHistory(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
 
         @GET
         @Path("/{groupName}/schemas/versions")
@@ -171,69 +162,50 @@ public class ApiV1 {
                                    @ApiParam(value = "Type") @QueryParam("type") String type);
 
         @GET
-        @Path("/{groupName}/schemas/versions/latest")
-        @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get latest schema for the group.", response = SchemaWithVersion.class, tags = {"Schema", })
-        @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group properties", response = SchemaWithVersion.class),
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        Response getLatestSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                 @ApiParam(value = "Type") @QueryParam("type") String type);
-
-        @GET
         @Path("/{groupName}/schemas")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group.", response = SchemaVersionsList.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned.", response = SchemaVersionsList.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#type under the group", response = SchemaVersionsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        public Response getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
+        Response getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                         @ApiParam(value = "Type of object") @QueryParam("type") String type);
 
         @PUT
         @Path("/{groupName}/encodings")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get an encoding id that uniquely identifies a schema version and codec pair.", response = EncodingId.class, tags = {"Encoding", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get an encoding id that uniquely identifies a schema version and codec type pair.", response = EncodingId.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingId.class),
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not registered", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name or version not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 412, message = "Codec type not registered", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while getting encoding id", response = Void.class)})
         Response getEncodingId(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                @ApiParam(value = "Get schema corresponding to the version", required = true) GetEncodingIdRequest getEncodingIdRequest);
-
-        @GET
-        @Path("/{groupName}/schemas/versions/{versionOrdinal}")
-        @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Schema", })
-        @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        Response deleteSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                     @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
 
         @DELETE
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 204, message = "Schema version deleted.", response = SchemaInfo.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        Response getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                      @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
+                @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version deleted", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
+        Response deleteSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                     @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
 
         @GET
-        @Path("/{groupName}/rules")
+        @Path("/{groupName}/schemas/versions/{versionOrdinal}")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the schema validation rules configured for the Group", response = SchemaValidationRules.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group schema validation rules", response = SchemaValidationRules.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        Response getSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
+        Response getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                      @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
 
         @POST
         @Path("/{groupName}/schemas/versions/find")
@@ -245,7 +217,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         Response getSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                  @ApiParam(value = "Get schema corresponding to the version", required = true) GetSchemaVersion getSchemaVersion);
+                                  @ApiParam(value = "Get schema corresponding to the version", required = true) SchemaInfo schemaInfo);
 
         @GET
         @Produces({"application/json"})
@@ -264,7 +236,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Updated schema validation policy", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Write conflict", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's schema validation rules", response = Void.class)})
         Response updateSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                              @ApiParam(value = "update group policy", required = true) UpdateValidationRulesRequest updateValidationRulesRequest);
 
@@ -272,11 +244,11 @@ public class ApiV1 {
         @Path("/{groupName}/schemas/versions/validate")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = Valid.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema is compatible with schemas in the registry for current policy setting.", response = Valid.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema validation response", response = Valid.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while trying to validate schema", response = Void.class)})
         Response validate(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                           @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest);
     }
@@ -289,43 +261,41 @@ public class ApiV1 {
     @io.swagger.annotations.Api(description = "the groups API")
     public interface GroupsApiAsync {
         @POST
-        @Path("/{groupName}/codecs")
+        @Path("/{groupName}/codecTypes")
         @Consumes({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codec to the group", response = Void.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new codecType to the group.", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codec to group", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added codecType to group", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        void addCodec(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                      @ApiParam(value = "The codec", required = true) AddCodec addCodec, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while registering codectype to a Group", response = Void.class)})
+        void addCodecType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                          @ApiParam(value = "Add codec type", required = true) String codecType, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Path("/{groupName}/schemas/versions")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "adds a new schema to the group", response = VersionInfo.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new schema to the group", response = VersionInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added schema to the group", response = VersionInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Incompatible schema", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 417, message = "Invalid serialization format", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while adding a schema", response = Void.class)})
         void addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                       @ApiParam(value = "Add new schema to group", required = true) AddSchemaRequest addSchemaRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                       @ApiParam(value = "Add new schema to group", required = true) SchemaInfo schemaInfo, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Path("/{groupName}/schemas/versions/canRead")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Response to tell whether schema can be used to read existing schemas", response = CanRead.class),
-
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while checking schema for readability", response = Void.class)})
         void canRead(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                     @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) CanReadRequest canReadRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                     @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) SchemaInfo schemaInfo, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Consumes({"application/json"})
@@ -334,7 +304,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 201, message = "Successfully added group", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Group with given name already exists", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
-        void createGroup(@ApiParam(value = "The Group configuration", required = true) CreateGroupRequest createGroupRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+        void createGroup(@ApiParam(value = "The Group configuration", required = true) CreateGroupRequest createGroupRequest, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @DELETE
         @Path("/{groupName}")
@@ -342,28 +312,28 @@ public class ApiV1 {
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 204, message = "Successfully deleted the Group", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class)})
-        void deleteGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+        void deleteGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
-        @Path("/{groupName}/codecs")
+        @Path("/{groupName}/codecTypes")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecs for the group.", response = CodecsList.class, tags = {"Encoding", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecTypes for the group.", response = CodecTypesList.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found Codecs", response = CodecsList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Found CodecTypes", response = CodecTypesList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        void getCodecsList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching codecTypes registered", response = Void.class)})
+        void getCodecTypesList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}/encodings/{encodingId}")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get the encoding information corresponding to the encoding id.", response = EncodingInfo.class, tags = {"Encoding", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get the encoding information corresponding to the encoding id.", response = EncodingInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while getting encoding info corresponding to encoding id", response = Void.class)})
         void getEncodingInfo(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                             @ApiParam(value = "Encoding id that identifies a unique combination of schema and codec", required = true) @PathParam("encodingId") Integer encodingId, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                             @ApiParam(value = "Encoding id that identifies a unique combination of schema and codecType", required = true) @PathParam("encodingId") Integer encodingId, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}")
@@ -373,17 +343,17 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group properties", response = GroupProperties.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        void getGroupProperties(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+        void getGroupProperties(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}/history")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the history of schema evolution of a Group.", response = GroupHistory.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the history of schema evolution of a Group", response = GroupHistory.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group history", response = GroupHistory.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        public void getGroupHistory(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group history", response = Void.class)})
+        void getGroupHistory(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}/schemas/versions")
@@ -395,74 +365,54 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getSchemaVersions(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                @ApiParam(value = "Type") @QueryParam("type") String type,
-                               @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
-
-        @GET
-        @Path("/{groupName}/schemas/versions/latest")
-        @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get latest schema for the group.", response = SchemaWithVersion.class, tags = {"Schema", })
-        @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group properties", response = SchemaWithVersion.class),
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        void getLatestSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                             @ApiParam(value = "Type") @QueryParam("type") String type,
-                             @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                               @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}/schemas")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group.", response = SchemaVersionsList.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned.", response = SchemaVersionsList.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#type under the group", response = SchemaVersionsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        public void getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group's latest schemas", response = Void.class)})
+        void getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                     @ApiParam(value = "Type of object") @QueryParam("type") String type,
+                                     @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @PUT
         @Path("/{groupName}/encodings")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get an encoding id that uniquely identifies a schema version and codec pair.", response = EncodingId.class, tags = {"Encoding", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get an encoding id that uniquely identifies a schema version and codec type pair.", response = EncodingId.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Found Encoding", response = EncodingId.class),
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 412, message = "Codec not registered", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name or version not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 412, message = "Codec type not registered", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while getting encoding id", response = Void.class)})
         void getEncodingId(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                           @ApiParam(value = "Get schema corresponding to the version", required = true) GetEncodingIdRequest getEncodingIdRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                           @ApiParam(value = "Get schema corresponding to the version", required = true) GetEncodingIdRequest getEncodingIdRequest, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
         void getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                  @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                  @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @DELETE
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 204, message = "Delete schema version from the group", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
         void deleteSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                 @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
-
-        @GET
-        @Path("/{groupName}/rules")
-        @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch the schema validation rules configured for the Group", response = SchemaValidationRules.class, tags = {"Group", })
-        @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found Group schema validation rules", response = SchemaValidationRules.class),
-                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
-        void getSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                 @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Path("/{groupName}/schemas/versions/find")
@@ -474,8 +424,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                              @ApiParam(value = "Get schema corresponding to the version", required = true) GetSchemaVersion getSchemaVersion,
-                              @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                              @ApiParam(value = "Get schema corresponding to the version", required = true) SchemaInfo schemaInfo,
+                              @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @GET
         @Produces({"application/json"})
@@ -484,7 +434,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "List of all groups", response = ListGroupsResponse.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching the list of Groups", response = Void.class)})
         void listGroups(@ApiParam(value = "Continuation token") @QueryParam("continuationToken") String continuationToken,
-                        @ApiParam(value = "The numbers of items to return") @QueryParam("limit") Integer limit, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                        @ApiParam(value = "The numbers of items to return") @QueryParam("limit") Integer limit, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @PUT
         @Path("/{groupName}/rules")
@@ -494,20 +444,61 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Updated schema validation policy", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Write conflict", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's schema validation rules", response = Void.class)})
         void updateSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                         @ApiParam(value = "update group policy", required = true) UpdateValidationRulesRequest updateValidationRulesRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                         @ApiParam(value = "update group policy", required = true) UpdateValidationRulesRequest updateValidationRulesRequest, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Path("/{groupName}/schemas/versions/validate")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "check if given schema is compatible with schemas in the registry for current policy setting.", response = Valid.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema is compatible with schemas in the registry for current policy setting.", response = Valid.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema validation response", response = Valid.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while trying to validate schema", response = Void.class)})
         void validate(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                      @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest, @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                      @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
     }
+
+
+    /**
+     * Sync Schemas apis. Identical to {@link SchemasApiAsync}. All methods in this interface are synchronous and return {@link Response} object.
+     * The purposes of this interface is to be used by proxy-client.
+     */
+    @Path("/v1/schemas")
+    @io.swagger.annotations.Api(description = "the schemas API")
+    public interface SchemasApi {
+        @POST
+        @Path("/addedTo")
+        @Consumes({"application/json"})
+        @Produces({"application/json"})
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Gets a map of groups to version info where the schema if it is registered. SchemaInfo#properties is ignored while comparing the schema.", response = AddedTo.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiResponses(value = {
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema version", response = AddedTo.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Schema not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Schema references", response = Void.class)})
+        Response getSchemaReferences(@ApiParam(value = "Get schema references for the supplied schema", required = true) SchemaInfo schemaInfo);
+
+    }
+
+    /**
+     * Sync Schemas apis. Identical to {@link SchemasApi}. All methods in this interface are asynchronous.
+     */
+    @Path("/v1/schemas")
+    @io.swagger.annotations.Api(description = "the schemas API")
+    public interface SchemasApiAsync {
+        @POST
+        @Path("/addedTo")
+        @Consumes({"application/json"})
+        @Produces({"application/json"})
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Gets a map of groups to version info where the schema if it is registered. SchemaInfo#properties is ignored while comparing the schema.", response = AddedTo.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiResponses(value = {
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema version", response = AddedTo.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Schema not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Schema references", response = Void.class)})
+        void getSchemaReferences(@ApiParam(value = "Get schema references for the supplied schema", required = true) SchemaInfo schemaInfo,
+                                 @Suspended AsyncResponse asyncResponse);
+    }
+
 }

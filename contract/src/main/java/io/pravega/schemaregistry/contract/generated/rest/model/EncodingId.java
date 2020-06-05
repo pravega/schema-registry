@@ -21,9 +21,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Encoding id that uniquely identifies a schema version and codec pair.
+ * Encoding id that uniquely identifies a schema version and codec type pair.
  */
-@ApiModel(description = "Encoding id that uniquely identifies a schema version and codec pair.")
+@ApiModel(description = "Encoding id that uniquely identifies a schema version and codec type pair.")
 
 public class EncodingId   {
   @JsonProperty("encodingId")

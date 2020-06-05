@@ -28,10 +28,11 @@ import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -51,7 +52,6 @@ import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificRecordBase;
 
 import java.net.URI;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -136,9 +136,9 @@ public class AvroDemo {
             System.out.println("adding new group with: \nserialization format = avro\n compatibiity = backward");
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
-            client.addGroup(groupId, serializationFormat,
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.emptyMap());
+                    true));
 
             System.out.println("registering schema " + SCHEMA1.toString(true));
             AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
@@ -259,9 +259,9 @@ public class AvroDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
-            client.addGroup(groupId, serializationFormat,
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.emptyMap());
+                    true));
 
             AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
 
@@ -323,9 +323,9 @@ public class AvroDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
-            client.addGroup(groupId, serializationFormat,
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.emptyMap());
+                    true));
 
             AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
 
@@ -386,9 +386,9 @@ public class AvroDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
-            client.addGroup(groupId, serializationFormat,
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
                     SchemaValidationRules.of(Compatibility.backward()),
-                    true, Collections.emptyMap());
+                    true));
 
             AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofBaseType(Test1.class);
             AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofBaseType(Test2.class);

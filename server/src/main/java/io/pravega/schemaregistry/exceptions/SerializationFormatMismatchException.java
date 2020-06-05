@@ -7,13 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.exceptions;
+package io.pravega.schemaregistry.exceptions;
 
 /**
- * Exception thrown when server isnt able to find the requested resource. 
+ * Exception thrown when a serialization format is different from the group property's serialization format. 
  */
-public class ResourceNotFoundException extends RuntimeException {
-    public ResourceNotFoundException(String message) {
+public class SerializationFormatMismatchException extends RuntimeException {
+    public SerializationFormatMismatchException(String message) {
         super(message);
     }
 }

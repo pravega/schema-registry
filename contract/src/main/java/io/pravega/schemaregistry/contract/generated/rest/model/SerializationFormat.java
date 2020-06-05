@@ -22,9 +22,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Serialization format enum that lists different serialization formats supported by the service. To use additional Serialization format, use serializationFormat.Custom and supply customTypeName.
+ * Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.
  */
-@ApiModel(description = "Serialization format enum that lists different serialization formats supported by the service. To use additional Serialization format, use serializationFormat.Custom and supply customTypeName.")
+@ApiModel(description = "Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.")
 
 public class SerializationFormat   {
   /**

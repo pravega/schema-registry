@@ -12,10 +12,9 @@ package io.pravega.schemaregistry.server.rest.resources;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
-import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
@@ -64,7 +63,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     public void groups() throws ExecutionException, InterruptedException {
         GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
                 SchemaValidationRules.of(Compatibility.backward()),
-                false, Collections.singletonMap("Encode", Boolean.toString(false)));
+                false);
         doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();
             map.put("group1", group1);
@@ -107,24 +106,22 @@ public class SchemaRegistryResourceTest extends JerseyTest {
 
         // can read
         doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any());
-        CanReadRequest canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
+        SchemaInfo schemaInfo = new SchemaInfo()
                 .type("name")
                 .serializationFormat(ModelHelper.encode(SerializationFormat.Avro))
                 .schemaData(new byte[0])
-                .properties(Collections.emptyMap())
-        );
+                .properties(Collections.emptyMap());
         Future<Response> future = target(GROUPS).path("mygroup").path("schemas/versions/canRead").request().async()
-                                                                                       .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
+                                                                                       .post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
         Response response = future.get();
         assertTrue(response.readEntity(CanRead.class).isCompatible());
 
-        canReadRequest = new CanReadRequest().schemaInfo(new SchemaInfo()
+        schemaInfo = new SchemaInfo()
                 .type("name")
                 .schemaData(new byte[0])
-                .properties(Collections.emptyMap())
-        );
+                .properties(Collections.emptyMap());
         future = target(GROUPS).path("mygroup").path("schemas/versions/canRead").request().async()
-                                                .post(Entity.entity(canReadRequest, MediaType.APPLICATION_JSON));
+                                                .post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
         response = future.get();
         assertEquals(400, response.getStatus());
     }

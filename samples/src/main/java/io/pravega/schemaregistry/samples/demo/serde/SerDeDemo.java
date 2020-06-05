@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.samples.demo.serde;
 
+import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -27,9 +28,10 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -44,7 +46,6 @@ import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -89,8 +90,8 @@ public class SerDeDemo {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
         SerializationFormat serializationFormat = SerializationFormat.custom("serDe");
-        client.addGroup(groupId, serializationFormat, SchemaValidationRules.of(Compatibility.denyAll()),
-                false, Collections.emptyMap());
+        client.addGroup(groupId, new GroupProperties(serializationFormat, SchemaValidationRules.of(Compatibility.denyAll()),
+                false));
     }
 
     @SneakyThrows
@@ -110,7 +111,8 @@ public class SerDeDemo {
 
         URL url = path.toUri().toURL();
 
-        SchemaInfo schemaInfo = new SchemaInfo("serde", serializationFormat, url.toString().getBytes(Charsets.UTF_8), map);
+        SchemaInfo schemaInfo = new SchemaInfo("serde", serializationFormat, url.toString().getBytes(Charsets.UTF_8),
+                ImmutableMap.copyOf(map));
         MySerializer mySerializer = new MySerializer();
 
         Serializer<MyPojo> serializer = SerializerFactory.customSerializer(config, () -> schemaInfo, mySerializer);
@@ -133,7 +135,7 @@ public class SerDeDemo {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        SchemaInfo schema = client.getLatestSchemaVersion(groupId, null).getSchema();
+        SchemaInfo schema = client.getSchemas(groupId).get(0).getSchema();
         String urlString = new String(schema.getSchemaData(), Charsets.UTF_8);
         URL url = new URL(urlString);
 

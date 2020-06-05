@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ * <p>
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.samples.demo.encoding;
@@ -27,10 +27,9 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -48,9 +47,7 @@ import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
 import java.net.URI;
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -60,7 +57,6 @@ import java.util.Scanner;
 @Slf4j
 public class EncryptionDemo {
     private static final String ALGORITHM = "AES";
-    private static final String ENCRYPTION_KEY_KEY = "key";
 
     private final ClientConfig clientConfig;
 
@@ -71,8 +67,9 @@ public class EncryptionDemo {
     private final String groupId;
     private final String myEncryption;
     private final EventStreamClientFactory clientFactory;
-    
-    private EncryptionDemo() {
+    private final String encryptionkey;
+
+    private EncryptionDemo(String encryptionkey) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build();
         client = SchemaRegistryClientFactory.createRegistryClient(config);
@@ -82,17 +79,17 @@ public class EncryptionDemo {
         groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
         myEncryption = "myEncryption";
         clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+        this.encryptionkey = encryptionkey;
         initialize();
     }
-    
-    public static void main(String[] args) {
-        EncryptionDemo demo = new EncryptionDemo();
-        String myEncryptionKey = "myEncryptionKeys";
 
-        demo.startWriter(myEncryptionKey);
-        
+    public static void main(String[] args) {
+        EncryptionDemo demo = new EncryptionDemo("myEncryptionKeys");
+
+        demo.startWriter();
+
         demo.startReader();
-        
+
         System.exit(0);
     }
 
@@ -102,17 +99,16 @@ public class EncryptionDemo {
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
         }
     }
-    
-    private void startWriter(String myEncryptionKey) {
+
+    private void startWriter() {
         AvroSchema<Test1> schema3 = AvroSchema.of(Test1.class);
-        
+
         // region writer with custom codec
-        Map<String, String> properties = Collections.singletonMap(ENCRYPTION_KEY_KEY, myEncryptionKey);
-        Codec myCodec = getMyCodec(properties);
+        Codec myCodec = getMyCodec(encryptionkey);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(SerializationFormat.Avro, 
+                                                            .autoCreateGroup(SerializationFormat.Avro,
                                                                     SchemaValidationRules.of(Compatibility.backward()), true)
                                                             .autoRegisterSchema(true)
                                                             .autoRegisterCodec(true)
@@ -128,13 +124,12 @@ public class EncryptionDemo {
 
         writer2.writeEvent(new Test1(input, 1)).join();
     }
-    
+
     private void startReader() {
-        List<CodecType> list = client.getCodecTypes(groupId);
+        List<String> list = client.getCodecTypes(groupId);
         assert 1 == list.size();
-        assert list.stream().anyMatch(x -> x.equals(CodecType.Custom) && x.getCustomTypeName().equals(myEncryption));
-        Map<String, String> propertiesFromRegistry = list.get(0).getProperties();
-        Codec myCodec = getMyCodec(propertiesFromRegistry);
+        assert list.stream().anyMatch(x -> x.equals(myEncryption));
+        Codec myCodec = getMyCodec(encryptionkey);
 
         // region new reader with additional codec
         // add new decoder for custom serialization
@@ -162,15 +157,15 @@ public class EncryptionDemo {
         }
         // endregion
     }
-    
+
     @SneakyThrows
-    private Codec getMyCodec(Map<String, String> properties) {
+    private Codec getMyCodec(String encryptionkey) {
         return new Codec() {
-            private final byte[] key = properties.get("key").getBytes(Charsets.UTF_8);
+            private final byte[] key = encryptionkey.getBytes(Charsets.UTF_8);
 
             @Override
-            public CodecType getCodecType() {
-                return CodecType.custom(myEncryption, properties);
+            public String getCodecType() {
+                return myEncryption;
             }
 
             @SneakyThrows
@@ -184,7 +179,7 @@ public class EncryptionDemo {
                 data.get(array);
 
                 byte[] encrypted = cipher.doFinal(array);
-                
+
                 System.out.println("encoded as = " + new String(encrypted, Charsets.UTF_8));
                 return ByteBuffer.wrap(encrypted);
             }

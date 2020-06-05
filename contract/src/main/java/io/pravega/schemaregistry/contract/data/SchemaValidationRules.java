@@ -28,16 +28,32 @@ import java.util.stream.Collectors;
 @Data
 @Builder
 public class SchemaValidationRules {
+    /**
+     * Map of schema validation rule name to corresponding schema validation rule.  
+     */
     private final Map<String, SchemaValidationRule> rules;
 
     private SchemaValidationRules(Map<String, SchemaValidationRule> rules) {
         this.rules = rules;
     }
 
+    /**
+     * Method to create a rule for compatibility.
+     * 
+     * @param compatibility compatibility policy to be used. 
+     * @return A singleton rules map containing the compatibility rule. 
+     */
     public static SchemaValidationRules of(Compatibility compatibility) {
         return new SchemaValidationRules(Collections.singletonMap(compatibility.getName(), compatibility));
     }
-    
+
+    /**
+     * Method to create SchemaValidationRules from the list of supplied rules. If multiple same rule are present 
+     * in the list then only the latest rule of each type is added to the Rules map. 
+     * Currently the only rule supported is {@link Compatibility}. 
+     * @param rules List of rules. 
+     * @return SchemaValidationRules object. 
+     */
     public static SchemaValidationRules of(List<SchemaValidationRule> rules) {
         Preconditions.checkNotNull(rules);
         Preconditions.checkArgument(rules.stream().allMatch(x -> x instanceof Compatibility), "Only compatibility rule is supported.");

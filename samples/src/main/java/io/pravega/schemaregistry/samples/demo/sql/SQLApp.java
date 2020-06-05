@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.samples.demo.sql;
 
 import com.google.common.base.Charsets;
+import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -22,8 +23,8 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -51,8 +52,6 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -178,13 +177,13 @@ public class SQLApp {
         SchemaValidationRules validationRules = SchemaValidationRules.of(Compatibility.denyAll());
         SerializationFormat serializationFormat = SerializationFormat.custom("table");
 
-        Map<String, String> map = new HashMap<>();
+        ImmutableMap.Builder<String, String> map = ImmutableMap.builder();
         map.put("scope", scope);
         map.put("stream", stream);
         
-        SchemaInfo tableSchemaInfo = new SchemaInfo("table", serializationFormat, tableSchema.toBytes(), map);
+        SchemaInfo tableSchemaInfo = new SchemaInfo("table", serializationFormat, tableSchema.toBytes(), map.build());
         
-        client.addGroup(tableGroupId, serializationFormat, validationRules, false, Collections.emptyMap());
+        client.addGroup(tableGroupId, new GroupProperties(serializationFormat, validationRules, false));
         client.addSchema(tableGroupId, tableSchemaInfo);
     }
 

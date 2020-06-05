@@ -12,16 +12,17 @@ package io.pravega.schemaregistry.samples;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -34,7 +35,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
@@ -110,9 +110,9 @@ public abstract class TestEndToEnd {
 
         int groupsCount = client.listGroups().size();
         
-        client.addGroup(group, SerializationFormat.Avro,  
+        client.addGroup(group, new GroupProperties(SerializationFormat.Avro,  
                 SchemaValidationRules.of(Compatibility.backward()), 
-                true, Collections.emptyMap());
+                true));
         assertEquals(client.listGroups().size(), groupsCount + 1);
 
         String myTest = "MyTest";
@@ -136,7 +136,7 @@ public abstract class TestEndToEnd {
         assertEquals(version2.getOrdinal(), 1);
         assertEquals(version2.getType(), myTest);
 
-        client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()));
+        client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()), null);
 
         SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SerializationFormat.Avro,
                 schema3.toString().getBytes(Charsets.UTF_8), ImmutableMap.of());
@@ -170,16 +170,16 @@ public abstract class TestEndToEnd {
         assertEquals(myTest2History.size(), 1);
         
         // delete schemainfo2
-        EncodingId encodingId = client.getEncodingId(group, version2, CodecType.None);
+        EncodingId encodingId = client.getEncodingId(group, version2, CodecFactory.MIME_NONE);
         assertEquals(encodingId.getId(), 0);
         client.deleteSchemaVersion(group, version2);
         SchemaInfo schema = client.getSchemaForVersion(group, version2);
         assertEquals(schema, schemaInfo2);
         AssertExtensions.assertThrows("", () -> client.getVersionForSchema(group, schemaInfo2), 
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException);
-        encodingId = client.getEncodingId(group, version2, CodecType.None);
+        encodingId = client.getEncodingId(group, version2, CodecFactory.MIME_NONE);
         assertEquals(encodingId.getId(), 0);
-        AssertExtensions.assertThrows("", () -> client.getEncodingId(group, version2, CodecType.GZip),
+        AssertExtensions.assertThrows("", () -> client.getEncodingId(group, version2, CodecFactory.MIME_GZIP),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException);
         
         groupEvolutionHistory = client.getGroupHistory(group);

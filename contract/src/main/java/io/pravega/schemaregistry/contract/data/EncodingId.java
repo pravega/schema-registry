@@ -24,6 +24,9 @@ import lombok.Data;
 @Builder
 @AllArgsConstructor
 public class EncodingId {
+    /**
+     * A 4byte id that uniquely identifies a {@link VersionInfo} and codecType pair. 
+     */
     private final int id;
 
     public static class EncodingIdBuilder implements ObjectBuilder<EncodingId> {

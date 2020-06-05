@@ -64,7 +64,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
-        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getName(), tParser, fileDescriptorSet);
+        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
     }
 
     /**
@@ -100,7 +100,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
         T defaultInstance = (T) tDerivedClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
 
-        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getName(), tParser, fileDescriptorSet);
+        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
     }
 
     /**

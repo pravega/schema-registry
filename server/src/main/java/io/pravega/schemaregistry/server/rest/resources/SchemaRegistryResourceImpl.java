@@ -16,24 +16,15 @@ import io.pravega.auth.AuthenticationException;
 import io.pravega.auth.AuthorizationException;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
-import io.pravega.schemaregistry.contract.exceptions.CodecNotFoundException;
-import io.pravega.schemaregistry.contract.exceptions.IncompatibleSchemaException;
-import io.pravega.schemaregistry.contract.exceptions.PreconditionFailedException;
-import io.pravega.schemaregistry.contract.exceptions.SerializationFormatMismatchException;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddCodec;
-import io.pravega.schemaregistry.contract.generated.rest.model.AddSchemaRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
-import io.pravega.schemaregistry.contract.generated.rest.model.CanReadRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecsList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
-import io.pravega.schemaregistry.contract.generated.rest.model.GetSchemaVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
@@ -46,6 +37,10 @@ import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
+import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
+import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.exceptions.PreconditionFailedException;
+import io.pravega.schemaregistry.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
@@ -57,8 +52,8 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import javax.ws.rs.core.SecurityContext;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -71,7 +66,7 @@ import static javax.ws.rs.core.Response.Status;
  * Schema Registry Resource implementation.
  */
 @Slf4j
-public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
+public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.SchemasApiAsync {
     private static final int DEFAULT_LIST_GROUPS_LIMIT = 100;
 
     // region auth resources
@@ -98,7 +93,8 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void listGroups(String continuationToken, Integer limit, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void listGroups(String continuationToken, Integer limit, 
+                           AsyncResponse asyncResponse) throws NotFoundException {
         log.info("List Groups called");
         int limitUnboxed = limit == null ? DEFAULT_LIST_GROUPS_LIMIT : limit;
 
@@ -127,15 +123,12 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void createGroup(CreateGroupRequest createGroupRequest, SecurityContext securityContext,
+    public void createGroup(CreateGroupRequest createGroupRequest, 
                             AsyncResponse asyncResponse) throws NotFoundException {
         withCompletion("createGroup", READ_UPDATE, AuthResources.ROOT, asyncResponse, () -> {
-            SerializationFormat serializationFormat = ModelHelper.decode(createGroupRequest.getSerializationFormat());
-            SchemaValidationRules validationRules = ModelHelper.decode(createGroupRequest.getValidationRules());
-            GroupProperties properties = new GroupProperties(
-                    serializationFormat, validationRules, createGroupRequest.isAllowMultipleTypes(), createGroupRequest.getProperties());
+            GroupProperties groupProperties = ModelHelper.decode(createGroupRequest.getGroupProperties());
             String groupName = createGroupRequest.getGroupName();
-            return registryService.createGroup(groupName, properties)
+            return registryService.createGroup(groupName, groupProperties)
                                   .thenApply(createStatus -> {
                                       if (!createStatus) {
                                           log.info("group {} exists", groupName);
@@ -155,7 +148,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getGroupProperties(String groupName, SecurityContext securityContext,
+    public void getGroupProperties(String groupName, 
                                    AsyncResponse asyncResponse) throws NotFoundException {
         withCompletion("getGroupProperties", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getGroupProperties(groupName)
@@ -178,7 +171,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getGroupHistory(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getGroupHistory(String groupName,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get group history called for group {}", groupName);
         withCompletion("getGroupHistory", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getGroupHistory(groupName, null)
@@ -206,7 +199,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void updateSchemaValidationRules(String groupName, UpdateValidationRulesRequest updateValidationRulesRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void updateSchemaValidationRules(String groupName, UpdateValidationRulesRequest updateValidationRulesRequest,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Update schema validation rules called for group {} with new request {}", groupName, updateValidationRulesRequest);
         withCompletion("updateSchemaValidationRules", READ_UPDATE, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> {
@@ -232,32 +225,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
             return response;
         });
     }
-
+    
     @Override
-    public void getSchemaValidationRules(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("Get group schema validation rules called for group {}", groupName);
-        withCompletion("getSchemaValidationRules", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
-                () -> registryService.getGroupProperties(groupName)
-                                     .thenApply(groupProperty -> {
-                                         log.info("Group {} validation rules found are {}", groupName, groupProperty.getSchemaValidationRules());
-                                         return Response.status(Status.OK).entity(ModelHelper.encode(groupProperty.getSchemaValidationRules())).build();
-                                     })
-                                     .exceptionally(exception -> {
-                                         if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} not found", groupName);
-                                             return Response.status(Status.NOT_FOUND).build();
-                                         }
-                                         log.warn("getSchemaValidationRules for group {} failed with exception: {}", groupName, exception);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
-                .thenApply(response -> {
-                    asyncResponse.resume(response);
-                    return response;
-                });
-    }
-
-    @Override
-    public void deleteGroup(String groupName, SecurityContext securityContext,
+    public void deleteGroup(String groupName, 
                             AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Delete group called for group {}", groupName);
         withCompletion("deleteGroup", READ_UPDATE, AuthResources.ROOT, asyncResponse,
@@ -277,9 +247,9 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getSchemaVersions(String groupName, String type, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersions(String groupName, String type,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get group schemas called for group {}", groupName);
-        withCompletion("getSchemas", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+        withCompletion("getSchemaVersions", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getGroupHistory(groupName, null)
                                      .thenApply(history -> {
                                          SchemaVersionsList list = new SchemaVersionsList()
@@ -287,7 +257,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                                          .schemaInfo(ModelHelper.encode(x.getSchema()))
                                                          .version(ModelHelper.encode(x.getVersion())))
                                                                  .collect(Collectors.toList()));
-                                         log.info("GetGroupSchemas: {} schemas found for group {}", list.getSchemas().size(), groupName);
+                                         log.info("getSchemaVersions: {} schemas found for group {}", list.getSchemas().size(), groupName);
                                          return Response.status(Status.OK).entity(list).build();
                                      })
                                      .exceptionally(exception -> {
@@ -296,7 +266,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
 
-                                         log.warn("getSchemas failed with exception: ", exception);
+                                         log.warn("getSchemaVersions failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -306,40 +276,12 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getLatestSchema(String groupName, String type, SecurityContext securityContext,
-                                AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("Get latest group schema called for group {}", groupName);
-        withCompletion("getLatestSchema", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
-                () -> registryService.getGroupLatestSchemaVersion(groupName, null)
-                                     .thenApply(schemaWithVersion -> {
-                                         SchemaWithVersion schema = ModelHelper.encode(schemaWithVersion);
-                                         log.info("Latest schema for group {} has version {}", groupName, schemaWithVersion.getVersion());
-                                         return Response.status(Status.OK).entity(schema).build();
-                                     })
-                                     .exceptionally(exception -> {
-                                         if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} not found", groupName);
-                                             return Response.status(Status.NOT_FOUND).build();
-                                         }
-
-                                         log.warn("getLatestSchema failed with exception: ", exception);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
-                .thenApply(response -> {
-                    asyncResponse.resume(response);
-                    return response;
-                });
-    }
-
-    @Override
-    public void addSchema(String groupName, AddSchemaRequest addSchemaRequest,
-                          SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void addSchema(String groupName, SchemaInfo schemaInfo,
+                                          AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Add schema to group called for group {}", groupName);
         withCompletion("addSchema", READ_UPDATE, String.format(AuthResources.GROUP_SCHEMA_FORMAT, groupName), asyncResponse,
                 () -> {
-                    io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(addSchemaRequest.getSchemaInfo());
-
-                    return registryService.addSchema(groupName, schemaInfo)
+                    return registryService.addSchema(groupName, ModelHelper.decode(schemaInfo))
                                           .thenApply(versionInfo -> {
                                               VersionInfo version = ModelHelper.encode(versionInfo);
                                               log.info("schema added to group {} with new version {}", groupName, versionInfo);
@@ -368,13 +310,12 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void validate(String groupName, ValidateRequest validateRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void validate(String groupName, ValidateRequest validateRequest,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Validate schema called for group {}", groupName);
 
         withCompletion("validate", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> {
-                    io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(validateRequest.getSchemaInfo());
-                    return registryService.validateSchema(groupName, schemaInfo)
+                    return registryService.validateSchema(groupName, ModelHelper.decode(validateRequest.getSchemaInfo()))
                                           .thenApply(compatible -> {
                                               log.info("Schema is valid for group {}", groupName);
                                               return Response.status(Status.OK).entity(new Valid().valid(compatible)).build();
@@ -394,13 +335,12 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void canRead(String groupName, CanReadRequest canReadRequest, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void canRead(String groupName, SchemaInfo schemaInfo,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Can read using schema called for group {}", groupName);
 
         withCompletion("canRead", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> {
-                    io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(canReadRequest.getSchemaInfo());
-                    return registryService.canRead(groupName, schemaInfo)
+                    return registryService.canRead(groupName, ModelHelper.decode(schemaInfo))
                                           .thenApply(canRead -> {
                                               log.info("For group {}, can read using schema response = {}", groupName, canRead);
                                               return Response.status(Status.OK).entity(new CanRead().compatible(canRead)).build();
@@ -421,7 +361,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
 
     @Override
     public void getSchemaFromVersion(String groupName, Integer version,
-                                     SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+                                      AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get schema from version {} called for group {}", version, groupName);
         withCompletion("getSchemaFromVersion", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getSchema(groupName, version)
@@ -446,7 +386,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
 
     @Override
     public void deleteSchemaVersion(String groupName, Integer version,
-                                     SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+                                      AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Delete schema from version {} called for group {}", version, groupName);
         withCompletion("deleteSchemaVersion", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.deleteSchema(groupName, version)
@@ -470,13 +410,13 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
 
     @Override
     public void getEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest,
-                              SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+                               AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getEncodingId called for group {} with version {} and codec {}", groupName,
                 getEncodingIdRequest.getVersionInfo(), getEncodingIdRequest.getCodecType());
         withCompletion("getEncodingId", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> {
                     io.pravega.schemaregistry.contract.data.VersionInfo version = ModelHelper.decode(getEncodingIdRequest.getVersionInfo());
-                    CodecType codecType = ModelHelper.decode(getEncodingIdRequest.getCodecType());
+                    String codecType = getEncodingIdRequest.getCodecType();
                     return registryService.getEncodingId(groupName, version, codecType)
                                           .thenApply(encodingId -> {
                                               EncodingId id = ModelHelper.encode(encodingId);
@@ -488,7 +428,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                               if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
                                                   log.warn("Group {} not found", groupName);
                                                   return Response.status(Status.NOT_FOUND).build();
-                                              } else if (Exceptions.unwrap(exception) instanceof CodecNotFoundException) {
+                                              } else if (Exceptions.unwrap(exception) instanceof CodecTypeNotRegisteredException) {
                                                   log.info("getEncodingId failed Codec Not Found {}", groupName);
                                                   return Response.status(Status.PRECONDITION_FAILED).build();
                                               } else {
@@ -503,13 +443,11 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getSchemaVersion(String groupName, GetSchemaVersion getSchemaVersion, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersion(String groupName, SchemaInfo schemaInfo,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("Get schema version called for group {}", groupName);
         withCompletion("getSchemaVersion", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> {
-                    io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(getSchemaVersion.getSchemaInfo());
-
-                    return registryService.getSchemaVersion(groupName, schemaInfo)
+                    return registryService.getSchemaVersion(groupName, ModelHelper.decode(schemaInfo))
                                           .thenApply(version -> {
                                               VersionInfo versionInfo = ModelHelper.encode(version);
                                               log.info("schema version {} found for group {}", versionInfo, groupName);
@@ -531,10 +469,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
     
     @Override
-    public void getSchemas(String groupName, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemas(String groupName, String type,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getSchemas called for group {} ", groupName);
         withCompletion("getSchemas", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
-                () -> registryService.getSchemas(groupName)
+                () -> registryService.getSchemas(groupName, type)
                                                           .thenApply(schemas -> {
                                                               SchemaVersionsList schemaList = new SchemaVersionsList()
                                                                       .schemas(schemas.stream().map(ModelHelper::encode).collect(Collectors.toList()));
@@ -557,7 +495,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void getEncodingInfo(String groupName, Integer encodingId, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getEncodingInfo(String groupName, Integer encodingId,  AsyncResponse asyncResponse) throws NotFoundException {
         log.info("getEncodingInfo called for group {} encodingId {}", groupName, encodingId);
         withCompletion("getEncodingInfo", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> {
@@ -584,15 +522,14 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
 
 
     @Override
-    public void getCodecsList(String groupName, SecurityContext securityContext,
+    public void getCodecTypesList(String groupName, 
                               AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("getCodecsList called for group {} ", groupName);
-        withCompletion("getCodecsList", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+        log.info("getCodecTypesList called for group {} ", groupName);
+        withCompletion("getCodecTypesList", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
                 () -> registryService.getCodecTypes(groupName)
                                      .thenApply(list -> {
-                                         CodecsList codecsList = new CodecsList()
-                                                 .codecTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
-                                         log.info("group {}, codecs {} ", groupName, codecsList);
+                                         CodecTypesList codecsList = new CodecTypesList().codecTypes(list);
+                                         log.info("group {}, codecTypes {} ", groupName, codecsList);
                                          return Response.status(Status.OK).entity(codecsList).build();
                                      })
                                      .exceptionally(exception -> {
@@ -600,7 +537,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                              log.warn("Group {} not found", groupName);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("getCodecsList failed with exception: ", exception);
+                                         log.warn("getCodecTypesList failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -610,12 +547,12 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
     }
 
     @Override
-    public void addCodec(String groupName, AddCodec addCodec, SecurityContext securityContext, AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("addCodec called for group {} codec {}", groupName, addCodec.getCodec());
-        withCompletion("addCodec", READ, String.format(AuthResources.GROUP_CODEC_FORMAT, groupName), asyncResponse,
-                () -> registryService.addCodec(groupName, ModelHelper.decode(addCodec.getCodec()))
+    public void addCodecType(String groupName, String codecType,  AsyncResponse asyncResponse) throws NotFoundException {
+        log.info("addCodecType called for group {} codecType {}", groupName, codecType);
+        withCompletion("addCodecType", READ, String.format(AuthResources.GROUP_CODEC_FORMAT, groupName), asyncResponse,
+                () -> registryService.addCodecType(groupName, codecType)
                                      .thenApply(v -> {
-                                         log.info("codec {} added to group {}", addCodec.getCodec(), groupName);
+                                         log.info("codecType {} added to group {}", codecType, groupName);
                                          return Response.status(Status.CREATED).build();
                                      })
                                      .exceptionally(exception -> {
@@ -623,7 +560,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                                              log.warn("Group {} not found", groupName);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("addCodec failed with exception: ", exception);
+                                         log.warn("addCodecType failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -632,6 +569,32 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync {
                 });
     }
 
+    @Override
+    public void getSchemaReferences(SchemaInfo schemaInfo, AsyncResponse asyncResponse) {
+        withCompletion("getSchemaReferences", READ, AuthResources.ROOT, asyncResponse,
+                () -> registryService.getSchemaReferences(ModelHelper.decode(schemaInfo))
+                                                                   .thenApply(map -> {
+                                                                       AddedTo addedTo = new AddedTo()
+                                                                               .groups(map.entrySet().stream().collect(
+                                                                                       Collectors.toMap(Map.Entry::getKey,
+                                                                                               x -> ModelHelper.encode(x.getValue()))));
+                                                                       log.info("getSchemaReferences {} ", map.keySet());
+                                                                       return Response.status(Status.OK).entity(addedTo).build();
+                                                                   })
+                                                                   .exceptionally(exception -> {
+                                                                       if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                                                           log.warn("Schema {} not found", schemaInfo.getType());
+                                                                           return Response.status(Status.NOT_FOUND).build();
+                                                                       }
+                                                                       log.warn("getCodecTypesList failed with exception: ", exception);
+                                                                       return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                                   }))
+                .thenApply(response -> {
+                    asyncResponse.resume(response);
+                    return response;
+                });
+    }
+    
     /**
      * This is a shortcut for {@code headers.getRequestHeader().get(HttpHeaders.AUTHORIZATION)}.
      *

@@ -28,9 +28,10 @@ import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
@@ -49,7 +50,6 @@ import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Collections;
 import java.util.Scanner;
 
 /**
@@ -79,9 +79,9 @@ public class AllFormatInSingleStreamDemo {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
         SerializationFormat serializationFormat = SerializationFormat.Any;
-        client.addGroup(groupId, serializationFormat,
+        client.addGroup(groupId, new GroupProperties(serializationFormat,
                 SchemaValidationRules.of(Compatibility.allowAny()),
-                true, Collections.emptyMap());
+                true));
     }
 
     public static void main(String[] args) {

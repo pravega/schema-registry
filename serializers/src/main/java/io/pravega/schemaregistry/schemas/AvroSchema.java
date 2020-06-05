@@ -33,7 +33,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     
     private AvroSchema(Schema schema) {
         this.schema = schema;
-        this.schemaInfo = new SchemaInfo(schema.getName(),  
+        this.schemaInfo = new SchemaInfo(schema.getFullName(),  
                 SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
     }
 

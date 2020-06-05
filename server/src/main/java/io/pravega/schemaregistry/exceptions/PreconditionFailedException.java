@@ -7,13 +7,13 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.contract.exceptions;
+package io.pravega.schemaregistry.exceptions;
 
 /**
- * Exception thrown when a codec is not found. 
+ * Exception thrown when conditional updates to an entity are attempted and condition fails. 
  */
-public class CodecNotFoundException extends RuntimeException {
-    public CodecNotFoundException(String message) {
+public class PreconditionFailedException extends RuntimeException {
+    public PreconditionFailedException(String message) {
         super(message);
     }
 }

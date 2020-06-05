@@ -15,7 +15,6 @@ import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -27,11 +26,12 @@ import lombok.Data;
 import lombok.Getter;
 
 import java.nio.ByteBuffer;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
+
+import static io.pravega.schemaregistry.codec.CodecFactory.*;
 
 /**
  * Serializer Config class that is passed to {@link SerializerFactory} for creating serializer. 
@@ -61,7 +61,7 @@ public class SerializerConfig {
     /**
      * Flag to tell the serializer if the codec should be automatically registered before using the serializer in 
      * {@link io.pravega.client.stream.EventStreamWriter}. 
-     * It is recommended to register keep this flag as false in production systems and manage codecs used by writers explicitly
+     * It is recommended to register keep this flag as false in production systems and manage codecTypes used by writers explicitly
      * so that readers are aware of encodings used. 
      */
     private final boolean autoRegisterCodec;
@@ -70,13 +70,13 @@ public class SerializerConfig {
      */
     private final Codec codec;
     /**
-     * Function that should be applied on serialized data read from stream. This is invoked after reading the {@link CodecType}
+     * Function that should be applied on serialized data read from stream. This is invoked after reading the codecType
      * from {@link EncodingInfo} and using the codec type read from it. 
      * It should return the uncompressed data back to the deserializer. 
      */
     private final Decoder decoder;
     /**
-     * Tells the deserializer that if supplied decoder codecs do not match group codecs then fail and exit upfront.  
+     * Tells the deserializer that if supplied decoder codecTypes do not match group codecTypes then fail and exit upfront.  
      */
     private final boolean failOnCodecMismatch;
 
@@ -100,10 +100,9 @@ public class SerializerConfig {
         private boolean failOnCodecMismatch = true;
         private Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient = null;
 
-        private GroupProperties groupProperties = new GroupProperties(SerializationFormat.Any,
-                SchemaValidationRules.of(Compatibility.fullTransitive()), false, Collections.emptyMap());
+        private GroupProperties groupProperties = GroupProperties.builder().build();
 
-        public SerializerConfigBuilder decoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+        public SerializerConfigBuilder decoder(String codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             this.decoder = new Decoder(codecType, decoder);
             return this;
         }
@@ -118,7 +117,7 @@ public class SerializerConfig {
 
         public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, SchemaValidationRules rules, boolean allowMultipleTypes) {
             this.autoCreateGroup = true;
-            this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes, Collections.emptyMap());
+            this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes);
             return this;
         }
         
@@ -136,13 +135,13 @@ public class SerializerConfig {
     }
 
     static class Decoder {
-        private static final BiFunction<CodecType, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
+        private static final BiFunction<String, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
             switch (x) {
-                case None:
+                case MIME_NONE:
                     return NOOP.decode(y);
-                case GZip:
+                case MIME_GZIP:
                     return GZIP.decode(y);
-                case Snappy:
+                case MIME_SNAPPY:
                     return SNAPPY.decode(y);
                 default:
                     throw new IllegalArgumentException();
@@ -150,10 +149,10 @@ public class SerializerConfig {
         };
 
         @Getter(AccessLevel.PACKAGE)
-        private final Set<CodecType> codecs;
-        private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder;
+        private final Set<String> codecTypes;
+        private final BiFunction<String, ByteBuffer, ByteBuffer> decoder;
 
-        private Decoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+        private Decoder(String codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             this.decoder = (x, y) -> {
                 if (x.equals(codecType)) {
                     return decoder.apply(y);
@@ -161,22 +160,22 @@ public class SerializerConfig {
                     return DEFAULT.apply(x, y);
                 }
             };
-            codecs = new HashSet<>();
-            this.codecs.add(CodecType.None);
-            this.codecs.add(CodecType.GZip);
-            this.codecs.add(CodecType.Snappy);
-            this.codecs.add(codecType);
+            codecTypes = new HashSet<>();
+            this.codecTypes.add(MIME_NONE);
+            this.codecTypes.add(MIME_GZIP);
+            this.codecTypes.add(MIME_SNAPPY);
+            this.codecTypes.add(codecType);
         }
 
         private Decoder() {
             this.decoder = DEFAULT;
-            codecs = new HashSet<>();
-            this.codecs.add(CodecType.None);
-            this.codecs.add(CodecType.GZip);
-            this.codecs.add(CodecType.Snappy);
+            codecTypes = new HashSet<>();
+            this.codecTypes.add(MIME_NONE);
+            this.codecTypes.add(MIME_GZIP);
+            this.codecTypes.add(MIME_SNAPPY);
         }
 
-        ByteBuffer decode(CodecType codecType, ByteBuffer bytes) {
+        ByteBuffer decode(String codecType, ByteBuffer bytes) {
             return decoder.apply(codecType, bytes);
         }
     }

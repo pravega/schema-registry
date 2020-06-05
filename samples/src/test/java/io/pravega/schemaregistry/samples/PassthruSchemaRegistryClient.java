@@ -11,19 +11,19 @@ package io.pravega.schemaregistry.samples;
 
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 
 import javax.annotation.Nullable;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -36,9 +36,8 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
     
     @Override
-    public boolean addGroup(String group, SerializationFormat serializationFormat, SchemaValidationRules validationRules,
-                            boolean allowMultipleTypes, Map<String, String> properties) {
-        return service.createGroup(group, new GroupProperties(serializationFormat, validationRules, allowMultipleTypes, properties)).join();
+    public boolean addGroup(String group, GroupProperties properties) {
+        return service.createGroup(group, properties).join();
     }
 
     @Override
@@ -57,13 +56,13 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules) {
-        service.updateSchemaValidationRules(group, validationRules, null).join();
+    public void updateSchemaValidationRules(String group, SchemaValidationRules validationRules, SchemaValidationRules previousRules) {
+        service.updateSchemaValidationRules(group, validationRules, previousRules).join();
     }
     
     @Override
     public List<SchemaWithVersion> getSchemas(String group) {
-        return service.getSchemas(group).join();
+        return service.getSchemas(group, null).join();
     }
 
     @Override
@@ -87,18 +86,23 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public EncodingId getEncodingId(String group, VersionInfo version, CodecType codecType) {
+    public EncodingId getEncodingId(String group, VersionInfo version, String codecType) {
         return service.getEncodingId(group, version, codecType).join();
     }
 
     @Override
-    public SchemaWithVersion getLatestSchemaVersion(String group, @Nullable String type) {
-        return service.getGroupLatestSchemaVersion(group, type).join();
+    public SchemaWithVersion getLatestSchemaVersion(String group, @Nullable String schemaType) {
+        List<SchemaWithVersion> latestSchemas = service.getSchemas(group, schemaType).join();
+        if (schemaType == null) {
+            return latestSchemas.stream().max(Comparator.comparingInt(x -> x.getVersion().getOrdinal())).orElse(null);
+        } else {
+            return latestSchemas.get(0);
+        }
     }
 
     @Override
-    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String type) {
-        return service.getGroupHistory(groupId, type)
+    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaType) {
+        return service.getGroupHistory(groupId, schemaType)
                 .thenApply(history -> history.stream().map(x -> new SchemaWithVersion(x.getSchema(), x.getVersion())).collect(Collectors.toList())).join();
     }
 
@@ -106,7 +110,12 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     public List<GroupHistoryRecord> getGroupHistory(String group) {
         return service.getGroupHistory(group, null).join();
     }
-    
+
+    @Override
+    public Map<String, VersionInfo> getSchemaReferences(SchemaInfo schemaInfo) throws RegistryExceptions.ResourceNotFoundException, RegistryExceptions.UnauthorizedException {
+        return service.getSchemaReferences(schemaInfo).join();
+    }
+
     @Override
     public VersionInfo getVersionForSchema(String group, SchemaInfo schema) {
         return service.getSchemaVersion(group, schema).join();
@@ -123,12 +132,12 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<CodecType> getCodecTypes(String group) {
+    public List<String> getCodecTypes(String group) {
         return service.getCodecTypes(group).join();
     }
 
     @Override
-    public void addCodecType(String group, CodecType codecType) {
-        service.addCodec(group, codecType).join();
+    public void addCodecType(String group, String codecType) {
+        service.addCodecType(group, codecType).join();
     }
 }

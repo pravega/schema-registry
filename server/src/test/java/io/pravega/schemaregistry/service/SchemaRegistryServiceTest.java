@@ -15,8 +15,8 @@ import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import org.junit.After;
@@ -24,7 +24,6 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -59,7 +58,7 @@ public class SchemaRegistryServiceTest {
         }).when(store).listGroups(any(), anyInt());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Avro, 
-                    SchemaValidationRules.of(Compatibility.backward()), false, Collections.emptyMap()));
+                    SchemaValidationRules.of(Compatibility.backward()), false));
         }).when(store).getGroupProperties(eq("grp1"));
         
         doAnswer(x -> {
