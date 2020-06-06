@@ -170,7 +170,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         Response getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                         @ApiParam(value = "Type of object") @QueryParam("type") String type);
+                            @ApiParam(value = "Type of object") @QueryParam("type") String type);
 
         @PUT
         @Path("/{groupName}/encodings")
@@ -193,8 +193,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version deleted", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
-        Response deleteSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                     @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
+        Response deleteSchemaFromVersionOrdinal(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                                @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
 
         @GET
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
@@ -204,8 +204,32 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
-        Response getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                      @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
+        Response getSchemaFromVersionOrdinal(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                             @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version);
+
+        @GET
+        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Produces({"application/json"})
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Group", })
+        @io.swagger.annotations.ApiResponses(value = {
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
+        public Response getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                             @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                             @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version);
+
+        @DELETE
+        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Produces({"application/json"})
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Group", })
+        @io.swagger.annotations.ApiResponses(value = {
+                @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
+        Response deleteSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                     @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                     @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version);
 
         @POST
         @Path("/{groupName}/schemas/versions/find")
@@ -376,8 +400,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group's latest schemas", response = Void.class)})
         void getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                     @ApiParam(value = "Type of object") @QueryParam("type") String type,
-                                     @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                        @ApiParam(value = "Type of object") @QueryParam("type") String type,
+                        @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @PUT
         @Path("/{groupName}/encodings")
@@ -400,8 +424,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
-        void getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                  @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+        void getSchemaFromVersionOrdinal(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                         @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @DELETE
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
@@ -411,8 +435,34 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
+        void deleteSchemaFromVersionOrdinal(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                            @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+
+        @GET
+        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Produces({"application/json"})
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Group", })
+        @io.swagger.annotations.ApiResponses(value = {
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
+        void getSchemaFromVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                  @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                  @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version,
+                                  @Suspended AsyncResponse asyncResponse);
+
+        @DELETE
+        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Produces({"application/json"})
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Group", })
+        @io.swagger.annotations.ApiResponses(value = {
+                @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
         void deleteSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                 @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                 @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                 @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version,
+                                 @Suspended AsyncResponse asyncResponse);
 
         @POST
         @Path("/{groupName}/schemas/versions/find")

@@ -19,6 +19,7 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 
 import javax.annotation.Nullable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +27,7 @@ import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
 
 /**
  * Defines a registry client for interacting with schema registry service. 
+ * The implementation of this interface should provide atomicity and read-after-write-consistency guarantees for all the methods.
  */
 public interface SchemaRegistryClient {
     /**
@@ -56,15 +58,16 @@ public interface SchemaRegistryClient {
     void removeGroup(String groupId) throws UnauthorizedException;
 
     /**
-     * List all groups. The returned value contains a Map of group name to group properties. 
-     * For partially created/failed groups the group properties value will be null. 
-     * The processing of this api is atomic and if groups are added after the api completes, then those will 
-     * not be included in the response. 
+     * List all groups that the user is authorized on. This returns an iterator where each element is a pair of group 
+     * name and group properties. 
+     * This iterator can be used to iterate over each element until all elements are exhausted. 
+     * The implementation should guarantee that all groups added before and until the iterator returns 
+     * {@link Iterator#hasNext()} = true can be iterated over. 
      * 
      * @return map of names of groups with corresponding group properties for all groups. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    Map<String, GroupProperties> listGroups() throws UnauthorizedException;
+    Iterator<Map.Entry<String, GroupProperties>> listGroups() throws UnauthorizedException;
     
     /**
      * Get group properties for the group identified by the group id. 
@@ -90,15 +93,17 @@ public interface SchemaRegistryClient {
      * @param groupId Id for the group. 
      * @param validationRules New Schema validation rules for the group.
      * @param previousRules Previous schema validation rules.
-     * @throws PreconditionFailedException if previous rules do not match the rules set for the group.
+     * @return true if the update was accepted by the service, false if it was rejected because of precondition failure.
+     * Precondition failure can occur if previous rules were specified and they do not match the rules set on the group. 
      * @throws ResourceNotFoundException if group is not found.
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules, @Nullable SchemaValidationRules previousRules)
-        throws PreconditionFailedException, ResourceNotFoundException, UnauthorizedException;
+    boolean updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules, @Nullable SchemaValidationRules previousRules)
+        throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Gets list of latest schemas for each object types registered under the group. Objects are identified by {@link SchemaInfo#type}.
+     * Schemas are retrieved atomically. So all schemas added before this call will be returned by this call. 
      *
      * @param groupId Id for the group. 
      * @return List of different objects within the group.   
@@ -116,7 +121,7 @@ public interface SchemaRegistryClient {
      * Add schema api is idempotent. If a schema is already registered, its version info is returned by the service.  
      * 
      * @param groupId Id for the group. 
-     * @param schema Schema to add. 
+     * @param schemaInfo Schema to add. 
      * @return versionInfo which uniquely identifies where the schema is added in the group. If schema is already registered,
      * then the existing version info is returned. 
      * @throws SchemaValidationFailedException if the schema is deemed invalid by applying schema validation rules which may 
@@ -127,38 +132,69 @@ public interface SchemaRegistryClient {
      * @throws ResourceNotFoundException if group is not found.
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    VersionInfo addSchema(String groupId, SchemaInfo schema) throws SchemaValidationFailedException, SerializationMismatchException, 
+    VersionInfo addSchema(String groupId, SchemaInfo schemaInfo) throws SchemaValidationFailedException, SerializationMismatchException, 
             MalformedSchemaException, ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Api to delete schema corresponding to the version. Users should be very careful while using this API and it is 
-     * advised to not be used in production, esp if the schema has already been used to write the data. 
+     * Api to delete schema corresponding to the version. Users should be very careful while using this API in production, 
+     * esp if the schema has already been used to write the data. 
      * Delete schema api is idempotent. 
      * This does a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
      * However, the schema will not participate in any compatibility checks once deleted.
      * It will not be included in listing schema versions for the group using apis like {@link SchemaRegistryClient#getSchemaVersions}
      * or {@link SchemaRegistryClient#getGroupHistory} or {@link SchemaRegistryClient#getSchemas} or 
      * {@link SchemaRegistryClient#getLatestSchemaVersion}
-     * If add schema is called again using this deleted schema will result in a new version being assigned to it subject to 
-     * schema validation rules. 
+     * If add schema is called again using this deleted schema will result in a new version being assigned to it upon registration. 
      * 
      * @param groupId Id for the group. 
-     * @param version Version which uniquely identifies schema within a group. 
+     * @param versionInfo Version which uniquely identifies schema within a group. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    void deleteSchemaVersion(String groupId, VersionInfo version) throws ResourceNotFoundException, UnauthorizedException;
+    void deleteSchemaVersion(String groupId, VersionInfo versionInfo) throws ResourceNotFoundException, UnauthorizedException;
+
+    /**
+     * Api to delete schema corresponding to the schemaType and version. 
+     * Users should be very careful while using this API in production, esp if the schema has already been used to write the data. 
+     * Delete schema api is idempotent. 
+     * This does a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
+     * However, the schema will not participate in any compatibility checks once deleted.
+     * It will not be included in listing schema versions for the group using apis like {@link SchemaRegistryClient#getSchemaVersions}
+     * or {@link SchemaRegistryClient#getGroupHistory} or {@link SchemaRegistryClient#getSchemas} or 
+     * {@link SchemaRegistryClient#getLatestSchemaVersion}
+     * If add schema is called again using this deleted schema will result in a new version being assigned to upon registration. 
+     * 
+     * @param groupId Id for the group.
+     * @param schemaType schemaType that identifies the type of object the schema represents. This should be same as the 
+     *                   value specified in {@link SchemaInfo#type}. 
+     * @param version Version number which uniquely identifies schema for the schemaType within a group. 
+     * @throws ResourceNotFoundException if group is not found. 
+     * @throws UnauthorizedException if the user is unauthorized.
+     */
+    void deleteSchemaVersion(String groupId, String schemaType, int version) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Gets schema corresponding to the version. 
      * 
      * @param groupId Id for the group. 
-     * @param version Version which uniquely identifies schema within a group. 
+     * @param versionInfo Version which uniquely identifies schema within a group. 
      * @return Schema info corresponding to the version info.
      * @throws ResourceNotFoundException if group or version is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    SchemaInfo getSchemaForVersion(String groupId, VersionInfo version) throws ResourceNotFoundException, UnauthorizedException;
+    SchemaInfo getSchemaForVersion(String groupId, VersionInfo versionInfo) throws ResourceNotFoundException, UnauthorizedException;
+
+    /**
+     * Gets schema corresponding to the version. 
+     * 
+     * @param groupId Id for the group. 
+     * @param schemaType schemaType as specified in the {@link SchemaInfo#type} while registering the schema. 
+     * @param version Version which uniquely identifies schema of schemaType within a group. 
+     * @return Schema info corresponding to the version info.
+     * @throws ResourceNotFoundException if group or version is not found. 
+     * @throws UnauthorizedException if the user is unauthorized.
+     */
+    SchemaInfo getSchemaForVersion(String groupId, String schemaType, int version) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Gets encoding info against the requested encoding Id. The purpose of encoding info is to uniquely identify the encoding
@@ -191,14 +227,14 @@ public interface SchemaRegistryClient {
      * then any call to getEncodingId using the deleted versionInfo will throw ResourceNotFoundException. 
      * 
      * @param groupId Id for the group. 
-     * @param version version of schema 
+     * @param versionInfo version of schema 
      * @param codecType codec type
      * @return Encoding id for the pair of version and codec type.
      * @throws CodecTypeNotRegisteredException if codectype is not registered with the group. Use {@link SchemaRegistryClient#addCodecType} 
      * @throws ResourceNotFoundException if group or version info is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    EncodingId getEncodingId(String groupId, VersionInfo version, String codecType) 
+    EncodingId getEncodingId(String groupId, VersionInfo versionInfo, String codecType) 
             throws CodecTypeNotRegisteredException, ResourceNotFoundException, UnauthorizedException;
 
     /**
@@ -223,12 +259,12 @@ public interface SchemaRegistryClient {
      * identifies each distinct {@link SchemaInfo#schemaData}. 
      *
      * @param groupId Id for the group. 
-     * @param schema SchemaInfo that describes format and structure. 
+     * @param schemaInfo SchemaInfo that describes format and structure. 
      * @return VersionInfo corresponding to schema. 
      * @throws ResourceNotFoundException if group is not found or if schema is not registered. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    VersionInfo getVersionForSchema(String groupId, SchemaInfo schema) throws ResourceNotFoundException, UnauthorizedException;
+    VersionInfo getVersionForSchema(String groupId, SchemaInfo schemaInfo) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Gets all schemas with corresponding versions for the group (or type, if specified). 
@@ -252,25 +288,25 @@ public interface SchemaRegistryClient {
      * the changes to schema are in compliance with validation rules for the group.  
      * 
      * @param groupId Id for the group. 
-     * @param schema Schema to check for validity. 
+     * @param schemaInfo Schema to check for validity. 
      * @return A schema is valid if it passes all the {@link GroupProperties#schemaValidationRules}. The rule supported 
      * presently, is Compatibility. If desired compatibility is satisfied by the schema then this api returns true, false otherwise. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    boolean validateSchema(String groupId, SchemaInfo schema) throws ResourceNotFoundException, UnauthorizedException;
+    boolean validateSchema(String groupId, SchemaInfo schemaInfo) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Checks whether given schema can be used to read by validating it for reads against one or more existing schemas in the group  
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
      * 
      * @param groupId Id for the group. 
-     * @param schema Schema to check to be used for reads. 
+     * @param schemaInfo Schema to check to be used for reads. 
      * @return True if it can be used to read, false otherwise. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    boolean canReadUsing(String groupId, SchemaInfo schema) throws ResourceNotFoundException, UnauthorizedException;
+    boolean canReadUsing(String groupId, SchemaInfo schemaInfo) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * List of codec types used for encoding in the group. 
@@ -295,6 +331,9 @@ public interface SchemaRegistryClient {
     /**
      * Gets complete schema evolution history of the group with schemas, versions, rules and time for the group. 
      * The order in the list matches the order in which schemas were evolved within the group. 
+     * This call is atomic and will get a consistent view at the time when the request is processed on the service. 
+     * So all schemas that were added before this call are returned and all schemas that were deleted before this call
+     * are excluded. 
      *
      * @param groupId Id for the group.
      * @return Ordered list of schemas with versions and validation rules for all schemas in the group. 

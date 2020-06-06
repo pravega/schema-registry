@@ -360,22 +360,21 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void getSchemaFromVersion(String groupName, Integer version,
-                                      AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("Get schema from version {} called for group {}", version, groupName);
-        withCompletion("getSchemaFromVersion", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
-                () -> registryService.getSchema(groupName, version)
+    public void getSchemaFromVersionOrdinal(String groupName, Integer versionOrdinal, AsyncResponse asyncResponse) {
+        log.info("Get schema from version {} called for group {}", versionOrdinal, groupName);
+        withCompletion("getSchemaFromVersionOrdinal", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+                () -> registryService.getSchema(groupName, versionOrdinal)
                                      .thenApply(schemaWithVersion -> {
                                          SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
-                                         log.info("Schema for version {} for group {} found.", version, groupName);
+                                         log.info("Schema for version {} for group {} found.", versionOrdinal, groupName);
                                          return Response.status(Status.OK).entity(schema).build();
                                      })
                                      .exceptionally(exception -> {
                                          if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} or version {} not found", groupName, version);
+                                             log.warn("Group {} or version {} not found", groupName, versionOrdinal);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("getSchemaFromVersion failed with exception: ", exception);
+                                         log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -385,21 +384,69 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void deleteSchemaVersion(String groupName, Integer version,
-                                      AsyncResponse asyncResponse) throws NotFoundException {
-        log.info("Delete schema from version {} called for group {}", version, groupName);
-        withCompletion("deleteSchemaVersion", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
-                () -> registryService.deleteSchema(groupName, version)
+    public void getSchemaFromVersion(String groupName, String schemaType, Integer version, AsyncResponse asyncResponse) {
+        log.info("Get schema from version {} called for group {}", version, groupName);
+        withCompletion("getSchemaFromVersion", READ, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+                () -> registryService.getSchema(groupName, schemaType, version)
+                                                                    .thenApply(schemaWithVersion -> {
+                                                                        SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
+                                                                        log.info("Schema for version {} for group {} found.", version, groupName);
+                                                                        return Response.status(Status.OK).entity(schema).build();
+                                                                    })
+                                                                    .exceptionally(exception -> {
+                                                                        if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                                                            log.warn("Group {} or version {} not found", groupName, version);
+                                                                            return Response.status(Status.NOT_FOUND).build();
+                                                                        }
+                                                                        log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
+                                                                        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                                    }))
+                .thenApply(response -> {
+                    asyncResponse.resume(response);
+                    return response;
+                });
+    }
+
+    @Override
+    public void deleteSchemaFromVersionOrdinal(String groupName, Integer versionOrdinal,
+                                    AsyncResponse asyncResponse) {
+        log.info("Delete schema from version {} called for group {}", versionOrdinal, groupName);
+        withCompletion("deleteSchemaFromVersionOrdinal", READ_UPDATE, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+                () -> registryService.deleteSchema(groupName, versionOrdinal)
                                      .thenApply(v -> {
-                                         log.info("Schema for version {} for group {} deleted.", version, groupName);
+                                         log.info("Schema for version {} for group {} deleted.", versionOrdinal, groupName);
                                          return Response.status(Status.NO_CONTENT).build();
                                      })
                                      .exceptionally(exception -> {
                                          if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} or version {} not found", groupName, version);
+                                             log.warn("Group {} or version {} not found", groupName, versionOrdinal);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaVersion failed with exception: ", exception);
+                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                     }))
+                .thenApply(response -> {
+                    asyncResponse.resume(response);
+                    return response;
+                });
+    }
+
+    @Override
+    public void deleteSchemaVersion(String groupName, String schemaType, Integer version,
+                                      AsyncResponse asyncResponse) {
+        log.info("Delete schema from version {}/{} called for group {}", schemaType, version, groupName);
+        withCompletion("deleteSchemaVersion", READ_UPDATE, String.format(AuthResources.GROUP_FORMAT, groupName), asyncResponse,
+                () -> registryService.deleteSchema(groupName, schemaType, version)
+                                     .thenApply(v -> {
+                                         log.info("Schema for version {}/{} for group {} deleted.", schemaType, version, groupName);
+                                         return Response.status(Status.NO_CONTENT).build();
+                                     })
+                                     .exceptionally(exception -> {
+                                         if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                             log.warn("Group {} or version {}/{} not found", groupName, schemaType, version);
+                                             return Response.status(Status.NOT_FOUND).build();
+                                         }
+                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {

@@ -13,6 +13,7 @@ import com.google.common.annotations.VisibleForTesting;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.common.AuthHelper;
+import io.pravega.schemaregistry.common.ContinuationTokenIterator;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -41,20 +42,26 @@ import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import java.util.AbstractMap;
+import java.util.Collection;
 import java.util.Comparator;
-import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
-    private static final int LIMIT = 100;
     private static final Retry.RetryAndThrowConditionally RETRY = Retry
             .withExpBackoff(100, 2, 10, 1000)
             .retryWhen(x -> Exceptions.unwrap(x) instanceof ConnectionException);
+    private static final int GROUP_LIMIT = 100;
+    private static final int SCHEMA_LIMIT = 10;
+
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
 
@@ -86,14 +93,15 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         return withRetry(() -> {
             CreateGroupRequest request = new CreateGroupRequest().groupName(groupId).groupProperties(ModelHelper.encode(groupProperties));
             Response response = groupProxy.createGroup(request);
-            if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                return true;
-            } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-                return false;
-            } else if (response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode()) {
-                throw new BadArgumentException("Group properties invalid. Verify that schema validation rules include compatibility.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to add the group.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case CREATED:
+                    return true;
+                case CONFLICT:
+                    return false;
+                case BAD_REQUEST:
+                    throw new BadArgumentException("Group properties invalid. Verify that schema validation rules include compatibility.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to add the group.");
             }
         });
     }
@@ -102,44 +110,40 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public void removeGroup(String groupId) {
         withRetry(() -> {
             Response response = groupProxy.deleteGroup(groupId);
-            if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                throw new InternalServerError("Internal Service error. Failed to remove the group.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case NO_CONTENT:
+                    return;
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to remove the group.");
             }
         });
     }
 
     @Override
-    public Map<String, GroupProperties> listGroups() {
-        String continuationToken = null;
+    public Iterator<Map.Entry<String, GroupProperties>> listGroups() {
+        final Function<String, Map.Entry<String, Collection<Map.Entry<String, GroupProperties>>>> function =
+                continuationToken -> {
+                    ListGroupsResponse entity = getListGroupsResponse(continuationToken);
+                    List<Map.Entry<String, GroupProperties>> map = new LinkedList<>();
+                    for (Map.Entry<String, io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties> entry : entity.getGroups().entrySet()) {
+                        ModelHelper.decode(entry.getValue().getSerializationFormat());
+                        map.add(new AbstractMap.SimpleEntry<>(entry.getKey(), ModelHelper.decode(entry.getValue())));
+                    }
+                    return new AbstractMap.SimpleEntry<>(entity.getContinuationToken(), map);
+                };
 
-        Map<String, GroupProperties> result = new HashMap<>();
-        Map<String, GroupProperties> map;
-        do {
-            ListGroupsResponse entity = getListGroupsResponse(continuationToken);
-            map = new HashMap<>();
-            for (Map.Entry<String, io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties> entry : entity.getGroups().entrySet()) {
-                if (entry.getValue() == null) {
-                    map.put(entry.getKey(), null);
-                } else {
-                    ModelHelper.decode(entry.getValue().getSerializationFormat());
-                    map.put(entry.getKey(), ModelHelper.decode(entry.getValue()));
-                }
-            }
-            continuationToken = entity.getContinuationToken();
-            result.putAll(map);
-
-        } while (map.size() >= LIMIT);
-        return result;
+        return new ContinuationTokenIterator<>(function, null);
     }
 
     private ListGroupsResponse getListGroupsResponse(String continuationToken) {
         return withRetry(() -> {
-            Response response = groupProxy.listGroups(continuationToken, LIMIT);
-            if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new InternalServerError("Internal Service error. Failed to list groups.");
+            Response response = groupProxy.listGroups(continuationToken, GROUP_LIMIT);
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return response.readEntity(ListGroupsResponse.class);
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to list groups.");
             }
-
-            return response.readEntity(ListGroupsResponse.class);
         });
     }
 
@@ -147,19 +151,20 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public GroupProperties getGroupProperties(String groupId) {
         return withRetry(() -> {
             Response response = groupProxy.getGroupProperties(groupId);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties.class));
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else {
-                throw new InternalServerError("Internal error. Failed to get group properties.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to list groups.");
             }
         });
     }
 
     @Override
-    public void updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules, @Nullable SchemaValidationRules previousRules) {
-        withRetry(() -> {
+    public boolean updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules, @Nullable SchemaValidationRules previousRules) {
+        return withRetry(() -> {
             UpdateValidationRulesRequest request = new UpdateValidationRulesRequest()
                     .validationRules(ModelHelper.encode(validationRules));
             if (previousRules != null) {
@@ -167,12 +172,15 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             }
 
             Response response = groupProxy.updateSchemaValidationRules(groupId, request);
-            if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-                throw new PreconditionFailedException("Conflict attempting to update the rules. Try again.");
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else if (response.getStatus() != Response.Status.OK.getStatusCode()) {
-                throw new InternalServerError("Internal Service error. Failed to update schema validation rules.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case CONFLICT:
+                    return false;
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                case OK:
+                    return true;
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to update schema validation rules.");
             }
         });
     }
@@ -186,40 +194,42 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         return withRetry(() -> {
             Response response = groupProxy.getSchemas(groupId, type);
             SchemaVersionsList objectsList = response.readEntity(SchemaVersionsList.class);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return objectsList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get object types.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return objectsList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get object types.");
             }
         });
     }
 
     @Override
-    public VersionInfo addSchema(String groupId, SchemaInfo schema) {
+    public VersionInfo addSchema(String groupId, SchemaInfo schemaInfo) {
         return withRetry(() -> {
-            Response response = groupProxy.addSchema(groupId, ModelHelper.encode(schema));
-            if (response.getStatus() == Response.Status.CREATED.getStatusCode()) {
-                return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else if (response.getStatus() == Response.Status.CONFLICT.getStatusCode()) {
-                throw new SchemaValidationFailedException("Schema is incompatible.");
-            } else if (response.getStatus() == Response.Status.EXPECTATION_FAILED.getStatusCode()) {
-                throw new SerializationMismatchException("Serialization format disallowed.");
-            } else if (response.getStatus() == Response.Status.BAD_REQUEST.getStatusCode()) {
-                throw new MalformedSchemaException("Schema is malformed. Verify the schema data and type");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to addSchema.");
+            Response response = groupProxy.addSchema(groupId, ModelHelper.encode(schemaInfo));
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case CREATED:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                case CONFLICT:
+                    throw new SchemaValidationFailedException("Schema is incompatible.");
+                case EXPECTATION_FAILED:
+                    throw new SerializationMismatchException("Serialization format disallowed.");
+                case BAD_REQUEST:
+                    throw new MalformedSchemaException("Schema is malformed. Verify the schema data and type");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to addSchema.");
             }
         });
     }
 
     @Override
-    public void deleteSchemaVersion(String groupId, VersionInfo version) {
+    public void deleteSchemaVersion(String groupId, VersionInfo versionInfo) {
         withRetry(() -> {
-            Response response = groupProxy.deleteSchemaVersion(groupId, version.getOrdinal());
+            Response response = groupProxy.deleteSchemaFromVersionOrdinal(groupId, versionInfo.getOrdinal());
             if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 throw new ResourceNotFoundException("Group not found.");
             } else if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
@@ -229,15 +239,43 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public SchemaInfo getSchemaForVersion(String groupId, VersionInfo version) {
-        return withRetry(() -> {
-            Response response = groupProxy.getSchemaFromVersion(groupId, version.getOrdinal());
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Schema not found.");
-            } else {
+    public void deleteSchemaVersion(String groupId, String schemaType, int version) {
+        withRetry(() -> {
+            Response response = groupProxy.deleteSchemaVersion(groupId, schemaType, version);
+            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
+                throw new ResourceNotFoundException("Group not found.");
+            } else if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
                 throw new InternalServerError("Internal Service error. Failed to get schema.");
+            }
+        });
+    }
+
+    @Override
+    public SchemaInfo getSchemaForVersion(String groupId, VersionInfo versionInfo) {
+        return withRetry(() -> {
+            Response response = groupProxy.getSchemaFromVersionOrdinal(groupId, versionInfo.getOrdinal());
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Schema not found.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get schema.");
+            }
+        });
+    }
+
+    @Override
+    public SchemaInfo getSchemaForVersion(String groupId, String schemaType, int version) {
+        return withRetry(() -> {
+            Response response = groupProxy.getSchemaFromVersion(groupId, schemaType, version);
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Schema not found.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get schema.");
             }
         });
     }
@@ -246,31 +284,33 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId) {
         return withRetry(() -> {
             Response response = groupProxy.getEncodingInfo(groupId, encodingId.getId());
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Encoding not found.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get encoding info.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Encoding not found.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get encoding info.");
             }
         });
     }
 
     @Override
-    public EncodingId getEncodingId(String groupId, VersionInfo version, String codecType) {
+    public EncodingId getEncodingId(String groupId, VersionInfo versionInfo, String codecType) {
         return withRetry(() -> {
             GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
             getEncodingIdRequest.codecType(codecType)
-                                .versionInfo(ModelHelper.encode(version));
+                                .versionInfo(ModelHelper.encode(versionInfo));
             Response response = groupProxy.getEncodingId(groupId, getEncodingIdRequest);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("getEncodingId failed. Either Group or Version does not exist.");
-            } else if (response.getStatus() == Response.Status.PRECONDITION_FAILED.getStatusCode()) {
-                throw new CodecTypeNotRegisteredException(String.format("Codec type %s not registered.", codecType));
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get encoding info.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("getEncodingId failed. Either Group or Version does not exist.");
+                case PRECONDITION_FAILED:
+                    throw new CodecTypeNotRegisteredException(String.format("Codec type %s not registered.", codecType));
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get encoding info.");
             }
         });
     }
@@ -279,7 +319,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaType) {
         List<SchemaWithVersion> list = latestSchemas(groupId, schemaType);
         if (schemaType == null) {
-            return list.stream().max(Comparator.comparingInt(x -> x.getVersion().getOrdinal())).orElse(null);
+            return list.stream().max(Comparator.comparingInt(x -> x.getVersionInfo().getOrdinal())).orElse(null);
         } else {
             return list.get(0);
         }
@@ -289,13 +329,14 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaType) {
         return withRetry(() -> {
             Response response = groupProxy.getSchemaVersions(groupId, schemaType);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
-                return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("getSchemaVersions failed. Group does not exist.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get schema versions for group.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
+                    return schemaList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("getSchemaVersions failed. Group does not exist.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get schema versions for group.");
             }
         });
     }
@@ -304,14 +345,14 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public List<GroupHistoryRecord> getGroupHistory(String groupId) {
         return withRetry(() -> {
             Response response = groupProxy.getGroupHistory(groupId);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory history = response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory.class);
-                return history.getHistory().stream().map(ModelHelper::decode).collect(Collectors.toList());
-
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("getGroupHistory failed. Either Group or Version does not exist.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get schema evolution history for group.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory history = response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory.class);
+                    return history.getHistory().stream().map(ModelHelper::decode).collect(Collectors.toList());
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("getGroupHistory failed. Either Group or Version does not exist.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get schema evolution history for group.");
             }
         });
     }
@@ -320,15 +361,15 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public Map<String, VersionInfo> getSchemaReferences(SchemaInfo schemaInfo) throws ResourceNotFoundException, UnauthorizedException {
         return withRetry(() -> {
             Response response = schemaProxy.getSchemaReferences(ModelHelper.encode(schemaInfo));
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                io.pravega.schemaregistry.contract.generated.rest.model.AddedTo addedTo = response
-                        .readEntity(io.pravega.schemaregistry.contract.generated.rest.model.AddedTo.class);
-                return addedTo.getGroups().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, x -> ModelHelper.decode(x.getValue())));
-
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("getSchemaReferences failed. Either Group or Version does not exist.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get schema evolution history for group.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    io.pravega.schemaregistry.contract.generated.rest.model.AddedTo addedTo = response
+                            .readEntity(io.pravega.schemaregistry.contract.generated.rest.model.AddedTo.class);
+                    return addedTo.getGroups().entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, x -> ModelHelper.decode(x.getValue())));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("getSchemaReferences failed. Either Group or Version does not exist.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get schema evolution history for group.");
             }
         });
     }
@@ -339,43 +380,46 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo = ModelHelper.encode(schema);
 
             Response response = groupProxy.getSchemaVersion(groupId, schemaInfo);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Schema not found.");
-            } else {
-                throw new InternalServerError("Internal Service error. Failed to get schema version.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Schema not found.");
+                default:
+                    throw new InternalServerError("Internal Service error. Failed to get schema version.");
             }
         });
     }
 
     @Override
-    public boolean validateSchema(String groupId, SchemaInfo schema) {
+    public boolean validateSchema(String groupId, SchemaInfo schemaInfo) {
         return withRetry(() -> {
             ValidateRequest validateRequest = new ValidateRequest()
-                    .schemaInfo(ModelHelper.encode(schema));
+                    .schemaInfo(ModelHelper.encode(schemaInfo));
             Response response = groupProxy.validate(groupId, validateRequest);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return response.readEntity(Valid.class).isValid();
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else {
-                throw new InternalServerError("Internal Service error.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return response.readEntity(Valid.class).isValid();
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                default:
+                    throw new InternalServerError("Internal Service error.");
             }
         });
     }
 
     @Override
-    public boolean canReadUsing(String groupId, SchemaInfo schema) {
+    public boolean canReadUsing(String groupId, SchemaInfo schemaInfo) {
         return withRetry(() -> {
-            io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo request = ModelHelper.encode(schema);
+            io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo request = ModelHelper.encode(schemaInfo);
             Response response = groupProxy.canRead(groupId, request);
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return response.readEntity(CanRead.class).isCompatible();
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Schema not found.");
-            } else {
-                throw new InternalServerError("Internal Service error.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return response.readEntity(CanRead.class).isCompatible();
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Schema not found.");
+                default:
+                    throw new InternalServerError("Internal Service error.");
             }
         });
     }
@@ -385,13 +429,13 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         return withRetry(() -> {
             Response response = groupProxy.getCodecTypesList(groupId);
             CodecTypesList list = response.readEntity(CodecTypesList.class);
-
-            if (response.getStatus() == Response.Status.OK.getStatusCode()) {
-                return list.getCodecTypes();
-            } else if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else {
-                throw new InternalServerError("Failed to get codecTypes. Internal server error.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case OK:
+                    return list.getCodecTypes();
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                default:
+                    throw new InternalServerError("Failed to get codecTypes. Internal server error.");
             }
         });
     }
@@ -401,10 +445,13 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         withRetry(() -> {
             Response response = groupProxy.addCodecType(groupId, codecType);
 
-            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else if (response.getStatus() != Response.Status.CREATED.getStatusCode()) {
-                throw new InternalServerError("Failed to add codec type. Internal server error.");
+            switch (Response.Status.fromStatusCode(response.getStatus())) {
+                case CREATED:
+                    return;
+                case NOT_FOUND:
+                    throw new ResourceNotFoundException("Group not found.");
+                default:
+                    throw new InternalServerError("Failed to add codec type. Internal server error.");
             }
         });
     }

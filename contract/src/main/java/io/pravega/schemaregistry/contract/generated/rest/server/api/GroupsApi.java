@@ -154,7 +154,7 @@ public class GroupsApi  {
         return delegate.deleteGroup(groupName,securityContext);
     }
     @DELETE
-    @Path("/{groupName}/schemas/versions/{versionOrdinal}")
+    @Path("/{groupName}/schemas/{type}/versions/{version}")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags={ "Group", })
@@ -165,10 +165,28 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class) })
     public Response deleteSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type",required=true) @PathParam("type") String type
+,@ApiParam(value = "Version number",required=true) @PathParam("version") Integer version
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.deleteSchemaVersion(groupName,type,version,securityContext);
+    }
+    @DELETE
+    @Path("/{groupName}/schemas/versions/{versionOrdinal}")
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema identified by version from the group.", response = Void.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 204, message = "Schema corresponding to the version", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class) })
+    public Response deleteSchemaVersionOrinal(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteSchemaVersion(groupName,versionOrdinal,securityContext);
+        return delegate.deleteSchemaVersionOrinal(groupName,versionOrdinal,securityContext);
     }
     @GET
     @Path("/{groupName}/codecTypes")
@@ -255,7 +273,7 @@ public class GroupsApi  {
         return delegate.getGroupProperties(groupName,securityContext);
     }
     @GET
-    @Path("/{groupName}/schemas/versions/{versionOrdinal}")
+    @Path("/{groupName}/schemas/{type}/versions/{version}")
     
     @Produces({ "application/json" })
     @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags={ "Group", })
@@ -266,10 +284,28 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class) })
     public Response getSchemaFromVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type",required=true) @PathParam("type") String type
+,@ApiParam(value = "Version number",required=true) @PathParam("version") Integer version
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSchemaFromVersion(groupName,type,version,securityContext);
+    }
+    @GET
+    @Path("/{groupName}/schemas/versions/{versionOrdinal}")
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version ordinal that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class) })
+    public Response getSchemaFromVersionOrdinal(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersion(groupName,versionOrdinal,securityContext);
+        return delegate.getSchemaFromVersionOrdinal(groupName,versionOrdinal,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions/find")
@@ -287,6 +323,23 @@ public class GroupsApi  {
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
         return delegate.getSchemaVersion(groupName,schemaInfo,securityContext);
+    }
+    @GET
+    @Path("/{groupName}/schemas/versions")
+    
+    @Produces({ "application/json" })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "Get all schema versions for the group", response = SchemaVersionsList.class, tags={ "Group", })
+    @io.swagger.annotations.ApiResponses(value = { 
+        @io.swagger.annotations.ApiResponse(code = 200, message = "Versioned history of schemas registered under the group", response = SchemaVersionsList.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
+        
+        @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group schema versions", response = Void.class) })
+    public Response getSchemaVersions(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "Type of object the schema describes.") @QueryParam("type") String type
+,@Context SecurityContext securityContext)
+    throws NotFoundException {
+        return delegate.getSchemaVersions(groupName,type,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas")

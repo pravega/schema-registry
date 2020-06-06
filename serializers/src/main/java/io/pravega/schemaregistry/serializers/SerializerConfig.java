@@ -137,7 +137,7 @@ public class SerializerConfig {
     static class Decoder {
         private static final BiFunction<String, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
             switch (x) {
-                case MIME_NONE:
+                case NONE:
                     return NOOP.decode(y);
                 case MIME_GZIP:
                     return GZIP.decode(y);
@@ -161,7 +161,7 @@ public class SerializerConfig {
                 }
             };
             codecTypes = new HashSet<>();
-            this.codecTypes.add(MIME_NONE);
+            this.codecTypes.add(NONE);
             this.codecTypes.add(MIME_GZIP);
             this.codecTypes.add(MIME_SNAPPY);
             this.codecTypes.add(codecType);
@@ -170,7 +170,7 @@ public class SerializerConfig {
         private Decoder() {
             this.decoder = DEFAULT;
             codecTypes = new HashSet<>();
-            this.codecTypes.add(MIME_NONE);
+            this.codecTypes.add(NONE);
             this.codecTypes.add(MIME_GZIP);
             this.codecTypes.add(MIME_SNAPPY);
         }

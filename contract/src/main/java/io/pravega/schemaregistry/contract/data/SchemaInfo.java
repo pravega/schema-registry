@@ -15,8 +15,7 @@ import io.pravega.common.ObjectBuilder;
 import lombok.Builder;
 import lombok.Data;
 
-import java.util.Arrays;
-import java.util.Objects;
+import java.nio.ByteBuffer;
 
 /**
  * Encapsulates properties of a schema. 
@@ -43,13 +42,13 @@ public class SchemaInfo {
     /**
      * Schema as an array of 8-bit unsigned bytes. 
      */
-    private final byte[] schemaData;
+    private final ByteBuffer schemaData;
     /**
      * User defined key value strings that users can use to add any additional metadata to the schema. 
      */
     private final ImmutableMap<String, String> properties;
 
-    public SchemaInfo(String type, SerializationFormat serializationFormat, byte[] schemaData, ImmutableMap<String, String> properties) {
+    public SchemaInfo(String type, SerializationFormat serializationFormat, ByteBuffer schemaData, ImmutableMap<String, String> properties) {
         Preconditions.checkArgument(type != null);
         Preconditions.checkArgument(serializationFormat != SerializationFormat.Any);
         this.type = type;
@@ -57,30 +56,7 @@ public class SchemaInfo {
         this.schemaData = schemaData;
         this.properties = properties;
     }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) {
-            return true;
-        }
-        if (o == null || getClass() != o.getClass()) {
-            return false;
-        }
-        SchemaInfo that = (SchemaInfo) o;
-        return Objects.equals(type, that.type) &&
-                serializationFormat == that.serializationFormat &&
-                Arrays.equals(schemaData, that.schemaData) &&
-                Objects.equals(properties, that.properties);
-    }
-
-    @Override
-    public int hashCode() {
-
-        int result = Objects.hash(type, type, serializationFormat, properties);
-        result = 31 * result + Arrays.hashCode(schemaData);
-        return result;
-    }
-
+    
     public static class SchemaInfoBuilder implements ObjectBuilder<SchemaInfo> {
     }
 }

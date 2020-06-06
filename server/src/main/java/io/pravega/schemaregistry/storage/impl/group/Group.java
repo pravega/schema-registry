@@ -52,6 +52,8 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
+
 /**
  * Class that implements all storage logic for a group.
  * The group uses a key value store which supports batch updates with optimistic concurrency.
@@ -61,12 +63,12 @@ import java.util.stream.IntStream;
 @Slf4j
 public class Group<V> {
     private static final TableRecords.Etag ETAG = new TableRecords.Etag();
-    private static final TableRecords.ValidationPolicyKey VALIDATION_POLICY_KEY = new TableRecords.ValidationPolicyKey();
-    private static final TableRecords.GroupPropertyKey GROUP_PROPERTY_KEY = new TableRecords.GroupPropertyKey();
-    private static final TableRecords.CodecTypesKey CODECS_TYPE_KEY = new TableRecords.CodecTypesKey();
-    private static final TableRecords.SchemaTypesKey SCHEMA_TYPES_KEY = new TableRecords.SchemaTypesKey();
-    private static final TableRecords.LatestSchemaVersionKey LATEST_SCHEMA_VERSION_KEY = new TableRecords.LatestSchemaVersionKey();
-    private static final TableRecords.LatestEncodingIdKey LATEST_ENCODING_ID_KEY = new TableRecords.LatestEncodingIdKey();
+    private static final ValidationPolicyKey VALIDATION_POLICY_KEY = new ValidationPolicyKey();
+    private static final GroupPropertyKey GROUP_PROPERTY_KEY = new GroupPropertyKey();
+    private static final CodecTypesKey CODECS_TYPE_KEY = new CodecTypesKey();
+    private static final SchemaTypesKey SCHEMA_TYPES_KEY = new SchemaTypesKey();
+    private static final LatestSchemaVersionKey LATEST_SCHEMA_VERSION_KEY = new LatestSchemaVersionKey();
+    private static final LatestEncodingIdKey LATEST_ENCODING_ID_KEY = new LatestEncodingIdKey();
     private static final Retry.RetryAndThrowConditionally WRITE_CONFLICT_RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                                       .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
 
@@ -82,13 +84,13 @@ public class Group<V> {
 
     public CompletableFuture<Boolean> create(SerializationFormat serializationFormat, Map<String, String> properties,
                                           boolean allowMultipleTypes, SchemaValidationRules schemaValidationRules) {
-        List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
+        List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
         entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, null)));
 
-        TableRecords.GroupPropertiesRecord groupProp = new TableRecords.GroupPropertiesRecord(serializationFormat, allowMultipleTypes, properties);
+        GroupPropertiesRecord groupProp = new GroupPropertiesRecord(serializationFormat, allowMultipleTypes, properties);
         entries.add(new AbstractMap.SimpleEntry<>(GROUP_PROPERTY_KEY, new GroupTable.Value<>(groupProp, null)));
 
-        TableRecords.ValidationRecord validationRecord = new TableRecords.ValidationRecord(schemaValidationRules);
+        ValidationRecord validationRecord = new ValidationRecord(schemaValidationRules);
         entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(validationRecord, null)));
 
         return Futures.exceptionallyComposeExpecting(groupTable.updateEntries(entries).thenApply(x -> true), 
@@ -105,13 +107,13 @@ public class Group<V> {
                       });
     }
 
-    private CompletableFuture<Boolean> compareWithExisting(TableRecords.GroupPropertiesRecord groupProp, 
-                                                           TableRecords.ValidationRecord validationRecord) {
-        List<TableRecords.TableKey> keys = Lists.newArrayList(GROUP_PROPERTY_KEY, VALIDATION_POLICY_KEY);
-        return groupTable.getEntries(keys, TableRecords.TableValue.class)
+    private CompletableFuture<Boolean> compareWithExisting(GroupPropertiesRecord groupProp, 
+                                                           ValidationRecord validationRecord) {
+        List<TableKey> keys = Lists.newArrayList(GROUP_PROPERTY_KEY, VALIDATION_POLICY_KEY);
+        return groupTable.getEntries(keys, TableValue.class)
                 .thenApply(entries -> {
-                    TableRecords.GroupPropertiesRecord prop = (TableRecords.GroupPropertiesRecord) entries.get(0);
-                    TableRecords.ValidationRecord validation = (TableRecords.ValidationRecord) entries.get(1);
+                    GroupPropertiesRecord prop = (GroupPropertiesRecord) entries.get(0);
+                    ValidationRecord validation = (ValidationRecord) entries.get(1);
                     return prop.equals(groupProp) && validationRecord.equals(validation);
                 });
     }
@@ -122,7 +124,7 @@ public class Group<V> {
     }
 
     public CompletableFuture<List<SchemaWithVersion>> getLatestSchemas() {
-        return groupTable.getEntry(SCHEMA_TYPES_KEY, TableRecords.SchemaTypesListValue.class)
+        return groupTable.getEntry(SCHEMA_TYPES_KEY, SchemaTypesListValue.class)
                          .thenCompose(types -> {
                              List<String> schemas = types == null ? Collections.emptyList() : types.getTypes();
                              return Futures.allOfWithResults(schemas.stream().map(this::getLatestSchemaVersion).collect(Collectors.toList()))
@@ -145,38 +147,38 @@ public class Group<V> {
 
     public CompletableFuture<List<SchemaWithVersion>> getSchemas(String type, int fromPos) {
         return getSchemas(fromPos)
-                .thenApply(schemas -> schemas.stream().filter(x -> x.getSchema().getType().equals(type))
+                .thenApply(schemas -> schemas.stream().filter(x -> x.getSchemaInfo().getType().equals(type))
                                              .collect(Collectors.toList()));
     }
 
-    private CompletableFuture<List<TableRecords.SchemaRecord>> getSchemaRecords(int fromPos) {
-        return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, TableRecords.LatestSchemaVersionValue.class)
+    private CompletableFuture<List<SchemaRecord>> getSchemaRecords(int fromPos) {
+        return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, LatestSchemaVersionValue.class)
                          .thenCompose(latestPos -> {
                              int endPos = latestPos == null ? 0 : latestPos.getVersion().getOrdinal() + 1;
 
-                             List<TableRecords.TableKey> keys = new ArrayList<>();
-                             List<TableRecords.VersionKey> versionKeys = IntStream.range(fromPos, endPos)
-                                                                                  .boxed().map(TableRecords.VersionKey::new)
+                             List<TableKey> keys = new ArrayList<>();
+                             List<VersionKey> versionKeys = IntStream.range(fromPos, endPos)
+                                                                                  .boxed().map(VersionKey::new)
                                                                                   .collect(Collectors.toList());
-                             List<TableRecords.VersionDeletedRecord> deletedKeys = IntStream.range(fromPos, endPos)
-                                                                                            .boxed().map(TableRecords.VersionDeletedRecord::new)
+                             List<VersionDeletedRecord> deletedKeys = IntStream.range(fromPos, endPos)
+                                                                                            .boxed().map(VersionDeletedRecord::new)
                                                                                             .collect(Collectors.toList());
                              keys.addAll(versionKeys);
                              keys.addAll(deletedKeys);
-                             return groupTable.getEntriesWithVersion(keys, TableRecords.TableValue.class);
+                             return groupTable.getEntriesWithVersion(keys, TableValue.class);
                          }).thenApply(entries -> {
-                    List<TableRecords.SchemaRecord> schemaRecords = new ArrayList<>();
+                    List<SchemaRecord> schemaRecords = new ArrayList<>();
                     // Note: the order in which we add keys is - first add version keys followed by deleted keys. 
                     // so all schema records would be present before deleted records. And most of the deleted records 
                     // will be null 
 
-                    for (GroupTable.Value<TableRecords.TableValue, V> entry : entries) {
-                        if (entry.getValue() instanceof TableRecords.SchemaRecord) {
-                            schemaRecords.add((TableRecords.SchemaRecord) entry.getValue());
+                    for (GroupTable.Value<TableValue, V> entry : entries) {
+                        if (entry.getValue() instanceof SchemaRecord) {
+                            schemaRecords.add((SchemaRecord) entry.getValue());
                         }
-                        if (entry.getValue() instanceof TableRecords.VersionDeletedRecord) {
+                        if (entry.getValue() instanceof VersionDeletedRecord) {
                             schemaRecords.removeIf(x -> x.getVersionInfo().getOrdinal() ==
-                                    ((TableRecords.VersionDeletedRecord) entry.getValue()).getOrdinal());
+                                    ((VersionDeletedRecord) entry.getValue()).getOrdinal());
                         }
                     }
 
@@ -184,12 +186,22 @@ public class Group<V> {
                 });
     }
 
+    private CompletableFuture<Integer> getVersionOrdinal(String schemaType, int version) {
+        return groupTable.getEntry(new SchemaTypeVersionKey(schemaType, version), VersionOrdinalValue.class)
+                .thenApply(VersionOrdinalValue::getOrdinal);
+    }
+
+    public CompletableFuture<Void> deleteSchema(String schemaType, int version, Etag etag) {
+        return getVersionOrdinal(schemaType, version)
+                .thenCompose(versionOrdinal -> deleteSchema(versionOrdinal, etag));
+    }
+    
     public CompletableFuture<Void> deleteSchema(int versionOrdinal, Etag etag) {
-        TableRecords.VersionDeletedRecord versionDeletedRecord = new TableRecords.VersionDeletedRecord(versionOrdinal);
-        return groupTable.getEntry(versionDeletedRecord, TableRecords.VersionDeletedRecord.class)
+        VersionDeletedRecord versionDeletedRecord = new VersionDeletedRecord(versionOrdinal);
+        return groupTable.getEntry(versionDeletedRecord, VersionDeletedRecord.class)
                 .thenCompose(entry -> {
                     if (entry == null) {
-                        List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
+                        List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
                         entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
                         entries.add(new AbstractMap.SimpleEntry<>(versionDeletedRecord,
@@ -201,21 +213,26 @@ public class Group<V> {
                 });
     }
 
+    public CompletableFuture<SchemaInfo> getSchema(String schemaType, int version) {
+        return getVersionOrdinal(schemaType, version)
+                .thenCompose(versionOrdinal -> getSchema(versionOrdinal, false));
+    }
+
     public CompletableFuture<SchemaInfo> getSchema(int versionOrdinal) {
         return getSchema(versionOrdinal, false);
     }
 
     private CompletableFuture<SchemaInfo> getSchema(int versionOrdinal, boolean throwOnDeleted) {
-        List<? extends TableRecords.TableKey> keys = Lists.newArrayList(new TableRecords.VersionKey(versionOrdinal), 
-                new TableRecords.VersionDeletedRecord(versionOrdinal));
-        return groupTable.getEntriesWithVersion(keys, TableRecords.TableValue.class)
+        List<? extends TableKey> keys = Lists.newArrayList(new VersionKey(versionOrdinal), 
+                new VersionDeletedRecord(versionOrdinal));
+        return groupTable.getEntriesWithVersion(keys, TableValue.class)
                          .thenApply(entries -> {
                              if (entries.get(1).getValue() != null && throwOnDeleted) {
                                  throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, Integer.toString(versionOrdinal));
                              } else {
-                                 TableRecords.TableValue value = entries.get(0).getValue();
+                                 TableValue value = entries.get(0).getValue();
                                  if (value != null) {
-                                     return ((TableRecords.SchemaRecord) value).getSchemaInfo();
+                                     return ((SchemaRecord) value).getSchemaInfo();
                                  } else {
                                      throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "schema version not found");
                                  }
@@ -225,9 +242,9 @@ public class Group<V> {
 
     public CompletableFuture<VersionInfo> getVersion(SchemaInfo schemaInfo) {
         long fingerprint = getFingerprint(schemaInfo);
-        TableRecords.SchemaFingerprintKey key = new TableRecords.SchemaFingerprintKey(fingerprint);
+        SchemaFingerprintKey key = new SchemaFingerprintKey(fingerprint);
 
-        return groupTable.getEntry(key, TableRecords.SchemaVersionList.class)
+        return groupTable.getEntry(key, SchemaVersionList.class)
                          .thenCompose(record -> {
                              if (record != null) {
                                  return findVersion(record.getVersions(), schemaInfo);
@@ -249,14 +266,14 @@ public class Group<V> {
     }
 
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
-        TableRecords.EncodingIdRecord encodingIdIndex = new TableRecords.EncodingIdRecord(encodingId);
-        return groupTable.getEntry(encodingIdIndex, TableRecords.EncodingInfoRecord.class)
+        EncodingIdRecord encodingIdIndex = new EncodingIdRecord(encodingId);
+        return groupTable.getEntry(encodingIdIndex, EncodingInfoRecord.class)
                          .thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo().getOrdinal())
                                  .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType())));
     }
 
     public CompletableFuture<SchemaWithVersion> getLatestSchemaVersion() {
-        return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, TableRecords.LatestSchemaVersionValue.class)
+        return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, LatestSchemaVersionValue.class)
                          .thenApply(rec -> {
                              if (rec == null) {
                                  return null;
@@ -284,8 +301,8 @@ public class Group<V> {
     }
 
     public CompletableFuture<SchemaWithVersion> getLatestSchemaVersion(String type) {
-        TableRecords.LatestSchemaVersionForTypeKey key = new TableRecords.LatestSchemaVersionForTypeKey(type);
-        return groupTable.getEntry(key, TableRecords.LatestSchemaVersionValue.class)
+        LatestSchemaVersionForTypeKey key = new LatestSchemaVersionForTypeKey(type);
+        return groupTable.getEntry(key, LatestSchemaVersionValue.class)
                          .thenApply(rec -> {
                              if (rec == null) {
                                  return null;
@@ -314,7 +331,7 @@ public class Group<V> {
     }
 
     public CompletableFuture<List<String>> getCodecTypes() {
-        return groupTable.getEntry(CODECS_TYPE_KEY, TableRecords.CodecTypesListValue.class)
+        return groupTable.getEntry(CODECS_TYPE_KEY, CodecTypesListValue.class)
                          .thenApply(codecTypes -> {
                              if (codecTypes == null) {
                                  return Collections.singletonList("");
@@ -328,13 +345,13 @@ public class Group<V> {
         // get all codecTypes. if codec doesnt exist, add it to log. let it get synced to the table. 
         // generate encoding id will only generate if the codec is already registered.
         return WRITE_CONFLICT_RETRY.runAsync(() -> getCurrentEtag()
-                .thenCompose(etag -> groupTable.getEntryWithVersion(CODECS_TYPE_KEY, TableRecords.CodecTypesListValue.class)
+                .thenCompose(etag -> groupTable.getEntryWithVersion(CODECS_TYPE_KEY, CodecTypesListValue.class)
                                                .thenCompose(rec -> addCodecType(codecType, etag, rec))), executor);
     }
 
-    private CompletionStage<Void> addCodecType(String codecType, Etag etag, GroupTable.Value<TableRecords.CodecTypesListValue, V> rec) {
+    private CompletionStage<Void> addCodecType(String codecType, Etag etag, GroupTable.Value<CodecTypesListValue, V> rec) {
         if (rec.getValue() == null || !rec.getValue().getCodecTypes().contains(codecType)) {
-            List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
+            List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
             entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
             V version = rec.getVersion();
             List<String> codecTypes;
@@ -344,7 +361,7 @@ public class Group<V> {
                 codecTypes = new LinkedList<>(rec.getValue().getCodecTypes());
                 codecTypes.add(codecType);
             }
-            TableRecords.CodecTypesListValue updated = new TableRecords.CodecTypesListValue(codecTypes);
+            CodecTypesListValue updated = new CodecTypesListValue(codecTypes);
             entries.add(new AbstractMap.SimpleEntry<>(CODECS_TYPE_KEY, new GroupTable.Value<>(updated, version)));
 
             return groupTable.updateEntries(entries);
@@ -369,37 +386,39 @@ public class Group<V> {
     }
 
     public CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
-        List<TableRecords.TableKey> keys = new ArrayList<>();
+        List<TableKey> keys = new ArrayList<>();
         keys.add(LATEST_SCHEMA_VERSION_KEY);
-        TableRecords.SchemaFingerprintKey schemaFingerprintKey = new TableRecords.SchemaFingerprintKey(getFingerprint(schemaInfo));
+        SchemaFingerprintKey schemaFingerprintKey = new SchemaFingerprintKey(getFingerprint(schemaInfo));
         keys.add(schemaFingerprintKey);
 
-        keys.add(new TableRecords.LatestSchemaVersionForTypeKey(schemaInfo.getType()));
+        keys.add(new LatestSchemaVersionForTypeKey(schemaInfo.getType()));
         keys.add(SCHEMA_TYPES_KEY);
 
-        return groupTable.getEntriesWithVersion(keys, TableRecords.TableValue.class).thenCompose(values -> {
-            TableRecords.LatestSchemaVersionValue latest = (TableRecords.LatestSchemaVersionValue) values.get(0).getValue();
+        return groupTable.getEntriesWithVersion(keys, TableValue.class).thenCompose(values -> {
+            LatestSchemaVersionValue latest = (LatestSchemaVersionValue) values.get(0).getValue();
             V latestVersion = values.get(0).getVersion();
-            TableRecords.SchemaVersionList schemaIndex = (TableRecords.SchemaVersionList) values.get(1).getValue();
+            SchemaVersionList schemaIndex = (SchemaVersionList) values.get(1).getValue();
             V schemaIndexVersion = values.get(1).getVersion();
             int nextOrdinal = latest == null ? 0 : latest.getVersion().getOrdinal() + 1;
             int nextVersion;
 
             if (prop.isAllowMultipleTypes()) {
-                TableRecords.LatestSchemaVersionValue objectLatestVersion = (TableRecords.LatestSchemaVersionValue) values.get(2).getValue();
+                LatestSchemaVersionValue objectLatestVersion = (LatestSchemaVersionValue) values.get(2).getValue();
                 nextVersion = objectLatestVersion == null ? 0 : objectLatestVersion.getVersion().getVersion() + 1;
             } else {
                 nextVersion = nextOrdinal;
             }
             VersionInfo next = new VersionInfo(schemaInfo.getType(), nextVersion, nextOrdinal);
 
-            List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new LinkedList<>();
+            List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new LinkedList<>();
             // 0. etag
             entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
             // 1. version info key. add
-            entries.add(new AbstractMap.SimpleEntry<>(new TableRecords.VersionKey(next.getOrdinal()),
-                    new GroupTable.Value<>(new TableRecords.SchemaRecord(schemaInfo, next, prop.getSchemaValidationRules(), 
+            entries.add(new AbstractMap.SimpleEntry<>(new SchemaTypeVersionKey(next.getType(), next.getVersion()),
+                    new GroupTable.Value<>(new VersionOrdinalValue(next.getOrdinal()), null)));
+            entries.add(new AbstractMap.SimpleEntry<>(new VersionKey(next.getOrdinal()),
+                    new GroupTable.Value<>(new SchemaRecord(schemaInfo, next, prop.getSchemaValidationRules(), 
                             System.currentTimeMillis()), null)));
 
             // 2. schema info key. update
@@ -411,20 +430,20 @@ public class Group<V> {
                 versions.add(next);
             }
             entries.add(new AbstractMap.SimpleEntry<>(schemaFingerprintKey,
-                    new GroupTable.Value<>(new TableRecords.SchemaVersionList(versions), schemaIndexVersion)));
+                    new GroupTable.Value<>(new SchemaVersionList(versions), schemaIndexVersion)));
 
             // 3. latest schema version
             entries.add(new AbstractMap.SimpleEntry<>(LATEST_SCHEMA_VERSION_KEY,
-                    new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), latestVersion)));
+                    new GroupTable.Value<>(new LatestSchemaVersionValue(next), latestVersion)));
 
             // 3.1 latest for object type
             V objectLatestVersionVersion = values.get(2).getVersion();
-            entries.add(new AbstractMap.SimpleEntry<>(new TableRecords.LatestSchemaVersionForTypeKey(
+            entries.add(new AbstractMap.SimpleEntry<>(new LatestSchemaVersionForTypeKey(
                     schemaInfo.getType()),
-                    new GroupTable.Value<>(new TableRecords.LatestSchemaVersionValue(next), objectLatestVersionVersion)));
+                    new GroupTable.Value<>(new LatestSchemaVersionValue(next), objectLatestVersionVersion)));
 
             // 4. object types list
-            TableRecords.SchemaTypesListValue typesValue = (TableRecords.SchemaTypesListValue) values.get(3).getValue();
+            SchemaTypesListValue typesValue = (SchemaTypesListValue) values.get(3).getValue();
             V typeVersion = values.get(3).getVersion();
 
             List<String> list = typesValue == null ? new ArrayList<>() :
@@ -434,21 +453,21 @@ public class Group<V> {
             }
             entries.add(new AbstractMap.SimpleEntry<>(SCHEMA_TYPES_KEY,
                     new GroupTable.Value<>(
-                            new TableRecords.SchemaTypesListValue(list), typeVersion)));
+                            new SchemaTypesListValue(list), typeVersion)));
             return groupTable.updateEntries(entries).thenApply(v -> next);
         });
     }
 
     public CompletableFuture<Void> updateValidationPolicy(SchemaValidationRules policy, Etag etag) {
-        return groupTable.getEntryWithVersion(VALIDATION_POLICY_KEY, TableRecords.ValidationRecord.class)
+        return groupTable.getEntryWithVersion(VALIDATION_POLICY_KEY, ValidationRecord.class)
                          .thenCompose(entry -> {
                              if (entry.getValue().getValidationRules().equals(policy)) {
                                  return CompletableFuture.completedFuture(null);
                              } else {
-                                 List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new ArrayList<>();
+                                 List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
                                  entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
-                                 TableRecords.ValidationRecord updated = new TableRecords.ValidationRecord(policy);
+                                 ValidationRecord updated = new ValidationRecord(policy);
                                  entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(updated, entry.getVersion())));
 
                                  return groupTable.updateEntries(entries);
@@ -457,11 +476,11 @@ public class Group<V> {
     }
 
     public CompletableFuture<GroupProperties> getGroupProperties() {
-        List<? extends TableRecords.TableKey> keys = Lists.newArrayList(GROUP_PROPERTY_KEY, VALIDATION_POLICY_KEY);
-        return groupTable.getEntries(keys, TableRecords.TableValue.class)
+        List<? extends TableKey> keys = Lists.newArrayList(GROUP_PROPERTY_KEY, VALIDATION_POLICY_KEY);
+        return groupTable.getEntries(keys, TableValue.class)
                          .thenApply(entries -> {
-                             TableRecords.GroupPropertiesRecord properties = (TableRecords.GroupPropertiesRecord) entries.get(0);
-                             TableRecords.ValidationRecord validationRecord = (TableRecords.ValidationRecord) entries.get(1);
+                             GroupPropertiesRecord properties = (GroupPropertiesRecord) entries.get(0);
+                             ValidationRecord validationRecord = (ValidationRecord) entries.get(1);
                              return new GroupProperties(properties.getSerializationFormat(), validationRecord.getValidationRules(),
                                      properties.isAllowMultipleTypes(),
                                      ImmutableMap.copyOf(properties.getProperties()));
@@ -469,7 +488,7 @@ public class Group<V> {
     }
 
     private long getFingerprint(SchemaInfo schemaInfo) {
-        return HashUtil.getFingerprint(schemaInfo.getSchemaData());
+        return HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
     }
 
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, String codecType, Etag etag) {
@@ -477,24 +496,24 @@ public class Group<V> {
                 .thenCompose(schema -> getCodecTypes()
                 .thenCompose(codecTypes -> {
                     if (codecTypes.contains(codecType)) {
-                        TableRecords.LatestEncodingIdKey key = new TableRecords.LatestEncodingIdKey();
-                        return groupTable.getEntryWithVersion(key, TableRecords.LatestEncodingIdValue.class).thenCompose(current -> {
+                        LatestEncodingIdKey key = new LatestEncodingIdKey();
+                        return groupTable.getEntryWithVersion(key, LatestEncodingIdValue.class).thenCompose(current -> {
                             EncodingId nextEncodingId = current.getValue() == null ? new EncodingId(0) :
                                     new EncodingId(current.getValue().getEncodingId().getId() + 1);
                             V encodingIdVersion = current.getVersion();
 
-                            List<Map.Entry<TableRecords.TableKey, GroupTable.Value<TableRecords.TableValue, V>>> entries = new LinkedList<>();
+                            List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new LinkedList<>();
 
                             entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
 
-                            TableRecords.EncodingIdRecord idIndex = new TableRecords.EncodingIdRecord(nextEncodingId);
-                            TableRecords.EncodingInfoRecord infoIndex = new TableRecords.EncodingInfoRecord(versionInfo, codecType);
+                            EncodingIdRecord idIndex = new EncodingIdRecord(nextEncodingId);
+                            EncodingInfoRecord infoIndex = new EncodingInfoRecord(versionInfo, codecType);
                             // add new entries for encoding id and info
                             entries.add(new AbstractMap.SimpleEntry<>(idIndex, new GroupTable.Value<>(infoIndex, null)));
                             entries.add(new AbstractMap.SimpleEntry<>(infoIndex, new GroupTable.Value<>(idIndex, null)));
                             // update
                             entries.add(new AbstractMap.SimpleEntry<>(LATEST_ENCODING_ID_KEY,
-                                    new GroupTable.Value<>(new TableRecords.LatestEncodingIdValue(nextEncodingId), encodingIdVersion)));
+                                    new GroupTable.Value<>(new LatestEncodingIdValue(nextEncodingId), encodingIdVersion)));
                             return groupTable.updateEntries(entries)
                                              .thenApply(v -> nextEncodingId);
                         });
@@ -505,8 +524,8 @@ public class Group<V> {
     }
 
     public CompletableFuture<Either<EncodingId, Etag>> getEncodingId(VersionInfo versionInfo, String codecType) {
-        TableRecords.EncodingInfoRecord encodingInfoIndex = new TableRecords.EncodingInfoRecord(versionInfo, codecType);
-        return groupTable.getEntry(encodingInfoIndex, TableRecords.EncodingIdRecord.class)
+        EncodingInfoRecord encodingInfoIndex = new EncodingInfoRecord(versionInfo, codecType);
+        return groupTable.getEntry(encodingInfoIndex, EncodingIdRecord.class)
                          .thenCompose(record -> {
                              if (record == null) {
                                  return getCurrentEtag().thenApply(Either::right);
@@ -525,7 +544,7 @@ public class Group<V> {
             VersionInfo version = iterator.next();
             return Futures.exceptionallyExpecting(getSchema(version.getOrdinal(), true)
                     .thenAccept(schema -> {
-                        if (Arrays.equals(schema.getSchemaData(), toFind.getSchemaData()) && schema.getType().equals(toFind.getType())) {
+                        if (Arrays.equals(schema.getSchemaData().array(), toFind.getSchemaData().array()) && schema.getType().equals(toFind.getType())) {
                             found.set(version);
                         }
                     }), e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);
@@ -538,7 +557,7 @@ public class Group<V> {
         switch (schemaInfo.getSerializationFormat()) {
             case Avro:
             case Json:
-                schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+                schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                 break;
             case Protobuf:
                 DescriptorProtos.FileDescriptorSet descriptor = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());

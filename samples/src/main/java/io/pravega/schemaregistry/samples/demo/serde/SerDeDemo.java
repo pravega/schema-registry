@@ -44,6 +44,7 @@ import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import java.net.URI;
 import java.net.URL;
+import java.nio.ByteBuffer;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashMap;
@@ -111,7 +112,7 @@ public class SerDeDemo {
 
         URL url = path.toUri().toURL();
 
-        SchemaInfo schemaInfo = new SchemaInfo("serde", serializationFormat, url.toString().getBytes(Charsets.UTF_8),
+        SchemaInfo schemaInfo = new SchemaInfo("serde", serializationFormat, ByteBuffer.wrap(url.toString().getBytes(Charsets.UTF_8)),
                 ImmutableMap.copyOf(map));
         MySerializer mySerializer = new MySerializer();
 
@@ -135,8 +136,8 @@ public class SerDeDemo {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        SchemaInfo schema = client.getSchemas(groupId).get(0).getSchema();
-        String urlString = new String(schema.getSchemaData(), Charsets.UTF_8);
+        SchemaInfo schema = client.getSchemas(groupId).get(0).getSchemaInfo();
+        String urlString = new String(schema.getSchemaData().array(), Charsets.UTF_8);
         URL url = new URL(urlString);
 
         PravegaDeserializer<Object> myDeserializer = SerdeLoader.getDeserializer(schema.getProperties().get(DESERIALIZER_CLASS_NAME), url);

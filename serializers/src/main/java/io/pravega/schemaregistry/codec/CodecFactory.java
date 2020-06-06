@@ -23,7 +23,7 @@ import java.util.zip.GZIPOutputStream;
  * Factory class for creating codecs for codec types . 
  */
 public class CodecFactory {
-    public static final String MIME_NONE = "";
+    public static final String NONE = "";
     public static final String MIME_GZIP = "application/x-gzip";
     public static final String MIME_SNAPPY = "application/x-snappy-framed";
 
@@ -46,7 +46,7 @@ public class CodecFactory {
     private static class Noop implements Codec {
         @Override
         public String getCodecType() {
-            return MIME_NONE;
+            return NONE;
         }
 
         @Override

@@ -27,7 +27,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static io.pravega.schemaregistry.codec.CodecFactory.MIME_NONE;
+import static io.pravega.schemaregistry.codec.CodecFactory.NONE;
 
 @Slf4j
 abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
@@ -91,7 +91,7 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     public T deserialize(ByteBuffer data) {
         if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
-            String codecType = MIME_NONE;
+            String codecType = NONE;
             if (skipHeaders) {
                 int currentPos = data.position();
                 data.position(currentPos + HEADER_SIZE);

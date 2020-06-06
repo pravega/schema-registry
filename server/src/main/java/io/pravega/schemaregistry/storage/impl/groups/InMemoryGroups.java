@@ -19,6 +19,7 @@ import lombok.Synchronized;
 
 import javax.annotation.concurrent.GuardedBy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
@@ -63,8 +64,12 @@ public class InMemoryGroups implements Groups<Integer> {
     @Synchronized
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups(ContinuationToken token, int limit) {
-        // TODO: implement pagination
-        return CompletableFuture.completedFuture(new ListWithToken<>(new ArrayList<>(groups.keySet()), null));
+        ContinuationToken next = ContinuationToken.fromString(Integer.toString(groups.size()));
+        if (token == null || token.equals(ContinuationToken.EMPTY)) {
+            return CompletableFuture.completedFuture(new ListWithToken<>(new ArrayList<>(groups.keySet()), next));
+        } else {
+            return CompletableFuture.completedFuture(new ListWithToken<>(Collections.emptyList(), next));
+        }
     }
 
     @Synchronized

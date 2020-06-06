@@ -19,6 +19,7 @@ import io.pravega.schemaregistry.storage.client.Version;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -48,7 +49,7 @@ public class PravegaKVSchemas implements Schemas<Version> {
         // (this can fail with write conflict if multiple concurrent attempts are made. keep retrying). 
         // 3. add the group name to the schema id groups list. get and set.  
         SchemaFingerprintKey fingerprintKey = new
-                SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData()));
+                SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData().array()));
         return withCreateSchemasTableIfAbsent(() -> Futures.exceptionallyExpecting(tableStore.getEntry(SCHEMAS,
                 KEY_SERIALIZER.toBytes(fingerprintKey),
                 x -> fromBytes(SchemaFingerprintKey.class, x, SchemaIdList.class)),
@@ -131,7 +132,8 @@ public class PravegaKVSchemas implements Schemas<Version> {
                     }))).thenApply(schemas -> schemas.entrySet().stream().filter(x -> {
                 SchemaInfo schema = x.getValue().getRecord().getSchemaInfo();
                 return schema.getType().equals(schemaInfo.getType())
-                        && schema.getSerializationFormat().equals(schemaInfo.getSerializationFormat());
+                        && schema.getSerializationFormat().equals(schemaInfo.getSerializationFormat())
+                        && Arrays.equals(schema.getSchemaData().array(), schemaInfo.getSchemaData().array());
             }).map(Map.Entry::getKey).findAny().orElse(null));
         } else {
             future = CompletableFuture.completedFuture(null);
@@ -142,7 +144,7 @@ public class PravegaKVSchemas implements Schemas<Version> {
     @Override
     public CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo) {
         SchemaFingerprintKey fingerprintKey = new
-                SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData()));
+                SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData().array()));
         return withCreateSchemasTableIfAbsent(() -> Futures.exceptionallyExpecting(tableStore.getEntry(SCHEMAS,
                 KEY_SERIALIZER.toBytes(fingerprintKey),
                 x -> fromBytes(SchemaFingerprintKey.class, x, SchemaIdList.class)),

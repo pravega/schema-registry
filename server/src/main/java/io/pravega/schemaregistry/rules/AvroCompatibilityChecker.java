@@ -32,8 +32,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     public boolean canRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
         Preconditions.checkArgument(toValidate.getSerializationFormat().equals(SerializationFormat.Avro));
         Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSerializationFormat().equals(SerializationFormat.Avro)));
-        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
-        List<Schema> writers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
+        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData().array(), Charsets.UTF_8));
+        List<Schema> writers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
                                                 .collect(Collectors.toList());
         try {
             CAN_READ.validate(schema, writers);
@@ -47,8 +47,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
         Preconditions.checkArgument(toValidate.getSerializationFormat().equals(SerializationFormat.Avro));
         Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSerializationFormat().equals(SerializationFormat.Avro)));
 
-        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
-        List<Schema> readers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
+        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData().array(), Charsets.UTF_8));
+        List<Schema> readers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
                                                 .collect(Collectors.toList());
         try {
             CAN_BE_READ.validate(schema, readers);
@@ -62,8 +62,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
         Preconditions.checkArgument(toValidate.getSerializationFormat().equals(SerializationFormat.Avro));
         Preconditions.checkArgument(toValidateAgainst.stream().allMatch(s -> s.getSerializationFormat().equals(SerializationFormat.Avro)));
 
-        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData(), Charsets.UTF_8));
-        List<Schema> schemas = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData(), Charsets.UTF_8)))
+        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData().array(), Charsets.UTF_8));
+        List<Schema> schemas = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
                                                 .collect(Collectors.toList());
         try {
             MUTUAL_READ.validate(schema, schemas);

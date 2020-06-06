@@ -24,10 +24,10 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.exceptions.PreconditionFailedException;
@@ -82,7 +82,6 @@ public class SchemaRegistryService {
         log.info("List groups called");
         return store.listGroups(continuationToken, limit)
                     .thenCompose(reply -> {
-                        ContinuationToken token = reply.getToken();
                         List<String> list = reply.getList();
                         return Futures.allOfWithResults(list.stream().collect(Collectors.toMap(x -> x,
                                 x -> Futures.exceptionallyExpecting(store.getGroupProperties(x).thenApply(AtomicReference::new),
@@ -92,7 +91,7 @@ public class SchemaRegistryService {
                             log.info("Returning groups {}", groups);
                             return new MapWithToken<>(
                                     groups.entrySet().stream().collect(HashMap::new,
-                                            (m, v) -> m.put(v.getKey(), v.getValue().get()), HashMap::putAll), token);
+                                            (m, v) -> m.put(v.getKey(), v.getValue().get()), HashMap::putAll), reply.getToken());
                         });
                     });
     }
@@ -283,6 +282,27 @@ public class SchemaRegistryService {
     }
 
     /**
+     * Gets schema corresponding to the version.
+     *
+     * @param group   Name of group.
+     * @param schemaType Schema type as used in {@link SchemaInfo#type}
+     * @param version Version number which uniquely identifies schema of schemaType within a group.
+     * @return CompletableFuture that holds Schema info corresponding to the version info.
+     */
+    public CompletableFuture<SchemaInfo> getSchema(String group, String schemaType, int version) {
+        log.info("Group {}, get schema for version {}/{}.", group, schemaType, version);
+
+        return store.getSchema(group, schemaType, version)
+                    .whenComplete((r, e) -> {
+                        if (e == null) {
+                            log.info("Group {}, return schema for verison {}/{}.", group, schemaType, version);
+                        } else {
+                            log.warn("Group {}, get schema version {}/{} failed with error", e, group, schemaType, version);
+                        }
+                    });
+    }
+
+    /**
      * Delete schema corresponding to the version.
      *
      * @param group   Name of group.
@@ -299,6 +319,28 @@ public class SchemaRegistryService {
                                                               log.info("Group {}, schema for verison {} deleted.", group, versionOrdinal);
                                                           } else {
                                                               log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
+                                                          }
+                                                      })), executor);
+    }
+
+    /**
+     * Delete schema corresponding to the version.
+     *
+     * @param group   Name of group.
+     * @param schemaType schema type as specified in {@link SchemaInfo#type}
+     * @param version Version which uniquely identifies schema of schemaType within a group.
+     * @return CompletableFuture that holds Schema info corresponding to the version info.
+     */
+    public CompletableFuture<Void> deleteSchema(String group, String schemaType, int version) {
+        log.info("Group {}, delete schema for version {}/{}.", group, schemaType, version);
+        return RETRY.runAsync(() -> store.getGroupEtag(group)
+                                         .thenCompose(etag ->
+                                                 store.deleteSchema(group, schemaType, version, etag)
+                                                      .whenComplete((r, e) -> {
+                                                          if (e == null) {
+                                                              log.info("Group {}, schema for verison {}/{} deleted.", group, schemaType, version);
+                                                          } else {
+                                                              log.warn("Group {}, get schema version {}/{} failed with error", e, group, schemaType, version);
                                                           }
                                                       })), executor);
     }
@@ -556,7 +598,7 @@ public class SchemaRegistryService {
 
         if (fetchAll) {
             if (groupProperties.isAllowMultipleTypes()) {
-                schemasFuture = store.listSchemasByName(group, schema.getType());
+                schemasFuture = store.listSchemasByType(group, schema.getType());
             } else {
                 schemasFuture = store.listSchemas(group);
             }
@@ -579,7 +621,7 @@ public class SchemaRegistryService {
                                               }).max(Comparator.comparingInt(VersionInfo::getVersion)).orElse(null);
             if (till != null) {
                 if (groupProperties.isAllowMultipleTypes()) {
-                    schemasFuture = store.listSchemasByName(group, schema.getType(), till);
+                    schemasFuture = store.listSchemasByType(group, schema.getType(), till);
                 } else {
                     schemasFuture = store.listSchemas(group, till);
                 }
@@ -602,7 +644,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(validateSchemaData(schema));
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
-        List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema).collect(Collectors.toList());
+        List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchemaInfo).collect(Collectors.toList());
         Collections.reverse(schemas);
 
         // Verify that the type matches the type in schemas it will be validated against. 
@@ -632,11 +674,11 @@ public class SchemaRegistryService {
                         List<SchemaInfo> backwardTillList = new LinkedList<>();
                         List<SchemaInfo> forwardTillList = new LinkedList<>();
                         schemasWithVersion.forEach(x -> {
-                            if (x.getVersion().getVersion() >= compatibility.getBackwardTill().getVersion()) {
-                                backwardTillList.add(x.getSchema());
+                            if (x.getVersionInfo().getVersion() >= compatibility.getBackwardTill().getVersion()) {
+                                backwardTillList.add(x.getSchemaInfo());
                             }
-                            if (x.getVersion().getVersion() >= compatibility.getForwardTill().getVersion()) {
-                                forwardTillList.add(x.getSchema());
+                            if (x.getVersionInfo().getVersion() >= compatibility.getForwardTill().getVersion()) {
+                                forwardTillList.add(x.getSchemaInfo());
                             }
                         });
                         isValid = checker.canRead(schema, backwardTillList) & checker.canBeRead(schema, forwardTillList);
@@ -672,7 +714,7 @@ public class SchemaRegistryService {
                                                        x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)));
                     break;
                 case Avro:
-                    schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+                    schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
                     int start = schemaInfo.getType().lastIndexOf(".");
                     String type = schemaInfo.getType().substring(start + 1);
@@ -681,7 +723,7 @@ public class SchemaRegistryService {
                             schema.getName().equals(type);
                     break;
                 case Json:
-                    schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+                    schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
                     break;
                 case Custom:
@@ -700,7 +742,7 @@ public class SchemaRegistryService {
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
-        List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchema)
+        List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchemaInfo)
                                                      .collect(Collectors.toList());
         Collections.reverse(schemas);
         for (SchemaValidationRule rule : prop.getSchemaValidationRules().getRules().values()) {
@@ -728,8 +770,8 @@ public class SchemaRegistryService {
                     case BackwardAndForwardTill:
                         List<SchemaInfo> backwardTillList = new LinkedList<>();
                         schemasWithVersion.forEach(x -> {
-                            if (x.getVersion().getVersion() >= compatibility.getBackwardTill().getVersion()) {
-                                backwardTillList.add(x.getSchema());
+                            if (x.getVersionInfo().getVersion() >= compatibility.getBackwardTill().getVersion()) {
+                                backwardTillList.add(x.getSchemaInfo());
                             }
                         });
                         canRead = checker.canRead(schema, backwardTillList);

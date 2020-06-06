@@ -50,7 +50,7 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData());
+        Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData().array());
         Schema readerSchema = avroSchema.getSchema();
         
         SpecificDatumReader<T> datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);

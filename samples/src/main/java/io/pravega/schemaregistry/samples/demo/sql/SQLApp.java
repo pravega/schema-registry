@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.samples.demo.sql;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -37,6 +38,7 @@ import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
 import lombok.Data;
 import lombok.SneakyThrows;
+import lombok.val;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.util.Utf8;
@@ -52,6 +54,7 @@ import org.apache.commons.lang3.NotImplementedException;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
+import java.nio.ByteBuffer;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
@@ -118,15 +121,15 @@ public class SQLApp {
     }
 
     private void handleShowTables() {
-        Map<String, GroupProperties> groups = client.listGroups();
-        groups.keySet().stream().filter(x -> x.startsWith("table://"))
+        val groups = Lists.newArrayList(client.listGroups());
+        groups.stream().filter(x -> x.getKey().startsWith("table://"))
               .forEach(x -> {
-                  String tableName = x.substring("table://".length());
+                  String tableName = x.getKey().substring("table://".length());
                   String tableGroupId = getTableGroupId(tableName);
                   SchemaWithVersion tableSchema = client.getLatestSchemaVersion(tableGroupId, null);
 
                   // read into this table schema
-                  TableSchema schema = TableSchema.fromBytes(tableSchema.getSchema().getSchemaData());
+                  TableSchema schema = TableSchema.fromBytes(tableSchema.getSchemaInfo().getSchemaData().array());
 
                   System.out.println("Table name: " + tableName);
 
@@ -158,11 +161,11 @@ public class SQLApp {
         GroupProperties properties = client.getGroupProperties(groupId);
         
         SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
-        SchemaInfo schemaInfo = latestSchema.getSchema();
+        SchemaInfo schemaInfo = latestSchema.getSchemaInfo();
         TableSchema tableSchema = null;
         switch (properties.getSerializationFormat()) {
             case Avro:
-                Schema schema = new Schema.Parser().parse(new String(schemaInfo.getSchemaData(), Charsets.UTF_8));
+                Schema schema = new Schema.Parser().parse(new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8));
                 tableSchema = new TableSchema(schema.getFields().stream().map(x -> {
                     String name = x.name();
                     Schema.Type type = x.schema().getType();
@@ -181,7 +184,7 @@ public class SQLApp {
         map.put("scope", scope);
         map.put("stream", stream);
         
-        SchemaInfo tableSchemaInfo = new SchemaInfo("table", serializationFormat, tableSchema.toBytes(), map.build());
+        SchemaInfo tableSchemaInfo = new SchemaInfo("table", serializationFormat, ByteBuffer.wrap(tableSchema.toBytes()), map.build());
         
         client.addGroup(tableGroupId, new GroupProperties(serializationFormat, validationRules, false));
         client.addSchema(tableGroupId, tableSchemaInfo);
@@ -200,12 +203,12 @@ public class SQLApp {
         
         String tableGroupId = getTableGroupId(tableName);
         SchemaWithVersion tableSchema = client.getLatestSchemaVersion(tableGroupId, null);
-        Map<String, String> prop = tableSchema.getSchema().getProperties();
+        Map<String, String> prop = tableSchema.getSchemaInfo().getProperties();
         String scope = prop.get("scope");
         String stream = prop.get("stream");
         
         // read into this table schema
-        TableSchema schema = TableSchema.fromBytes(tableSchema.getSchema().getSchemaData());
+        TableSchema schema = TableSchema.fromBytes(tableSchema.getSchemaInfo().getSchemaData().array());
         StringBuilder top = new StringBuilder();
         for (int i = 0; i < schema.columns.size(); i++) {
             top.append("_");
@@ -287,7 +290,7 @@ public class SQLApp {
                                                             .build();
 
         SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
-        AvroSchema<GenericRecord> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchema().getSchemaData(), Charsets.UTF_8)));
+        AvroSchema<GenericRecord> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchemaInfo().getSchemaData().array(), Charsets.UTF_8)));
         Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, avroSchema);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

@@ -209,15 +209,16 @@ paths:
         description: Group name
         required: true
         type: string
-      - in: query
-        name: type
-        type: string
-        description: Type of object the schema describes. 
     get:
       tags:
       - "Group"
       operationId: getSchemaVersions
-      description: Get all schema versions for the group 
+      description: Get all schema versions for the group
+      parameters:
+            - in: query
+              name: type
+              type: string
+              description: Type of object the schema describes. 
       produces:
         - application/json
       responses:
@@ -229,13 +230,6 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group schema versions
-  /groups/{groupName}/schemas/versions:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
     post:
       tags:
       - "Group"
@@ -307,6 +301,54 @@ paths:
       - in: path
         name: versionOrdinal
         description: Version ordinal
+        required: true
+        type: integer
+        format: int32
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemaFromVersionOrdinal
+      description: Get schema from the version ordinal that uniquely identifies the schema in the group. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching schema from version  
+    delete:
+      tags:
+      - "Group"
+      operationId: deleteSchemaVersionOrinal
+      description: Delete schema identified by version from the group.
+      produces:
+        - application/json
+      responses:
+        204:
+          description: Schema corresponding to the version
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while deleting schema from group  
+  /groups/{groupName}/schemas/{type}/versions/{version}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: type
+        description: Schema type from SchemaInfo#type or VersionInfo#type
+        required: true
+        type: string
+      - in: path
+        name: version
+        description: Version number
         required: true
         type: integer
         format: int32
@@ -808,7 +850,7 @@ definitions:
   GroupHistory:
     type: object
     properties:
-       history:
+      history:
         type: array
         description: Chronological list of Group History records.
         items:

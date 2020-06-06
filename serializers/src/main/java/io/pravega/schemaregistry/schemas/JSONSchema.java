@@ -21,6 +21,8 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
+import java.nio.ByteBuffer;
+
 /**
  * Container class for Json Schema.
  * 
@@ -104,14 +106,14 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
         ObjectMapper objectMapper = new ObjectMapper();
-        String schemaString = new String(schemaInfo.getSchemaData(), Charsets.UTF_8);
+        String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
         
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
         return new JSONSchema<>(schema, schemaInfo.getType(), schemaString, Object.class);
     }
 
-    private byte[] getSchemaBytes() {
-        return schemaString.getBytes(Charsets.UTF_8);
+    private ByteBuffer getSchemaBytes() {
+        return ByteBuffer.wrap(schemaString.getBytes(Charsets.UTF_8));
     }
 
     @Override

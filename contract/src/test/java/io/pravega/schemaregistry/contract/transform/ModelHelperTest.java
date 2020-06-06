@@ -22,6 +22,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SerializationForm
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import org.junit.Test;
 
+import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 
@@ -65,8 +66,8 @@ public class ModelHelperTest {
         assertEquals(encodingInfo.getVersionInfo(), versionInfo);
         assertEquals(encodingInfo.getSchemaInfo(), schemaInfo);
         io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion = ModelHelper.decode(new SchemaWithVersion().schemaInfo(schema).version(version));
-        assertEquals(schemaWithVersion.getVersion(), versionInfo);
-        assertEquals(schemaWithVersion.getSchema(), schemaInfo);
+        assertEquals(schemaWithVersion.getVersionInfo(), versionInfo);
+        assertEquals(schemaWithVersion.getSchemaInfo(), schemaInfo);
 
         io.pravega.schemaregistry.contract.data.EncodingId encodingId = ModelHelper.decode(new EncodingId().encodingId(1));
         assertEquals(encodingId.getId(), 1);
@@ -76,7 +77,7 @@ public class ModelHelperTest {
     public void testEncode() {
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = io.pravega.schemaregistry.contract.data.SerializationFormat.custom("custom");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                "name", serializationFormat, new byte[0], ImmutableMap.of());
+                "name", serializationFormat, ByteBuffer.wrap(new byte[0]), ImmutableMap.of());
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 1);
         io.pravega.schemaregistry.contract.data.Compatibility rule = io.pravega.schemaregistry.contract.data.Compatibility.backwardTillAndForwardTill(
                 new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 0),
@@ -98,7 +99,7 @@ public class ModelHelperTest {
         SchemaInfo schema = ModelHelper.encode(schemaInfo);
         assertEquals(schema.getType(), schemaInfo.getType());
         assertEquals(schema.getProperties(), schemaInfo.getProperties());
-        assertTrue(Arrays.equals(schema.getSchemaData(), schemaInfo.getSchemaData()));
+        assertTrue(Arrays.equals(schema.getSchemaData(), schemaInfo.getSchemaData().array()));
         assertEquals(schema.getSerializationFormat(), type);
 
         EncodingId encodingId = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.EncodingId(0));

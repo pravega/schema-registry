@@ -23,9 +23,9 @@ public class SchemaWithVersion {
     /**
      * Schema Information object. 
      */
-    private final SchemaInfo schema;
+    private final SchemaInfo schemaInfo;
     /**
      * Version information object that identifies the corresponding schema object. 
      */
-    private final VersionInfo version;
+    private final VersionInfo versionInfo;
 }

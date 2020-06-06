@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.client;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Lists;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -29,9 +30,11 @@ import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.test.common.AssertExtensions;
+import lombok.val;
 import org.junit.Test;
 
 import javax.ws.rs.core.Response;
+import java.nio.ByteBuffer;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -69,21 +72,27 @@ public class TestSchemaRegistryClient {
         
         // list groups
         doReturn(response).when(proxy).listGroups(null, 100);
+        Response response2 = mock(Response.class);
+        doReturn(response2).when(proxy).listGroups("token", 100);
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
+        doReturn(Response.Status.OK.getStatusCode()).when(response2).getStatus();
         GroupProperties mygroup = new GroupProperties().properties(Collections.emptyMap())
                                                        .serializationFormat(new io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat()
                                                                .serializationFormat(io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat.SerializationFormatEnum.ANY))
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
                                                        .allowMultipleTypes(false);
         String groupName = "mygroup";
-        ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupName, mygroup));
+        ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupName, mygroup)).continuationToken("token");
         doReturn(groupList).when(response).readEntity(eq(ListGroupsResponse.class));
+        doReturn(new ListGroupsResponse().groups(Collections.emptyMap()).continuationToken("token")).when(response2).readEntity(eq(ListGroupsResponse.class));
 
-        Map<String, io.pravega.schemaregistry.contract.data.GroupProperties> groups = client.listGroups();
+        val groups = Lists.newArrayList(client.listGroups());
         assertEquals(1, groups.size());
-        assertTrue(groups.containsKey(groupName));
-        assertEquals(groups.get(groupName).getSerializationFormat(), SerializationFormat.Any);
-        assertEquals(groups.get(groupName).getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
+        assertTrue(groups.stream().anyMatch(x -> x.getKey().equals(groupName)));
+        Map.Entry<String, io.pravega.schemaregistry.contract.data.GroupProperties> group = 
+                groups.stream().filter(x -> x.getKey().equals(groupName)).findAny().orElseThrow(RuntimeException::new);
+        assertEquals(group.getValue().getSerializationFormat(), SerializationFormat.Any);
+        assertEquals(group.getValue().getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
 
         reset(response);
     }
@@ -101,19 +110,26 @@ public class TestSchemaRegistryClient {
                                                        .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
                                                        .allowMultipleTypes(false);
         String groupId = "mygroup";
-        ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupId, mygroup));
+        ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupId, mygroup)).continuationToken("token");
+        ListGroupsResponse groupList2 = new ListGroupsResponse().groups(Collections.emptyMap()).continuationToken("token");
         doReturn(response).when(proxy).listGroups(null, 100);
+        Response response2 = mock(Response.class);
+        doReturn(response2).when(proxy).listGroups("token", 100);
+        doReturn(Response.Status.OK.getStatusCode()).when(response2).getStatus();
 
         doReturn(groupList).when(response).readEntity(eq(ListGroupsResponse.class));
-        Map<String, io.pravega.schemaregistry.contract.data.GroupProperties> groups = client.listGroups();
+        doReturn(groupList2).when(response2).readEntity(eq(ListGroupsResponse.class));
+        val groups = Lists.newArrayList(client.listGroups());
         assertEquals(1, groups.size());
-        assertTrue(groups.containsKey(groupId));
-        assertEquals(groups.get(groupId).getSerializationFormat(), SerializationFormat.Any);
-        assertEquals(groups.get(groupId).getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
+        assertTrue(groups.stream().anyMatch(x -> x.getKey().equals(groupId)));
+        Map.Entry<String, io.pravega.schemaregistry.contract.data.GroupProperties> group =
+                groups.stream().filter(x -> x.getKey().equals(groupId)).findAny().orElseThrow(RuntimeException::new);
+        assertEquals(group.getValue().getSerializationFormat(), SerializationFormat.Any);
+        assertEquals(group.getValue().getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
         
         // Runtime Exception
         doReturn(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).when(response).getStatus();
-        AssertExtensions.assertThrows("Exception should have been thrown", () -> client.listGroups(), e -> e instanceof InternalServerError);
+        AssertExtensions.assertThrows("Exception should have been thrown", () -> Lists.newArrayList(client.listGroups()), e -> e instanceof InternalServerError);
     }
 
     @Test
@@ -175,9 +191,7 @@ public class TestSchemaRegistryClient {
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         // Precondition Failed
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
-        AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.updateSchemaValidationRules("mygroup", schemaValidationRules, null),
-                e -> e instanceof PreconditionFailedException);
+        assertFalse(client.updateSchemaValidationRules("mygroup", schemaValidationRules, null));
         // NotFound exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -200,7 +214,7 @@ public class TestSchemaRegistryClient {
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         VersionInfo versionInfo = new VersionInfo("schema1", 5, 5);
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion schemaVersion = new io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion()
@@ -210,7 +224,7 @@ public class TestSchemaRegistryClient {
         doReturn(schemaList).when(response).readEntity(SchemaVersionsList.class);
         List<SchemaWithVersion> output = client.getSchemas("mygroup");
         assertEquals(1, output.size());
-        assertEquals("schema1", output.get(0).getSchema().getType());
+        assertEquals("schema1", output.get(0).getSchemaInfo().getType());
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getSchemas("mygroup"),
@@ -229,7 +243,7 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).addSchema(anyString(), any());
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo versionInfo =
                 new io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo().version(
@@ -263,7 +277,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemaFromVersion(anyString(), anyInt());
+        doReturn(response).when(proxy).getSchemaFromVersionOrdinal(anyString(), anyInt());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat serializationFormat = ModelHelper.encode(SerializationFormat.custom("custom"));
@@ -297,7 +311,7 @@ public class TestSchemaRegistryClient {
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         String codecType = "gzip";
         EncodingInfo encodingInfo = new EncodingInfo(versionInfo, schemaInfo, codecType);
@@ -357,15 +371,15 @@ public class TestSchemaRegistryClient {
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         SchemaVersionsList schemaWithVersions = new SchemaVersionsList().schemas(Collections.singletonList(ModelHelper.encode(schemaWithVersion)));
         doReturn(schemaWithVersions).when(response).readEntity(
-                io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList.class);
+                SchemaVersionsList.class);
         SchemaWithVersion schemaWithVersion1 = client.getLatestSchemaVersion("mygroup", null);
-        assertEquals(schemaWithVersion.getSchema(), schemaWithVersion1.getSchema());
-        assertEquals(schemaWithVersion.getVersion(), schemaWithVersion1.getVersion());
+        assertEquals(schemaWithVersion.getSchemaInfo(), schemaWithVersion1.getSchemaInfo());
+        assertEquals(schemaWithVersion.getVersionInfo(), schemaWithVersion1.getVersionInfo());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -378,14 +392,13 @@ public class TestSchemaRegistryClient {
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         versionInfo = new VersionInfo("schema2", 5, 5);
         serializationFormat = SerializationFormat.custom("custom");
-        schemaData = new byte[0];
         schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion.class);
         schemaWithVersion1 = client.getLatestSchemaVersion("mygroup", "myobject");
-        assertEquals(schemaWithVersion.getSchema(), schemaWithVersion1.getSchema());
-        assertEquals(schemaWithVersion.getVersion(), schemaWithVersion1.getVersion());
+        assertEquals(schemaWithVersion.getSchemaInfo(), schemaWithVersion1.getSchemaInfo());
+        assertEquals(schemaWithVersion.getVersionInfo(), schemaWithVersion1.getVersionInfo());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -406,7 +419,7 @@ public class TestSchemaRegistryClient {
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
         GroupHistoryRecord groupHistoryRecord = new io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord()
@@ -441,8 +454,7 @@ public class TestSchemaRegistryClient {
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
-        
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         doReturn(ModelHelper.encode(versionInfo)).when(response).readEntity(
@@ -459,6 +471,43 @@ public class TestSchemaRegistryClient {
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> client.getVersionForSchema("mygroup", schemaInfo), e -> e instanceof InternalServerError);
     }
+    
+    @Test
+    public void testGetSchemaVersions() {
+        ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
+        SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
+        Response response = mock(Response.class);
+        doReturn(response).when(proxy).getSchemaVersions(anyString(), any());
+
+        doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
+        SerializationFormat serializationFormat = SerializationFormat.custom("custom");
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
+
+        SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
+        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
+        SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
+        SchemaVersionsList list = new SchemaVersionsList().schemas(Collections.singletonList(ModelHelper.encode(schemaWithVersion)));
+        doReturn(list).when(response).readEntity(SchemaVersionsList.class);
+        List<SchemaWithVersion> result = Lists.newArrayList(client.getSchemaVersions("mygroup", null));
+        assertEquals(result.size(), 1);
+        assertEquals(versionInfo, result.get(0).getVersionInfo());
+        assertEquals(schemaInfo, result.get(0).getSchemaInfo());
+
+        result = Lists.newArrayList(client.getSchemaVersions("mygroup", schemaInfo.getType()));
+        assertEquals(result.size(), 1);
+        assertEquals(versionInfo, result.get(0).getVersionInfo());
+        assertEquals(schemaInfo, result.get(0).getSchemaInfo());
+        
+        //NotFound Exception
+        doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
+        AssertExtensions.assertThrows("An exception should have been thrown",
+                () -> Lists.newArrayList(client.getSchemaVersions("mygroup", null)), 
+                e -> e instanceof ResourceNotFoundException);
+        //Runtime Exception
+        doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
+        AssertExtensions.assertThrows("An exception should have been thrown",
+                () -> Lists.newArrayList(client.getSchemaVersions("mygroup", null)), e -> e instanceof InternalServerError);
+    }
 
     @Test
     public void testValidateSchema() {
@@ -469,8 +518,8 @@ public class TestSchemaRegistryClient {
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
-        
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
+
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         Valid valid = new Valid().valid(Boolean.TRUE);
         doReturn(valid).when(response).readEntity(Valid.class);
@@ -495,8 +544,8 @@ public class TestSchemaRegistryClient {
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
-        byte[] schemaData = new byte[0];
-        
+        ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
+
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         CanRead canRead = new CanRead().compatible(Boolean.TRUE);
         doReturn(canRead).when(response).readEntity(CanRead.class);

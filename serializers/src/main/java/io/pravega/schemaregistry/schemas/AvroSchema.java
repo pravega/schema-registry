@@ -21,6 +21,8 @@ import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.specific.SpecificRecordBase;
 
+import java.nio.ByteBuffer;
+
 /**
  * Container class for Avro Schema.
  * 
@@ -88,14 +90,14 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
     public static AvroSchema<GenericRecord> from(SchemaInfo schemainfo) {
-        String schemaString = new String(schemainfo.getSchemaData(), Charsets.UTF_8);
+        String schemaString = new String(schemainfo.getSchemaData().array(), Charsets.UTF_8);
         Schema schema = new Schema.Parser().parse(schemaString);
 
         return new AvroSchema<>(schema);
     }
 
-    private byte[] getSchemaBytes() {
-        return schema.toString().getBytes(Charsets.UTF_8);
+    private ByteBuffer getSchemaBytes() {
+        return ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
     }
 
     @Override

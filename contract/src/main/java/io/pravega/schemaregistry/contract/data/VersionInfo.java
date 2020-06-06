@@ -15,7 +15,8 @@ import lombok.Builder;
 import lombok.Data;
 
 /**
- * Object that captures the version of a schema within a group.
+ * Version information object that encapsulates properties that uniquely identify a specific version of a schema within a group.
+ * 
  * {@link VersionInfo#type} is same as {@link SchemaInfo#type} which represents the object type for which the version is computed. 
  * {@link VersionInfo#version} the registry assigned monotonically increasing version number for the schema for specific object type.
  * Since the version number is per object type, so type and version number forms a unique pair. 

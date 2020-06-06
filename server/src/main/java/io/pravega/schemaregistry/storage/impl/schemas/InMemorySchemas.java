@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
+ * 
  * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.storage.impl.schemas;
@@ -35,7 +35,7 @@ public class InMemorySchemas implements Schemas<Integer> {
     @Synchronized
     @Override
     public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String group) {
-        long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData());
+        long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
         String schemaId = fingerprintValue == null ? null : findSchemaId(schemaInfo, fingerprintValue);
@@ -90,7 +90,7 @@ public class InMemorySchemas implements Schemas<Integer> {
     @Synchronized
     @Override
     public CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo) {
-        long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData());
+        long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
         String schemaId = fingerprintValue == null ? null : findSchemaId(schemaInfo, fingerprintValue);

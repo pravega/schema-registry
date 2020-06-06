@@ -25,6 +25,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SerializationForm
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import org.apache.commons.lang3.NotImplementedException;
 
+import java.nio.ByteBuffer;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -44,7 +45,7 @@ public class ModelHelper {
         Preconditions.checkArgument(schemaInfo.getSchemaData() != null);
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = decode(schemaInfo.getSerializationFormat());
         return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getType(),
-                serializationFormat, schemaInfo.getSchemaData(), ImmutableMap.copyOf(schemaInfo.getProperties()));
+                serializationFormat, ByteBuffer.wrap(schemaInfo.getSchemaData()), ImmutableMap.copyOf(schemaInfo.getProperties()));
     }
 
     public static io.pravega.schemaregistry.contract.data.SerializationFormat decode(SerializationFormat serializationFormat) {
@@ -187,8 +188,8 @@ public class ModelHelper {
     }
 
     public static SchemaWithVersion encode(io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion) {
-        return new SchemaWithVersion().schemaInfo(encode(schemaWithVersion.getSchema()))
-                                      .version(encode(schemaWithVersion.getVersion()));
+        return new SchemaWithVersion().schemaInfo(encode(schemaWithVersion.getSchemaInfo()))
+                                      .version(encode(schemaWithVersion.getVersionInfo()));
     }
 
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
@@ -204,7 +205,7 @@ public class ModelHelper {
     }
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {
-        return new SchemaInfo().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData())
+        return new SchemaInfo().properties(schemaInfo.getProperties()).schemaData(schemaInfo.getSchemaData().array())
                                .type(schemaInfo.getType()).serializationFormat(encode(schemaInfo.getSerializationFormat()));
     }
 

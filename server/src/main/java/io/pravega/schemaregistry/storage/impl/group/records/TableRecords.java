@@ -52,6 +52,7 @@ public interface TableRecords {
                     .put(LatestEncodingIdKey.class, LatestEncodingIdValue.SERIALIZER)
                     .put(LatestSchemaVersionKey.class, LatestSchemaVersionValue.SERIALIZER)
                     .put(LatestSchemaVersionForTypeKey.class, LatestSchemaVersionValue.SERIALIZER)
+                    .put(SchemaTypeVersionKey.class, VersionOrdinalValue.SERIALIZER)
                     .build();
 
     interface TableKey {
@@ -372,6 +373,46 @@ public interface TableRecords {
 
             private void read00(RevisionDataInput source, VersionKey.VersionKeyBuilder b) throws IOException {
                 b.ordinal(source.readInt());
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class SchemaTypeVersionKey implements TableKey {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final String schemaType;
+        private final int version;
+
+        private static class SchemaTypeVersionKeyBuilder implements ObjectBuilder<SchemaTypeVersionKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaTypeVersionKey, SchemaTypeVersionKey.SchemaTypeVersionKeyBuilder> {
+            @Override
+            protected SchemaTypeVersionKey.SchemaTypeVersionKeyBuilder newBuilder() {
+                return SchemaTypeVersionKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(SchemaTypeVersionKey e, RevisionDataOutput target) throws IOException {
+                target.writeUTF(e.schemaType);
+                target.writeInt(e.version);
+            }
+
+            private void read00(RevisionDataInput source, SchemaTypeVersionKey.SchemaTypeVersionKeyBuilder b) throws IOException {
+                b.schemaType(source.readUTF());
+                b.version(source.readInt());
             }
         }
     }
@@ -897,6 +938,49 @@ public interface TableRecords {
 
             private void read00(RevisionDataInput source, LatestEncodingIdValue.LatestEncodingIdValueBuilder b) throws IOException {
                 b.encodingId(EncodingIdSerializer.SERIALIZER.deserialize(source));
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class VersionOrdinalValue implements TableValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final int ordinal;
+
+        @SneakyThrows
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class VersionOrdinalValueBuilder implements ObjectBuilder<VersionOrdinalValue> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<VersionOrdinalValue, VersionOrdinalValue.VersionOrdinalValueBuilder> {
+            @Override
+            protected VersionOrdinalValue.VersionOrdinalValueBuilder newBuilder() {
+                return VersionOrdinalValue.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(VersionOrdinalValue e, RevisionDataOutput target) throws IOException {
+                target.writeInt(e.ordinal);
+            }
+
+            private void read00(RevisionDataInput source, VersionOrdinalValue.VersionOrdinalValueBuilder b) throws IOException {
+                b.ordinal(source.readInt());
             }
         }
     }

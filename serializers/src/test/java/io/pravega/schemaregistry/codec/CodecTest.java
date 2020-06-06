@@ -38,7 +38,7 @@ public class CodecTest {
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
 
         Codec none = CodecFactory.none();
-        assertEquals(none.getCodecType(), CodecFactory.MIME_NONE);
+        assertEquals(none.getCodecType(), CodecFactory.NONE);
         encoded = none.encode(ByteBuffer.wrap(testStringBytes));
         assertTrue(Arrays.equals(encoded.array(), testStringBytes));
         decoded = none.decode(encoded);

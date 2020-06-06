@@ -21,6 +21,8 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
+import java.nio.ByteBuffer;
+
 /**
  * Container class for protobuf schema.
  * Protobuf schemas are represented using {@link com.google.protobuf.DescriptorProtos.FileDescriptorSet}. 
@@ -42,8 +44,8 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
     
-    private byte[] getSchemaBytes() {
-        return descriptorProto.toByteArray();
+    private ByteBuffer getSchemaBytes() {
+        return ByteBuffer.wrap(descriptorProto.toByteArray());
     }
 
     @Override
