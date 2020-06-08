@@ -313,8 +313,9 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while registering codectype to a Group", response = Void.class)})
         void addCodecType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                          @ApiParam(value = "Add codec type", required = true) String codecType,
                           @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                          @ApiParam(value = "Add codec type", required = true) String codecType, @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                          @Suspended AsyncResponse asyncResponse) throws NotFoundException;
 
         @POST
         @Path("/{groupName}/schemas/versions")
