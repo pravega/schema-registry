@@ -18,6 +18,7 @@ import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.common.util.ByteArraySegment;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.storage.impl.group.records.SchemaInfoSerializer;
+import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -252,7 +253,7 @@ public interface SchemaRecords {
     class SchemaGroupsList implements Value {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final List<String> groupIds;
+        private final List<NamespaceAndGroup> groupIds;
 
         @SneakyThrows
         @Override
@@ -280,11 +281,11 @@ public interface SchemaRecords {
             }
 
             private void write00(SchemaGroupsList e, RevisionDataOutput target) throws IOException {
-                target.writeCollection(e.groupIds, DataOutput::writeUTF);
+                target.writeCollection(e.groupIds, NamespaceAndGroup.SERIALIZER::serialize);
             }
 
             private void read00(RevisionDataInput source, SchemaGroupsList.SchemaGroupsListBuilder b) throws IOException {
-                b.groupIds(Lists.newArrayList(source.readCollection(DataInput::readUTF)));
+                b.groupIds(Lists.newArrayList(source.readCollection(NamespaceAndGroup.SERIALIZER::deserialize)));
             }
         }
     }

@@ -49,7 +49,7 @@ public class RestServer extends AbstractIdleService {
 
         final Set<Object> resourceObjs = new HashSet<>();
         resourceObjs.add(new PingImpl());
-        resourceObjs.add(new SchemaRegistryResourceImpl(registryService, restServerConfig));
+        resourceObjs.add(new SchemaRegistryResourceImpl(registryService, restServerConfig, executor()));
 
         final RegistryApplication application = new RegistryApplication(resourceObjs);
         this.resourceConfig = ResourceConfig.forApplication(application);

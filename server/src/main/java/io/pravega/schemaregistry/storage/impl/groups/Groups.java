@@ -22,11 +22,11 @@ import java.util.concurrent.CompletableFuture;
  * @param <T> Type of Version for group. 
  */
 public interface Groups<T> {
-    CompletableFuture<Group<T>> getGroup(String groupName);
+    CompletableFuture<Group<T>> getGroup(String namespace, String groupName);
 
-    CompletableFuture<Boolean> addNewGroup(String group, GroupProperties groupProperties);
+    CompletableFuture<Boolean> addNewGroup(String namespace, String group, GroupProperties groupProperties);
 
-    CompletableFuture<ListWithToken<String>> getGroups(ContinuationToken token, int limit);
+    CompletableFuture<ListWithToken<String>> getGroups(String namespace, ContinuationToken token, int limit);
 
-    CompletableFuture<Void> deleteGroup(String group);
+    CompletableFuture<Void> deleteGroup(String namespace, String group);
 }

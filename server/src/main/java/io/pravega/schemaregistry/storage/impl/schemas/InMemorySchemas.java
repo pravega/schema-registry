@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.storage.impl.schemas;
 
 import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.Data;
 import lombok.Synchronized;
 
@@ -22,6 +23,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.stream.Collectors;
 
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.*;
 
@@ -34,7 +36,8 @@ public class InMemorySchemas implements Schemas<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String group) {
+    public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
+        String namespace = nameSpace == null ? "" : nameSpace;
         long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
@@ -47,12 +50,13 @@ public class InMemorySchemas implements Schemas<Integer> {
         // add group reference
         SchemaGroupsKey groupsKey = new SchemaGroupsKey(schemaId);
         Value groupsValue = schemas.get(groupsKey);
+        NamespaceAndGroup namespaceAndGroup = new NamespaceAndGroup(namespace, group);
         if (groupsValue != null) {
-            List<String> list = new ArrayList<>(((SchemaGroupsList) groupsValue.value).getGroupIds());
-            list.add(group);
+            List<NamespaceAndGroup> list = new ArrayList<>(((SchemaGroupsList) groupsValue.value).getGroupIds());
+            list.add(namespaceAndGroup);
             schemas.put(groupsKey, new Value(new SchemaGroupsList(list), groupsValue.version + 1));
         } else {
-            schemas.put(groupsKey, new Value(new SchemaGroupsList(Collections.singletonList(group)), 0));
+            schemas.put(groupsKey, new Value(new SchemaGroupsList(Collections.singletonList(namespaceAndGroup)), 0));
         }
         return CompletableFuture.completedFuture(null);
     }
@@ -89,7 +93,8 @@ public class InMemorySchemas implements Schemas<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo) {
+    public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, SchemaInfo schemaInfo) {
+        String namespace = nameSpace == null ? "" : nameSpace;
         long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
@@ -100,7 +105,9 @@ public class InMemorySchemas implements Schemas<Integer> {
             SchemaGroupsKey groupsKey = new SchemaGroupsKey(schemaId);
             SchemaGroupsList groupsValue = (SchemaGroupsList) schemas.get(groupsKey).value;
 
-            return CompletableFuture.completedFuture(groupsValue.getGroupIds());
+            List<String> groupIds = groupsValue.getGroupIds().stream().filter(x -> x.getNamespace().equals(namespace))
+                                               .map(NamespaceAndGroup::getGroupId).collect(Collectors.toList());
+            return CompletableFuture.completedFuture(groupIds);
         }
     }
 

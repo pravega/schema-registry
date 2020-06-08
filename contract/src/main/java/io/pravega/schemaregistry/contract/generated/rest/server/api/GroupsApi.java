@@ -81,9 +81,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while registering codectype to a Group", response = Void.class) })
     public Response addCodecType(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "The codecType" ,required=true) String codecType
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.addCodecType(groupName,codecType,securityContext);
+        return delegate.addCodecType(groupName,codecType,namespace,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions")
@@ -102,9 +103,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while adding schema to group", response = Void.class) })
     public Response addSchema(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Add new schema to group" ,required=true) SchemaInfo schemaInfo
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.addSchema(groupName,schemaInfo,securityContext);
+        return delegate.addSchema(groupName,schemaInfo,namespace,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions/canRead")
@@ -119,9 +121,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while checking schema for readability", response = Void.class) })
     public Response canRead(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules." ,required=true) SchemaInfo schemaInfo
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.canRead(groupName,schemaInfo,securityContext);
+        return delegate.canRead(groupName,schemaInfo,namespace,securityContext);
     }
     @POST
     
@@ -135,9 +138,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class) })
     public Response createGroup(@ApiParam(value = "The Group configuration" ,required=true) CreateGroupRequest createGroupRequest
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.createGroup(createGroupRequest,securityContext);
+        return delegate.createGroup(createGroupRequest,namespace,securityContext);
     }
     @DELETE
     @Path("/{groupName}")
@@ -149,9 +153,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class) })
     public Response deleteGroup(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteGroup(groupName,securityContext);
+        return delegate.deleteGroup(groupName,namespace,securityContext);
     }
     @DELETE
     @Path("/{groupName}/schemas/{type}/versions/{version}")
@@ -167,9 +172,10 @@ public class GroupsApi  {
     public Response deleteSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type",required=true) @PathParam("type") String type
 ,@ApiParam(value = "Version number",required=true) @PathParam("version") Integer version
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteSchemaVersion(groupName,type,version,securityContext);
+        return delegate.deleteSchemaVersion(groupName,type,version,namespace,securityContext);
     }
     @DELETE
     @Path("/{groupName}/schemas/versions/{versionOrdinal}")
@@ -184,9 +190,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class) })
     public Response deleteSchemaVersionOrinal(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteSchemaVersionOrinal(groupName,versionOrdinal,securityContext);
+        return delegate.deleteSchemaVersionOrinal(groupName,versionOrdinal,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/codecTypes")
@@ -200,9 +207,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching codecTypes registered", response = Void.class) })
     public Response getCodecTypesList(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getCodecTypesList(groupName,securityContext);
+        return delegate.getCodecTypesList(groupName,namespace,securityContext);
     }
     @PUT
     @Path("/{groupName}/encodings")
@@ -219,9 +227,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while getting encoding id", response = Void.class) })
     public Response getEncodingId(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) GetEncodingIdRequest getEncodingIdRequest
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getEncodingId(groupName,getEncodingIdRequest,securityContext);
+        return delegate.getEncodingId(groupName,getEncodingIdRequest,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/encodings/{encodingId}")
@@ -236,9 +245,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while getting encoding info corresponding to encoding id", response = Void.class) })
     public Response getEncodingInfo(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Encoding id that identifies a unique combination of schema and codec type",required=true) @PathParam("encodingId") Integer encodingId
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getEncodingInfo(groupName,encodingId,securityContext);
+        return delegate.getEncodingInfo(groupName,encodingId,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/history")
@@ -252,9 +262,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group history", response = Void.class) })
     public Response getGroupHistory(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getGroupHistory(groupName,securityContext);
+        return delegate.getGroupHistory(groupName,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}")
@@ -268,9 +279,10 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class) })
     public Response getGroupProperties(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getGroupProperties(groupName,securityContext);
+        return delegate.getGroupProperties(groupName,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas/{type}/versions/{version}")
@@ -286,9 +298,10 @@ public class GroupsApi  {
     public Response getSchemaFromVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type",required=true) @PathParam("type") String type
 ,@ApiParam(value = "Version number",required=true) @PathParam("version") Integer version
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersion(groupName,type,version,securityContext);
+        return delegate.getSchemaFromVersion(groupName,type,version,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas/versions/{versionOrdinal}")
@@ -303,9 +316,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class) })
     public Response getSchemaFromVersionOrdinal(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaFromVersionOrdinal(groupName,versionOrdinal,securityContext);
+        return delegate.getSchemaFromVersionOrdinal(groupName,versionOrdinal,namespace,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions/find")
@@ -320,9 +334,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error fetching version for schema", response = Void.class) })
     public Response getSchemaVersion(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Get schema corresponding to the version" ,required=true) SchemaInfo schemaInfo
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaVersion(groupName,schemaInfo,securityContext);
+        return delegate.getSchemaVersion(groupName,schemaInfo,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas/versions")
@@ -336,10 +351,11 @@ public class GroupsApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group schema versions", response = Void.class) })
     public Response getSchemaVersions(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@ApiParam(value = "Type of object the schema describes.") @QueryParam("type") String type
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaVersions(groupName,type,securityContext);
+        return delegate.getSchemaVersions(groupName,namespace,type,securityContext);
     }
     @GET
     @Path("/{groupName}/schemas")
@@ -354,9 +370,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group's latest schemas", response = Void.class) })
     public Response getSchemas(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Type of object") @QueryParam("type") String type
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemas(groupName,type,securityContext);
+        return delegate.getSchemas(groupName,type,namespace,securityContext);
     }
     @GET
     
@@ -367,11 +384,12 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 200, message = "List of all groups", response = ListGroupsResponse.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching the list of Groups", response = Void.class) })
-    public Response listGroups(@ApiParam(value = "Continuation token") @QueryParam("continuationToken") String continuationToken
+    public Response listGroups(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
+,@ApiParam(value = "Continuation token") @QueryParam("continuationToken") String continuationToken
 ,@ApiParam(value = "The numbers of items to return") @QueryParam("limit") Integer limit
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.listGroups(continuationToken,limit,securityContext);
+        return delegate.listGroups(namespace,continuationToken,limit,securityContext);
     }
     @PUT
     @Path("/{groupName}/rules")
@@ -388,9 +406,10 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's schema validation rules", response = Void.class) })
     public Response updateSchemaValidationRules(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "update group policy" ,required=true) UpdateValidationRulesRequest updateValidationRulesRequest
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.updateSchemaValidationRules(groupName,updateValidationRulesRequest,securityContext);
+        return delegate.updateSchemaValidationRules(groupName,updateValidationRulesRequest,namespace,securityContext);
     }
     @POST
     @Path("/{groupName}/schemas/versions/validate")
@@ -405,8 +424,9 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while trying to validate schema", response = Void.class) })
     public Response validate(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Checks if schema is valid with respect to supplied validation rules" ,required=true) ValidateRequest validateRequest
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.validate(groupName,validateRequest,securityContext);
+        return delegate.validate(groupName,validateRequest,namespace,securityContext);
     }
 }

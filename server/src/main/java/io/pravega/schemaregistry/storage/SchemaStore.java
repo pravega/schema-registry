@@ -1,7 +1,7 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
+ * Licensed under the Apache License, Version 2.0 (String namespace, the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
@@ -28,57 +28,57 @@ import java.util.concurrent.CompletableFuture;
  * Schema Store interface for storing and retrieving and querying schemas. 
  */
 public interface SchemaStore {
-    CompletableFuture<ListWithToken<String>> listGroups(@Nullable ContinuationToken token, int limit);
+    CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit);
 
-    CompletableFuture<Boolean> createGroup(String group, GroupProperties groupProperties);
+    CompletableFuture<Boolean> createGroup(String namespace, String groupId, GroupProperties groupProperties);
 
-    CompletableFuture<Void> deleteGroup(String group);
+    CompletableFuture<Void> deleteGroup(String namespace, String groupId);
 
-    CompletableFuture<Etag> getGroupEtag(String group);
+    CompletableFuture<Etag> getGroupEtag(String namespace, String groupId);
 
-    CompletableFuture<GroupProperties> getGroupProperties(String group);
+    CompletableFuture<GroupProperties> getGroupProperties(String namespace, String groupId);
     
-    CompletableFuture<Void> updateValidationRules(String group, Etag etag, SchemaValidationRules policy);
+    CompletableFuture<Void> updateValidationRules(String namespace, String groupId, Etag etag, SchemaValidationRules policy);
 
-    CompletableFuture<List<SchemaWithVersion>> getLatestSchemas(String group);
+    CompletableFuture<List<SchemaWithVersion>> getLatestSchemas(String namespace, String groupId);
     
-    CompletableFuture<List<SchemaWithVersion>> listSchemas(String group);
+    CompletableFuture<List<SchemaWithVersion>> listSchemas(String namespace, String groupId);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemas(String group, VersionInfo from);
+    CompletableFuture<List<SchemaWithVersion>> listSchemas(String namespace, String groupId, VersionInfo from);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String group, String type);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type);
 
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String group, String type, VersionInfo from);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type, VersionInfo from);
     
-    CompletableFuture<Void> deleteSchema(String group, int versionOrdinal, Etag etag);
+    CompletableFuture<Void> deleteSchema(String namespace, String groupId, int versionOrdinal, Etag etag);
     
-    CompletableFuture<Void> deleteSchema(String group, String schemaType, int version, Etag etag);
+    CompletableFuture<Void> deleteSchema(String namespace, String groupId, String schemaType, int version, Etag etag);
     
-    CompletableFuture<SchemaInfo> getSchema(String group, int versionOrdinal);
+    CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int versionOrdinal);
     
-    CompletableFuture<SchemaInfo> getSchema(String group, String schemaType, int version);
+    CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, String schemaType, int version);
 
-    CompletableFuture<SchemaWithVersion> getLatestSchemaVersion(String group);
+    CompletableFuture<SchemaWithVersion> getLatestSchemaVersion(String namespace, String groupId);
     
-    CompletableFuture<SchemaWithVersion> getLatestSchemaVersion(String group, String type);
+    CompletableFuture<SchemaWithVersion> getLatestSchemaVersion(String namespace, String groupId, String type);
     
-    CompletableFuture<VersionInfo> addSchema(String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
+    CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
 
-    CompletableFuture<VersionInfo> getSchemaVersion(String group, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String groupId, SchemaInfo schemaInfo);
 
-    CompletableFuture<Either<EncodingId, Etag>> getEncodingId(String group, VersionInfo versionInfo, String codecType);
+    CompletableFuture<Either<EncodingId, Etag>> getEncodingId(String namespace, String groupId, VersionInfo versionInfo, String codecType);
     
-    CompletableFuture<EncodingId> createEncodingId(String group, VersionInfo versionInfo, String codecType, Etag etag);
+    CompletableFuture<EncodingId> createEncodingId(String namespace, String groupId, VersionInfo versionInfo, String codecType, Etag etag);
 
-    CompletableFuture<EncodingInfo> getEncodingInfo(String group, EncodingId encodingId);
+    CompletableFuture<EncodingInfo> getEncodingInfo(String namespace, String groupId, EncodingId encodingId);
 
-    CompletableFuture<List<String>> getCodecTypes(String group);
+    CompletableFuture<List<String>> getCodecTypes(String namespace, String groupId);
 
-    CompletableFuture<Void> addCodecType(String group, String codecType);
+    CompletableFuture<Void> addCodecType(String namespace, String groupId, String codecType);
 
-    CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String group);
+    CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String namespace, String groupId);
     
-    CompletableFuture<List<GroupHistoryRecord>> getGroupHistoryForType(String group, String type);
+    CompletableFuture<List<GroupHistoryRecord>> getGroupHistoryForType(String namespace, String groupId, String type);
     
-    CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo);
+    CompletableFuture<List<String>> getGroupsUsing(String namespace, SchemaInfo schemaInfo);
 }

@@ -23,6 +23,7 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
+import org.junit.After;
 import org.junit.Test;
 
 import javax.ws.rs.client.Entity;
@@ -36,7 +37,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -48,17 +51,24 @@ import static org.mockito.Mockito.mock;
 public class SchemaRegistryResourceTest extends JerseyTest {
     private static final String GROUPS = "v1/groups";
     private SchemaRegistryService service;
+    private ScheduledExecutorService executor;
 
     @Override
     protected Application configure() {
+        executor = Executors.newSingleThreadScheduledExecutor();
         forceSet(TestProperties.CONTAINER_PORT, "0");
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
-        resourceObjs.add(new SchemaRegistryResourceImpl(service, ServiceConfig.builder().build()));
+        resourceObjs.add(new SchemaRegistryResourceImpl(service, ServiceConfig.builder().build(), executor));
 
         return new RegistryApplication(resourceObjs);
     }
 
+    @After
+    public void tearDown() {
+        executor.shutdownNow();    
+    }
+    
     @Test
     public void groups() throws ExecutionException, InterruptedException {
         GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
@@ -69,13 +79,13 @@ public class SchemaRegistryResourceTest extends JerseyTest {
             map.put("group1", group1);
             map.put("group2", null);
             return CompletableFuture.completedFuture(new MapWithToken<>(map, null));
-        }).when(service).listGroups(any(), anyInt());
+        }).when(service).listGroups(any(), any(), anyInt());
 
         Future<Response> future = target(GROUPS).queryParam("limit", 100).request().async().get();
         Response response = future.get();
         assertEquals(response.getStatus(), 200);
         ListGroupsResponse list = response.readEntity(ListGroupsResponse.class);
-        assertEquals(list.getGroups().size(), 2);
+        assertEquals(list.getGroups().size(), 1);
 
         // region create group
         // endregion
@@ -105,7 +115,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         // endregion
 
         // can read
-        doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any());
+        doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any(), any());
         SchemaInfo schemaInfo = new SchemaInfo()
                 .type("name")
                 .serializationFormat(ModelHelper.encode(SerializationFormat.Avro))

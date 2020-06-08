@@ -19,7 +19,7 @@ import javax.validation.constraints.*;
 
 public class SchemasApiServiceImpl extends SchemasApiService {
     @Override
-    public Response getSchemaReferences(SchemaInfo schemaInfo, SecurityContext securityContext) throws NotFoundException {
+    public Response getSchemaReferences(SchemaInfo schemaInfo,  String namespace, SecurityContext securityContext) throws NotFoundException {
         // do some magic!
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "magic!")).build();
     }

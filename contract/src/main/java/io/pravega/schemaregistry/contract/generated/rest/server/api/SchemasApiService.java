@@ -18,5 +18,5 @@ import javax.ws.rs.core.SecurityContext;
 import javax.validation.constraints.*;
 
 public abstract class SchemasApiService {
-    public abstract Response getSchemaReferences(SchemaInfo schemaInfo,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response getSchemaReferences(SchemaInfo schemaInfo, String namespace,SecurityContext securityContext) throws NotFoundException;
 }

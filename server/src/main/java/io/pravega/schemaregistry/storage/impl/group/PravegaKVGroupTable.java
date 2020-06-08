@@ -45,12 +45,12 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     private final TableStore tablesStore;
     private final String tableName;
 
-    public PravegaKVGroupTable(String groupName, String id, TableStore tablesStore) {
+    public PravegaKVGroupTable(String id, TableStore tablesStore) {
         this.tablesStore = tablesStore;
-        this.tableName = getTableName(groupName, id);
+        this.tableName = getTableName(id);
     }
 
-    private static String getTableName(String groupName, String id) {
+    private static String getTableName(String id) {
         return String.format(TABLE_NAME_FORMAT, id);
     }
 

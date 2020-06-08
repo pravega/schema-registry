@@ -36,85 +36,91 @@ import java.util.stream.Collectors;
 
 public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     private final SchemaRegistryService service;
+    private final String namespace;
+
+    public PassthruSchemaRegistryClient(SchemaRegistryService service, String namespace) {
+        this.service = service;
+        this.namespace = namespace;
+    }
 
     public PassthruSchemaRegistryClient(SchemaRegistryService service) {
-        this.service = service;
+        this(service, null);
     }
-    
+
     @Override
     public boolean addGroup(String group, GroupProperties properties) {
-        return service.createGroup(group, properties).join();
+        return service.createGroup(namespace, group, properties).join();
     }
 
     @Override
     public void removeGroup(String group) {
-        service.deleteGroup(group).join();
+        service.deleteGroup(namespace, group).join();
     }
 
     @Override
     public Iterator<Map.Entry<String, GroupProperties>> listGroups() {
-        Function<ContinuationToken, Map.Entry<ContinuationToken, Collection<Map.Entry<String, GroupProperties>>>> function = 
+        Function<ContinuationToken, Map.Entry<ContinuationToken, Collection<Map.Entry<String, GroupProperties>>>> function =
                 token -> {
-                    MapWithToken<String, GroupProperties> result = service.listGroups(token, 100).join();
+                    MapWithToken<String, GroupProperties> result = service.listGroups(namespace, token, 100).join();
                     return new AbstractMap.SimpleEntry<>(result.getToken(), result.getMap().entrySet());
-                }; 
+                };
         return new ContinuationTokenIterator<>(function, null);
     }
 
     @Override
     public GroupProperties getGroupProperties(String group) {
-        return service.getGroupProperties(group).join();
+        return service.getGroupProperties(namespace, group).join();
     }
 
     @Override
     public boolean updateSchemaValidationRules(String group, SchemaValidationRules validationRules, SchemaValidationRules previousRules) {
-        return service.updateSchemaValidationRules(group, validationRules, previousRules)
+        return service.updateSchemaValidationRules(namespace, group, validationRules, previousRules)
                       .handle((r, e) -> e != null).join();
     }
-    
+
     @Override
     public List<SchemaWithVersion> getSchemas(String group) {
-        return service.getSchemas(group, null).join();
+        return service.getSchemas(namespace, group, null).join();
     }
 
     @Override
     public VersionInfo addSchema(String group, SchemaInfo schemaInfo) {
-        return service.addSchema(group, schemaInfo).join();
+        return service.addSchema(namespace, group, schemaInfo).join();
     }
 
     @Override
-    public void deleteSchemaVersion(String groupId, VersionInfo versionInfo) {
-        service.deleteSchema(groupId, versionInfo.getOrdinal()).join();
+    public void deleteSchemaVersion(String group, VersionInfo versionInfo) {
+        service.deleteSchema(namespace, group, versionInfo.getOrdinal()).join();
     }
 
     @Override
-    public void deleteSchemaVersion(String groupId, String schemaType, int version) {
-        service.deleteSchema(groupId, schemaType, version).join();
+    public void deleteSchemaVersion(String group, String schemaType, int version) {
+        service.deleteSchema(group, schemaType, version).join();
     }
 
     @Override
     public SchemaInfo getSchemaForVersion(String group, VersionInfo versionInfo) {
-        return service.getSchema(group, versionInfo.getOrdinal()).join();
+        return service.getSchema(namespace, group, versionInfo.getOrdinal()).join();
     }
 
     @Override
     public SchemaInfo getSchemaForVersion(String group, String schemaType, int version) {
-        return service.getSchema(group, schemaType, version).join();
+        return service.getSchema(namespace, group, schemaType, version).join();
     }
 
     @Override
     public EncodingInfo getEncodingInfo(String group, EncodingId encodingId) {
-        return service.getEncodingInfo(group, encodingId).join();
+        return service.getEncodingInfo(namespace, group, encodingId).join();
     }
 
     @Override
     public EncodingId getEncodingId(String group, VersionInfo versionInfo, String codecType) {
-        return service.getEncodingId(group, versionInfo, codecType).join();
+        return service.getEncodingId(namespace, group, versionInfo, codecType).join();
     }
 
     @Override
     public SchemaWithVersion getLatestSchemaVersion(String group, @Nullable String schemaType) {
-        List<SchemaWithVersion> latestSchemas = service.getSchemas(group, schemaType).join();
+        List<SchemaWithVersion> latestSchemas = service.getSchemas(namespace, group, schemaType).join();
         if (schemaType == null) {
             return latestSchemas.stream().max(Comparator.comparingInt(x -> x.getVersionInfo().getOrdinal())).orElse(null);
         } else {
@@ -123,43 +129,43 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaType) {
-        return service.getGroupHistory(groupId, schemaType)
-                .thenApply(history -> history.stream().map(x -> new SchemaWithVersion(x.getSchema(), x.getVersion())).collect(Collectors.toList())).join();
+    public List<SchemaWithVersion> getSchemaVersions(String group, @Nullable String schemaType) {
+        return service.getGroupHistory(namespace, group, schemaType)
+                      .thenApply(history -> history.stream().map(x -> new SchemaWithVersion(x.getSchema(), x.getVersion())).collect(Collectors.toList())).join();
     }
 
     @Override
     public List<GroupHistoryRecord> getGroupHistory(String group) {
-        return service.getGroupHistory(group, null).join();
+        return service.getGroupHistory(namespace, group, null).join();
     }
 
     @Override
     public Map<String, VersionInfo> getSchemaReferences(SchemaInfo schemaInfo) throws RegistryExceptions.ResourceNotFoundException, RegistryExceptions.UnauthorizedException {
-        return service.getSchemaReferences(schemaInfo).join();
+        return service.getSchemaReferences(namespace, schemaInfo).join();
     }
 
     @Override
     public VersionInfo getVersionForSchema(String group, SchemaInfo schemaInfo) {
-        return service.getSchemaVersion(group, schemaInfo).join();
+        return service.getSchemaVersion(namespace, group, schemaInfo).join();
     }
 
     @Override
     public boolean validateSchema(String group, SchemaInfo schemaInfo) {
-        return service.validateSchema(group, schemaInfo).join();
+        return service.validateSchema(namespace, group, schemaInfo).join();
     }
 
     @Override
     public boolean canReadUsing(String group, SchemaInfo schemaInfo) {
-        return service.canRead(group, schemaInfo).join();
+        return service.canRead(namespace, group, schemaInfo).join();
     }
 
     @Override
     public List<String> getCodecTypes(String group) {
-        return service.getCodecTypes(group).join();
+        return service.getCodecTypes(namespace, group).join();
     }
 
     @Override
     public void addCodecType(String group, String codecType) {
-        service.addCodecType(group, codecType).join();
+        service.addCodecType(namespace, group, codecType).join();
     }
 }

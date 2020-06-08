@@ -37,7 +37,7 @@ public class ContinuationTokenIterator<T, Token> implements Iterator<T> {
     private T next;
     @GuardedBy("$lock")
     private boolean canHaveNext;
-
+    
     public ContinuationTokenIterator(Function<Token, Map.Entry<Token, Collection<T>>> loadingFunction, Token tokenIdentity) {
         this.loadingFunction = loadingFunction;
         this.queue = new LinkedBlockingQueue<T>();
@@ -48,15 +48,14 @@ public class ContinuationTokenIterator<T, Token> implements Iterator<T> {
 
     @Synchronized
     private void load() {
-        if (next == null && canHaveNext) {
+        next = next == null ? queue.poll() : next;
+        while (next == null && canHaveNext) {
             Map.Entry<Token, Collection<T>> result = loadingFunction.apply(token);
             token = result.getKey();
 
             queue.addAll(result.getValue());
             next = queue.poll();
-            if (next == null) {
-                canHaveNext = false;
-            }
+            canHaveNext = next != null;
         }
     }
 

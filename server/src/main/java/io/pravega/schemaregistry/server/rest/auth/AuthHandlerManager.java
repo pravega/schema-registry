@@ -104,6 +104,28 @@ public class AuthHandlerManager {
         }
         return retVal;
     }
+
+    /**
+     * API to authenticate the user.
+     *
+     * @param credentials Credentials used for authentication.
+     * @throws AuthenticationException if an authentication failure occurred.
+     */
+    public void authenticate(String credentials) throws AuthenticationException {
+        Preconditions.checkNotNull(credentials, "credentials");
+        try {
+            String[] parts = extractMethodAndToken(credentials);
+            String method = parts[0];
+            String token = parts[1];
+            AuthHandler handler = getHandler(method);
+            Preconditions.checkNotNull(handler, "Can not find handler.");
+            if (handler.authenticate(token) == null) {
+                throw new AuthenticationException("Authentication failure");
+            }
+        } catch (AuthException e) {
+            throw new AuthenticationException("Authentication failure");
+        }
+    }
     
     /**
      * This method is not only visible for testing, but also intended to be used solely for testing. It allows tests

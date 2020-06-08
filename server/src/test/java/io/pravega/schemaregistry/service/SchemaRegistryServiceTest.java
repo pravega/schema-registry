@@ -55,17 +55,17 @@ public class SchemaRegistryServiceTest {
         ArrayList<String> groups = Lists.newArrayList("grp1", "grp2");
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new ListWithToken<>(groups, null));
-        }).when(store).listGroups(any(), anyInt());
+        }).when(store).listGroups(any(), any(), anyInt());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Avro, 
                     SchemaValidationRules.of(Compatibility.backward()), false));
-        }).when(store).getGroupProperties(eq("grp1"));
+        }).when(store).getGroupProperties(any(), eq("grp1"));
         
         doAnswer(x -> {
             return Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group prop not found"));
-        }).when(store).getGroupProperties(eq("grp2"));
+        }).when(store).getGroupProperties(any(), eq("grp2"));
 
-        MapWithToken<String, GroupProperties> result = service.listGroups(null, 100).join();
-        assertEquals(result.getMap().size(), 2);
+        MapWithToken<String, GroupProperties> result = service.listGroups(null, null, 100).join();
+        assertEquals(result.getMap().size(), 1);
     }
 }

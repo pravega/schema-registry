@@ -36,6 +36,10 @@ paths:
         - application/json
       parameters:
         - in: query
+          name: namespace
+          type: string
+          description: namespace
+        - in: query
           name: continuationToken
           type: string
           description: Continuation token
@@ -60,6 +64,10 @@ paths:
       consumes:
         - application/json
       parameters:
+        - in: query
+          name: namespace
+          type: string
+          description: namespace
         - in: body
           name: CreateGroupRequest
           description: The Group configuration
@@ -88,6 +96,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     get:
       tags:
       - "Group"
@@ -121,6 +133,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     get:
       tags:
       - "Group"
@@ -144,6 +160,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     put:
       tags:
       - "Group"
@@ -165,7 +185,11 @@ paths:
                   $ref: "#/definitions/SchemaValidationRules"
                   nullable: true
             required:
-              - validationRules      
+              - validationRules
+        - in: query
+          name: namespace
+          type: string
+          description: namespace
       responses:
         200:
           description: Updated schema validation policy
@@ -186,6 +210,10 @@ paths:
         name: type
         type: string
         description: Type of object
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     get:
       tags:
       - "Group"
@@ -209,6 +237,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     get:
       tags:
       - "Group"
@@ -266,6 +298,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     post:
       tags:
       - "Group"
@@ -298,6 +334,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
       - in: path
         name: versionOrdinal
         description: Version ordinal
@@ -341,6 +381,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
       - in: path
         name: type
         description: Schema type from SchemaInfo#type or VersionInfo#type
@@ -389,6 +433,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     post:
       tags:
       - "Group"
@@ -428,6 +476,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     post:
       tags:
       - "Group"
@@ -460,6 +512,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     put:
       tags:
       - "Group"
@@ -502,6 +558,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
       - in: path
         name: encodingId
         description: Encoding id that identifies a unique combination of schema and codec type
@@ -531,6 +591,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     get:
       tags:
       - "Group"
@@ -570,6 +634,10 @@ paths:
           description: Internal server error while registering codectype to a Group          
   /schemas/addedTo:
     parameters:
+      - in: query
+        name: namespace
+        type: string
+        description: namespace
     post:
       tags:
       - "Schema"

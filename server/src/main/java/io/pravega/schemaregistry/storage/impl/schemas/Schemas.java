@@ -22,9 +22,9 @@ import java.util.concurrent.CompletableFuture;
  * @param <T> Type of Version. 
  */
 public interface Schemas<T> {
-    CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String group);
+    CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String namespace, String group);
 
-    CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo);
+    CompletableFuture<List<String>> getGroupsUsing(String namespace, SchemaInfo schemaInfo);
 
     @Data
     class Value<T extends TableRecords.TableValue, V> {

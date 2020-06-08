@@ -67,8 +67,9 @@ public class SchemasApi  {
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Schema references", response = Void.class) })
     public Response getSchemaReferences(@ApiParam(value = "Get schema references for the supplied schema" ,required=true) SchemaInfo schemaInfo
+,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.getSchemaReferences(schemaInfo,securityContext);
+        return delegate.getSchemaReferences(schemaInfo,namespace,securityContext);
     }
 }

@@ -16,6 +16,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.client.Version;
+import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 
 import java.util.AbstractMap;
 import java.util.ArrayList;
@@ -43,7 +44,8 @@ public class PravegaKVSchemas implements Schemas<Version> {
     }
 
     @Override
-    public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String group) {
+    public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
+        String namespace = nameSpace == null ? "" : nameSpace;
         // 1. check if schema exists -- get fingerprint -- get all schemas in the fingerprint list.. 
         // 2. if it doesnt exist, generate a new id and add it to id and fingerprint list and add schema id entry atomically. 
         // (this can fail with write conflict if multiple concurrent attempts are made. keep retrying). 
@@ -64,21 +66,22 @@ public class PravegaKVSchemas implements Schemas<Version> {
                                           return CompletableFuture.completedFuture(schemaId);
                                       }
                                   })
-                                  .thenCompose(schemaId -> addGroupReferenceForSchema(group, schemaId));
+                                  .thenCompose(schemaId -> addGroupReferenceForSchema(namespace, group, schemaId));
                       }));
     }
 
-    private CompletionStage<Void> addGroupReferenceForSchema(String group, String schemaId) {
+    private CompletionStage<Void> addGroupReferenceForSchema(String namespace, String group, String schemaId) {
         SchemaGroupsKey groupsKey = new SchemaGroupsKey(schemaId);
         return Futures.exceptionallyExpecting(tableStore.getEntry(SCHEMAS, KEY_SERIALIZER.toBytes(groupsKey),
                 x -> fromBytes(SchemaGroupsKey.class, x, SchemaGroupsList.class)),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null)
                       .thenCompose(groups -> {
                           Version groupsVersion = groups == null ? null : groups.getVersion();
-                          List<String> groupsList = groups == null ? new ArrayList<>() :
+                          List<NamespaceAndGroup> groupsList = groups == null ? new ArrayList<>() :
                                   new ArrayList<>(groups.getRecord().getGroupIds());
-                          if (!groupsList.contains(group)) {
-                              groupsList.add(group);
+                          NamespaceAndGroup namespaceAndGroup = new NamespaceAndGroup(namespace, group);
+                          if (!groupsList.contains(namespaceAndGroup)) {
+                              groupsList.add(namespaceAndGroup);
                               return Futures.toVoid(tableStore.updateEntry(SCHEMAS,
                                       KEY_SERIALIZER.toBytes(groupsKey),
                                       new SchemaGroupsList(groupsList).toBytes(), groupsVersion));
@@ -142,7 +145,8 @@ public class PravegaKVSchemas implements Schemas<Version> {
     }
 
     @Override
-    public CompletableFuture<List<String>> getGroupsUsing(SchemaInfo schemaInfo) {
+    public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, SchemaInfo schemaInfo) {
+        String namespace = nameSpace == null ? "" : nameSpace;
         SchemaFingerprintKey fingerprintKey = new
                 SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData().array()));
         return withCreateSchemasTableIfAbsent(() -> Futures.exceptionallyExpecting(tableStore.getEntry(SCHEMAS,
@@ -163,7 +167,9 @@ public class PravegaKVSchemas implements Schemas<Version> {
                                                 if (groups == null) {
                                                     return Collections.emptyList();
                                                 } else {
-                                                    return groups.getRecord().getGroupIds();
+                                                    return groups.getRecord().getGroupIds()
+                                                            .stream().filter(x -> x.getNamespace().equals(namespace))
+                                                                 .map(NamespaceAndGroup::getGroupId).collect(Collectors.toList());
                                                 }
                                             });
                           }

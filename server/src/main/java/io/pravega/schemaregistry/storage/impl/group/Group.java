@@ -72,12 +72,10 @@ public class Group<V> {
     private static final Retry.RetryAndThrowConditionally WRITE_CONFLICT_RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                                       .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
 
-    private final String groupId;
     private final GroupTable<V> groupTable;
     private final ScheduledExecutorService executor;
 
-    public Group(String groupId, GroupTable<V> groupTable, ScheduledExecutorService executor) {
-        this.groupId = groupId;
+    public Group(GroupTable<V> groupTable, ScheduledExecutorService executor) {
         this.groupTable = groupTable;
         this.executor = executor;
     }
@@ -98,10 +96,8 @@ public class Group<V> {
                 () -> compareWithExisting(groupProp, validationRecord))
                       .handle((r, e) -> {
                           if (e == null) {
-                              log.info("group {} properties created", groupId);
                               return r;
                           } else {
-                              log.error("failed to create group {}", e, groupId);
                               throw new CompletionException(e);
                           }
                       });
