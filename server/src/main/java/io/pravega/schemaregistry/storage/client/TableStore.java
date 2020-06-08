@@ -26,6 +26,7 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.common.tracing.RequestTag;
 import io.pravega.common.util.ContinuationTokenAsyncIterator;
 import io.pravega.common.util.RetriesExhaustedException;
+import io.pravega.common.util.Retry;
 import io.pravega.controller.server.SegmentHelper;
 import io.pravega.controller.server.WireCommandFailedException;
 import io.pravega.controller.store.host.HostStoreException;
@@ -86,7 +87,8 @@ public class TableStore {
     }
     
     public CompletableFuture<Void> createScope() {
-        return Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE));
+        return Retry.indefinitelyWithExpBackoff("Failed to create scope. Retrying...")
+                    .runAsync(() -> Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE)), executor);
     }
     
     public CompletableFuture<Void> createTable(String tableName) {

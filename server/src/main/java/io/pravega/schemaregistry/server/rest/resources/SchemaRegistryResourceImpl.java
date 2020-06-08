@@ -141,7 +141,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
                                                              // skip groups the user is not authorized on.
                                                              filtered.incrementAndGet();
                                                          } 
-                                                     }
+                                                     } 
                                                  });
                                                  if (result.getMap().size() == toFetch.get() && filtered.get() > 0) {
                                                      toFetch.set(filtered.get());
@@ -150,6 +150,10 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
                                                  } else {
                                                      // we have reached exit condition
                                                      loop.set(false);
+                                                     if (groupsList.getGroups() == null) {
+                                                         groupsList.groups(Collections.emptyMap());
+                                                     }
+
                                                      groupsList.continuationToken(result.getToken() == null ? null : result.getToken().toString());
                                                  }
 
