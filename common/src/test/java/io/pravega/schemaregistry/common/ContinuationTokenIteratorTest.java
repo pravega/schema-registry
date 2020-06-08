@@ -28,19 +28,9 @@ import static org.mockito.Mockito.*;
 public class ContinuationTokenIteratorTest {
     @Test
     public void test() {
-        // 1. call method 1st call returns - list of 5 items + new token
-        // verify that call method is not called until all 10 are read. 
-        // 2. call returns empty list + new token
-        // 3. call returns empty list + new token
-        // 4. call returns list of 10 items + new token
-        // verify that we consume 10 items without calling the callmethod
-        // 5. call returns empty list  + same token. --> this should exit
         Queue<ListWithToken> responses = spy(new LinkedBlockingQueue<>());
         responses.add(new ListWithToken(Lists.newArrayList(1, 2, 3, 4, 5), "1"));
-        responses.add(new ListWithToken(Collections.emptyList(), "2"));
-        responses.add(new ListWithToken(Collections.emptyList(), "3"));
-        responses.add(new ListWithToken(Lists.newArrayList(6, 7, 8, 9, 10), "4"));
-        responses.add(new ListWithToken(Collections.emptyList(), "4"));
+        responses.add(new ListWithToken(Collections.emptyList(), ""));
         Function<String, Map.Entry<String, Collection<Integer>>> func = token -> {
             ListWithToken result = responses.poll();
             return new AbstractMap.SimpleEntry<>(result.token, result.list);
@@ -51,13 +41,7 @@ public class ContinuationTokenIteratorTest {
             assertEquals(myIterator.next().intValue(), i + 1);
         }
         verify(responses, times(1)).poll();
-        for (int i = 5; i < 10; i++) {
-            assertTrue(myIterator.hasNext());
-            assertEquals(myIterator.next().intValue(), i + 1);
-        }
-        verify(responses, times(4)).poll();
         assertFalse(myIterator.hasNext());
-        verify(responses, times(5)).poll();
     }
     
     @Data
