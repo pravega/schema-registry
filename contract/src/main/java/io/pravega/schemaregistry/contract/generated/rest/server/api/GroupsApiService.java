@@ -37,7 +37,7 @@ public abstract class GroupsApiService {
     public abstract Response createGroup(CreateGroupRequest createGroupRequest, String namespace,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteGroup(String groupName, String namespace,SecurityContext securityContext) throws NotFoundException;
     public abstract Response deleteSchemaVersion(String groupName,String type,Integer version, String namespace,SecurityContext securityContext) throws NotFoundException;
-    public abstract Response deleteSchemaVersionOrinal(String groupName,Integer versionOrdinal, String namespace,SecurityContext securityContext) throws NotFoundException;
+    public abstract Response deleteSchemaVersionOrdinal(String groupName,Integer versionOrdinal, String namespace,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getCodecTypesList(String groupName, String namespace,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingId(String groupName,GetEncodingIdRequest getEncodingIdRequest, String namespace,SecurityContext securityContext) throws NotFoundException;
     public abstract Response getEncodingInfo(String groupName,Integer encodingId, String namespace,SecurityContext securityContext) throws NotFoundException;

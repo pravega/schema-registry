@@ -460,7 +460,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
         withCompletion("getSchemaFromVersion", READ, resource, asyncResponse,
-                () -> registryService.getSchema(groupName, schemaType, version)
+                () -> registryService.getSchema(namespace, groupName, schemaType, version)
                                                                     .thenApply(schemaWithVersion -> {
                                                                         SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
                                                                         log.info("Schema for version {} for group {} found.", version, groupName);
@@ -515,7 +515,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
                 String.format(AuthResources.NAMESPACE_GROUP_SCHEMA_FORMAT, namespace, groupName);
 
         withCompletion("deleteSchemaVersion", READ_UPDATE, resource, asyncResponse,
-                () -> registryService.deleteSchema(groupName, schemaType, version)
+                () -> registryService.deleteSchema(namespace, groupName, schemaType, version)
                                      .thenApply(v -> {
                                          log.info("Schema for version {}/{} for group {} deleted.", schemaType, version, groupName);
                                          return Response.status(Status.NO_CONTENT).build();

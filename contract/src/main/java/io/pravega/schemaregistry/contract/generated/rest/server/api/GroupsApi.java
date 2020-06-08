@@ -188,12 +188,12 @@ public class GroupsApi  {
         @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
         
         @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class) })
-    public Response deleteSchemaVersionOrinal(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
+    public Response deleteSchemaVersionOrdinal(@ApiParam(value = "Group name",required=true) @PathParam("groupName") String groupName
 ,@ApiParam(value = "Version ordinal",required=true) @PathParam("versionOrdinal") Integer versionOrdinal
 ,@ApiParam(value = "namespace") @QueryParam("namespace") String namespace
 ,@Context SecurityContext securityContext)
     throws NotFoundException {
-        return delegate.deleteSchemaVersionOrinal(groupName,versionOrdinal,namespace,securityContext);
+        return delegate.deleteSchemaVersionOrdinal(groupName,versionOrdinal,namespace,securityContext);
     }
     @GET
     @Path("/{groupName}/codecTypes")
@@ -379,7 +379,7 @@ public class GroupsApi  {
     
     
     @Produces({ "application/json" })
-    @io.swagger.annotations.ApiOperation(value = "", notes = "List all groups", response = ListGroupsResponse.class, tags={ "Group", })
+    @io.swagger.annotations.ApiOperation(value = "", notes = "List all groups within the namespace. If namespace is not specified, All groups in default namespace are listed.", response = ListGroupsResponse.class, tags={ "Group", })
     @io.swagger.annotations.ApiResponses(value = { 
         @io.swagger.annotations.ApiResponse(code = 200, message = "List of all groups", response = ListGroupsResponse.class),
         
