@@ -5,6 +5,9 @@
     <Match> <!-- generated code -->
         <Package name="io.pravega.schemaregistry.test.integrationtest.generated" />
     </Match>
+    <Match> <!-- generated code -->
+        <Package name="io.pravega.schemaregistry.testobjs.generated" />
+    </Match>
     <Match> <!-- does not work well with futures -->
         <Bug pattern="NP_NONNULL_PARAM_VIOLATION" />
     </Match>
