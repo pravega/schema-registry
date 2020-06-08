@@ -25,7 +25,6 @@ buildscript {
         }
     }
     dependencies {
-        classpath group: 'com.google.protobuf', name:'protobuf-gradle-plugin', version: protobufGradlePlugin
         classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
         classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
@@ -152,9 +151,6 @@ task sourceTar(type: Tar) {
 
 task javadocs(type: Javadoc) {
     description = "Generate main pravega javadoc"
-}
-
-task publishAllJars() {
 }
 
 task prepareRegistryImage(type: Copy) {
