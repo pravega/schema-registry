@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import org.apache.commons.lang3.SerializationException;
 
 import java.io.InputStream;
 import java.util.Map;
@@ -31,6 +32,17 @@ class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        return deserializers.get(writerSchema.getType()).deserialize(inputStream, writerSchema, readerSchema);
+        AbstractPravegaDeserializer<T> deserializer = deserializers
+                .entrySet()
+                .stream()
+                .filter(x -> x.getKey().equals(writerSchema.getType()) || extractName(x.getKey()).equals(writerSchema.getType()))
+                .findAny().orElseThrow(() -> new SerializationException("deserializer not supplied for type " + writerSchema.getType()))
+                .getValue();
+        return deserializer.deserialize(inputStream, writerSchema, readerSchema);
+    }
+    
+    private String extractName(String qualifiedName) {
+        int nameStart = qualifiedName.lastIndexOf(".");
+        return qualifiedName.substring(nameStart + 1);
     }
 }

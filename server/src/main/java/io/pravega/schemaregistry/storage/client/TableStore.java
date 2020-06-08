@@ -61,7 +61,7 @@ import static io.pravega.controller.server.WireCommandFailedException.Reason.Con
  */
 @Slf4j
 public class TableStore {
-    public static final String SCHEMA_REGISTRY_SCOPE = "schema-registry";
+    public static final String SCHEMA_REGISTRY_SCOPE = "_schemaregistry";
     private static final int NUM_OF_RETRIES = 15; // approximately 1 minute worth of retries
     private final SegmentHelper segmentHelper;
     private final HostStoreImpl hostStore;
