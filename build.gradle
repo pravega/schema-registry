@@ -20,15 +20,6 @@ buildscript {
     // log the current JVM version.
     println "Build JVM Version is : " + Jvm.current()
     repositories {
-        mavenLocal()
-        jcenter()
-        mavenCentral()
-        maven {
-            url "https://repository.apache.org/snapshots"
-        }
-        maven {
-            url "https://oss.jfrog.org/jfrog-dependencies"
-        }
         maven {
             url "https://plugins.gradle.org/m2/"
         }
@@ -56,7 +47,7 @@ allprojects {
             compileOnly group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
             testCompile group: 'com.github.spotbugs', name: 'spotbugs-annotations', version: spotbugsAnnotationsVersion
             compileOnly 'org.projectlombok:lombok:' + lombokVersion
-            
+
             testCompileOnly 'org.projectlombok:lombok:' + lombokVersion
             annotationProcessor 'org.projectlombok:lombok:' + lombokVersion
             testAnnotationProcessor 'org.projectlombok:lombok:' + lombokVersion
@@ -84,9 +75,15 @@ allprojects {
     apply from: "$rootDir/gradle/rat.gradle"
 
     repositories {
+        mavenLocal()
         jcenter()
         mavenCentral()
-        mavenLocal()
+        maven {
+            url "https://oss.jfrog.org/jfrog-dependencies"
+        }
+        maven {
+            url "https://repository.apache.org/snapshots"
+        }
     }
 
     gradle.projectsEvaluated {
@@ -223,3 +220,107 @@ project('serializers') {
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
 }
+
+apply plugin: 'distribution'
+
+task sourceCopy(type: Copy) {
+    from rootDir
+    into 'source'
+}
+
+task sourceTar(type: Tar) {
+    dependsOn 'sourceCopy'
+    from  'source'
+    destinationDir = file('sourceArtifacts')
+    extension = 'tgz'
+    compression = Compression.GZIP
+}
+
+task javadocs(type: Javadoc) {
+    description = "Generate main pravega javadoc"
+}
+
+task prepareRegistryImage(type: Copy) {
+    into "${buildDir}/docker/pravega-schema-registry"
+    from "docker/pravega-schema-registry"
+    from (installDist) {
+        into "pravega-schema-registry"
+        exclude "**/*.bat"
+    }
+}
+
+task buildRegistryImage(type: DockerBuildTask, dependsOn: prepareRegistryImage) {
+    baseTag = schemaregistryBaseTag
+    dockerDir = prepareRegistryImage.destinationDir.absolutePath
+    if (JavaVersion.current().isJava11Compatible()) {
+        dockerFile = "${dockerDir}/Dockerfile-java-11"
+    } else {
+        dockerFile = "${dockerDir}/Dockerfile"
+    }
+}
+
+task docker(dependsOn: buildRegistryImage) {
+    description = "Builds all docker images"
+}
+
+task pushRegistryImage(type: DockerPushTask) {
+    // No explicit dependency on building the pravega image
+    mustRunAfter buildRegistryImage
+    tag = "${schemaregistryBaseTag}:${version}"
+}
+
+task dockerPush(dependsOn: pushRegistryImage) {
+    description = "Push all docker images"
+}
+
+/**
+ * Task for building a docker image
+ */
+class DockerBuildTask extends Exec {
+    String baseTag
+    String dockerDir
+    String dockerFile
+
+    DockerBuildTask() {
+        executable project.dockerExecutable
+        args "build"
+        args "--pull"
+        args "-t", "${->baseTag}:${project.version}"
+        args "-t", "${->baseTag}:latest"
+        args "-f", "${->dockerFile}"
+        args "${->dockerDir}"
+    }
+}
+
+/**
+ * Task for pushing an image, which can either push to dockerhub or to a private registry.
+ * If pushing to dockerhub, you must be logged using using `docker login` before running.
+ */
+class DockerPushTask extends Exec {
+    String tag
+
+    DockerPushTask() {
+        executable project.dockerExecutable
+        args "push", "${->getRemoteTag()}"
+    }
+
+    protected void exec() {
+        // Tag the image with the remote image name first
+        if (project.hasProperty('dockerRegistry')) {
+            project.exec {
+                commandLine project.dockerExecutable, "tag", tag, getRemoteTag()
+            }
+        }
+        super.exec()
+    }
+
+    String getRemoteTag() {
+        if (project.hasProperty('dockerRegistry')) {
+            return "${project.property('dockerRegistry')}/${tag}"
+        }
+        else {
+            return tag
+        }
+    }
+}
+
