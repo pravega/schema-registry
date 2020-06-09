@@ -84,9 +84,6 @@ allprojects {
         maven {
             url "https://repository.apache.org/snapshots"
         }
-        maven {
-            url "https://plugins.gradle.org/m2/"
-        }
     }
 
     gradle.projectsEvaluated {
