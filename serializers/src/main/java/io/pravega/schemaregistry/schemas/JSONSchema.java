@@ -54,6 +54,14 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         this.tDerivedClass = tDerivedClass;
         this.schema = schema;
     }
+    
+    private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> tClass) {
+        this.schemaString = schemaString;
+        this.schemaInfo = schemaInfo;
+        this.tClass = tClass;
+        this.tDerivedClass = tClass;
+        this.schema = schema;
+    }
 
     /**
      * Method to create a typed JSONSchema for the given class. It extracts the json schema from the class.
@@ -109,7 +117,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
         
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
-        return new JSONSchema<>(schema, schemaInfo.getType(), schemaString, Object.class);
+        return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
     }
 
     private ByteBuffer getSchemaBytes() {

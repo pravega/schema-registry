@@ -43,6 +43,15 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
         this.descriptorProto = fileDescriptorSet;
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
+
+    @SneakyThrows
+    private ProtobufSchema(SchemaInfo schemaInfo) {
+        DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+
+        this.parser = null;
+        this.descriptorProto = fileDescriptorSet;
+        this.schemaInfo = schemaInfo;
+    }
     
     private ByteBuffer getSchemaBytes() {
         return ByteBuffer.wrap(descriptorProto.toByteArray());
@@ -66,7 +75,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
-        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
+        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getName(), tParser, fileDescriptorSet);
     }
 
     /**
@@ -102,7 +111,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
         T defaultInstance = (T) tDerivedClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
 
-        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
+        return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getName(), tParser, fileDescriptorSet);
     }
 
     /**
@@ -114,9 +123,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     @SneakyThrows
     @SuppressWarnings("unchecked")
     public static ProtobufSchema<DynamicMessage> from(SchemaInfo schemaInfo) {
-        DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
-
-        return new ProtobufSchema<>(schemaInfo.getType(), null, fileDescriptorSet);
+        return new ProtobufSchema<>(schemaInfo);
     }
 }
 

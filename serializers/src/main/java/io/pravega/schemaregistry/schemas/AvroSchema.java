@@ -35,8 +35,14 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     
     private AvroSchema(Schema schema) {
         this.schema = schema;
-        this.schemaInfo = new SchemaInfo(schema.getFullName(),  
+        this.schemaInfo = new SchemaInfo(schema.getName(),  
                 SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
+    }
+
+    private AvroSchema(SchemaInfo schemaInfo) {
+        String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
+        this.schema = new Schema.Parser().parse(schemaString);
+        this.schemaInfo = schemaInfo;
     }
 
     /**
@@ -86,14 +92,11 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     /**
      * Method to create a typed AvroSchema of type {@link GenericRecord} from schema info. 
      *
-     * @param schemainfo Schema info object that has schema data in binary form.  
+     * @param schemaInfo Schema info object that has schema data in binary form.  
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
-    public static AvroSchema<GenericRecord> from(SchemaInfo schemainfo) {
-        String schemaString = new String(schemainfo.getSchemaData().array(), Charsets.UTF_8);
-        Schema schema = new Schema.Parser().parse(schemaString);
-
-        return new AvroSchema<>(schema);
+    public static AvroSchema<GenericRecord> from(SchemaInfo schemaInfo) {
+        return new AvroSchema<>(schemaInfo);
     }
 
     private ByteBuffer getSchemaBytes() {

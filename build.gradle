@@ -187,6 +187,7 @@ project('contract') {
         compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
         compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+
     }
 
     javadoc {
@@ -197,6 +198,17 @@ project('contract') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
+}
+
+def getProjectVersion() {
+    String ver = schemaregistryVersion
+    if (grgit && ver.contains("-SNAPSHOT")) {
+        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
+        def count = grgit.log(includes:['HEAD']).size()
+        def commitId = "${grgit.head().abbreviatedId}"
+        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
+    }
+    return ver
 }
 
 project('serializers') {
@@ -303,7 +315,7 @@ project('samples') {
         compile project(':common')
         compile project(':contract')
         compile project(':client')
-        compile project(':server') 
+        compile project(':server')
         compile project(':serializers')
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
@@ -320,17 +332,6 @@ project('samples') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-}
-
-def getProjectVersion() {
-    String ver = schemaregistryVersion
-    if (grgit && ver.contains("-SNAPSHOT")) {
-        String versionLabel = ver.substring(0, ver.indexOf("-SNAPSHOT"))
-        def count = grgit.log(includes:['HEAD']).size()
-        def commitId = "${grgit.head().abbreviatedId}"
-        ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
-    }
-    return ver
 }
 
 apply plugin: 'distribution'
@@ -486,3 +487,4 @@ class DockerPushTask extends Exec {
         }
     }
 }
+
