@@ -18,6 +18,7 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.SneakyThrows;
@@ -40,9 +41,9 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
                 DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getDescriptorProto();
                 
                 int count = descriptorSet.getFileCount();
-                int nameStart = schemaToUse.getType().lastIndexOf(".");
-                String name = schemaToUse.getType().substring(nameStart + 1);
-                String pckg = nameStart < 0 ? "" : schemaToUse.getType().substring(0, nameStart);
+                String[] tokens = NameUtil.extractNameAndQualifier(schemaToUse.getType());
+                String name = tokens[0];
+                String pckg = tokens[1];
                 DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet.getFileList().stream()
                         .filter(x -> x.getPackage().startsWith(pckg) &&
                                 x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)))

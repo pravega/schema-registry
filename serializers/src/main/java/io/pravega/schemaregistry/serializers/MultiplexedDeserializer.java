@@ -18,6 +18,8 @@ import org.apache.commons.lang3.SerializationException;
 import java.io.InputStream;
 import java.util.Map;
 
+import static io.pravega.schemaregistry.common.NameUtil.extractName;
+
 class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
 
@@ -39,10 +41,5 @@ class MultiplexedDeserializer<T> extends AbstractPravegaDeserializer<T> {
                 .findAny().orElseThrow(() -> new SerializationException("deserializer not supplied for type " + writerSchema.getType()))
                 .getValue();
         return deserializer.deserialize(inputStream, writerSchema, readerSchema);
-    }
-    
-    private String extractName(String qualifiedName) {
-        int nameStart = qualifiedName.lastIndexOf(".");
-        return qualifiedName.substring(nameStart + 1);
     }
 }
