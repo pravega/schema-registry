@@ -110,8 +110,8 @@ public class EncryptionDemo {
                                                             .groupId(groupId)
                                                             .autoCreateGroup(SerializationFormat.Avro,
                                                                     SchemaValidationRules.of(Compatibility.backward()), true)
-                                                            .autoRegisterSchema(true)
-                                                            .autoRegisterCodec(true)
+                                                            .registerSchema(true)
+                                                            .registerCodec(true)
                                                             .codec(myCodec)
                                                             .registryClient(client)
                                                             .build();

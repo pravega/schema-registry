@@ -57,14 +57,14 @@ public class SerializerConfig {
      * It is recommended to register keep this flag as false in production systems and manage schema evolution explicitly and
      * in lockstep with upgrade of existing pravega client applications. 
      */
-    private final boolean autoRegisterSchema;
+    private final boolean registerSchema;
     /**
      * Flag to tell the serializer if the codec should be automatically registered before using the serializer in 
      * {@link io.pravega.client.stream.EventStreamWriter}. 
      * It is recommended to register keep this flag as false in production systems and manage codecTypes used by writers explicitly
      * so that readers are aware of encodings used. 
      */
-    private final boolean autoRegisterCodec;
+    private final boolean registerCodec;
     /**
      * Codec to use for compressing events after serializing them. 
      */
@@ -84,9 +84,9 @@ public class SerializerConfig {
      * Flag to tell the serializer if the group should be created automatically. 
      * It is recommended to register keep this flag as false in production systems and create groups and add schemas 
      */
-    private final boolean autoCreateGroup;
+    private final boolean createGroup;
     /**
-     * Group properties to use for creating the group if autoCreateGroup is set to true. 
+     * Group properties to use for creating the group if createGroup is set to true. 
      */
     private final GroupProperties groupProperties;
 
@@ -95,8 +95,9 @@ public class SerializerConfig {
 
         private Decoder decoder = new Decoder();
 
-        private boolean autoRegisterSchema = false;
-        private boolean autoRegisterCodec = false;
+        private boolean registerSchema = false;
+        private boolean registerCodec = false;
+        private boolean createGroup = false;
         private boolean failOnCodecMismatch = true;
         private Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient = null;
 
@@ -116,7 +117,7 @@ public class SerializerConfig {
         }
 
         public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, SchemaValidationRules rules, boolean allowMultipleTypes) {
-            this.autoCreateGroup = true;
+            this.createGroup = true;
             this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes);
             return this;
         }

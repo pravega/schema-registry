@@ -157,7 +157,7 @@ public class SpecificAndGenericConsumerProto {
                                                             .autoCreateGroup(SerializationFormat.Protobuf,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 

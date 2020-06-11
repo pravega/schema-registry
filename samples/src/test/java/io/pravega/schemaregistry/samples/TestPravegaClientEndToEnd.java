@@ -177,7 +177,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -288,8 +288,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
-                                                            .autoRegisterCodec(true)
+                                                            .registerSchema(true)
+                                                            .registerCodec(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -314,8 +314,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region writer with codec gzip 
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
-                                           .autoRegisterSchema(true)
-                                           .autoRegisterCodec(true)
+                                           .registerSchema(true)
+                                           .registerCodec(true)
                                            .codec(CodecFactory.gzip())
                                            .registryClient(client)
                                            .build();
@@ -334,8 +334,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region writer with codec snappy
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
-                                           .autoRegisterSchema(true)
-                                           .autoRegisterCodec(true)
+                                           .registerSchema(true)
+                                           .registerCodec(true)
                                            .codec(CodecFactory.snappy())
                                            .registryClient(client)
                                            .build();
@@ -393,8 +393,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         };
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
-                                           .autoRegisterSchema(true)
-                                           .autoRegisterCodec(true)
+                                           .registerSchema(true)
+                                           .registerCodec(true)
                                            .codec(myCodec)
                                            .registryClient(client)
                                            .build();
@@ -467,7 +467,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         
@@ -532,7 +532,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer
@@ -599,7 +599,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer
@@ -716,7 +716,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     false)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer
@@ -821,7 +821,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer
@@ -937,7 +937,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     false)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer
@@ -1009,7 +1009,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .autoCreateGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer

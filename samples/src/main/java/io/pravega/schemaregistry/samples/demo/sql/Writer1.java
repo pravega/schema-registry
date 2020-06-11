@@ -140,7 +140,7 @@ public class Writer1 {
                                                             .groupId(groupId)
                                                             .autoCreateGroup(SerializationFormat.Avro, SchemaValidationRules.of(Compatibility.backward()), 
                                                                     false)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryConfig(config)
                                                             .build();
 

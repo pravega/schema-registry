@@ -145,7 +145,7 @@ public class AvroDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
 
@@ -267,7 +267,7 @@ public class AvroDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
 
@@ -331,7 +331,7 @@ public class AvroDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
             // region writer
@@ -396,7 +396,7 @@ public class AvroDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
             // region writer

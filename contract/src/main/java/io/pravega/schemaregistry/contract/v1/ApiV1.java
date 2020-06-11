@@ -25,7 +25,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
-import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.swagger.annotations.ApiParam;
 
 import javax.ws.rs.Consumes;
@@ -315,7 +314,7 @@ public class ApiV1 {
         void addCodecType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                           @ApiParam(value = "Add codec type", required = true) String codecType,
                           @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                          @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                          @Suspended AsyncResponse asyncResponse);
 
         @POST
         @Path("/{groupName}/schemas/versions")
@@ -331,7 +330,7 @@ public class ApiV1 {
         void addSchema(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                        @ApiParam(value = "Add new schema to group", required = true) SchemaInfo schemaInfo,
                        @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                       @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                       @Suspended AsyncResponse asyncResponse);
 
         @POST
         @Path("/{groupName}/schemas/versions/canRead")
@@ -345,7 +344,7 @@ public class ApiV1 {
         void canRead(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                      @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) SchemaInfo schemaInfo,
                      @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                     @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                     @Suspended AsyncResponse asyncResponse);
 
         @POST
         @Consumes({"application/json"})
@@ -356,7 +355,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
         void createGroup(@ApiParam(value = "The Group configuration", required = true) CreateGroupRequest createGroupRequest, 
                          @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                         @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                         @Suspended AsyncResponse asyncResponse);
 
         @DELETE
         @Path("/{groupName}")
@@ -366,7 +365,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting the Group", response = Void.class)})
         void deleteGroup(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                          @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                         @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                         @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/codecTypes")
@@ -378,7 +377,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching codecTypes registered", response = Void.class)})
         void getCodecTypesList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                               @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                               @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/encodings/{encodingId}")
@@ -391,7 +390,7 @@ public class ApiV1 {
         void getEncodingInfo(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                              @ApiParam(value = "Encoding id that identifies a unique combination of schema and codecType", required = true) @PathParam("encodingId") Integer encodingId,
                              @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                             @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                             @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}")
@@ -403,7 +402,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         void getGroupProperties(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                 @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                                @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/history")
@@ -415,7 +414,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group history", response = Void.class)})
         void getGroupHistory(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                              @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                             @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                             @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/schemas/versions")
@@ -428,7 +427,7 @@ public class ApiV1 {
         void getSchemaVersions(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                @ApiParam(value = "Type") @QueryParam("type") String type,
                                @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                               @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                               @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/schemas")
@@ -441,7 +440,7 @@ public class ApiV1 {
         void getSchemas(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                         @ApiParam(value = "Type of object") @QueryParam("type") String type,
                         @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                        @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                        @Suspended AsyncResponse asyncResponse);
 
         @PUT
         @Path("/{groupName}/encodings")
@@ -456,7 +455,7 @@ public class ApiV1 {
         void getEncodingId(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                            @ApiParam(value = "Get schema corresponding to the version", required = true) GetEncodingIdRequest getEncodingIdRequest,
                            @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                           @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                           @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
@@ -469,7 +468,7 @@ public class ApiV1 {
         void getSchemaFromVersionOrdinal(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                          @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version,
                                          @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                                         @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                         @Suspended AsyncResponse asyncResponse);
 
         @DELETE
         @Path("/{groupName}/schemas/versions/{versionOrdinal}")
@@ -482,7 +481,7 @@ public class ApiV1 {
         void deleteSchemaFromVersionOrdinal(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                             @ApiParam(value = "version ordinal", required = true) @PathParam("versionOrdinal") Integer version,
                                             @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                                            @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                            @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Path("/{groupName}/schemas/{type}/versions/{version}")
@@ -524,7 +523,7 @@ public class ApiV1 {
         void getSchemaVersion(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                               @ApiParam(value = "Get schema corresponding to the version", required = true) SchemaInfo schemaInfo,
                               @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                              @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                              @Suspended AsyncResponse asyncResponse);
 
         @GET
         @Produces({"application/json"})
@@ -535,7 +534,7 @@ public class ApiV1 {
         void listGroups(@ApiParam(value = "Continuation token") @QueryParam("continuationToken") String continuationToken,
                         @ApiParam(value = "The numbers of items to return") @QueryParam("limit") Integer limit,
                         @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                        @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                        @Suspended AsyncResponse asyncResponse);
 
         @PUT
         @Path("/{groupName}/rules")
@@ -549,7 +548,7 @@ public class ApiV1 {
         void updateSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                                          @ApiParam(value = "update group policy", required = true) UpdateValidationRulesRequest updateValidationRulesRequest,
                                          @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                                         @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                                         @Suspended AsyncResponse asyncResponse);
 
         @POST
         @Path("/{groupName}/schemas/versions/validate")
@@ -563,7 +562,7 @@ public class ApiV1 {
         void validate(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
                       @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest,
                       @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
-                      @Suspended AsyncResponse asyncResponse) throws NotFoundException;
+                      @Suspended AsyncResponse asyncResponse);
     }
 
 

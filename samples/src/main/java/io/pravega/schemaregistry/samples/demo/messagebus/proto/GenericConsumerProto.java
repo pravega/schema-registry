@@ -126,7 +126,7 @@ public class GenericConsumerProto {
                                                             .autoCreateGroup(SerializationFormat.Protobuf, 
                                                                     SchemaValidationRules.of(Compatibility.allowAny()), 
                                                                     true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // endregion

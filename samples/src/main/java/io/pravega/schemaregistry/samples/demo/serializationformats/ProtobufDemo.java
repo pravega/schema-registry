@@ -110,7 +110,7 @@ public class ProtobufDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
             // region writer
@@ -194,7 +194,7 @@ public class ProtobufDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
             // region writer

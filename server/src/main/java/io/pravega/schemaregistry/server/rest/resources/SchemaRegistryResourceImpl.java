@@ -35,7 +35,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationR
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
-import io.pravega.schemaregistry.contract.generated.rest.server.api.NotFoundException;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
@@ -105,7 +104,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void listGroups(String continuationToken, Integer limit, String namespace,
-                           AsyncResponse asyncResponse) throws NotFoundException {
+                           AsyncResponse asyncResponse) {
         log.info("List Groups called");
         AtomicInteger toFetch = limit == null ? new AtomicInteger(DEFAULT_LIST_GROUPS_LIMIT) : new AtomicInteger(limit);
         AtomicReference<String> continuationTokenRef = new AtomicReference<>(continuationToken);
@@ -170,7 +169,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void createGroup(CreateGroupRequest createGroupRequest, String namespace,
-                            AsyncResponse asyncResponse) throws NotFoundException {
+                            AsyncResponse asyncResponse) {
         String resource = Strings.isNullOrEmpty(namespace) ? AuthResources.ROOT : String.format(AuthResources.NAMESPACE_FORMAT, namespace);
         withCompletion("createGroup", READ_UPDATE, resource, asyncResponse, () -> {
             GroupProperties groupProperties = ModelHelper.decode(createGroupRequest.getGroupProperties());
@@ -196,7 +195,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void getGroupProperties(String groupName, String namespace,
-                                   AsyncResponse asyncResponse) throws NotFoundException {
+                                   AsyncResponse asyncResponse) {
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) : 
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
         withCompletion("getGroupProperties", READ, resource, asyncResponse,
@@ -220,7 +219,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void getGroupHistory(String groupName, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getGroupHistory(String groupName, String namespace, AsyncResponse asyncResponse) {
         log.info("Get group history called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -251,7 +250,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void updateSchemaValidationRules(String groupName, UpdateValidationRulesRequest updateValidationRulesRequest, 
-                                            String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+                                            String namespace, AsyncResponse asyncResponse) {
         log.info("Update schema validation rules called for group {} with new request {}", groupName, updateValidationRulesRequest);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -283,7 +282,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     
     @Override
     public void deleteGroup(String groupName, String namespace,
-                            AsyncResponse asyncResponse) throws NotFoundException {
+                            AsyncResponse asyncResponse) {
         log.info("Delete group called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -304,7 +303,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void getSchemaVersions(String groupName, String type, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersions(String groupName, String type, String namespace, AsyncResponse asyncResponse) {
         log.info("Get group schemas called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -337,7 +336,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void addSchema(String groupName, SchemaInfo schemaInfo, String namespace,
-                                          AsyncResponse asyncResponse) throws NotFoundException {
+                                          AsyncResponse asyncResponse) {
         log.info("Add schema to group called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_SCHEMA_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_SCHEMA_FORMAT, namespace, groupName);
@@ -373,7 +372,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void validate(String groupName, ValidateRequest validateRequest, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void validate(String groupName, ValidateRequest validateRequest, String namespace, AsyncResponse asyncResponse) {
         log.info("Validate schema called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -400,7 +399,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void canRead(String groupName, SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void canRead(String groupName, SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) {
         log.info("Can read using schema called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -536,7 +535,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void getEncodingId(String groupName, GetEncodingIdRequest getEncodingIdRequest, String namespace,
-                              AsyncResponse asyncResponse) throws NotFoundException {
+                              AsyncResponse asyncResponse) {
         log.info("getEncodingId called for group {} with version {} and codec {}", groupName,
                 getEncodingIdRequest.getVersionInfo(), getEncodingIdRequest.getCodecType());
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
@@ -572,7 +571,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void getSchemaVersion(String groupName, SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemaVersion(String groupName, SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) {
         log.info("Get schema version called for group {}", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -601,7 +600,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
     
     @Override
-    public void getSchemas(String groupName, String type, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getSchemas(String groupName, String type, String namespace, AsyncResponse asyncResponse) {
         log.info("getSchemas called for group {} ", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -630,7 +629,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void getEncodingInfo(String groupName, Integer encodingId, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void getEncodingInfo(String groupName, Integer encodingId, String namespace, AsyncResponse asyncResponse) {
         log.info("getEncodingInfo called for group {} encodingId {}", groupName, encodingId);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -661,7 +660,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
 
     @Override
     public void getCodecTypesList(String groupName, String namespace,
-                                  AsyncResponse asyncResponse) throws NotFoundException {
+                                  AsyncResponse asyncResponse) {
         log.info("getCodecTypesList called for group {} ", groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
@@ -688,7 +687,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     }
 
     @Override
-    public void addCodecType(String groupName, String codecType, String namespace, AsyncResponse asyncResponse) throws NotFoundException {
+    public void addCodecType(String groupName, String codecType, String namespace, AsyncResponse asyncResponse) {
         log.info("addCodecType called for group {} codecType {}", groupName, codecType);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_CODEC_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_CODEC_FORMAT, namespace, groupName);

@@ -144,7 +144,7 @@ public class SpecificAndGenericConsumer {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .autoCreateGroup(SerializationFormat.Avro, true)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 

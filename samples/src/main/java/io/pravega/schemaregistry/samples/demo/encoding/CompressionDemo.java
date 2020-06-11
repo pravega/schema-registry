@@ -223,8 +223,8 @@ public class CompressionDemo {
     private void writeGzip(String input) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
-                                                            .autoRegisterCodec(true)
+                                                            .registerSchema(true)
+                                                            .registerCodec(true)
                                                             .codec(CodecFactory.gzip())
                                                             .registryClient(client)
                                                             .build();
@@ -244,8 +244,8 @@ public class CompressionDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .codec(CodecFactory.snappy())
-                                                            .autoRegisterSchema(true)
-                                                            .autoRegisterCodec(true)
+                                                            .registerSchema(true)
+                                                            .registerCodec(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -264,8 +264,8 @@ public class CompressionDemo {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .codec(MY_CODEC)
-                                                            .autoRegisterSchema(true)
-                                                            .autoRegisterCodec(true)
+                                                            .registerSchema(true)
+                                                            .registerCodec(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -284,8 +284,8 @@ public class CompressionDemo {
     private void withoutCompression(String input) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
-                                                            .autoRegisterCodec(true)
+                                                            .registerSchema(true)
+                                                            .registerCodec(true)
                                                             .registryClient(client)
                                                             .build();
         

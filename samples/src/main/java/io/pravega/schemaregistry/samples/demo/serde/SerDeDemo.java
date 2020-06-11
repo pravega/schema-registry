@@ -99,7 +99,7 @@ public class SerDeDemo {
     private EventStreamWriter<MyPojo> createWriter() {
         SerializerConfig config = SerializerConfig.builder()
                                                   .groupId(groupId)
-                                                  .autoRegisterSchema(true)
+                                                  .registerSchema(true)
                                                   .registryClient(client)
                                                   .build();
 

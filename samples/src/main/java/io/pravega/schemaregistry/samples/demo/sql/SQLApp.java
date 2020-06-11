@@ -285,7 +285,7 @@ public class SQLApp {
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 

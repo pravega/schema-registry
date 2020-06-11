@@ -139,7 +139,7 @@ public class AllFormatInSingleStreamDemo {
     private EventStreamReader<Object> createReader(String groupId) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -160,7 +160,7 @@ public class AllFormatInSingleStreamDemo {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -178,7 +178,7 @@ public class AllFormatInSingleStreamDemo {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 
@@ -201,7 +201,7 @@ public class AllFormatInSingleStreamDemo {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoRegisterSchema(true)
+                                                            .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
         // region writer

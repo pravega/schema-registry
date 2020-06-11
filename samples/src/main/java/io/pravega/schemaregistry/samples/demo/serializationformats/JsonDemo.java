@@ -110,7 +110,7 @@ public class JsonDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
             // region writer
@@ -181,7 +181,7 @@ public class JsonDemo {
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
-                                                                .autoRegisterSchema(true)
+                                                                .registerSchema(true)
                                                                 .registryClient(client)
                                                                 .build();
             // region writer
