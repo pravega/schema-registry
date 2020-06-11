@@ -118,7 +118,8 @@ public interface SchemaRegistryClient {
      * If group is configured with {@link GroupProperties#allowMultipleTypes} then multiple schemas with distinct
      * type {@link SchemaInfo#type} could be registered. 
      * All schemas with same type are assigned monotonically increasing version numbers. 
-     * Add schema api is idempotent. If a schema is already registered, its version info is returned by the service.  
+     * Implementation of this method is expected to be idempotent. The behaviour of Add Schema API on the schema registry
+     * service is idempotent. If a schema is already registered, its version info is returned by the service.  
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to add. 
@@ -136,12 +137,13 @@ public interface SchemaRegistryClient {
             MalformedSchemaException, ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Api to delete schema corresponding to the version. Users should be very careful while using this API in production, 
+     * Deletes the schema associated to the given version. Users should be very careful while using this API in production, 
      * esp if the schema has already been used to write the data. 
-     * Delete schema api is idempotent. 
-     * This does a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
+     * An implementation of the delete call is expected to be idempotent. The behaviour of delete schema API invocation 
+     * with the schema registry service is idempotent. 
+     * The service performs a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
      * However, the schema will not participate in any compatibility checks once deleted.
-     * It will not be included in listing schema versions for the group using apis like {@link SchemaRegistryClient#getSchemaVersions}
+     * It will not be included in listing schema versions for the group using APIs like {@link SchemaRegistryClient#getSchemaVersions}
      * or {@link SchemaRegistryClient#getGroupHistory} or {@link SchemaRegistryClient#getSchemas} or 
      * {@link SchemaRegistryClient#getLatestSchemaVersion}
      * If add schema is called again using this deleted schema will result in a new version being assigned to it upon registration. 
@@ -154,15 +156,16 @@ public interface SchemaRegistryClient {
     void deleteSchemaVersion(String groupId, VersionInfo versionInfo) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Api to delete schema corresponding to the schemaType and version. 
-     * Users should be very careful while using this API in production, esp if the schema has already been used to write the data. 
-     * Delete schema api is idempotent. 
-     * This does a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
+     * Deletes the schema associated to the given version. Users should be very careful while using this API in production, 
+     * esp if the schema has already been used to write the data. 
+     * An implementation of the delete call is expected to be idempotent. The behaviour of delete schema API invocation 
+     * with the schema registry service is idempotent. 
+     * The service performs a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
      * However, the schema will not participate in any compatibility checks once deleted.
-     * It will not be included in listing schema versions for the group using apis like {@link SchemaRegistryClient#getSchemaVersions}
+     * It will not be included in listing schema versions for the group using APIs like {@link SchemaRegistryClient#getSchemaVersions}
      * or {@link SchemaRegistryClient#getGroupHistory} or {@link SchemaRegistryClient#getSchemas} or 
      * {@link SchemaRegistryClient#getLatestSchemaVersion}
-     * If add schema is called again using this deleted schema will result in a new version being assigned to upon registration. 
+     * If add schema is called again using this deleted schema will result in a new version being assigned to it upon registration. 
      * 
      * @param groupId Id for the group.
      * @param schemaType schemaType that identifies the type of object the schema represents. This should be same as the 
@@ -219,8 +222,9 @@ public interface SchemaRegistryClient {
      * Gets an encoding id that uniquely identifies a combination of Schema version and codec type. 
      * This encoding id is a 4 byte integer and it can be used to tag the data which is serialized and encoded using the
      * schema version and codecType identified by this encoding id. 
-     * This api is idempotent. And if an encoding id is generated for a version and codec pair, subsequent requests to this
-     * api will return the generated encoding id. 
+     * The implementation of this method is expected to be idempotent. The corresponding GetEncodingId API on schema registry
+     * service is idempotent and will generate a new encoding id for each unique version and codecType pair only once. 
+     * Subsequent requests to get the encoding id for the codecType and version will return the previously generated id. 
      * If the schema identified by the version is deleted using {@link SchemaRegistryClient#deleteSchemaVersion} api, 
      * then if the encoding id was already generated for the pair of schema version and codec, then it will be returned. 
      * However, if no encoding id for the versioninfo and codec pair was generated and the schema version was deleted, 
@@ -283,14 +287,14 @@ public interface SchemaRegistryClient {
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group  
      * subject to current {@link GroupProperties#schemaValidationRules} policy.
-     * This api performs exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
+     * The invocation of this method will perform exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
      * but without registering the schema. This is primarily intended to be used during schema development phase to validate that 
      * the changes to schema are in compliance with validation rules for the group.  
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to check for validity. 
      * @return A schema is valid if it passes all the {@link GroupProperties#schemaValidationRules}. The rule supported 
-     * presently, is Compatibility. If desired compatibility is satisfied by the schema then this api returns true, false otherwise. 
+     * presently, is Compatibility. If desired compatibility is satisfied by the schema then this method returns true, false otherwise. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
@@ -345,8 +349,8 @@ public interface SchemaRegistryClient {
     /**
      * Finds all groups and corresponding version info for the groups where the supplied schema has been registered.
      * It is important to note that the same schema type could be part of multiple group, however in each group it 
-     * may have gone through a separate evolution. This api simply identifies all groups where the specific schema 
-     * (type, format and binary) is used. 
+     * may have gone through a separate evolution. Invocation of this method lists all groups where the specific schema 
+     * (type, format and binary) is used along with versions that identifies this schema in those groups. 
      * The user defined {@link SchemaInfo#properties} is not used for comparison. 
      * 
      * @param schemaInfo Schema info to find references for. 
