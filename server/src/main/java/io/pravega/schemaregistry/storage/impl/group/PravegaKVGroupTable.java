@@ -108,8 +108,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
 
     @Override
     public <T extends TableValue> CompletableFuture<T> getEntry(TableKey key, Class<T> tClass) {
-        return getEntryWithVersion(key, tClass)
-                .thenApply(Value::getValue);
+        return getEntryWithVersion(key, tClass).thenApply(Value::getValue);
     }
 
     @Override

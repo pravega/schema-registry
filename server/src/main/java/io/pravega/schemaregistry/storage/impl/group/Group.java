@@ -184,7 +184,13 @@ public class Group<V> {
 
     private CompletableFuture<Integer> getVersionOrdinal(String schemaType, int version) {
         return groupTable.getEntry(new SchemaTypeVersionKey(schemaType, version), VersionOrdinalValue.class)
-                .thenApply(VersionOrdinalValue::getOrdinal);
+                .thenApply(x -> {
+                    if (x != null) {
+                        return x.getOrdinal();
+                    } else {
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version not found %s %s", schemaType, version));
+                    }
+                });
     }
 
     public CompletableFuture<Void> deleteSchema(String schemaType, int version, Etag etag) {
@@ -264,8 +270,14 @@ public class Group<V> {
     public CompletableFuture<EncodingInfo> getEncodingInfo(EncodingId encodingId) {
         EncodingIdRecord encodingIdIndex = new EncodingIdRecord(encodingId);
         return groupTable.getEntry(encodingIdIndex, EncodingInfoRecord.class)
-                         .thenCompose(encodingInfo -> getSchema(encodingInfo.getVersionInfo().getOrdinal())
-                                 .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType())));
+                         .thenCompose(encodingInfo -> {
+                             if (encodingInfo == null) {
+                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, 
+                                         String.format("encoding id not found %s", encodingId.getId()));
+                             }
+                             return getSchema(encodingInfo.getVersionInfo().getOrdinal())
+                                     .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType()));
+                         });
     }
 
     public CompletableFuture<SchemaWithVersion> getLatestSchemaVersion() {

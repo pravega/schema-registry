@@ -830,7 +830,7 @@ public class SchemaRegistryService {
                                     Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, schemaInfo),
                                             e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, EMPTY_VERSION))))
                                                   .thenApply(result -> {
-                                                      return result.entrySet().stream().filter(x -> x.getValue().equals(EMPTY_VERSION))
+                                                      return result.entrySet().stream().filter(x -> !x.getValue().equals(EMPTY_VERSION))
                                                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                                                   }));
     }
