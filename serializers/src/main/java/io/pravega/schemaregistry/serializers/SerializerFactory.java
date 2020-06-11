@@ -67,7 +67,7 @@ public class SerializerFactory {
         autoCreateGroup(schemaRegistryClient, config);
         registerCodec(schemaRegistryClient, config);
         String groupId = config.getGroupId();
-        return new AvroSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(), config.isAutoRegisterSchema());
+        return new AvroSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(), config.isRegisterSchema());
     }
 
     /**
@@ -146,7 +146,7 @@ public class SerializerFactory {
         Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new AvroSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
-                                config.isAutoRegisterSchema())));
+                                config.isRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
 
@@ -238,7 +238,7 @@ public class SerializerFactory {
         autoCreateGroup(schemaRegistryClient, config);
         registerCodec(schemaRegistryClient, config);
         return new ProtobufSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(),
-                config.isAutoRegisterSchema());
+                config.isRegisterSchema());
     }
 
     /**
@@ -312,7 +312,7 @@ public class SerializerFactory {
         Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new ProtobufSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
-                                config.isAutoRegisterSchema())));
+                                config.isRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
 
@@ -395,7 +395,7 @@ public class SerializerFactory {
         autoCreateGroup(schemaRegistryClient, config);
         registerCodec(schemaRegistryClient, config);
         return new JsonSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(),
-                config.isAutoRegisterSchema());
+                config.isRegisterSchema());
     }
 
     /**
@@ -465,7 +465,7 @@ public class SerializerFactory {
         Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new JsonSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
-                                config.isAutoRegisterSchema())));
+                                config.isRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
 
@@ -547,7 +547,7 @@ public class SerializerFactory {
         autoCreateGroup(schemaRegistryClient, config);
         registerCodec(schemaRegistryClient, config);
         return new AbstractPravegaSerializer<T>(groupId, schemaRegistryClient,
-                schema, config.getCodec(), config.isAutoRegisterSchema()) {
+                schema, config.getCodec(), config.isRegisterSchema()) {
             @Override
             protected void serialize(T var, SchemaInfo schema, OutputStream outputStream) {
                 serializer.serialize(var, schema, outputStream);
@@ -652,13 +652,13 @@ public class SerializerFactory {
     // endregion
 
     private static void autoCreateGroup(SchemaRegistryClient client, SerializerConfig config) {
-        if (config.isAutoCreateGroup()) {
+        if (config.isCreateGroup()) {
             client.addGroup(config.getGroupId(), config.getGroupProperties());
         }
     }
 
     private static void registerCodec(SchemaRegistryClient client, SerializerConfig config) {
-        if (config.isAutoRegisterCodec()) {
+        if (config.isRegisterCodec()) {
             client.addCodecType(config.getGroupId(), config.getCodec().getCodecType());
         }
     }

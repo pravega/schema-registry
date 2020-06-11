@@ -103,9 +103,9 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
                 writerSchema = encodingInfo.getSchemaInfo();
             }
             
-            ByteBuffer uncompressed = decoder.decode(codecType, data);
-            byte[] array = new byte[uncompressed.remaining()];
-            uncompressed.get(array);
+            ByteBuffer decoded = decoder.decode(codecType, data);
+            byte[] array = new byte[decoded.remaining()];
+            decoded.get(array);
 
             InputStream inputStream = new ByteArrayInputStream(array);
             if (schemaInfo == null) { // deserialize into writer schema
