@@ -25,7 +25,7 @@ import java.nio.ByteBuffer;
 
 /**
  * Container class for Json Schema.
- * 
+ *
  * @param <T> Type of element. 
  */
 public class JSONSchema<T> implements SchemaContainer<T> {
@@ -34,16 +34,16 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     private final Class<T> tClass;
     @Getter
     private final Class<? extends T> tDerivedClass;
-    
+
     @Getter
     private final JsonSchema schema;
 
     private final SchemaInfo schemaInfo;
-    
+
     private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass) {
         this(schema, name, schemaString, tClass, tClass);
     }
-    
+
     private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass, Class<? extends T> tDerivedClass) {
         String type = name != null ? name : schema.getId();
         // Add empty name if the name is not supplied and cannot be extracted from the json schema id. 
@@ -54,7 +54,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         this.tDerivedClass = tDerivedClass;
         this.schema = schema;
     }
-    
+
     private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> tClass) {
         this.schemaString = schemaString;
         this.schemaInfo = schemaInfo;
@@ -66,7 +66,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     /**
      * Method to create a typed JSONSchema for the given class. It extracts the json schema from the class.
      * For POJOs the schema is extracted using jacksons {@link JsonSchemaGenerator}. 
-     * 
+     *
      * @param tClass Class whose object's schema is used.
      * @param <T> Type of the Java class. 
      * @return {@link JSONSchema} with generic type T that extracts and captures the json schema. 
@@ -77,10 +77,10 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(objectMapper);
         JsonSchema schema = schemaGen.generateSchema(tClass);
         String schemaString = objectMapper.writeValueAsString(schema);
-        
-        return new JSONSchema<>(schema, null, schemaString, tClass);    
+
+        return new JSONSchema<>(schema, null, schemaString, tClass);
     }
-    
+
     /**
      * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
      *
@@ -91,10 +91,10 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> of(String type, String schemaString) {
         ObjectMapper objectMapper = new ObjectMapper();
-        JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);  
+        JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
         return new JSONSchema<>(schema, type, schemaString, Object.class);
     }
-    
+
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerivedClass, Class<T> tClass) {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -115,7 +115,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
     public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
         ObjectMapper objectMapper = new ObjectMapper();
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-        
+
         JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
         return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
     }

@@ -18,6 +18,7 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -241,7 +242,8 @@ public class SchemaRegistryService {
                                          .thenCompose(etag ->
                                                  store.getGroupProperties(namespace, group)
                                                       .thenCompose(prop -> {
-                                                          if (!schema.getSerializationFormat().equals(prop.getSerializationFormat()) && !prop.getSerializationFormat().equals(SerializationFormat.Any)) {
+                                                          if (!schema.getSerializationFormat().equals(prop.getSerializationFormat()) && 
+                                                                  !prop.getSerializationFormat().equals(SerializationFormat.Any)) {
                                                               throw new SerializationFormatMismatchException(schema.getSerializationFormat().name());
                                                           }
                                                           return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, schema),
@@ -673,7 +675,7 @@ public class SchemaRegistryService {
         List<SchemaInfo> schemas = schemasWithVersion.stream().map(SchemaWithVersion::getSchemaInfo).collect(Collectors.toList());
         Collections.reverse(schemas);
 
-        // Verify that the type matches the type in schemas it will be validated against. 
+        // Verify that the type matches the type in schemas it will be validated against.
         if (!schemas.stream().allMatch(x -> x.getType().equals(schema.getType()))) {
             return false;
         }
@@ -725,15 +727,15 @@ public class SchemaRegistryService {
     }
 
     private boolean validateSchemaData(SchemaInfo schemaInfo) {
+        String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+        String name = tokens[0];
+        String pckg = tokens[1];
         boolean isValid = true;
         try {
             String schemaString;
             switch (schemaInfo.getSerializationFormat()) {
                 case Protobuf:
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
-                    int nameStart = schemaInfo.getType().lastIndexOf(".");
-                    String name = schemaInfo.getType().substring(nameStart + 1);
-                    String pckg = nameStart < 0 ? "" : schemaInfo.getType().substring(0, nameStart);
 
                     isValid = fileDescriptorSet.getFileList().stream()
                                                .anyMatch(x -> x.getPackage().startsWith(pckg) &&
@@ -742,11 +744,8 @@ public class SchemaRegistryService {
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    int start = schemaInfo.getType().lastIndexOf(".");
-                    String type = schemaInfo.getType().substring(start + 1);
-                    String namespace = start < 0 ? "" : schemaInfo.getType().substring(0, start);
-                    isValid = ((schema.getNamespace() == null) || schema.getNamespace().startsWith(namespace)) &&
-                            schema.getName().equals(type);
+                    isValid = ((schema.getNamespace() == null) || schema.getNamespace().startsWith(pckg)) &&
+                            schema.getName().equals(name);
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
@@ -755,7 +754,6 @@ public class SchemaRegistryService {
                 case Custom:
                 case Any:
                 default:
-                    isValid = true;
                     break;
             }
         } catch (Exception e) {

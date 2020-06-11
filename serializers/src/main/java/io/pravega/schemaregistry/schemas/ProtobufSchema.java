@@ -26,7 +26,7 @@ import java.nio.ByteBuffer;
 /**
  * Container class for protobuf schema.
  * Protobuf schemas are represented using {@link com.google.protobuf.DescriptorProtos.FileDescriptorSet}. 
- * 
+ *
  * @param <T> Type of element. 
  */
 @Data
@@ -35,7 +35,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
     private final Parser<T> parser;
     @Getter
     private final DescriptorProtos.FileDescriptorSet descriptorProto;
-    
+
     private final SchemaInfo schemaInfo;
 
     private ProtobufSchema(String name, Parser<T> parser, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
@@ -52,7 +52,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
         this.descriptorProto = fileDescriptorSet;
         this.schemaInfo = schemaInfo;
     }
-    
+
     private ByteBuffer getSchemaBytes() {
         return ByteBuffer.wrap(descriptorProto.toByteArray());
     }
@@ -64,7 +64,7 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
 
     /**
      * Method to generate protobuf schema from the supplied protobuf generated class and {@link DescriptorProtos.FileDescriptorSet}.
-     * 
+     *
      * @param tClass Class for code generated protobuf message.  
      * @param fileDescriptorSet file descriptor set representing a protobuf schema. 
      * @param <T> Type of protobuf message

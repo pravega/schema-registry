@@ -25,17 +25,17 @@ import java.nio.ByteBuffer;
 
 /**
  * Container class for Avro Schema.
- * 
+ *
  * @param <T> Type of element. 
  */
 public class AvroSchema<T> implements SchemaContainer<T> {
     @Getter
     private final Schema schema;
     private final SchemaInfo schemaInfo;
-    
+
     private AvroSchema(Schema schema) {
         this.schema = schema;
-        this.schemaInfo = new SchemaInfo(schema.getName(),  
+        this.schemaInfo = new SchemaInfo(schema.getName(),
                 SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
     }
 
@@ -49,7 +49,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * Method to create a typed AvroSchema for the given class. It extracts the avro schema from the class.
      * For Avro generated classes, the schema is retrieved from the class. 
      * For POJOs the schema is extracted using avro's {@link ReflectData}. 
-     * 
+     *
      * @param tClass Class whose object's schema is used.
      * @param <T> Type of the Java class. 
      * @return {@link AvroSchema} with generic type T that extracts and captures the avro schema. 
