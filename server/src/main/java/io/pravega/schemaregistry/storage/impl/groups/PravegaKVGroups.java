@@ -15,6 +15,7 @@ import io.pravega.client.tables.impl.IteratorState;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.common.FuturesCollector;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -28,9 +29,12 @@ import lombok.SneakyThrows;
 
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -94,21 +98,23 @@ public class PravegaKVGroups implements Groups<Version> {
     @Override
     public CompletableFuture<ListWithToken<String>> getGroups(String nameSpace, ContinuationToken token, int limit) {
         String namespace = nameSpace == null ? "" : nameSpace;
-        ByteBuf buffer;
+        ByteBuf continuationToken;
         if (token == null || token.equals(ContinuationToken.EMPTY)) {
-            buffer = IteratorState.EMPTY.toBytes();
+            continuationToken = IteratorState.EMPTY.toBytes();
         } else {
             byte[] bytes = Base64.getDecoder().decode(token.toString());
-            buffer = Unpooled.wrappedBuffer(bytes);
+            continuationToken = Unpooled.wrappedBuffer(bytes);
         }
-        return withCreateGroupsTableIfAbsent(() -> tableStore.getKeysPaginated(GROUPS, buffer, limit, NamespaceAndGroup::fromBytes))
-                .thenApply(resp -> {
-                    List<String> groups = resp.getValue().stream()
-                                             .filter(x -> x.getNamespace().equals(namespace))
-                                             .map(NamespaceAndGroup::getGroupId)
-                                             .collect(Collectors.toList());
-                    return new ListWithToken<>(groups, ContinuationToken.create(Base64.getEncoder().encodeToString(resp.getKey().array())));
-                });
+        BiFunction<ByteBuf, Integer, CompletableFuture<Map.Entry<ByteBuf, List<NamespaceAndGroup>>>> function = 
+                (ByteBuf t, Integer l) -> withCreateGroupsTableIfAbsent(
+                        () -> tableStore.getKeysPaginated(GROUPS, t, l, NamespaceAndGroup::fromBytes));
+        Predicate<NamespaceAndGroup> predicate = x -> x.getNamespace().equals(namespace);
+        return FuturesCollector.filteredWithTokenAndLimit(function, predicate, continuationToken, limit, executor)
+                               .thenApply(result -> {
+                                             List<String> groups = result.getValue().stream().map(NamespaceAndGroup::getGroupId).collect(Collectors.toList());
+                                             ContinuationToken continuationTok = ContinuationToken.create(Base64.getEncoder().encodeToString(result.getKey().array()));
+                                             return new ListWithToken<>(groups, continuationTok);
+                                         });
     }
 
     @Override

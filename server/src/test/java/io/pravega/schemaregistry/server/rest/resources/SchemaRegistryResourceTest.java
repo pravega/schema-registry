@@ -77,7 +77,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();
             map.put("group1", group1);
-            map.put("group2", null);
             return CompletableFuture.completedFuture(new MapWithToken<>(map, null));
         }).when(service).listGroups(any(), any(), anyInt());
 

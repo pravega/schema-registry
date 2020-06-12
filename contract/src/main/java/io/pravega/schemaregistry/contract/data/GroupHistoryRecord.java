@@ -30,7 +30,7 @@ public class GroupHistoryRecord {
      */
     private final VersionInfo version;
     /**
-     * Validation rules that were applied at the time when the schema was registered. 
+     * Validation rules applied at the time when the schema was registered. 
      */
     private final SchemaValidationRules rules;
     /**

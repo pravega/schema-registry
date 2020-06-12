@@ -51,6 +51,7 @@ public class SchemaValidationRules {
      * Method to create SchemaValidationRules from the list of supplied rules. If multiple same rule are present 
      * in the list then only the latest rule of each type is added to the Rules map. 
      * Currently the only rule supported is {@link Compatibility}. 
+     * 
      * @param rules List of rules. 
      * @return SchemaValidationRules object. 
      */

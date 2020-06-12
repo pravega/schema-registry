@@ -143,7 +143,7 @@ public class SpecificAndGenericConsumer {
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(SerializationFormat.Avro, true)
+                                                            .createGroup(SerializationFormat.Avro, true)
                                                             .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();

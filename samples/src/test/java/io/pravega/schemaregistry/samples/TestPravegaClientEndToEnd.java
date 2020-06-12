@@ -174,7 +174,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .registerSchema(true)
@@ -285,7 +285,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .registerSchema(true)
@@ -464,7 +464,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .registerSchema(true)
@@ -529,7 +529,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .registerSchema(true)
@@ -596,7 +596,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.backward()),
                                                                     true)
                                                             .registerSchema(true)
@@ -713,7 +713,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     false)
                                                             .registerSchema(true)
@@ -818,7 +818,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
                                                             .registerSchema(true)
@@ -934,7 +934,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     false)
                                                             .registerSchema(true)
@@ -1006,7 +1006,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .autoCreateGroup(serializationFormat,
+                                                            .createGroup(serializationFormat,
                                                                     SchemaValidationRules.of(Compatibility.allowAny()),
                                                                     true)
                                                             .registerSchema(true)

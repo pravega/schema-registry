@@ -43,6 +43,7 @@ public class SerializerConfig {
     private final static Codec GZIP = CodecFactory.gzip();
     private final static Codec SNAPPY = CodecFactory.snappy();
 
+    
     /**
      * Name of the group. 
      */
@@ -66,13 +67,13 @@ public class SerializerConfig {
      */
     private final boolean registerCodec;
     /**
-     * Codec to use for compressing events after serializing them. 
+     * Codec to use for encoding events after serializing them. 
      */
     private final Codec codec;
     /**
      * Function that should be applied on serialized data read from stream. This is invoked after reading the codecType
      * from {@link EncodingInfo} and using the codec type read from it. 
-     * It should return the uncompressed data back to the deserializer. 
+     * It should return the decoded data back to the deserializer. 
      */
     private final Decoder decoder;
     /**
@@ -108,15 +109,15 @@ public class SerializerConfig {
             return this;
         }
 
-        public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat) {
-            return autoCreateGroup(serializationFormat, true);
+        public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat) {
+            return createGroup(serializationFormat, true);
         }
 
-        public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, boolean allowMultipleTypes) {
-            return autoCreateGroup(serializationFormat, SchemaValidationRules.of(Compatibility.fullTransitive()), allowMultipleTypes);
+        public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, boolean allowMultipleTypes) {
+            return createGroup(serializationFormat, SchemaValidationRules.of(Compatibility.fullTransitive()), allowMultipleTypes);
         }
 
-        public SerializerConfigBuilder autoCreateGroup(SerializationFormat serializationFormat, SchemaValidationRules rules, boolean allowMultipleTypes) {
+        public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, SchemaValidationRules rules, boolean allowMultipleTypes) {
             this.createGroup = true;
             this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes);
             return this;

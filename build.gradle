@@ -123,7 +123,8 @@ project('common') {
         compile group: 'commons-io', name: 'commons-io', version: commonsioVersion
         compile group: 'com.google.guava', name: 'guava', version: guavaVersion
         compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
-        //Do NOT add any additional dependencies here.
+        //Do NOT add any additional dependencies to common. All other sub projects depend on common and any project specific 
+        //dependency should be added to the specific project. 
     }
 
     javadoc {
@@ -313,7 +314,7 @@ project('samples') {
         compile project(':common')
         compile project(':contract')
         compile project(':client')
-        compile project(':server')
+        compile project(':server') 
         compile project(':serializers')
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion

@@ -17,6 +17,7 @@ import io.pravega.auth.AuthenticationException;
 import io.pravega.auth.AuthorizationException;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
+import io.pravega.schemaregistry.common.FuturesCollector;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
@@ -52,14 +53,14 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import java.util.AbstractMap;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -106,9 +107,7 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
     public void listGroups(String continuationToken, Integer limit, String namespace,
                            AsyncResponse asyncResponse) {
         log.info("List Groups called");
-        AtomicInteger toFetch = limit == null ? new AtomicInteger(DEFAULT_LIST_GROUPS_LIMIT) : new AtomicInteger(limit);
-        AtomicReference<String> continuationTokenRef = new AtomicReference<>(continuationToken);
-        AtomicBoolean loop = new AtomicBoolean(true);
+        int toFetch = limit == null ? DEFAULT_LIST_GROUPS_LIMIT : limit;
         ListGroupsResponse groupsList = new ListGroupsResponse();
 
         List<String> authorizationHeader = config.isAuthEnabled() ? getAuthorizationHeader() : Collections.emptyList();
@@ -122,49 +121,43 @@ public class SchemaRegistryResourceImpl implements ApiV1.GroupsApiAsync, ApiV1.S
                     asyncResponse.resume(Response.status(Response.Status.FORBIDDEN.getStatusCode()).build());
                 }
             }
-        }, executorService).thenCompose(v ->
-                Futures.loop(loop::get,
-                        () -> registryService.listGroups(namespace, ContinuationToken.fromString(continuationTokenRef.get()), toFetch.get())
-                                             .thenAccept(result -> {
-                                                 AtomicInteger filtered = new AtomicInteger();
-                                                 result.getMap().forEach((x, y) -> {
-                                                     if (y != null) {
-                                                         try {
-                                                             String resource = Strings.isNullOrEmpty(namespace) ? 
-                                                                     String.format(AuthResources.GROUP_FORMAT, x) : 
-                                                                     String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, x);
-                                                             authenticateAuthorize(authorizationHeader,
-                                                                     resource, READ);
-                                                             groupsList.putGroupsItem(x, ModelHelper.encode(y));
-                                                         } catch (AuthException e) {
-                                                             // skip groups the user is not authorized on.
-                                                             filtered.incrementAndGet();
-                                                         } 
-                                                     } 
-                                                 });
-                                                 if (result.getMap().size() == toFetch.get() && filtered.get() > 0) {
-                                                     toFetch.set(filtered.get());
-                                                     continuationTokenRef.set(result.getToken() == null ? 
-                                                             ContinuationToken.EMPTY.toString() : result.getToken().toString());
-                                                 } else {
-                                                     // we have reached exit condition
-                                                     loop.set(false);
-                                                     if (groupsList.getGroups() == null) {
-                                                         groupsList.groups(Collections.emptyMap());
-                                                     }
-
-                                                     groupsList.continuationToken(result.getToken() == null ? null : result.getToken().toString());
-                                                 }
-
-                                             }), executorService).thenApply(r -> Response.status(Status.OK).entity(groupsList).build())
-                       .exceptionally(exception -> {
-                           log.warn("listGroups failed with exception: ", exception);
-                           return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                       })
-               .thenApply(response -> {
-                   asyncResponse.resume(response);
-                   return response;
-               }));
+        }, executorService).thenCompose(v -> {
+            Predicate<Map.Entry<String, GroupProperties>> predicate = x -> {
+                try {
+                    String resource = Strings.isNullOrEmpty(namespace) ?
+                            String.format(AuthResources.GROUP_FORMAT, x.getKey()) :
+                            String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, x.getKey());
+                    authenticateAuthorize(authorizationHeader, resource, READ);
+                    return true;
+                } catch (AuthException e) {
+                    return false;
+                }
+            };
+            
+            return FuturesCollector.filteredWithTokenAndLimit(
+                    (ContinuationToken t, Integer l) ->
+                            registryService.listGroups(namespace, t, l)
+                                           .thenApply(mwt -> new AbstractMap.SimpleEntry<>(mwt.getToken(),
+                                                   new ArrayList<>(mwt.getMap().entrySet()))), 
+                    predicate, ContinuationToken.fromString(continuationToken), toFetch, executorService)
+                                   .thenAccept(result -> {
+                                          String contToken = result.getKey() == null ?
+                                                  ContinuationToken.EMPTY.toString() : result.getKey().toString();
+                                          groupsList.groups(
+                                                  result.getValue().stream().collect(
+                                                          Collectors.toMap(Map.Entry::getKey, x -> ModelHelper.encode(x.getValue()))))
+                                                    .setContinuationToken(contToken);
+                                      })
+                                   .thenApply(r -> Response.status(Status.OK).entity(groupsList).build())
+                                   .exceptionally(exception -> {
+                       log.warn("listGroups failed with exception: ", exception);
+                       return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                   })
+                                   .thenApply(response -> {
+                       asyncResponse.resume(response);
+                       return response;
+                   });
+        });
     }
 
     @Override

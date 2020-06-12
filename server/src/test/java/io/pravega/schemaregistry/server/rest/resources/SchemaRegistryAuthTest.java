@@ -96,12 +96,16 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                 SchemaValidationRules.of(Compatibility.backward()),
                 false);
         doAnswer(x -> {
+            return CompletableFuture.completedFuture(new MapWithToken<>(new HashMap<>(), ContinuationToken.fromString("token")));
+        }).when(service).listGroups(any(), any(), anyInt());
+
+        doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();
             for (int i = 0; i < 4; i++) {
                 map.put("group" + i, group1);
             }
             return CompletableFuture.completedFuture(new MapWithToken<>(map, ContinuationToken.fromString("token")));
-        }).when(service).listGroups(any(), any(), anyInt());
+        }).when(service).listGroups(any(), any(), eq(10));
 
         Future<Response> future = target("v1/groups").queryParam("limit", 10)
                                                      .request().header(HttpHeaders.AUTHORIZATION, 
