@@ -18,6 +18,7 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.common.FuturesCollector;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -42,6 +43,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 
 import javax.annotation.Nullable;
+import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.LinkedList;
@@ -81,20 +83,24 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<MapWithToken<String, GroupProperties>> listGroups(String namespace, ContinuationToken continuationToken, int limit) {
         log.info("List groups called");
-        return store.listGroups(namespace, continuationToken, limit)
+        return FuturesCollector.filteredWithTokenAndLimit(
+                (ContinuationToken c, Integer l) -> store.listGroups(namespace, c, l)
                     .thenCompose(reply -> {
                         List<String> list = reply.getList();
-                        return Futures.allOfWithResults(list.stream().collect(Collectors.toMap(x -> x,
-                                x -> Futures.exceptionallyExpecting(store.getGroupProperties(namespace, x).thenApply(AtomicReference::new),
-                                        e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
-                                        new AtomicReference<>((GroupProperties) null))
-                        ))).thenApply(groups -> {
-                            log.info("Returning groups {}", groups);
-                            return new MapWithToken<>(
-                                    groups.entrySet().stream().filter(x -> x.getValue().get() != null)
-                                          .collect(Collectors.toMap(Map.Entry::getKey, m -> m.getValue().get())), reply.getToken());
-                        });
-                    });
+                        return Futures.allOfWithResults(list.stream().map(x -> Futures.exceptionallyExpecting(store.getGroupProperties(namespace, x).thenApply(AtomicReference::new),
+                                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                new AtomicReference<>((GroupProperties) null)).thenApply(prop -> new AbstractMap.SimpleEntry<>(x, prop)))
+                                                            .collect(Collectors.toList()))
+                                .thenApply(result -> new AbstractMap.SimpleEntry<>(reply.getToken(), result));
+                    }), 
+                x -> x.getValue().get() != null, continuationToken, limit, executor)
+        .thenApply(groupsList -> {
+            log.info("Returning groups {}", groupsList);
+            Map<String, GroupProperties> collect = groupsList.getValue().stream().collect(
+                    Collectors.toMap(AbstractMap.SimpleEntry::getKey, x -> x.getValue().get()));
+            return new MapWithToken<>(
+                    collect, groupsList.getKey());
+        });
     }
 
     /**
