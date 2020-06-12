@@ -210,7 +210,7 @@ public class Group<V> {
                                 new GroupTable.Value<>(versionDeletedRecord, null)));
                         return groupTable.updateEntries(entries);
                     } else {
-                        return CompletableFuture.completedFuture(null);
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version ordinal found %s", versionOrdinal));
                     }
                 });
     }
