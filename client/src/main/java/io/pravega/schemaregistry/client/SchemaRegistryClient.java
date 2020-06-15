@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.client;
 
+import com.google.common.annotations.Beta;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -29,6 +30,7 @@ import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
  * Defines a registry client for interacting with schema registry service. 
  * The implementation of this interface should provide atomicity and read-after-write-consistency guarantees for all the methods.
  */
+@Beta
 public interface SchemaRegistryClient {
     /**
      * Adds a new group. A group refers to the name under which the schemas are registered. A group is identified by a 
