@@ -9,15 +9,12 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
-import com.google.common.base.Preconditions;
 import io.pravega.common.ObjectBuilder;
 import lombok.Builder;
 import lombok.Data;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  * Schema validation rules that are applied for checking if a schema is valid. 
@@ -46,21 +43,7 @@ public class SchemaValidationRules {
     public static SchemaValidationRules of(Compatibility compatibility) {
         return new SchemaValidationRules(Collections.singletonMap(compatibility.getName(), compatibility));
     }
-
-    /**
-     * Method to create SchemaValidationRules from the list of supplied rules. If multiple same rule are present 
-     * in the list then only the latest rule of each type is added to the Rules map. 
-     * Currently the only rule supported is {@link Compatibility}. 
-     * 
-     * @param rules List of rules. 
-     * @return SchemaValidationRules object. 
-     */
-    public static SchemaValidationRules of(List<SchemaValidationRule> rules) {
-        Preconditions.checkNotNull(rules);
-        Preconditions.checkArgument(rules.stream().allMatch(x -> x instanceof Compatibility), "Only compatibility rule is supported.");
-        return new SchemaValidationRules(rules.stream().collect(Collectors.toMap(SchemaValidationRule::getName, x -> x)));
-    }
-
+    
     public static class SchemaValidationRulesBuilder implements ObjectBuilder<SchemaValidationRules> {
     }
 

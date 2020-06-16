@@ -60,8 +60,7 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaValidationRules decode(SchemaValidationRules rules) {
-        Preconditions.checkArgument(rules != null);
-        Preconditions.checkArgument(rules.getRules() != null);
+        Preconditions.checkArgument(rules != null && rules.getRules() != null && rules.getRules().size() == 1);
         List<io.pravega.schemaregistry.contract.data.SchemaValidationRule> list = rules.getRules().entrySet().stream().map(rule -> {
             if (rule.getValue().getRule() instanceof Map) {
                 String name = (String) ((Map) rule.getValue().getRule()).get("name");
@@ -74,7 +73,9 @@ public class ModelHelper {
                 throw new IllegalArgumentException("Rule not supported");
             }
         }).collect(Collectors.toList());
-        return io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(list);
+        
+        return io.pravega.schemaregistry.contract.data.SchemaValidationRules.of(
+                (io.pravega.schemaregistry.contract.data.Compatibility) list.get(0));
     }
 
     public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
@@ -94,9 +95,9 @@ public class ModelHelper {
         io.pravega.schemaregistry.contract.data.VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         io.pravega.schemaregistry.contract.data.VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
 
-        return new io.pravega.schemaregistry.contract.data.Compatibility(
-                searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()),
-                backwardTill, forwardTill);
+        return io.pravega.schemaregistry.contract.data.Compatibility.builder().compatibility(
+                searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()))
+                .backwardTill(backwardTill).forwardTill(forwardTill).build();
     }
     
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {

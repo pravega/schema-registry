@@ -50,7 +50,7 @@ abstract class AbstractResource {
         this.authManager = new AuthHandlerManager(config);
         this.executorService = executorService;
     }
-    
+
     /**
      * This is a shortcut for {@code headers.getRequestHeader().get(HttpHeaders.AUTHORIZATION)}.
      *
@@ -62,8 +62,8 @@ abstract class AbstractResource {
     }
 
     CompletableFuture<Response> withCompletion(String request, AuthHandler.Permissions permissions,
-                                                       String resource, AsyncResponse response,
-                                                       Supplier<CompletableFuture<Response>> future) {
+                                               String resource, AsyncResponse response,
+                                               Supplier<CompletableFuture<Response>> future) {
         try {
             authenticateAuthorize(getAuthorizationHeader(), resource, permissions);
             return future.get();
