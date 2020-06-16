@@ -78,7 +78,8 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
         ServiceConfig config = ServiceConfig.builder().authEnabled(true).userPasswordFile(authFile.getAbsolutePath()).build();
-        resourceObjs.add(new SchemaRegistryResourceImpl(service, config, executor));
+        resourceObjs.add(new GroupResourceImpl(service, config, executor));
+        resourceObjs.add(new SchemaResourceImpl(service, config, executor));
 
         RegistryApplication registryApplication = new RegistryApplication(resourceObjs);
         return registryApplication;

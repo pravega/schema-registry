@@ -19,8 +19,9 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.UriBuilder;
 
 import io.pravega.common.auth.JKSHelper;
+import io.pravega.schemaregistry.server.rest.resources.GroupResourceImpl;
 import io.pravega.schemaregistry.server.rest.resources.PingImpl;
-import io.pravega.schemaregistry.server.rest.resources.SchemaRegistryResourceImpl;
+import io.pravega.schemaregistry.server.rest.resources.SchemaResourceImpl;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.grizzly.GrizzlyFuture;
@@ -49,7 +50,8 @@ public class RestServer extends AbstractIdleService {
 
         final Set<Object> resourceObjs = new HashSet<>();
         resourceObjs.add(new PingImpl());
-        resourceObjs.add(new SchemaRegistryResourceImpl(registryService, restServerConfig, executor()));
+        resourceObjs.add(new GroupResourceImpl(registryService, restServerConfig, executor()));
+        resourceObjs.add(new SchemaResourceImpl(registryService, restServerConfig, executor()));
 
         final RegistryApplication application = new RegistryApplication(resourceObjs);
         this.resourceConfig = ResourceConfig.forApplication(application);

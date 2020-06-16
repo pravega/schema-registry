@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.contract.v1;
 
+import com.google.common.annotations.Beta;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
@@ -40,6 +41,7 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
+@Beta
 public class ApiV1 {
     @Path("/ping")
     public interface Ping {
