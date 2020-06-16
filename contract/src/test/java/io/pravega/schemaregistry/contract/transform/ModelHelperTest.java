@@ -16,6 +16,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRule;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
@@ -32,7 +33,9 @@ public class ModelHelperTest {
     @Test
     public void testDecode() {
         SerializationFormat type = new SerializationFormat().serializationFormat(SerializationFormat.SerializationFormatEnum.CUSTOM).customTypeName("a");
-        SchemaValidationRules rules = new SchemaValidationRules().rules(Collections.emptyMap());
+        SchemaValidationRules rules = new SchemaValidationRules().rules(Collections.singletonMap(Compatibility.class.getSimpleName(), 
+                new SchemaValidationRule().rule(new Compatibility().name(Compatibility.class.getSimpleName())
+                                                                   .policy(Compatibility.PolicyEnum.BACKWARD))));
         SchemaInfo schema = new SchemaInfo()
                 .type("a").serializationFormat(type).schemaData(new byte[0]).properties(Collections.emptyMap());
         VersionInfo version = new VersionInfo().type("a").version(1).ordinal(1);
@@ -55,7 +58,8 @@ public class ModelHelperTest {
         assertEquals(compatibilityDecoded.getCompatibility(), io.pravega.schemaregistry.contract.data.Compatibility.Type.BackwardAndForwardTill);
 
         io.pravega.schemaregistry.contract.data.SchemaValidationRules rulesDecoded = ModelHelper.decode(rules);
-        assertEquals(rulesDecoded.getRules().size(), 0);
+        assertEquals(rulesDecoded.getRules().size(), 1);
+        assertEquals(rulesDecoded.getRules().values().iterator().next().getName(), Compatibility.class.getSimpleName());
         
         io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = ModelHelper.decode(version);
         assertEquals(versionInfo.getType(), version.getType());

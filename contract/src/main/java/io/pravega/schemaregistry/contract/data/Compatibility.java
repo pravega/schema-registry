@@ -56,7 +56,7 @@ public class Compatibility implements SchemaValidationRule {
         this(compatibility, null, null);
     }
 
-    public Compatibility(Type compatibility, VersionInfo backwardTill, VersionInfo forwardTill) {
+    private Compatibility(Type compatibility, VersionInfo backwardTill, VersionInfo forwardTill) {
         this.compatibility = compatibility;
         this.backwardTill = backwardTill;
         this.forwardTill = forwardTill;

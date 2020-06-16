@@ -95,9 +95,9 @@ public class ModelHelper {
         io.pravega.schemaregistry.contract.data.VersionInfo backwardTill = compatibility.getBackwardTill() == null ? null : decode(compatibility.getBackwardTill());
         io.pravega.schemaregistry.contract.data.VersionInfo forwardTill = compatibility.getForwardTill() == null ? null : decode(compatibility.getForwardTill());
 
-        return new io.pravega.schemaregistry.contract.data.Compatibility(
-                searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()),
-                backwardTill, forwardTill);
+        return io.pravega.schemaregistry.contract.data.Compatibility.builder().compatibility(
+                searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name()))
+                .backwardTill(backwardTill).forwardTill(forwardTill).build();
     }
     
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
