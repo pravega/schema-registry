@@ -41,7 +41,6 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.container.Suspended;
 import javax.ws.rs.core.Response;
 
-@Beta
 public class ApiV1 {
     @Path("/ping")
     public interface Ping {
@@ -55,6 +54,7 @@ public class ApiV1 {
      */
     @Path("/v1/groups")
     @io.swagger.annotations.Api(description = "the groups API")
+    @Beta
     public interface GroupsApi {
         @POST
         @Path("/{groupName}/codecTypes")
@@ -284,6 +284,7 @@ public class ApiV1 {
      */
     @Path("/v1/groups")
     @io.swagger.annotations.Api(description = "the groups API")
+    @Beta
     public interface GroupsApiAsync {
         @POST
         @Path("/{groupName}/codecTypes")
@@ -512,13 +513,13 @@ public class ApiV1 {
                       @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest, @Suspended AsyncResponse asyncResponse);
     }
 
-
     /**
      * Sync Schemas apis. Identical to {@link SchemasApiAsync}. All methods in this interface are synchronous and return {@link Response} object.
      * The purposes of this interface is to be used by proxy-client.
      */
     @Path("/v1/schemas")
     @io.swagger.annotations.Api(description = "the schemas API")
+    @Beta
     public interface SchemasApi {
         @POST
         @Path("/addedTo")
@@ -538,6 +539,7 @@ public class ApiV1 {
      */
     @Path("/v1/schemas")
     @io.swagger.annotations.Api(description = "the schemas API")
+    @Beta
     public interface SchemasApiAsync {
         @POST
         @Path("/addedTo")
@@ -551,5 +553,4 @@ public class ApiV1 {
         void getSchemaReferences(@ApiParam(value = "Get schema references for the supplied schema", required = true) SchemaInfo schemaInfo,
                                  @Suspended AsyncResponse asyncResponse);
     }
-
 }
