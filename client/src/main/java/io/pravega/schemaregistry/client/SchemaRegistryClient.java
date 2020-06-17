@@ -121,7 +121,8 @@ public interface SchemaRegistryClient {
      * type {@link SchemaInfo#type} could be registered. 
      * All schemas with same type are assigned monotonically increasing version numbers. 
      * Implementation of this method is expected to be idempotent. The behaviour of Add Schema API on the schema registry
-     * service is idempotent. If a schema is already registered, its version info is returned by the service.  
+     * service is idempotent. The service assigns and returns a new version info object to identify the given schema. 
+     * If a schema was already registered, the existing version info is returned by the service.  
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to add. 
