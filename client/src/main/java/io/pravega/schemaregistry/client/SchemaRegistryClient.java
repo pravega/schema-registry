@@ -34,9 +34,9 @@ import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
 public interface SchemaRegistryClient {
     /**
      * Adds a new group. A group refers to the name under which the schemas are registered. A group is identified by a 
-     * unique name and has an associated set of group metadata {@link GroupProperties} and a list of codec types and a 
+     * unique id and has an associated set of group metadata {@link GroupProperties} and a list of codec types and a 
      * versioned history of schemas that were registered under the group. 
-     * Add group is idempotent. If the group by the same name already exists the api will return false. 
+     * Add group is idempotent. If the group by the same id already exists the api will return false. 
      * 
      * @param groupId Id for the group that uniquely identifies the group. 
      * @param groupProperties groupProperties Group properties for the group. These include serialization format, validation rules, 
@@ -108,7 +108,7 @@ public interface SchemaRegistryClient {
      * Schemas are retrieved atomically. So all schemas added before this call will be returned by this call. 
      *
      * @param groupId Id for the group. 
-     * @return List of different objects within the group.   
+     * @return Unordered list of different objects within the group.    
      * @throws ResourceNotFoundException if group is not found.
      * @throws UnauthorizedException if the user is unauthorized.
      */
@@ -121,7 +121,8 @@ public interface SchemaRegistryClient {
      * type {@link SchemaInfo#type} could be registered. 
      * All schemas with same type are assigned monotonically increasing version numbers. 
      * Implementation of this method is expected to be idempotent. The behaviour of Add Schema API on the schema registry
-     * service is idempotent. If a schema is already registered, its version info is returned by the service.  
+     * service is idempotent. The service assigns and returns a new version info object to identify the given schema. 
+     * If a schema was already registered, the existing version info is returned by the service.  
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to add. 
