@@ -34,7 +34,7 @@ public class SchemaStoreFactory {
     }
     
     public static SchemaStore createPravegaStore(ServiceConfig serviceConfig, ClientConfig clientConfig, ScheduledExecutorService executor) {
-        TableStore tableStore = new TableStore(clientConfig, () -> retrieveMasterToken(serviceConfig), executor);
+        TableStore tableStore = new TableStore(clientConfig, serviceConfig, executor);
         return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor), new PravegaKVSchemas(tableStore));
     }
 

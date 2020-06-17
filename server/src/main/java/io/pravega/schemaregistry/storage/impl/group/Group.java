@@ -200,17 +200,24 @@ public class Group<V> {
     
     public CompletableFuture<Void> deleteSchema(int versionOrdinal, Etag etag) {
         VersionDeletedRecord versionDeletedRecord = new VersionDeletedRecord(versionOrdinal);
-        return groupTable.getEntry(versionDeletedRecord, VersionDeletedRecord.class)
-                .thenCompose(entry -> {
-                    if (entry == null) {
-                        List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
-                        entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
-
-                        entries.add(new AbstractMap.SimpleEntry<>(versionDeletedRecord,
-                                new GroupTable.Value<>(versionDeletedRecord, null)));
-                        return groupTable.updateEntries(entries);
-                    } else {
+        VersionKey versionKey = new VersionKey(versionOrdinal);
+        return groupTable.getEntriesWithVersion(Lists.newArrayList(versionKey, versionDeletedRecord), TableValue.class)
+                .thenCompose(entries -> {
+                    TableValue schema = entries.get(0).getValue();
+                    TableValue versionDeletedRecordValue = entries.get(1).getValue();
+                    if (schema == null) {
                         throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version ordinal found %s", versionOrdinal));
+                    }
+                    if (versionDeletedRecordValue == null) {
+                        List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> toUpdate = new ArrayList<>();
+                        toUpdate.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+
+                        toUpdate.add(new AbstractMap.SimpleEntry<>(versionDeletedRecord,
+                                new GroupTable.Value<>(versionDeletedRecord, null)));
+                        return groupTable.updateEntries(toUpdate);
+                    } else {
+                        // already deleted. Idempotent case. 
+                        return CompletableFuture.completedFuture(null);
                     }
                 });
     }

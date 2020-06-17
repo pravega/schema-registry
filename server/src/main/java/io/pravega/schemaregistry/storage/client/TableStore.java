@@ -33,9 +33,11 @@ import io.pravega.controller.store.host.HostStoreException;
 import io.pravega.controller.store.stream.PravegaTablesStoreHelper;
 import io.pravega.controller.store.stream.StoreException;
 import io.pravega.controller.util.RetryHelper;
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.Data;
 import lombok.NonNull;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.AbstractMap;
@@ -47,7 +49,6 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
@@ -67,22 +68,26 @@ public class TableStore {
     private final HostStoreImpl hostStore;
     private final int numOfRetries;
     private final ScheduledExecutorService executor;
-    private final AtomicReference<String> authToken;
     private final Cache<TableCacheKey, Version.VersionedRecord<?>> cache;
-    private final Supplier<String> masterTokenSupplier;
+    private final Function<String, String> tokenSupplier;
     private final CompletableFuture<Void> createScope;
+    private final Cache<String, String> tokenCache;
     
-    public TableStore(ClientConfig clientConfig, Supplier<String> masterTokenSupplier, ScheduledExecutorService executor) {
+    public TableStore(ClientConfig clientConfig, ServiceConfig serviceConfig, ScheduledExecutorService executor) {
         ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
         hostStore = new HostStoreImpl(clientConfig, executor);
         segmentHelper = new SegmentHelper(connectionFactory, hostStore);
         this.executor = executor;
-        this.masterTokenSupplier = masterTokenSupplier;
-        this.authToken = new AtomicReference<>(this.masterTokenSupplier.get());
+        this.tokenSupplier = x -> serviceConfig.isAuthEnabled() ? 
+                hostStore.getController().getOrRefreshDelegationTokenFor(SCHEMA_REGISTRY_SCOPE, x).join() : "";
         numOfRetries = NUM_OF_RETRIES;
         this.cache = CacheBuilder.newBuilder()
                                  .maximumSize(10000)
                                  .build();
+
+        tokenCache = CacheBuilder.newBuilder()
+                    .maximumSize(10000)
+                    .build();
         this.createScope = createScope(); 
     }
     
@@ -94,7 +99,8 @@ public class TableStore {
     public CompletableFuture<Void> createTable(String tableName) {
         log.debug("create table called for table: {}", tableName);
 
-        return Futures.toVoid(withRetries(() -> createScope.thenCompose(v -> segmentHelper.createTableSegment(tableName, authToken.get(), RequestTag.NON_EXISTENT_ID)),
+        return Futures.toVoid(withRetries(() -> createScope.thenCompose(v -> segmentHelper.createTableSegment(
+                tableName, getToken(tableName), RequestTag.NON_EXISTENT_ID)),
                 () -> String.format("create table: %s", tableName), tableName))
                       .whenCompleteAsync((r, e) -> {
                           if (e != null) {
@@ -108,7 +114,7 @@ public class TableStore {
     public CompletableFuture<Void> deleteTable(String tableName, boolean mustBeEmpty) {
         log.debug("delete table called for table: {}", tableName);
         return withRetries(() -> segmentHelper.deleteTableSegment(
-                tableName, mustBeEmpty, authToken.get(), RequestTag.NON_EXISTENT_ID),
+                tableName, mustBeEmpty, getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("delete table: %s", tableName), tableName)
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataContainerNotFoundException) {
@@ -149,7 +155,7 @@ public class TableStore {
                 return new TableEntryImpl<>(new TableKeyImpl<>(x.getKey(), version), x.getValue().getKey());
             }).collect(Collectors.toList());
 
-            return segmentHelper.updateTableEntries(tableName, entries, authToken.get(), RequestTag.NON_EXISTENT_ID)
+            return segmentHelper.updateTableEntries(tableName, entries, getToken(tableName), RequestTag.NON_EXISTENT_ID)
                                 .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
                                                        .collect(Collectors.toList()));
         }, () -> String.format("update entries : %s", tableName), tableName, true);
@@ -169,7 +175,7 @@ public class TableStore {
 
         CompletableFuture<List<Version.VersionedRecord<byte[]>>> result = new CompletableFuture<>();
         String message = "get entries for table: %s";
-        withRetries(() -> segmentHelper.readTable(tableName, keys, authToken.get(), RequestTag.NON_EXISTENT_ID),
+        withRetries(() -> segmentHelper.readTable(tableName, keys, getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format(message, tableName), tableName)
                 .thenApplyAsync(x -> {
                     return x.stream().map(y -> {
@@ -200,7 +206,7 @@ public class TableStore {
         log.trace("remove entry called for : {} key : {}", tableName, key);
         List<TableKey<byte[]>> keys = Collections.singletonList(new TableKeyImpl<>(key, null));
         return withRetries(() -> segmentHelper.removeTableKeys(
-                tableName, keys, authToken.get(), RequestTag.NON_EXISTENT_ID),
+                tableName, keys, getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("remove entry: key: %s table: %s", key, tableName), tableName)
                 .thenAcceptAsync(v -> log.trace("entry for key {} removed from table {}", key, tableName), executor)
                 .exceptionally(e -> {
@@ -269,7 +275,7 @@ public class TableStore {
         log.trace("get keys paginated called for : {}", tableName);
 
         return withRetries(() ->
-                        segmentHelper.readTableKeys(tableName, limit, IteratorState.fromBytes(continuationToken), authToken.get(), RequestTag.NON_EXISTENT_ID),
+                        segmentHelper.readTableKeys(tableName, limit, IteratorState.fromBytes(continuationToken), getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApplyAsync(result -> {
                     List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(x.getKey()))
@@ -284,7 +290,7 @@ public class TableStore {
             Function<byte[], T> fromBytesValue) {
         log.trace("get entries paginated called for : {}", tableName);
         return withRetries(() -> segmentHelper.readTableEntries(tableName, limit,
-                IteratorState.fromBytes(continuationToken), authToken.get(), RequestTag.NON_EXISTENT_ID),
+                IteratorState.fromBytes(continuationToken), getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApplyAsync(result -> {
                     List<Map.Entry<K, Version.VersionedRecord<T>>> items = result.getItems().stream().map(x -> {
@@ -317,7 +323,7 @@ public class TableStore {
                         hostStore.invalidateCache(tableName);
                         break;
                     case AuthFailed:
-                        authToken.set(this.masterTokenSupplier.get());
+                        tokenCache.invalidate(tableName);
                         toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, wcfe, errorMessage);
                         break;
                     case SegmentDoesNotExist:
@@ -368,6 +374,11 @@ public class TableStore {
                                   }
                               }
                           });
+    }
+    
+    @SneakyThrows
+    private String getToken(String tableName) {
+        return tokenCache.get(tableName, () ->  tokenSupplier.apply(tableName));
     }
 
     @Data
