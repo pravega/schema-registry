@@ -301,7 +301,7 @@ public class SerializerTest {
         deserialized = deserializer.deserialize(serializedJson);
         assertTrue(deserialized instanceof JSonGenericObject);
 
-        Serializer<String> jsonStringDeserializer = SerializerFactory.deserializerAsJsonString(config);
+        Serializer<String> jsonStringDeserializer = SerializerFactory.deserializeAsJsonString(config);
         serializedAvro.position(0);
         String jsonString = jsonStringDeserializer.deserialize(serializedAvro);
         assertNotNull(jsonString);

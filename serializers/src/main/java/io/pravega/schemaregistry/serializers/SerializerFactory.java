@@ -626,7 +626,7 @@ public class SerializerFactory {
      * @param config serializer config
      * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
      */
-    public static Serializer<String> deserializerAsJsonString(SerializerConfig config) {
+    public static Serializer<String> deserializeAsJsonString(SerializerConfig config) {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
                 SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :

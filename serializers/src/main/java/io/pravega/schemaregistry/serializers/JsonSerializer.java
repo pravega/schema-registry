@@ -9,8 +9,9 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Charsets;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -25,13 +26,15 @@ class JsonSerializer<T> extends AbstractPravegaSerializer<T> {
                    Codec codec, boolean registerSchema) {
         super(groupId, client, schema, codec, registerSchema);
         objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
     }
 
     @SneakyThrows
     @Override
     protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
-        String json = objectMapper.writeValueAsString(var);
-        outputStream.write(json.getBytes(Charsets.UTF_8));
+        objectMapper.writeValue(outputStream, var);
         outputStream.flush();
     }
 }
