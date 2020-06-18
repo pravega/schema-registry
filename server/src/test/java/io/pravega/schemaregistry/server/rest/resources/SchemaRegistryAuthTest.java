@@ -16,7 +16,6 @@ import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
@@ -50,9 +49,7 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
 
@@ -94,7 +91,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
     @Test(timeout = 10000)
     public void groups() throws ExecutionException, InterruptedException {
         GroupProperties group1 = new GroupProperties(SerializationFormat.Avro,
-                SchemaValidationRules.of(Compatibility.backward()),
+                Compatibility.backward(),
                 false);
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new MapWithToken<>(new HashMap<>(), ContinuationToken.fromString("token")));

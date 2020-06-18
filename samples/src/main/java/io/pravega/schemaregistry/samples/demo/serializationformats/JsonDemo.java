@@ -34,7 +34,6 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
@@ -103,7 +102,7 @@ public class JsonDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Json;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    SchemaValidationRules.of(Compatibility.allowAny()),
+                    Compatibility.allowAny(),
                     false, ImmutableMap.of(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders))));
 
             JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
@@ -173,7 +172,7 @@ public class JsonDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Json;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    SchemaValidationRules.of(Compatibility.allowAny()),
+                    Compatibility.allowAny(),
                     true));
 
             JSONSchema<User> schema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);

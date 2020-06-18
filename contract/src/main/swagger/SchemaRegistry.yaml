@@ -153,7 +153,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group history
-  /groups/{groupName}/rules:
+  /groups/{groupName}/compatibility:
     parameters:
       - in: path
         name: groupName
@@ -167,38 +167,38 @@ paths:
     put:
       tags:
       - "Group"
-      operationId: updateSchemaValidationRules
-      description: update schema validation rules of an existing Group
+      operationId: updateCompatibility
+      description: update schema compatibility of an existing Group
       consumes:
         - application/json
       parameters:
         - in: body
-          name: UpdateValidationRulesRequest
+          name: UpdateCompatibilityRequest
           description: update group policy
           required: true
           schema:
             type: object
             properties:
-              validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
-              previousRules:
-                  $ref: "#/definitions/SchemaValidationRules"
+              compatibility:
+                  $ref: "#/definitions/Compatibility"
+              previousCompatibility:
+                  $ref: "#/definitions/Compatibility"
                   nullable: true
             required:
-              - validationRules
+              - compatibility
         - in: query
           name: namespace
           type: string
           description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
       responses:
         200:
-          description: Updated schema validation policy
+          description: Updated schema compatibility policy
         404:
           description: Group with given name not found
         409:
           description: Write conflict 
         500:
-          description: Internal server error while updating Group's schema validation rules 
+          description: Internal server error while updating Group's schema compatibility 
   /groups/{groupName}/schemas:
     parameters:
       - in: path
@@ -447,15 +447,15 @@ paths:
       parameters:
         - in: body
           name: ValidateRequest
-          description: Checks if schema is valid with respect to supplied validation rules
+          description: Checks if schema is valid with respect to supplied compatibility
           required: true
           schema:
             type: object
             properties:
               schemaInfo:
                   $ref: "#/definitions/SchemaInfo"
-              validationRules:
-                  $ref: "#/definitions/SchemaValidationRules"
+              compatibility:
+                  $ref: "#/definitions/Compatibility"
             required:
               - schemaInfo      
       produces:
@@ -484,13 +484,13 @@ paths:
       tags:
       - "Group"
       operationId: canRead
-      description: Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules. 
+      description: Checks if given schema can be used for reads subject to compatibility policy in the schema compatibility. 
       consumes:
         - application/json
       parameters:
         - in: body
           name: schemaInfo
-          description: Checks if schema can be used to read the data in the stream based on compatibility rules. 
+          description: Checks if schema can be used to read the data in the stream based on compatibility policy. 
           required: true
           schema:
               $ref: "#/definitions/SchemaInfo"
@@ -684,9 +684,9 @@ definitions:
       serializationFormat:
           description: serialization format for the group.    
           $ref: "#/definitions/SerializationFormat"
-      schemaValidationRules:
-          description: Validation rules to apply while registering new schema.    
-          $ref: "#/definitions/SchemaValidationRules"
+      compatibility:
+          description: Compatibility to apply while registering new schema.    
+          $ref: "#/definitions/Compatibility"
       allowMultipleTypes:
           description: Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.      
           type: boolean
@@ -700,7 +700,7 @@ definitions:
     required:
       - serializationFormat
       - allowMultipleTypes
-      - schemaValidationRules      
+      - compatibility      
   SerializationFormat:
     type: object
     description: Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.  
@@ -812,57 +812,122 @@ definitions:
       - codecType      
   Compatibility:
     type: object
-    description: Schema Compatibility validation rule.
-    required:
-      - name
-      - policy
+    description: Compatibility policy.
     properties:
-      name:
-        type: string
-        description: Name is used to identify the type of SchemaValidationRule. For Compatibility rule the name should be "Compatibility".
       policy:
         description: Compatibility policy enum.
         type: string
         enum:
           - AllowAny
           - DenyAll
-          - Backward
-          - Forward
-          - ForwardTransitive
-          - BackwardTransitive
-          - BackwardTill
-          - ForwardTill
-          - BackwardAndForwardTill
-          - Full
-          - FullTransitive
-      backwardTill:
-        description: Version for backward till if policy is BackwardTill or BackwardAndForwardTill.
-        $ref: "#/definitions/VersionInfo"        
-      forwardTill:
-        description: Version for forward till if policy is ForwardTill or BackwardAndForwardTill.
-        $ref: "#/definitions/VersionInfo"        
-  SchemaValidationRules:
-    type: object
-    description: Schema validation rules to be applied for new schema addition. Currently only one rule is supported - Compatibility.
-    properties:
-      rules:
-        type: object
-        additionalProperties:
-          $ref: "#/definitions/SchemaValidationRule"
-  SchemaValidationRule:
-    type: object
-    description: Schema validation rule base class.
+          - BackwardAndForward
+      backwardAndForward:
+        description: Backward and forward policy details.
+        $ref: "#/definitions/BackwardAndForward"
     required:
-      - rule
+      - policy
+  BackwardAndForward:
+    type: object
+    description: BackwardPolicy and forwardPolicy policy. 
     properties:
-      rule:
-        description: Specific schema validation rule. The only rule we have presently is Compatibility. The "name" is used to identify specific Rule type. The only rule supported in this is Compatibility.  
+      backwardPolicy:
+        description: BackwardAndForward policy type that describes different types of BackwardPolicy policies like Backward, BackwardTransitive and BackwardTill.    
+        $ref: "#/definitions/BackwardPolicy"
+      forwardPolicy:
+        description: BackwardAndForward policy type that describes different types of ForwardPolicy policies like Forward, ForwardTransitive and ForwardTill.  
+        $ref: "#/definitions/ForwardPolicy"
+  BackwardPolicy:
+    type: object
+    description: BackwardPolicy policy.
+    required:
+      - backwardPolicy
+    properties:
+      backwardPolicy:
+        description: BackwardAndForward type backwardPolicy. Can be one of Backward, backwardTill and backwardTransitive.  
         oneOf:
-          - $ref: '#/definitions/Compatibility'
+          - $ref: '#/definitions/Backward'
+          - $ref: '#/definitions/BackwardTill'
+          - $ref: '#/definitions/BackwardTransitive'
         discriminator:
           propertyName: name
           mapping:
-            Compatibility: '#/definitions/Compatibility'
+            Backward: "#/definitions/Backward"
+            BackwardTill: "#/definitions/BackwardTill"
+            BackwardTransitive: "#/definitions/BackwardTransitive"
+  ForwardPolicy:
+    type: object
+    description: ForwardPolicy policy.
+    required:
+      - forwardPolicy
+    properties:
+      forwardPolicy:
+        description: BackwardAndForward type forwardPolicy. Can be one of forward, forwardTill and forwardTransitive.  
+        oneOf:
+          - $ref: "#/definitions/Forward"
+          - $ref: "#/definitions/ForwardTill"
+          - $ref: "#/definitions/ForwardTransitive"
+        discriminator:
+          propertyName: name
+          mapping:
+            Forward: "#/definitions/Forward"
+            ForwardTill: "#/definitions/ForwardTill"
+            ForwardTransitive: "#/definitions/ForwardTransitive"
+  Backward:
+    type: object
+    description: BackwardPolicy compatibility type which tells the service to check for backwardPolicy compatibility with latest schema.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  Forward:
+    type: object
+    description: ForwardPolicy compatibility type which tells the service to check for forwardPolicy compatibilty with latest schema.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  BackwardTransitive:
+    type: object
+    description: BackwardPolicy compatibility type which tells the service to check for backwardPolicy compatibility with all previous schemas.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  ForwardTransitive:
+    type: object
+    description: ForwardPolicy compatibility type which tells the service to check for forwardPolicy compatibility with all previous schemas.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  BackwardTill:
+    type: object
+    description: BackwardPolicy compatibility which tells the service to check for backwardPolicy compatibility with all previous schemas till specific version.
+    properties:
+      name:
+        type: string
+      version:
+        description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
+        $ref: "#/definitions/VersionInfo"
+    required:
+      - name
+      - version    
+  ForwardTill:
+    type: object
+    description: ForwardPolicy compatibility which tells the service to check for forwardPolicy compatibility with all previous schemas till specific version.
+    properties:
+      name:
+        type: string
+      version:
+        description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
+        $ref: "#/definitions/VersionInfo"
+    required:
+      - name
+      - version
   CodecTypesList:
     type: object
     description: Response object for listCodecTypes.
@@ -877,7 +942,7 @@ definitions:
     description: Response object for validateSchema api.
     properties:
       valid:
-        description: Whether given schema is valid with respect to existing group schemas against the configured validation rules. 
+        description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
         type: boolean
     required:
       - valid    
@@ -886,13 +951,13 @@ definitions:
     description: Response object for canRead api.
     properties:
       compatible:
-        description: Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group's configured compatibility policy. 
+        description: Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy. 
         type: boolean
     required:
       - compatible    
   GroupHistoryRecord:
       type: object
-      description: Group History Record that describes each schema evolution - schema information, version generated for the schema, time and rules used for schema validation.
+      description: Group History Record that describes each schema evolution - schema information, version generated for the schema, time and compatibility policy used for schema validation.
       properties:
         schemaInfo:
           description: Schema information object.
@@ -900,9 +965,9 @@ definitions:
         version:
           description: Schema version information object.
           $ref: "#/definitions/VersionInfo"
-        validationRules:
-          description: Schema validation rules applied.
-          $ref: "#/definitions/SchemaValidationRules"
+        compatibility:
+          description: Schema compatibility applied.
+          $ref: "#/definitions/Compatibility"
         timestamp:
           description: Timestamp when the schema was added.
           type: integer
@@ -913,7 +978,7 @@ definitions:
       required:
         - schemaInfo
         - version
-        - validationRules
+        - compatibility
         - timestamp      
   GroupHistory:
     type: object

@@ -18,7 +18,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
@@ -73,8 +73,8 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean updateSchemaValidationRules(String group, SchemaValidationRules validationRules, SchemaValidationRules previousRules) {
-        return service.updateSchemaValidationRules(namespace, group, validationRules, previousRules)
+    public boolean updateCompatibility(String group, Compatibility validationRules, Compatibility previousRules) {
+        return service.updateCompatibility(namespace, group, validationRules, previousRules)
                       .handle((r, e) -> e != null).join();
     }
 

@@ -17,43 +17,22 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * ValidateRequest
+ * UpdateCompatibilityRequest
  */
 
-public class ValidateRequest   {
-  @JsonProperty("schemaInfo")
-  private SchemaInfo schemaInfo = null;
-
+public class UpdateCompatibilityRequest   {
   @JsonProperty("compatibility")
   private Compatibility compatibility = null;
 
-  public ValidateRequest schemaInfo(SchemaInfo schemaInfo) {
-    this.schemaInfo = schemaInfo;
-    return this;
-  }
+  @JsonProperty("previousCompatibility")
+  private Compatibility previousCompatibility = null;
 
-  /**
-   * Get schemaInfo
-   * @return schemaInfo
-   **/
-  @JsonProperty("schemaInfo")
-  @ApiModelProperty(required = true, value = "")
-  @NotNull
-  public SchemaInfo getSchemaInfo() {
-    return schemaInfo;
-  }
-
-  public void setSchemaInfo(SchemaInfo schemaInfo) {
-    this.schemaInfo = schemaInfo;
-  }
-
-  public ValidateRequest compatibility(Compatibility compatibility) {
+  public UpdateCompatibilityRequest compatibility(Compatibility compatibility) {
     this.compatibility = compatibility;
     return this;
   }
@@ -63,13 +42,33 @@ public class ValidateRequest   {
    * @return compatibility
    **/
   @JsonProperty("compatibility")
-  @ApiModelProperty(value = "")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
   public Compatibility getCompatibility() {
     return compatibility;
   }
 
   public void setCompatibility(Compatibility compatibility) {
     this.compatibility = compatibility;
+  }
+
+  public UpdateCompatibilityRequest previousCompatibility(Compatibility previousCompatibility) {
+    this.previousCompatibility = previousCompatibility;
+    return this;
+  }
+
+  /**
+   * Get previousCompatibility
+   * @return previousCompatibility
+   **/
+  @JsonProperty("previousCompatibility")
+  @ApiModelProperty(value = "")
+  public Compatibility getPreviousCompatibility() {
+    return previousCompatibility;
+  }
+
+  public void setPreviousCompatibility(Compatibility previousCompatibility) {
+    this.previousCompatibility = previousCompatibility;
   }
 
 
@@ -81,24 +80,24 @@ public class ValidateRequest   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    ValidateRequest validateRequest = (ValidateRequest) o;
-    return Objects.equals(this.schemaInfo, validateRequest.schemaInfo) &&
-        Objects.equals(this.compatibility, validateRequest.compatibility);
+    UpdateCompatibilityRequest updateCompatibilityRequest = (UpdateCompatibilityRequest) o;
+    return Objects.equals(this.compatibility, updateCompatibilityRequest.compatibility) &&
+        Objects.equals(this.previousCompatibility, updateCompatibilityRequest.previousCompatibility);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, compatibility);
+    return Objects.hash(compatibility, previousCompatibility);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class ValidateRequest {\n");
+    sb.append("class UpdateCompatibilityRequest {\n");
     
-    sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
+    sb.append("    previousCompatibility: ").append(toIndentedString(previousCompatibility)).append("\n");
     sb.append("}");
     return sb.toString();
   }

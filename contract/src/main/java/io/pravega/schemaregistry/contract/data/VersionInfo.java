@@ -23,7 +23,7 @@ import lombok.Data;
  * {@link VersionInfo#version} the registry assigned monotonically increasing version number for the schema for specific object type.
  * Since the version number is per object type, so type and version number forms a unique pair. 
  * {@link VersionInfo#id} This is an Id that is assigned by the service and uniquely identifies the schema version within 
- * the group. The ids are assigned as monotonically increasing numbers for all schemas added to the group. 
+ * the group. The id are assigned as monotonically increasing numbers for all schemas added to the group. 
  * So the id also represents the absolute order of the schema for all schemas in the group. 
  */
 @Data

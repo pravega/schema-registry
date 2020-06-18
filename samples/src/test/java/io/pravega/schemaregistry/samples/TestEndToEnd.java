@@ -19,7 +19,6 @@ import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -73,7 +72,7 @@ public abstract class TestEndToEnd {
             .noDefault()
             .name("b")
             .type(Schema.create(Schema.Type.STRING))
-            .withDefault("backward compatible with schema1")
+            .withDefault("backwardPolicy compatible with schema1")
             .endRecord();
 
     private final Schema schema3 = SchemaBuilder
@@ -119,7 +118,7 @@ public abstract class TestEndToEnd {
         int groupsCount = Lists.newArrayList(client.listGroups()).size();
 
         client.addGroup(group, new GroupProperties(SerializationFormat.Avro,
-                SchemaValidationRules.of(Compatibility.backward()),
+                Compatibility.backward(),
                 true));
         assertEquals(Lists.newArrayList(client.listGroups()).size(), groupsCount + 1);
 
@@ -144,7 +143,7 @@ public abstract class TestEndToEnd {
         assertEquals(version2.getId(), 1);
         assertEquals(version2.getType(), myTest);
 
-        client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()), null);
+        client.updateCompatibility(group, Compatibility.fullTransitive(), null);
 
         SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SerializationFormat.Avro,
                 ByteBuffer.wrap(schema3.toString().getBytes(Charsets.UTF_8)), ImmutableMap.of());

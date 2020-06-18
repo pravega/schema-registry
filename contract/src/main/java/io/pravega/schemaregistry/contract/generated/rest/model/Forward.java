@@ -21,32 +21,32 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Response object for canRead api.
+ * ForwardPolicy compatibility type which tells the service to check for forwardPolicy compatibilty with latest schema.
  */
-@ApiModel(description = "Response object for canRead api.")
+@ApiModel(description = "ForwardPolicy compatibility type which tells the service to check for forwardPolicy compatibilty with latest schema.")
 
-public class CanRead   {
-  @JsonProperty("compatible")
-  private Boolean compatible = null;
+public class Forward   {
+  @JsonProperty("name")
+  private String name = null;
 
-  public CanRead compatible(Boolean compatible) {
-    this.compatible = compatible;
+  public Forward name(String name) {
+    this.name = name;
     return this;
   }
 
   /**
-   * Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group&#39;s configured compatibility policy.
-   * @return compatible
+   * Get name
+   * @return name
    **/
-  @JsonProperty("compatible")
-  @ApiModelProperty(required = true, value = "Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy.")
+  @JsonProperty("name")
+  @ApiModelProperty(required = true, value = "")
   @NotNull
-  public Boolean isCompatible() {
-    return compatible;
+  public String getName() {
+    return name;
   }
 
-  public void setCompatible(Boolean compatible) {
-    this.compatible = compatible;
+  public void setName(String name) {
+    this.name = name;
   }
 
 
@@ -58,22 +58,22 @@ public class CanRead   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CanRead canRead = (CanRead) o;
-    return Objects.equals(this.compatible, canRead.compatible);
+    Forward forward = (Forward) o;
+    return Objects.equals(this.name, forward.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compatible);
+    return Objects.hash(name);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CanRead {\n");
+    sb.append("class Forward {\n");
     
-    sb.append("    compatible: ").append(toIndentedString(compatible)).append("\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("}");
     return sb.toString();
   }

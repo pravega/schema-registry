@@ -33,7 +33,6 @@ import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
@@ -211,7 +210,7 @@ public class CompressionDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
             client.addGroup(groupId, 
-                    new GroupProperties(serializationFormat, SchemaValidationRules.of(Compatibility.backward()), true));
+                    new GroupProperties(serializationFormat, Compatibility.backward(), true));
         }
     }
 

@@ -14,7 +14,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import java.util.List;
 
 /**
- * Always true implementation of Compatibility Checker that returns true for each of the checks. 
+ * Always true implementation of BackwardAndForward Checker that returns true for each of the checks. 
  */
 public class AlwaysTrueCompatibilityChecker implements CompatibilityChecker {
     @Override

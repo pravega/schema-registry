@@ -16,7 +16,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 
@@ -38,7 +38,7 @@ public interface SchemaStore {
 
     CompletableFuture<GroupProperties> getGroupProperties(String namespace, String groupId);
     
-    CompletableFuture<Void> updateValidationRules(String namespace, String groupId, Etag etag, SchemaValidationRules policy);
+    CompletableFuture<Void> updateValidationRules(String namespace, String groupId, Etag etag, Compatibility policy);
 
     CompletableFuture<List<SchemaWithVersion>> getLatestSchemas(String namespace, String groupId);
     
@@ -50,11 +50,11 @@ public interface SchemaStore {
 
     CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type, VersionInfo from);
     
-    CompletableFuture<Void> deleteSchema(String namespace, String groupId, int schemaId, Etag etag);
+    CompletableFuture<Void> deleteSchema(String namespace, String groupId, int versionOrdinal, Etag etag);
     
     CompletableFuture<Void> deleteSchema(String namespace, String groupId, String schemaType, int version, Etag etag);
     
-    CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int schemaId);
+    CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int versionOrdinal);
     
     CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, String schemaType, int version);
 

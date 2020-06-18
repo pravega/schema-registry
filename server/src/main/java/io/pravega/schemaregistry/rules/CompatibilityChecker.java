@@ -14,7 +14,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import java.util.List;
 
 /**
- * Compatibility checker interface to compare a schema against existing schemas for compatibility. 
+ * BackwardAndForward checker interface to compare a schema against existing schemas for compatibility. 
  */
 public interface CompatibilityChecker {
     /**

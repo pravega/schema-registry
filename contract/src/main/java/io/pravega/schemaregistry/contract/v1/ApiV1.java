@@ -22,7 +22,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
-import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.UpdateCompatibilityRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
@@ -87,13 +87,13 @@ public class ApiV1 {
         @Path("/{groupName}/schemas/versions/canRead")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the compatibility.", response = CanRead.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Response to tell whether schema can be used to read existing schemas", response = CanRead.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while checking schema for readability", response = Void.class)})
         Response canRead(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                         @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) SchemaInfo schemaInfo,
+                         @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility policy.", required = true) SchemaInfo schemaInfo,
                          @ApiParam(value = "namespace") @QueryParam("namespace") String namespace);
 
         @POST
@@ -272,16 +272,16 @@ public class ApiV1 {
                             @ApiParam(value = "namespace") @QueryParam("namespace") String namespace);
 
         @PUT
-        @Path("/{groupName}/rules")
+        @Path("/{groupName}/compatibility")
         @Consumes({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "update schema validation rules of an existing Group", response = Void.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "update compatibility of an existing Group", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Updated schema validation policy", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Write conflict", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's schema validation rules", response = Void.class)})
-        Response updateSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                             @ApiParam(value = "update group policy", required = true) UpdateValidationRulesRequest updateValidationRulesRequest,
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's compatibility", response = Void.class)})
+        Response updateCompatibility(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                             @ApiParam(value = "update group policy", required = true) UpdateCompatibilityRequest updateCompatibilityRequest,
                                              @ApiParam(value = "namespace") @QueryParam("namespace") String namespace);
 
         @POST
@@ -294,7 +294,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while trying to validate schema", response = Void.class)})
         Response validate(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                          @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest,
+                          @ApiParam(value = "Checks if schema is valid with respect to supplied compatibility", required = true) ValidateRequest validateRequest,
                           @ApiParam(value = "namespace") @QueryParam("namespace") String namespace);
     }
 
@@ -339,13 +339,13 @@ public class ApiV1 {
         @Path("/{groupName}/schemas/versions/canRead")
         @Consumes({"application/json"})
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the schema validation rules.", response = CanRead.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Checks if given schema can be used for reads subject to compatibility policy in the compatibility.", response = CanRead.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Response to tell whether schema can be used to read existing schemas", response = CanRead.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while checking schema for readability", response = Void.class)})
         void canRead(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                     @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility rules.", required = true) SchemaInfo schemaInfo,
+                     @ApiParam(value = "Checks if schema can be used to read the data in the stream based on compatibility policy.", required = true) SchemaInfo schemaInfo,
                      @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                      @Suspended AsyncResponse asyncResponse);
 
@@ -540,16 +540,16 @@ public class ApiV1 {
                         @Suspended AsyncResponse asyncResponse);
 
         @PUT
-        @Path("/{groupName}/rules")
+        @Path("/{groupName}/compatibility")
         @Consumes({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "update schema validation rules of an existing Group", response = Void.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "update compatibility of an existing Group", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Updated schema validation policy", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 409, message = "Write conflict", response = Void.class),
-                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's schema validation rules", response = Void.class)})
-        void updateSchemaValidationRules(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                         @ApiParam(value = "update group policy", required = true) UpdateValidationRulesRequest updateValidationRulesRequest,
+                @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while updating Group's compatibility", response = Void.class)})
+        void updateCompatibility(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
+                                         @ApiParam(value = "update group policy", required = true) UpdateCompatibilityRequest updateCompatibilityRequest,
                                          @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                                          @Suspended AsyncResponse asyncResponse);
 
@@ -563,7 +563,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while trying to validate schema", response = Void.class)})
         void validate(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                      @ApiParam(value = "Checks if schema is valid with respect to supplied validation rules", required = true) ValidateRequest validateRequest,
+                      @ApiParam(value = "Checks if schema is valid with respect to supplied compatibility", required = true) ValidateRequest validateRequest,
                       @ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                       @Suspended AsyncResponse asyncResponse);
     }

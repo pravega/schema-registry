@@ -21,32 +21,32 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Schema validation rule base class.
+ * Policy to Allow any change.
  */
-@ApiModel(description = "Schema validation rule base class.")
+@ApiModel(description = "Policy to Allow any change.")
 
-public class SchemaValidationRule   {
-  @JsonProperty("rule")
-  private Object rule = null;
+public class AllowAny   {
+  @JsonProperty("name")
+  private String name = null;
 
-  public SchemaValidationRule rule(Object rule) {
-    this.rule = rule;
+  public AllowAny name(String name) {
+    this.name = name;
     return this;
   }
 
   /**
-   * Specific schema validation rule. The only rule we have presently is Compatibility. The \&quot;name\&quot; is used to identify specific Rule type. The only rule supported in this is Compatibility.
-   * @return rule
+   * Get name
+   * @return name
    **/
-  @JsonProperty("rule")
-  @ApiModelProperty(required = true, value = "Specific schema validation rule. The only rule we have presently is Compatibility. The \"name\" is used to identify specific Rule type. The only rule supported in this is Compatibility.")
+  @JsonProperty("name")
+  @ApiModelProperty(required = true, value = "")
   @NotNull
-  public Object getRule() {
-    return rule;
+  public String getName() {
+    return name;
   }
 
-  public void setRule(Object rule) {
-    this.rule = rule;
+  public void setName(String name) {
+    this.name = name;
   }
 
 
@@ -58,22 +58,22 @@ public class SchemaValidationRule   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaValidationRule schemaValidationRule = (SchemaValidationRule) o;
-    return Objects.equals(this.rule, schemaValidationRule.rule);
+    AllowAny allowAny = (AllowAny) o;
+    return Objects.equals(this.name, allowAny.name);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(rule);
+    return Objects.hash(name);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaValidationRule {\n");
+    sb.append("class AllowAny {\n");
     
-    sb.append("    rule: ").append(toIndentedString(rule)).append("\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("}");
     return sb.toString();
   }

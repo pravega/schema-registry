@@ -13,8 +13,8 @@ import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.common.FuturesCollector;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
@@ -26,7 +26,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsRespons
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaVersionsList;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
-import io.pravega.schemaregistry.contract.generated.rest.model.UpdateValidationRulesRequest;
+import io.pravega.schemaregistry.contract.generated.rest.model.UpdateCompatibilityRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
@@ -208,28 +208,28 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void updateSchemaValidationRules(String groupName, UpdateValidationRulesRequest updateValidationRulesRequest, 
+    public void updateCompatibility(String groupName, UpdateCompatibilityRequest updateCompatibilityRequest, 
                                             String namespace, AsyncResponse asyncResponse) {
-        log.info("Update schema validation rules called for group {} with new request {}", groupName, updateValidationRulesRequest);
+        log.info("Update compatibility called for group {} with new request {}", groupName, updateCompatibilityRequest);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("updateSchemaValidationRules", READ_UPDATE, resource, asyncResponse,
+        withCompletion("updateCompatibility", READ_UPDATE, resource, asyncResponse,
                 () -> {
-                    SchemaValidationRules rules = ModelHelper.decode(updateValidationRulesRequest.getValidationRules());
-                    SchemaValidationRules previousRules = updateValidationRulesRequest.getPreviousRules() == null ?
-                            null : ModelHelper.decode(updateValidationRulesRequest.getPreviousRules());
-                    return getRegistryService().updateSchemaValidationRules(namespace, groupName, rules, previousRules)
+                    Compatibility rules = ModelHelper.decode(updateCompatibilityRequest.getCompatibility());
+                    Compatibility previousRules = updateCompatibilityRequest.getPreviousCompatibility() == null ?
+                            null : ModelHelper.decode(updateCompatibilityRequest.getCompatibility());
+                    return getRegistryService().updateCompatibility(namespace, groupName, rules, previousRules)
                                           .thenApply(groupProperty -> Response.status(Status.OK).build())
                                           .exceptionally(exception -> {
                                               if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
                                                   log.warn("Group {} not found", groupName);
                                                   return Response.status(Status.NOT_FOUND).build();
                                               } else if (Exceptions.unwrap(exception) instanceof PreconditionFailedException) {
-                                                  log.warn("updateSchemaValidationRules write conflict {}", groupName);
+                                                  log.warn("updateCompatibility write conflict {}", groupName);
                                                   return Response.status(Status.CONFLICT).build();
                                               } else {
-                                                  log.warn("updateSchemaValidationRules failed with exception: ", exception);
+                                                  log.warn("updateCompatibility failed with exception: ", exception);
                                                   return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                               }
                                           });
@@ -390,7 +390,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("getSchemaForId", READ, resource, asyncResponse,
+        withCompletion("getSchemaFromVersionOrdinal", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchema(namespace, groupName, schemaId)
                                      .thenApply(schemaWithVersion -> {
                                          SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
@@ -402,7 +402,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {} not found", groupName, schemaId);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("getSchemaForId failed with exception: ", exception);
+                                         log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -429,7 +429,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                                             log.warn("Group {} or version {} not found", groupName, version);
                                                                             return Response.status(Status.NOT_FOUND).build();
                                                                         }
-                                                                        log.warn("getSchemaFromVersion failed with exception: ", exception);
+                                                                        log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
                                                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                                                     }))
                 .thenApply(response -> {
@@ -445,7 +445,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("deleteSchemaForId", READ_UPDATE, resource, asyncResponse,
+        withCompletion("deleteSchemaFromVersionOrdinal", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteSchema(namespace, groupName, schemaId)
                                      .thenApply(v -> {
                                          log.info("Schema for version {} for group {} deleted.", schemaId, groupName);
@@ -456,7 +456,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {} not found", groupName, schemaId);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaForId failed with exception: ", exception);
+                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -483,7 +483,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {}/{} not found", groupName, schemaType, version);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaVersion failed with exception: ", exception);
+                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {

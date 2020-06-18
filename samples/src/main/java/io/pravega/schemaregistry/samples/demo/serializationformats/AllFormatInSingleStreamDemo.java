@@ -32,7 +32,6 @@ import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
@@ -80,7 +79,7 @@ public class AllFormatInSingleStreamDemo {
 
         SerializationFormat serializationFormat = SerializationFormat.Any;
         client.addGroup(groupId, new GroupProperties(serializationFormat,
-                SchemaValidationRules.of(Compatibility.allowAny()),
+                Compatibility.allowAny(),
                 true));
     }
 

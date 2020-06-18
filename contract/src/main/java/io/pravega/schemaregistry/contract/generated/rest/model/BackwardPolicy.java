@@ -21,32 +21,32 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Response object for canRead api.
+ * BackwardPolicy policy.
  */
-@ApiModel(description = "Response object for canRead api.")
+@ApiModel(description = "BackwardPolicy policy.")
 
-public class CanRead   {
-  @JsonProperty("compatible")
-  private Boolean compatible = null;
+public class BackwardPolicy   {
+  @JsonProperty("backwardPolicy")
+  private Object backwardPolicy = null;
 
-  public CanRead compatible(Boolean compatible) {
-    this.compatible = compatible;
+  public BackwardPolicy backwardPolicy(Object backwardPolicy) {
+    this.backwardPolicy = backwardPolicy;
     return this;
   }
 
   /**
-   * Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group&#39;s configured compatibility policy.
-   * @return compatible
+   * BackwardAndForward type backwardPolicy. Can be one of Backward, backwardTill and backwardTransitive.
+   * @return backwardPolicy
    **/
-  @JsonProperty("compatible")
-  @ApiModelProperty(required = true, value = "Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy.")
+  @JsonProperty("backwardPolicy")
+  @ApiModelProperty(required = true, value = "BackwardAndForward type backwardPolicy. Can be one of Backward, backwardTill and backwardTransitive.")
   @NotNull
-  public Boolean isCompatible() {
-    return compatible;
+  public Object getBackwardPolicy() {
+    return backwardPolicy;
   }
 
-  public void setCompatible(Boolean compatible) {
-    this.compatible = compatible;
+  public void setBackwardPolicy(Object backwardPolicy) {
+    this.backwardPolicy = backwardPolicy;
   }
 
 
@@ -58,22 +58,22 @@ public class CanRead   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CanRead canRead = (CanRead) o;
-    return Objects.equals(this.compatible, canRead.compatible);
+    BackwardPolicy backwardPolicy = (BackwardPolicy) o;
+    return Objects.equals(this.backwardPolicy, backwardPolicy.backwardPolicy);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compatible);
+    return Objects.hash(backwardPolicy);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CanRead {\n");
+    sb.append("class BackwardPolicy {\n");
     
-    sb.append("    compatible: ").append(toIndentedString(compatible)).append("\n");
+    sb.append("    backwardPolicy: ").append(toIndentedString(backwardPolicy)).append("\n");
     sb.append("}");
     return sb.toString();
   }

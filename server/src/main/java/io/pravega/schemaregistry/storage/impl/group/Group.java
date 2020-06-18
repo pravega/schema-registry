@@ -24,7 +24,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -81,14 +81,14 @@ public class Group<V> {
     }
 
     public CompletableFuture<Boolean> create(SerializationFormat serializationFormat, Map<String, String> properties,
-                                          boolean allowMultipleTypes, SchemaValidationRules schemaValidationRules) {
+                                          boolean allowMultipleTypes, Compatibility compatibility) {
         List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
         entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, null)));
 
         GroupPropertiesRecord groupProp = new GroupPropertiesRecord(serializationFormat, allowMultipleTypes, properties);
         entries.add(new AbstractMap.SimpleEntry<>(GROUP_PROPERTY_KEY, new GroupTable.Value<>(groupProp, null)));
 
-        ValidationRecord validationRecord = new ValidationRecord(schemaValidationRules);
+        ValidationRecord validationRecord = new ValidationRecord(compatibility);
         entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(validationRecord, null)));
 
         return Futures.exceptionallyComposeExpecting(groupTable.updateEntries(entries).thenApply(x -> true), 
@@ -174,7 +174,7 @@ public class Group<V> {
                         }
                         if (entry.getValue() instanceof VersionDeletedRecord) {
                             schemaRecords.removeIf(x -> x.getVersionInfo().getId() ==
-                                    ((VersionDeletedRecord) entry.getValue()).getId());
+                                    ((VersionDeletedRecord) entry.getValue()).getOrdinal());
                         }
                     }
 
@@ -182,11 +182,11 @@ public class Group<V> {
                 });
     }
 
-    private CompletableFuture<Integer> getSchemaId(String schemaType, int version) {
-        return groupTable.getEntry(new SchemaTypeVersionKey(schemaType, version), SchemaIdValue.class)
+    private CompletableFuture<Integer> getVersionOrdinal(String schemaType, int version) {
+        return groupTable.getEntry(new SchemaTypeVersionKey(schemaType, version), VersionOrdinalValue.class)
                 .thenApply(x -> {
                     if (x != null) {
-                        return x.getId();
+                        return x.getOrdinal();
                     } else {
                         throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version not found %s %s", schemaType, version));
                     }
@@ -194,19 +194,19 @@ public class Group<V> {
     }
 
     public CompletableFuture<Void> deleteSchema(String schemaType, int version, Etag etag) {
-        return getSchemaId(schemaType, version)
-                .thenCompose(schemaId -> deleteSchema(schemaId, etag));
+        return getVersionOrdinal(schemaType, version)
+                .thenCompose(versionOrdinal -> deleteSchema(versionOrdinal, etag));
     }
     
-    public CompletableFuture<Void> deleteSchema(int schemaId, Etag etag) {
-        VersionDeletedRecord versionDeletedRecord = new VersionDeletedRecord(schemaId);
-        VersionKey versionKey = new VersionKey(schemaId);
+    public CompletableFuture<Void> deleteSchema(int versionOrdinal, Etag etag) {
+        VersionDeletedRecord versionDeletedRecord = new VersionDeletedRecord(versionOrdinal);
+        VersionKey versionKey = new VersionKey(versionOrdinal);
         return groupTable.getEntriesWithVersion(Lists.newArrayList(versionKey, versionDeletedRecord), TableValue.class)
                 .thenCompose(entries -> {
                     TableValue schema = entries.get(0).getValue();
                     TableValue versionDeletedRecordValue = entries.get(1).getValue();
                     if (schema == null) {
-                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version id found %s", schemaId));
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version id found %s", versionOrdinal));
                     }
                     if (versionDeletedRecordValue == null) {
                         List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> toUpdate = new ArrayList<>();
@@ -223,21 +223,21 @@ public class Group<V> {
     }
 
     public CompletableFuture<SchemaInfo> getSchema(String schemaType, int version) {
-        return getSchemaId(schemaType, version)
-                .thenCompose(schemaId -> getSchema(schemaId, false));
+        return getVersionOrdinal(schemaType, version)
+                .thenCompose(versionOrdinal -> getSchema(versionOrdinal, false));
     }
 
-    public CompletableFuture<SchemaInfo> getSchema(int schemaId) {
-        return getSchema(schemaId, false);
+    public CompletableFuture<SchemaInfo> getSchema(int versionOrdinal) {
+        return getSchema(versionOrdinal, false);
     }
 
-    private CompletableFuture<SchemaInfo> getSchema(int schemaId, boolean throwOnDeleted) {
-        List<? extends TableKey> keys = Lists.newArrayList(new VersionKey(schemaId), 
-                new VersionDeletedRecord(schemaId));
+    private CompletableFuture<SchemaInfo> getSchema(int versionOrdinal, boolean throwOnDeleted) {
+        List<? extends TableKey> keys = Lists.newArrayList(new VersionKey(versionOrdinal), 
+                new VersionDeletedRecord(versionOrdinal));
         return groupTable.getEntriesWithVersion(keys, TableValue.class)
                          .thenApply(entries -> {
                              if (entries.get(1).getValue() != null && throwOnDeleted) {
-                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, Integer.toString(schemaId));
+                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, Integer.toString(versionOrdinal));
                              } else {
                                  TableValue value = entries.get(0).getValue();
                                  if (value != null) {
@@ -431,9 +431,9 @@ public class Group<V> {
 
             // 1. version info key. add
             entries.add(new AbstractMap.SimpleEntry<>(new SchemaTypeVersionKey(next.getType(), next.getVersion()),
-                    new GroupTable.Value<>(new SchemaIdValue(next.getId()), null)));
+                    new GroupTable.Value<>(new VersionOrdinalValue(next.getId()), null)));
             entries.add(new AbstractMap.SimpleEntry<>(new VersionKey(next.getId()),
-                    new GroupTable.Value<>(new SchemaRecord(schemaInfo, next, prop.getSchemaValidationRules(), 
+                    new GroupTable.Value<>(new SchemaRecord(schemaInfo, next, prop.getCompatibility(), 
                             System.currentTimeMillis()), null)));
 
             // 2. schema info key. update
@@ -473,7 +473,7 @@ public class Group<V> {
         });
     }
 
-    public CompletableFuture<Void> updateValidationPolicy(SchemaValidationRules policy, Etag etag) {
+    public CompletableFuture<Void> updateValidationPolicy(Compatibility policy, Etag etag) {
         return groupTable.getEntryWithVersion(VALIDATION_POLICY_KEY, ValidationRecord.class)
                          .thenCompose(entry -> {
                              if (entry.getValue().getValidationRules().equals(policy)) {

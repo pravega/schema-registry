@@ -16,7 +16,7 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.storage.ContinuationToken;
@@ -67,7 +67,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> updateValidationRules(String namespace, String groupId, Etag etag, SchemaValidationRules policy) {
+    public CompletableFuture<Void> updateValidationRules(String namespace, String groupId, Etag etag, Compatibility policy) {
         return getGroup(namespace, groupId)
                 .thenCompose(grp -> grp.updateValidationPolicy(policy, etag));
     }
@@ -99,8 +99,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, int schemaId, Etag etag) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(schemaId, etag));
+    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, int versionOrdinal, Etag etag) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(versionOrdinal, etag));
     }
 
     @Override
@@ -109,8 +109,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int schemaId) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(schemaId));
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int versionOrdinal) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(versionOrdinal));
     }
 
     @Override

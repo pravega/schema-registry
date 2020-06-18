@@ -34,7 +34,6 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.Test1;
 import io.pravega.schemaregistry.samples.generated.Test2;
@@ -82,7 +81,7 @@ public class AvroDemo {
             .noDefault()
             .name("b")
             .type(Schema.create(Schema.Type.STRING))
-            .withDefault("backward compatible with schema1")
+            .withDefault("backwardPolicy compatible with schema1")
             .endRecord();
 
     private static final Schema SCHEMA3 = SchemaBuilder
@@ -133,11 +132,11 @@ public class AvroDemo {
             streamManager.createScope(scope);
             streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
-            System.out.println("adding new group with: \nserialization format = avro\n compatibiity = backward");
+            System.out.println("adding new group with: \nserialization format = avro\n compatibiity = backwardPolicy");
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    SchemaValidationRules.of(Compatibility.backward()),
+                    Compatibility.backward(),
                     true));
 
             System.out.println("registering schema " + SCHEMA1.toString(true));
@@ -172,7 +171,7 @@ public class AvroDemo {
             // endregion
 
             // region writer with schema3
-            // this should throw exception as schema change is not backward compatible.
+            // this should throw exception as schema change is not backwardPolicy compatible.
             boolean exceptionThrown = false;
             try {
                 System.out.println("registering schema " + SCHEMA3.toString(true));
@@ -260,7 +259,7 @@ public class AvroDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    SchemaValidationRules.of(Compatibility.backward()),
+                    Compatibility.backward(),
                     true));
 
             AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
@@ -324,7 +323,7 @@ public class AvroDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    SchemaValidationRules.of(Compatibility.backward()),
+                    Compatibility.backward(),
                     true));
 
             AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
@@ -387,7 +386,7 @@ public class AvroDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Avro;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    SchemaValidationRules.of(Compatibility.backward()),
+                    Compatibility.backward(),
                     true));
 
             AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofBaseType(Test1.class);

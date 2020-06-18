@@ -57,7 +57,7 @@ public class InMemoryGroups implements Groups<Integer> {
         Group<Integer> grp = groups.computeIfAbsent(new NamespaceAndGroup(namespace, groupName), 
                 x -> new Group<>(kvFactory.get(), executor));
         return grp.create(groupProperties.getSerializationFormat(), groupProperties.getProperties(), groupProperties.isAllowMultipleTypes(), 
-                groupProperties.getSchemaValidationRules()).thenApply(v -> true);
+                groupProperties.getCompatibility()).thenApply(v -> true);
     }
 
     @Synchronized

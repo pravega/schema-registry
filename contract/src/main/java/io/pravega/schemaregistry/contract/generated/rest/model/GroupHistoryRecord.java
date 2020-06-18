@@ -16,17 +16,17 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Group History Record that describes each schema evolution - schema information, version generated for the schema, time and rules used for schema validation.
+ * Group History Record that describes each schema evolution - schema information, version generated for the schema, time and compatibility policy used for schema validation.
  */
-@ApiModel(description = "Group History Record that describes each schema evolution - schema information, version generated for the schema, time and rules used for schema validation.")
+@ApiModel(description = "Group History Record that describes each schema evolution - schema information, version generated for the schema, time and compatibility policy used for schema validation.")
 
 public class GroupHistoryRecord   {
   @JsonProperty("schemaInfo")
@@ -35,8 +35,8 @@ public class GroupHistoryRecord   {
   @JsonProperty("version")
   private VersionInfo version = null;
 
-  @JsonProperty("validationRules")
-  private SchemaValidationRules validationRules = null;
+  @JsonProperty("compatibility")
+  private Compatibility compatibility = null;
 
   @JsonProperty("timestamp")
   private Long timestamp = null;
@@ -84,24 +84,24 @@ public class GroupHistoryRecord   {
     this.version = version;
   }
 
-  public GroupHistoryRecord validationRules(SchemaValidationRules validationRules) {
-    this.validationRules = validationRules;
+  public GroupHistoryRecord compatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
     return this;
   }
 
   /**
-   * Schema validation rules applied.
-   * @return validationRules
+   * Schema compatibility applied.
+   * @return compatibility
    **/
-  @JsonProperty("validationRules")
-  @ApiModelProperty(required = true, value = "Schema validation rules applied.")
+  @JsonProperty("compatibility")
+  @ApiModelProperty(required = true, value = "Schema compatibility applied.")
   @NotNull
-  public SchemaValidationRules getValidationRules() {
-    return validationRules;
+  public Compatibility getCompatibility() {
+    return compatibility;
   }
 
-  public void setValidationRules(SchemaValidationRules validationRules) {
-    this.validationRules = validationRules;
+  public void setCompatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
   }
 
   public GroupHistoryRecord timestamp(Long timestamp) {
@@ -155,14 +155,14 @@ public class GroupHistoryRecord   {
     GroupHistoryRecord groupHistoryRecord = (GroupHistoryRecord) o;
     return Objects.equals(this.schemaInfo, groupHistoryRecord.schemaInfo) &&
         Objects.equals(this.version, groupHistoryRecord.version) &&
-        Objects.equals(this.validationRules, groupHistoryRecord.validationRules) &&
+        Objects.equals(this.compatibility, groupHistoryRecord.compatibility) &&
         Objects.equals(this.timestamp, groupHistoryRecord.timestamp) &&
         Objects.equals(this.schemaString, groupHistoryRecord.schemaString);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, version, validationRules, timestamp, schemaString);
+    return Objects.hash(schemaInfo, version, compatibility, timestamp, schemaString);
   }
 
 
@@ -173,7 +173,7 @@ public class GroupHistoryRecord   {
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
-    sb.append("    validationRules: ").append(toIndentedString(validationRules)).append("\n");
+    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    schemaString: ").append(toIndentedString(schemaString)).append("\n");
     sb.append("}");

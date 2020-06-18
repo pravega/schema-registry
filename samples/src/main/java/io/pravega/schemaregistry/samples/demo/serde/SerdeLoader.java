@@ -30,7 +30,7 @@ public class SerdeLoader {
                     URL[] urls = {url};
                     aClass = Class.forName(className, true, new java.net.URLClassLoader(urls));
                 if (PravegaSerializer.class.isAssignableFrom(aClass)) {
-                    return (PravegaSerializer) aClass.newInstance();
+                    return (PravegaSerializer) aClass.getDeclaredConstructor().newInstance();
                 } else {
                     throw new RuntimeException("implementation not found");
                 }
@@ -52,7 +52,7 @@ public class SerdeLoader {
                 theClass = Class.forName(className, true, new java.net.URLClassLoader(urls));
                 if (PravegaDeserializer.class.isAssignableFrom(theClass)) {
                     // Create an instance of the class.
-                    return (PravegaDeserializer) theClass.newInstance();
+                    return (PravegaDeserializer) theClass.getDeclaredConstructor().newInstance();
                 } else {
                     throw new RuntimeException("Implementation not found");
                 }

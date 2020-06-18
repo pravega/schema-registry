@@ -21,32 +21,32 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Response object for canRead api.
+ * ForwardPolicy policy.
  */
-@ApiModel(description = "Response object for canRead api.")
+@ApiModel(description = "ForwardPolicy policy.")
 
-public class CanRead   {
-  @JsonProperty("compatible")
-  private Boolean compatible = null;
+public class ForwardPolicy   {
+  @JsonProperty("forwardPolicy")
+  private Object forwardPolicy = null;
 
-  public CanRead compatible(Boolean compatible) {
-    this.compatible = compatible;
+  public ForwardPolicy forwardPolicy(Object forwardPolicy) {
+    this.forwardPolicy = forwardPolicy;
     return this;
   }
 
   /**
-   * Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group&#39;s configured compatibility policy.
-   * @return compatible
+   * BackwardAndForward type forwardPolicy. Can be one of forward, forwardTill and forwardTransitive.
+   * @return forwardPolicy
    **/
-  @JsonProperty("compatible")
-  @ApiModelProperty(required = true, value = "Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy.")
+  @JsonProperty("forwardPolicy")
+  @ApiModelProperty(required = true, value = "BackwardAndForward type forwardPolicy. Can be one of forward, forwardTill and forwardTransitive.")
   @NotNull
-  public Boolean isCompatible() {
-    return compatible;
+  public Object getForwardPolicy() {
+    return forwardPolicy;
   }
 
-  public void setCompatible(Boolean compatible) {
-    this.compatible = compatible;
+  public void setForwardPolicy(Object forwardPolicy) {
+    this.forwardPolicy = forwardPolicy;
   }
 
 
@@ -58,22 +58,22 @@ public class CanRead   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CanRead canRead = (CanRead) o;
-    return Objects.equals(this.compatible, canRead.compatible);
+    ForwardPolicy forwardPolicy = (ForwardPolicy) o;
+    return Objects.equals(this.forwardPolicy, forwardPolicy.forwardPolicy);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(compatible);
+    return Objects.hash(forwardPolicy);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CanRead {\n");
+    sb.append("class ForwardPolicy {\n");
     
-    sb.append("    compatible: ").append(toIndentedString(compatible)).append("\n");
+    sb.append("    forwardPolicy: ").append(toIndentedString(forwardPolicy)).append("\n");
     sb.append("}");
     return sb.toString();
   }

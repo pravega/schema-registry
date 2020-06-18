@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * Compatibility checker for Avro schemas. 
+ * BackwardAndForward checker for Avro schemas. 
  */
 public class AvroCompatibilityChecker implements CompatibilityChecker {
     private static final SchemaValidator CAN_READ = new SchemaValidatorBuilder().canReadStrategy().validateAll();

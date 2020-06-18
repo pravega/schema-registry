@@ -10,12 +10,12 @@
 package io.pravega.schemaregistry.client;
 
 import com.google.common.annotations.Beta;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 
@@ -75,7 +75,7 @@ public interface SchemaRegistryClient {
      * Get group properties for the group identified by the group id. 
      * 
      * {@link GroupProperties#serializationFormat} which identifies the serialization format is used to describe the schema.
-     * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
+     * {@link GroupProperties#compatibility} sets the schema validation policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas are allowed to be registered in the group. 
      * Schemas are validated against existing schema versions that have the same {@link SchemaInfo#type}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
@@ -90,17 +90,17 @@ public interface SchemaRegistryClient {
     /**
      * Update group's schema validation policy. If previous rules are not supplied, then the update to the rules will be
      * performed unconditionally. However, if previous rules are supplied, then the update will be performed if and only if
-     * existing {@link GroupProperties#schemaValidationRules} match previous rules. 
+     * existing {@link GroupProperties#compatibility} match previous rules. 
      * 
      * @param groupId Id for the group. 
-     * @param validationRules New Schema validation rules for the group.
-     * @param previousRules Previous schema validation rules.
+     * @param validationRules New Compatibility for the group.
+     * @param previousRules Previous compatibility.
      * @return true if the update was accepted by the service, false if it was rejected because of precondition failure.
      * Precondition failure can occur if previous rules were specified and they do not match the rules set on the group. 
      * @throws ResourceNotFoundException if group is not found.
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    boolean updateSchemaValidationRules(String groupId, SchemaValidationRules validationRules, @Nullable SchemaValidationRules previousRules)
+    boolean updateCompatibility(String groupId, Compatibility validationRules, @Nullable Compatibility previousRules)
         throws ResourceNotFoundException, UnauthorizedException;
 
     /**
@@ -128,7 +128,7 @@ public interface SchemaRegistryClient {
      * @param schemaInfo Schema to add. 
      * @return versionInfo which uniquely identifies where the schema is added in the group. If schema is already registered,
      * then the existing version info is returned. 
-     * @throws SchemaValidationFailedException if the schema is deemed invalid by applying schema validation rules which may 
+     * @throws SchemaValidationFailedException if the schema is deemed invalid by applying compatibility which may 
      * include comparing schema with existing schemas for compatibility in the desired direction. 
      * @throws SerializationMismatchException if serialization format does not match the group's configured serialization format.
      * @throws MalformedSchemaException for known serialization formats, if the service is unable to parse the schema binary or 
@@ -289,15 +289,15 @@ public interface SchemaRegistryClient {
     
     /**
      * Checks whether given schema is valid by applying validation rules against previous schemas in the group  
-     * subject to current {@link GroupProperties#schemaValidationRules} policy.
+     * subject to current {@link GroupProperties#compatibility} policy.
      * The invocation of this method will perform exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
      * but without registering the schema. This is primarily intended to be used during schema development phase to validate that 
      * the changes to schema are in compliance with validation rules for the group.  
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to check for validity. 
-     * @return A schema is valid if it passes all the {@link GroupProperties#schemaValidationRules}. The rule supported 
-     * presently, is Compatibility. If desired compatibility is satisfied by the schema then this method returns true, false otherwise. 
+     * @return A schema is valid if it passes all the {@link GroupProperties#compatibility}. The rule supported 
+     * are allow any, deny all or a combination of BackwardAndForward. If desired compatibility is satisfied by the schema then this method returns true, false otherwise. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
@@ -305,7 +305,7 @@ public interface SchemaRegistryClient {
 
     /**
      * Checks whether given schema can be used to read by validating it for reads against one or more existing schemas in the group  
-     * subject to current {@link GroupProperties#schemaValidationRules} policy.
+     * subject to current {@link GroupProperties#compatibility} policy.
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to check to be used for reads. 
