@@ -16,7 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.SchemaValidationRules;
+import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
@@ -34,8 +34,8 @@ public class GroupProperties   {
   @JsonProperty("serializationFormat")
   private SerializationFormat serializationFormat = null;
 
-  @JsonProperty("schemaValidationRules")
-  private SchemaValidationRules schemaValidationRules = null;
+  @JsonProperty("compatibility")
+  private Compatibility compatibility = null;
 
   @JsonProperty("allowMultipleTypes")
   private Boolean allowMultipleTypes = null;
@@ -63,24 +63,24 @@ public class GroupProperties   {
     this.serializationFormat = serializationFormat;
   }
 
-  public GroupProperties schemaValidationRules(SchemaValidationRules schemaValidationRules) {
-    this.schemaValidationRules = schemaValidationRules;
+  public GroupProperties compatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
     return this;
   }
 
   /**
-   * Validation rules to apply while registering new schema.
-   * @return schemaValidationRules
+   * Compatibility to apply while registering new schema.
+   * @return compatibility
    **/
-  @JsonProperty("schemaValidationRules")
-  @ApiModelProperty(required = true, value = "Validation rules to apply while registering new schema.")
+  @JsonProperty("compatibility")
+  @ApiModelProperty(required = true, value = "Compatibility to apply while registering new schema.")
   @NotNull
-  public SchemaValidationRules getSchemaValidationRules() {
-    return schemaValidationRules;
+  public Compatibility getCompatibility() {
+    return compatibility;
   }
 
-  public void setSchemaValidationRules(SchemaValidationRules schemaValidationRules) {
-    this.schemaValidationRules = schemaValidationRules;
+  public void setCompatibility(Compatibility compatibility) {
+    this.compatibility = compatibility;
   }
 
   public GroupProperties allowMultipleTypes(Boolean allowMultipleTypes) {
@@ -141,14 +141,14 @@ public class GroupProperties   {
     }
     GroupProperties groupProperties = (GroupProperties) o;
     return Objects.equals(this.serializationFormat, groupProperties.serializationFormat) &&
-        Objects.equals(this.schemaValidationRules, groupProperties.schemaValidationRules) &&
+        Objects.equals(this.compatibility, groupProperties.compatibility) &&
         Objects.equals(this.allowMultipleTypes, groupProperties.allowMultipleTypes) &&
         Objects.equals(this.properties, groupProperties.properties);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(serializationFormat, schemaValidationRules, allowMultipleTypes, properties);
+    return Objects.hash(serializationFormat, compatibility, allowMultipleTypes, properties);
   }
 
 
@@ -158,7 +158,7 @@ public class GroupProperties   {
     sb.append("class GroupProperties {\n");
     
     sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
-    sb.append("    schemaValidationRules: ").append(toIndentedString(schemaValidationRules)).append("\n");
+    sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("    allowMultipleTypes: ").append(toIndentedString(allowMultipleTypes)).append("\n");
     sb.append("    properties: ").append(toIndentedString(properties)).append("\n");
     sb.append("}");

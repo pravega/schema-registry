@@ -11,11 +11,11 @@ package io.pravega.schemaregistry.client;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import io.pravega.schemaregistry.contract.data.BackwardAndForward;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.SchemaValidationRules;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -54,7 +54,7 @@ public class TestSchemaRegistryClient {
         // add group
         // 1. success response code
         io.pravega.schemaregistry.contract.data.GroupProperties groupProperties = new io.pravega.schemaregistry.contract.data.GroupProperties(
-                SerializationFormat.Avro, SchemaValidationRules.of(Compatibility.backward()), true);
+                SerializationFormat.Avro, Compatibility.backward(), true);
         doReturn(response).when(proxy).createGroup(any());
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         boolean addGroup = client.addGroup("grp1", groupProperties);
@@ -79,7 +79,7 @@ public class TestSchemaRegistryClient {
         GroupProperties mygroup = new GroupProperties().properties(Collections.emptyMap())
                                                        .serializationFormat(new io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat()
                                                                .serializationFormat(io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat.SerializationFormatEnum.ANY))
-                                                       .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
+                                                       .compatibility(ModelHelper.encode(Compatibility.backward()))
                                                        .allowMultipleTypes(false);
         String groupName = "mygroup";
         ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupName, mygroup)).continuationToken("token");
@@ -92,7 +92,7 @@ public class TestSchemaRegistryClient {
         Map.Entry<String, io.pravega.schemaregistry.contract.data.GroupProperties> group = 
                 groups.stream().filter(x -> x.getKey().equals(groupName)).findAny().orElseThrow(RuntimeException::new);
         assertEquals(group.getValue().getSerializationFormat(), SerializationFormat.Any);
-        assertEquals(group.getValue().getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
+        assertTrue(group.getValue().getCompatibility().getBackwardAndForward().getBackwardPolicy() instanceof BackwardAndForward.Backward);
 
         reset(response);
     }
@@ -107,7 +107,7 @@ public class TestSchemaRegistryClient {
         GroupProperties mygroup = new GroupProperties().properties(Collections.emptyMap())
                                                        .serializationFormat(new io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat()
                                                                .serializationFormat(io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat.SerializationFormatEnum.ANY))
-                                                       .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
+                                                       .compatibility(ModelHelper.encode(Compatibility.backward()))
                                                        .allowMultipleTypes(false);
         String groupId = "mygroup";
         ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupId, mygroup)).continuationToken("token");
@@ -125,7 +125,7 @@ public class TestSchemaRegistryClient {
         Map.Entry<String, io.pravega.schemaregistry.contract.data.GroupProperties> group =
                 groups.stream().filter(x -> x.getKey().equals(groupId)).findAny().orElseThrow(RuntimeException::new);
         assertEquals(group.getValue().getSerializationFormat(), SerializationFormat.Any);
-        assertEquals(group.getValue().getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()), Compatibility.backward());
+        assertTrue(group.getValue().getCompatibility().getBackwardAndForward().getBackwardPolicy() instanceof BackwardAndForward.Backward);
         
         // Runtime Exception
         doReturn(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).when(response).getStatus();
@@ -161,13 +161,12 @@ public class TestSchemaRegistryClient {
                                                        .serializationFormat(new io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat()
                                                                .serializationFormat(
                                                                        io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat.SerializationFormatEnum.ANY))
-                                                       .schemaValidationRules(ModelHelper.encode(SchemaValidationRules.of(Compatibility.backward())))
+                                                       .compatibility(ModelHelper.encode(Compatibility.backward()))
                                                        .allowMultipleTypes(false);
         doReturn(mygroup).when(response).readEntity(eq(GroupProperties.class));
         io.pravega.schemaregistry.contract.data.GroupProperties groupProperties = client.getGroupProperties("mygroup");
         assertEquals(groupProperties.getSerializationFormat(), SerializationFormat.Any);
-        assertEquals(groupProperties.getSchemaValidationRules().getRules().get(Compatibility.class.getSimpleName()),
-                Compatibility.backward());
+        assertTrue(groupProperties.getCompatibility().getBackwardAndForward().getBackwardPolicy() instanceof BackwardAndForward.Backward);
         // ResourceNotFoundException
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getGroupProperties(
@@ -179,28 +178,28 @@ public class TestSchemaRegistryClient {
     }
 
     @Test
-    public void testUpdateSchemaValidationRules() {
+    public void testUpdateCompatibility() {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).updateSchemaValidationRules(anyString(), any());
+        doReturn(response).when(proxy).updateCompatibility(anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
-        client.updateSchemaValidationRules("mygroup", schemaValidationRules, null);
+        Compatibility compatibility = Compatibility.backward();
+        client.updateCompatibility("mygroup", compatibility, null);
         assertEquals(response.getStatus(), Response.Status.OK.getStatusCode());
         // Precondition Failed
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
-        assertFalse(client.updateSchemaValidationRules("mygroup", schemaValidationRules, null));
+        assertFalse(client.updateCompatibility("mygroup", compatibility, null));
         // NotFound exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.updateSchemaValidationRules("mygroup", schemaValidationRules, null),
+                () -> client.updateCompatibility("mygroup", compatibility, null),
                 e -> e instanceof ResourceNotFoundException);
         // Runtime Exception
         doReturn(Response.Status.EXPECTATION_FAILED.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.updateSchemaValidationRules("mygroup", schemaValidationRules, null),
+                () -> client.updateCompatibility("mygroup", compatibility, null),
                 e -> e instanceof InternalServerError);
     }
 
@@ -247,13 +246,13 @@ public class TestSchemaRegistryClient {
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo versionInfo =
                 new io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo().version(
-                        5).type("schema2").ordinal(5);
+                        5).type("schema2").id(5);
         doReturn(versionInfo).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class);
         VersionInfo versionInfo1 = client.addSchema("mygroup", schemaInfo);
         assertEquals(5, versionInfo1.getVersion());
         assertEquals("schema2", versionInfo1.getType());
-        assertEquals(5, versionInfo1.getOrdinal());
+        assertEquals(5, versionInfo1.getId());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -277,7 +276,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemaFromVersionOrdinal(anyString(), anyInt());
+        doReturn(response).when(proxy).getSchemaForId(anyString(), anyInt());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat serializationFormat = ModelHelper.encode(SerializationFormat.custom("custom"));
@@ -421,16 +420,16 @@ public class TestSchemaRegistryClient {
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
-        SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.backward());
+        Compatibility compatibility = Compatibility.backward();
         GroupHistoryRecord groupHistoryRecord = new io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord()
                 .schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo))
-                .validationRules(ModelHelper.encode(schemaValidationRules)).timestamp(100L).schemaString("");
+                .compatibility(ModelHelper.encode(compatibility)).timestamp(100L).schemaString("");
         GroupHistory history = new GroupHistory();
         history.addHistoryItem(groupHistoryRecord);
         doReturn(history).when(response).readEntity(GroupHistory.class);
         List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getGroupHistory("mygroup");
         assertEquals(1, groupHistoryList.size());
-        assertEquals(schemaValidationRules, groupHistoryList.get(0).getRules());
+        assertEquals(compatibility, groupHistoryList.get(0).getCompatibility());
         assertEquals(schemaInfo, groupHistoryList.get(0).getSchema());
         assertEquals(versionInfo, groupHistoryList.get(0).getVersion());
         assertEquals(100L, groupHistoryList.get(0).getTimestamp());

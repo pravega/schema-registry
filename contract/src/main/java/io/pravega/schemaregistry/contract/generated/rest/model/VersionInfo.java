@@ -32,8 +32,8 @@ public class VersionInfo   {
   @JsonProperty("version")
   private Integer version = null;
 
-  @JsonProperty("ordinal")
-  private Integer ordinal = null;
+  @JsonProperty("id")
+  private Integer id = null;
 
   public VersionInfo type(String type) {
     this.type = type;
@@ -75,24 +75,24 @@ public class VersionInfo   {
     this.version = version;
   }
 
-  public VersionInfo ordinal(Integer ordinal) {
-    this.ordinal = ordinal;
+  public VersionInfo id(Integer id) {
+    this.id = id;
     return this;
   }
 
   /**
-   * Version ordinal that uniquely identifies the position of the corresponding schema across all schemas in the group.
-   * @return ordinal
+   * schema id that uniquely identifies schema version and describes the absolute order in which the schema was added to the group.
+   * @return id
    **/
-  @JsonProperty("ordinal")
-  @ApiModelProperty(required = true, value = "Version ordinal that uniquely identifies the position of the corresponding schema across all schemas in the group.")
+  @JsonProperty("id")
+  @ApiModelProperty(required = true, value = "schema id that uniquely identifies schema version and describes the absolute order in which the schema was added to the group.")
   @NotNull
-  public Integer getOrdinal() {
-    return ordinal;
+  public Integer getId() {
+    return id;
   }
 
-  public void setOrdinal(Integer ordinal) {
-    this.ordinal = ordinal;
+  public void setId(Integer id) {
+    this.id = id;
   }
 
 
@@ -107,12 +107,12 @@ public class VersionInfo   {
     VersionInfo versionInfo = (VersionInfo) o;
     return Objects.equals(this.type, versionInfo.type) &&
         Objects.equals(this.version, versionInfo.version) &&
-        Objects.equals(this.ordinal, versionInfo.ordinal);
+        Objects.equals(this.id, versionInfo.id);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(type, version, ordinal);
+    return Objects.hash(type, version, id);
   }
 
 
@@ -123,7 +123,7 @@ public class VersionInfo   {
     
     sb.append("    type: ").append(toIndentedString(type)).append("\n");
     sb.append("    version: ").append(toIndentedString(version)).append("\n");
-    sb.append("    ordinal: ").append(toIndentedString(ordinal)).append("\n");
+    sb.append("    id: ").append(toIndentedString(id)).append("\n");
     sb.append("}");
     return sb.toString();
   }

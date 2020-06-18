@@ -21,32 +21,32 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Schema validation rule base class.
+ * ForwardPolicy policy.
  */
-@ApiModel(description = "Schema validation rule base class.")
+@ApiModel(description = "ForwardPolicy policy.")
 
-public class SchemaValidationRule   {
-  @JsonProperty("rule")
-  private Object rule = null;
+public class ForwardPolicy   {
+  @JsonProperty("forwardPolicy")
+  private Object forwardPolicy = null;
 
-  public SchemaValidationRule rule(Object rule) {
-    this.rule = rule;
+  public ForwardPolicy forwardPolicy(Object forwardPolicy) {
+    this.forwardPolicy = forwardPolicy;
     return this;
   }
 
   /**
-   * Specific schema validation rule. The only rule we have presently is Compatibility. The \&quot;name\&quot; is used to identify specific Rule type. The only rule supported in this is Compatibility.
-   * @return rule
+   * BackwardAndForward type forwardPolicy. Can be one of forward, forwardTill and forwardTransitive.
+   * @return forwardPolicy
    **/
-  @JsonProperty("rule")
-  @ApiModelProperty(required = true, value = "Specific schema validation rule. The only rule we have presently is Compatibility. The \"name\" is used to identify specific Rule type. The only rule supported in this is Compatibility.")
+  @JsonProperty("forwardPolicy")
+  @ApiModelProperty(required = true, value = "BackwardAndForward type forwardPolicy. Can be one of forward, forwardTill and forwardTransitive.")
   @NotNull
-  public Object getRule() {
-    return rule;
+  public Object getForwardPolicy() {
+    return forwardPolicy;
   }
 
-  public void setRule(Object rule) {
-    this.rule = rule;
+  public void setForwardPolicy(Object forwardPolicy) {
+    this.forwardPolicy = forwardPolicy;
   }
 
 
@@ -58,22 +58,22 @@ public class SchemaValidationRule   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    SchemaValidationRule schemaValidationRule = (SchemaValidationRule) o;
-    return Objects.equals(this.rule, schemaValidationRule.rule);
+    ForwardPolicy forwardPolicy = (ForwardPolicy) o;
+    return Objects.equals(this.forwardPolicy, forwardPolicy.forwardPolicy);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(rule);
+    return Objects.hash(forwardPolicy);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class SchemaValidationRule {\n");
+    sb.append("class ForwardPolicy {\n");
     
-    sb.append("    rule: ").append(toIndentedString(rule)).append("\n");
+    sb.append("    forwardPolicy: ").append(toIndentedString(forwardPolicy)).append("\n");
     sb.append("}");
     return sb.toString();
   }

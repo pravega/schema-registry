@@ -142,7 +142,7 @@ public class SchemaInfo   {
     SchemaInfo schemaInfo = (SchemaInfo) o;
     return Objects.equals(this.type, schemaInfo.type) &&
         Objects.equals(this.serializationFormat, schemaInfo.serializationFormat) &&
-        Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
+            Arrays.equals(this.schemaData, schemaInfo.schemaData) &&
         Objects.equals(this.properties, schemaInfo.properties);
   }
 
