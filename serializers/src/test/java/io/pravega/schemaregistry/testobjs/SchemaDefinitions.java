@@ -29,7 +29,7 @@ public class SchemaDefinitions {
             .noDefault()
             .name("b")
             .type(Schema.create(Schema.Type.STRING))
-            .withDefault("backward compatible with schema1")
+            .withDefault("backwardPolicy compatible with schema1")
             .endRecord();
 
     public static final Schema SCHEMA3 = SchemaBuilder
