@@ -63,8 +63,8 @@ public interface SchemaRegistryClient {
      * List all groups that the user is authorized on. This returns an iterator where each element is a pair of group 
      * name and group properties. 
      * This iterator can be used to iterate over each element until all elements are exhausted. 
-     * The implementation should guarantee that all groups added before and until the iterator returns 
-     * {@link Iterator#hasNext()} = true can be iterated over. 
+     * The implementation should guarantee that all groups added before and till the iterator continues to return 
+     * {@link Iterator#hasNext()} = true should be available for iteration. 
      * 
      * @return map of names of groups with corresponding group properties for all groups. 
      * @throws UnauthorizedException if the user is unauthorized.
