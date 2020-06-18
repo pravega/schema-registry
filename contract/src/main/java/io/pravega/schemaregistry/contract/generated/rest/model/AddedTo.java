@@ -44,11 +44,11 @@ public class AddedTo   {
   }
 
   /**
-   * Get groups
+   * Version for the schema in the group.
    * @return groups
    **/
   @JsonProperty("groups")
-  @ApiModelProperty(required = true, value = "")
+  @ApiModelProperty(required = true, value = "Version for the schema in the group.")
   @NotNull
   public Map<String, VersionInfo> getGroups() {
     return groups;

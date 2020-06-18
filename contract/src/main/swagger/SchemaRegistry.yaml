@@ -327,7 +327,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error fetching version for schema
-  /groups/{groupName}/schemas/versions/{versionOrdinal}:
+  /groups/{groupName}/schemas/schema/{schemaId}:
     parameters:
       - in: path
         name: groupName
@@ -339,16 +339,16 @@ paths:
         type: string
         description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
       - in: path
-        name: versionOrdinal
-        description: Version ordinal
+        name: schemaId
+        description: Schema Id
         required: true
         type: integer
         format: int32
     get:
       tags:
       - "Group"
-      operationId: getSchemaFromVersionOrdinal
-      description: Get schema from the version ordinal that uniquely identifies the schema in the group. 
+      operationId: getSchemaForId
+      description: Get schema from the schema id that uniquely identifies the schema in the group. 
       produces:
         - application/json
       responses:
@@ -363,7 +363,7 @@ paths:
     delete:
       tags:
       - "Group"
-      operationId: deleteSchemaVersionOrdinal
+      operationId: deleteSchemaForId
       description: Delete schema identified by version from the group.
       produces:
         - application/json
@@ -400,7 +400,7 @@ paths:
       tags:
       - "Group"
       operationId: getSchemaFromVersion
-      description: Get schema from the version ordinal that uniquely identifies the schema in the group. 
+      description: Get schema from the version number that uniquely identifies the schema in the group. 
       produces:
         - application/json
       responses:
@@ -753,14 +753,14 @@ definitions:
         description: Version number that uniquely identifies the schema version among all schemas in the group that share the same Type. 
         type: integer
         format: int32
-      ordinal:
-        description: Version ordinal that uniquely identifies the position of the corresponding schema across all schemas in the group.
+      id:
+        description: schema id that uniquely identifies schema version and describes the absolute order in which the schema was added to the group.
         type: integer
         format: int32
     required:
       - type
       - version
-      - ordinal    
+      - id    
   SchemaWithVersion:
     type: object
     description: Object that encapsulates SchemaInfo and its corresponding VersionInfo objects. 

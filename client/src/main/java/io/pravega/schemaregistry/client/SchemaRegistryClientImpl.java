@@ -231,7 +231,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void deleteSchemaVersion(String groupId, VersionInfo versionInfo) {
         withRetry(() -> {
-            Response response = groupProxy.deleteSchemaFromVersionOrdinal(groupId, versionInfo.getOrdinal(), namespace);
+            Response response = groupProxy.deleteSchemaForId(groupId, versionInfo.getId(), namespace);
             if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 throw new ResourceNotFoundException("Group not found.");
             } else if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
@@ -255,7 +255,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public SchemaInfo getSchemaForVersion(String groupId, VersionInfo versionInfo) {
         return withRetry(() -> {
-            Response response = groupProxy.getSchemaFromVersionOrdinal(groupId, versionInfo.getOrdinal(), namespace);
+            Response response = groupProxy.getSchemaForId(groupId, versionInfo.getId(), namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
@@ -321,7 +321,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public SchemaWithVersion getLatestSchemaVersion(String groupId, @Nullable String schemaType) {
         List<SchemaWithVersion> list = latestSchemas(groupId, schemaType);
         if (schemaType == null) {
-            return list.stream().max(Comparator.comparingInt(x -> x.getVersionInfo().getOrdinal())).orElse(null);
+            return list.stream().max(Comparator.comparingInt(x -> x.getVersionInfo().getId())).orElse(null);
         } else {
             return list.get(0);
         }

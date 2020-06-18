@@ -279,18 +279,18 @@ public class SchemaRegistryService {
      *
      * @param namespace      namespace for which the request is scoped to.
      * @param group          Name of group.
-     * @param versionOrdinal Version which uniquely identifies schema within a group.
+     * @param schemaId Version which uniquely identifies schema within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, int versionOrdinal) {
-        log.info("Group {}, get schema for version {} .", group, versionOrdinal);
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, int schemaId) {
+        log.info("Group {}, get schema for version {} .", group, schemaId);
 
-        return store.getSchema(namespace, group, versionOrdinal)
+        return store.getSchema(namespace, group, schemaId)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return schema for verison {}.", group, versionOrdinal);
+                            log.info("Group {}, return schema for verison {}.", group, schemaId);
                         } else {
-                            log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
+                            log.warn("Group {}, get schema version {} failed with error", e, group, schemaId);
                         }
                     });
     }
@@ -322,19 +322,19 @@ public class SchemaRegistryService {
      *
      * @param namespace      namespace for which the request is scoped to.
      * @param group          Name of group.
-     * @param versionOrdinal Version which uniquely identifies schema within a group.
+     * @param id Version which uniquely identifies schema within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<Void> deleteSchema(String namespace, String group, int versionOrdinal) {
-        log.info("Group {}, delete schema for version {} .", group, versionOrdinal);
+    public CompletableFuture<Void> deleteSchema(String namespace, String group, int id) {
+        log.info("Group {}, delete schema for version {} .", group, id);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(etag ->
-                                                 store.deleteSchema(namespace, group, versionOrdinal, etag)
+                                                 store.deleteSchema(namespace, group, id, etag)
                                                       .whenComplete((r, e) -> {
                                                           if (e == null) {
-                                                              log.info("Group {}, schema for verison {} deleted.", group, versionOrdinal);
+                                                              log.info("Group {}, schema for verison {} deleted.", group, id);
                                                           } else {
-                                                              log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
+                                                              log.warn("Group {}, get schema version {} failed with error", e, group, id);
                                                           }
                                                       })), executor);
     }

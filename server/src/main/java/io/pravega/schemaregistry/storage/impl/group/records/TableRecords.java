@@ -52,7 +52,7 @@ public interface TableRecords {
                     .put(LatestEncodingIdKey.class, LatestEncodingIdValue.SERIALIZER)
                     .put(LatestSchemaVersionKey.class, LatestSchemaVersionValue.SERIALIZER)
                     .put(LatestSchemaVersionForTypeKey.class, LatestSchemaVersionValue.SERIALIZER)
-                    .put(SchemaTypeVersionKey.class, VersionOrdinalValue.SERIALIZER)
+                    .put(SchemaTypeVersionKey.class, SchemaIdValue.SERIALIZER)
                     .build();
 
     interface TableKey {
@@ -346,7 +346,7 @@ public interface TableRecords {
     class VersionKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final int ordinal;
+        private final int id;
 
         private static class VersionKeyBuilder implements ObjectBuilder<VersionKey> {
         }
@@ -368,11 +368,11 @@ public interface TableRecords {
             }
 
             private void write00(VersionKey e, RevisionDataOutput target) throws IOException {
-                target.writeInt(e.ordinal);
+                target.writeInt(e.id);
             }
 
             private void read00(RevisionDataInput source, VersionKey.VersionKeyBuilder b) throws IOException {
-                b.ordinal(source.readInt());
+                b.id(source.readInt());
             }
         }
     }
@@ -423,7 +423,7 @@ public interface TableRecords {
     class VersionDeletedRecord implements TableKey, TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final int ordinal;
+        private final int id;
 
         @SneakyThrows
         @Override
@@ -451,11 +451,11 @@ public interface TableRecords {
             }
 
             private void write00(VersionDeletedRecord e, RevisionDataOutput target) throws IOException {
-                target.writeInt(e.ordinal);
+                target.writeInt(e.id);
             }
 
             private void read00(RevisionDataInput source, VersionDeletedRecord.VersionDeletedRecordBuilder b) throws IOException {
-                b.ordinal(source.readInt());
+                b.id(source.readInt());
             }
         }
     }
@@ -945,10 +945,10 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class VersionOrdinalValue implements TableValue {
+    class SchemaIdValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final int ordinal;
+        private final int id;
 
         @SneakyThrows
         @Override
@@ -956,13 +956,13 @@ public interface TableRecords {
             return SERIALIZER.serialize(this).getCopy();
         }
 
-        private static class VersionOrdinalValueBuilder implements ObjectBuilder<VersionOrdinalValue> {
+        private static class SchemaIdValueBuilder implements ObjectBuilder<SchemaIdValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<VersionOrdinalValue, VersionOrdinalValue.VersionOrdinalValueBuilder> {
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdValue, SchemaIdValue.SchemaIdValueBuilder> {
             @Override
-            protected VersionOrdinalValue.VersionOrdinalValueBuilder newBuilder() {
-                return VersionOrdinalValue.builder();
+            protected SchemaIdValue.SchemaIdValueBuilder newBuilder() {
+                return SchemaIdValue.builder();
             }
 
             @Override
@@ -975,12 +975,12 @@ public interface TableRecords {
                 version(0).revision(0, this::write00, this::read00);
             }
 
-            private void write00(VersionOrdinalValue e, RevisionDataOutput target) throws IOException {
-                target.writeInt(e.ordinal);
+            private void write00(SchemaIdValue e, RevisionDataOutput target) throws IOException {
+                target.writeInt(e.id);
             }
 
-            private void read00(RevisionDataInput source, VersionOrdinalValue.VersionOrdinalValueBuilder b) throws IOException {
-                b.ordinal(source.readInt());
+            private void read00(RevisionDataInput source, SchemaIdValue.SchemaIdValueBuilder b) throws IOException {
+                b.id(source.readInt());
             }
         }
     }

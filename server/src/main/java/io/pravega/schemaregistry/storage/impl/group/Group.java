@@ -150,7 +150,7 @@ public class Group<V> {
     private CompletableFuture<List<SchemaRecord>> getSchemaRecords(int fromPos) {
         return groupTable.getEntry(LATEST_SCHEMA_VERSION_KEY, LatestSchemaVersionValue.class)
                          .thenCompose(latestPos -> {
-                             int endPos = latestPos == null ? 0 : latestPos.getVersion().getOrdinal() + 1;
+                             int endPos = latestPos == null ? 0 : latestPos.getVersion().getId() + 1;
 
                              List<TableKey> keys = new ArrayList<>();
                              List<VersionKey> versionKeys = IntStream.range(fromPos, endPos)
@@ -173,8 +173,8 @@ public class Group<V> {
                             schemaRecords.add((SchemaRecord) entry.getValue());
                         }
                         if (entry.getValue() instanceof VersionDeletedRecord) {
-                            schemaRecords.removeIf(x -> x.getVersionInfo().getOrdinal() ==
-                                    ((VersionDeletedRecord) entry.getValue()).getOrdinal());
+                            schemaRecords.removeIf(x -> x.getVersionInfo().getId() ==
+                                    ((VersionDeletedRecord) entry.getValue()).getId());
                         }
                     }
 
@@ -182,11 +182,11 @@ public class Group<V> {
                 });
     }
 
-    private CompletableFuture<Integer> getVersionOrdinal(String schemaType, int version) {
-        return groupTable.getEntry(new SchemaTypeVersionKey(schemaType, version), VersionOrdinalValue.class)
+    private CompletableFuture<Integer> getSchemaId(String schemaType, int version) {
+        return groupTable.getEntry(new SchemaTypeVersionKey(schemaType, version), SchemaIdValue.class)
                 .thenApply(x -> {
                     if (x != null) {
-                        return x.getOrdinal();
+                        return x.getId();
                     } else {
                         throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version not found %s %s", schemaType, version));
                     }
@@ -194,19 +194,19 @@ public class Group<V> {
     }
 
     public CompletableFuture<Void> deleteSchema(String schemaType, int version, Etag etag) {
-        return getVersionOrdinal(schemaType, version)
-                .thenCompose(versionOrdinal -> deleteSchema(versionOrdinal, etag));
+        return getSchemaId(schemaType, version)
+                .thenCompose(schemaId -> deleteSchema(schemaId, etag));
     }
     
-    public CompletableFuture<Void> deleteSchema(int versionOrdinal, Etag etag) {
-        VersionDeletedRecord versionDeletedRecord = new VersionDeletedRecord(versionOrdinal);
-        VersionKey versionKey = new VersionKey(versionOrdinal);
+    public CompletableFuture<Void> deleteSchema(int schemaId, Etag etag) {
+        VersionDeletedRecord versionDeletedRecord = new VersionDeletedRecord(schemaId);
+        VersionKey versionKey = new VersionKey(schemaId);
         return groupTable.getEntriesWithVersion(Lists.newArrayList(versionKey, versionDeletedRecord), TableValue.class)
                 .thenCompose(entries -> {
                     TableValue schema = entries.get(0).getValue();
                     TableValue versionDeletedRecordValue = entries.get(1).getValue();
                     if (schema == null) {
-                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version ordinal found %s", versionOrdinal));
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version id found %s", schemaId));
                     }
                     if (versionDeletedRecordValue == null) {
                         List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> toUpdate = new ArrayList<>();
@@ -223,21 +223,21 @@ public class Group<V> {
     }
 
     public CompletableFuture<SchemaInfo> getSchema(String schemaType, int version) {
-        return getVersionOrdinal(schemaType, version)
-                .thenCompose(versionOrdinal -> getSchema(versionOrdinal, false));
+        return getSchemaId(schemaType, version)
+                .thenCompose(schemaId -> getSchema(schemaId, false));
     }
 
-    public CompletableFuture<SchemaInfo> getSchema(int versionOrdinal) {
-        return getSchema(versionOrdinal, false);
+    public CompletableFuture<SchemaInfo> getSchema(int schemaId) {
+        return getSchema(schemaId, false);
     }
 
-    private CompletableFuture<SchemaInfo> getSchema(int versionOrdinal, boolean throwOnDeleted) {
-        List<? extends TableKey> keys = Lists.newArrayList(new VersionKey(versionOrdinal), 
-                new VersionDeletedRecord(versionOrdinal));
+    private CompletableFuture<SchemaInfo> getSchema(int schemaId, boolean throwOnDeleted) {
+        List<? extends TableKey> keys = Lists.newArrayList(new VersionKey(schemaId), 
+                new VersionDeletedRecord(schemaId));
         return groupTable.getEntriesWithVersion(keys, TableValue.class)
                          .thenApply(entries -> {
                              if (entries.get(1).getValue() != null && throwOnDeleted) {
-                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, Integer.toString(versionOrdinal));
+                                 throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, Integer.toString(schemaId));
                              } else {
                                  TableValue value = entries.get(0).getValue();
                                  if (value != null) {
@@ -282,7 +282,7 @@ public class Group<V> {
                                  throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, 
                                          String.format("encoding id not found %s", encodingId.getId()));
                              }
-                             return getSchema(encodingInfo.getVersionInfo().getOrdinal())
+                             return getSchema(encodingInfo.getVersionInfo().getId())
                                      .thenApply(schemaInfo -> new EncodingInfo(encodingInfo.getVersionInfo(), schemaInfo, encodingInfo.getCodecType()));
                          });
     }
@@ -299,7 +299,7 @@ public class Group<V> {
                          .thenCompose(versionInfo -> {
                              if (versionInfo != null) {
                                  return Futures.exceptionallyComposeExpecting(
-                                         getSchema(versionInfo.getOrdinal(), true)
+                                         getSchema(versionInfo.getId(), true)
                                                  .thenApply(schema -> new SchemaWithVersion(schema, versionInfo)), 
                                          e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, () -> {
                                             return getSchemas().thenApply(schemaRecords -> {
@@ -328,7 +328,7 @@ public class Group<V> {
                          .thenCompose(versionInfo -> {
                              if (versionInfo != null) {
                                  return Futures.exceptionallyComposeExpecting(
-                                         getSchema(versionInfo.getOrdinal(), true)
+                                         getSchema(versionInfo.getId(), true)
                                          .thenApply(schema -> new SchemaWithVersion(schema, versionInfo)),
                                          e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, () -> {
                                              return getSchemas(type).thenApply(schemaRecords -> {
@@ -414,7 +414,7 @@ public class Group<V> {
             V latestVersion = values.get(0).getVersion();
             SchemaVersionList schemaIndex = (SchemaVersionList) values.get(1).getValue();
             V schemaIndexVersion = values.get(1).getVersion();
-            int nextOrdinal = latest == null ? 0 : latest.getVersion().getOrdinal() + 1;
+            int nextOrdinal = latest == null ? 0 : latest.getVersion().getId() + 1;
             int nextVersion;
 
             if (prop.isAllowMultipleTypes()) {
@@ -431,8 +431,8 @@ public class Group<V> {
 
             // 1. version info key. add
             entries.add(new AbstractMap.SimpleEntry<>(new SchemaTypeVersionKey(next.getType(), next.getVersion()),
-                    new GroupTable.Value<>(new VersionOrdinalValue(next.getOrdinal()), null)));
-            entries.add(new AbstractMap.SimpleEntry<>(new VersionKey(next.getOrdinal()),
+                    new GroupTable.Value<>(new SchemaIdValue(next.getId()), null)));
+            entries.add(new AbstractMap.SimpleEntry<>(new VersionKey(next.getId()),
                     new GroupTable.Value<>(new SchemaRecord(schemaInfo, next, prop.getSchemaValidationRules(), 
                             System.currentTimeMillis()), null)));
 
@@ -507,7 +507,7 @@ public class Group<V> {
     }
 
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, String codecType, Etag etag) {
-        return getSchema(versionInfo.getOrdinal(), true)
+        return getSchema(versionInfo.getId(), true)
                 .thenCompose(schema -> getCodecTypes()
                 .thenCompose(codecTypes -> {
                     if (codecTypes.contains(codecType)) {
@@ -557,7 +557,7 @@ public class Group<V> {
             return iterator.hasNext() && found.get() == null;
         }, () -> {
             VersionInfo version = iterator.next();
-            return Futures.exceptionallyExpecting(getSchema(version.getOrdinal(), true)
+            return Futures.exceptionallyExpecting(getSchema(version.getId(), true)
                     .thenAccept(schema -> {
                         if (Arrays.equals(schema.getSchemaData().array(), toFind.getSchemaData().array()) && schema.getType().equals(toFind.getType())) {
                             found.set(version);

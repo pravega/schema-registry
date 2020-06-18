@@ -247,13 +247,13 @@ public class TestSchemaRegistryClient {
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo versionInfo =
                 new io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo().version(
-                        5).type("schema2").ordinal(5);
+                        5).type("schema2").id(5);
         doReturn(versionInfo).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class);
         VersionInfo versionInfo1 = client.addSchema("mygroup", schemaInfo);
         assertEquals(5, versionInfo1.getVersion());
         assertEquals("schema2", versionInfo1.getType());
-        assertEquals(5, versionInfo1.getOrdinal());
+        assertEquals(5, versionInfo1.getId());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -277,7 +277,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemaFromVersionOrdinal(anyString(), anyInt(), any());
+        doReturn(response).when(proxy).getSchemaForId(anyString(), anyInt(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat serializationFormat = ModelHelper.encode(SerializationFormat.custom("custom"));

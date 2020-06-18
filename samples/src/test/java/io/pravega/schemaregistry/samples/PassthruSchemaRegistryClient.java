@@ -90,7 +90,7 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
 
     @Override
     public void deleteSchemaVersion(String group, VersionInfo versionInfo) {
-        service.deleteSchema(namespace, group, versionInfo.getOrdinal()).join();
+        service.deleteSchema(namespace, group, versionInfo.getId()).join();
     }
 
     @Override
@@ -100,7 +100,7 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
 
     @Override
     public SchemaInfo getSchemaForVersion(String group, VersionInfo versionInfo) {
-        return service.getSchema(namespace, group, versionInfo.getOrdinal()).join();
+        return service.getSchema(namespace, group, versionInfo.getId()).join();
     }
 
     @Override
@@ -122,7 +122,7 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     public SchemaWithVersion getLatestSchemaVersion(String group, @Nullable String schemaType) {
         List<SchemaWithVersion> latestSchemas = service.getSchemas(namespace, group, schemaType).join();
         if (schemaType == null) {
-            return latestSchemas.stream().max(Comparator.comparingInt(x -> x.getVersionInfo().getOrdinal())).orElse(null);
+            return latestSchemas.stream().max(Comparator.comparingInt(x -> x.getVersionInfo().getId())).orElse(null);
         } else {
             return latestSchemas.get(0);
         }

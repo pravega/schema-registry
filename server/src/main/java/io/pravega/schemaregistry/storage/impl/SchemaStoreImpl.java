@@ -85,7 +85,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
 
     @Override
     public CompletableFuture<List<SchemaWithVersion>> listSchemas(String namespace, String groupId, VersionInfo from) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(from.getOrdinal()));
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(from.getId()));
     }
 
     @Override
@@ -95,12 +95,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
 
     @Override
     public CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type, VersionInfo from) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(type, from.getOrdinal()));
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(type, from.getId()));
     }
 
     @Override
-    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, int versionOrdinal, Etag etag) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(versionOrdinal, etag));
+    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, int schemaId, Etag etag) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(schemaId, etag));
     }
 
     @Override
@@ -109,8 +109,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int versionOrdinal) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(versionOrdinal));
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int schemaId) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(schemaId));
     }
 
     @Override

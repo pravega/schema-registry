@@ -38,7 +38,7 @@ public class ModelHelperTest {
                                                                    .policy(Compatibility.PolicyEnum.BACKWARD))));
         SchemaInfo schema = new SchemaInfo()
                 .type("a").serializationFormat(type).schemaData(new byte[0]).properties(Collections.emptyMap());
-        VersionInfo version = new VersionInfo().type("a").version(1).ordinal(1);
+        VersionInfo version = new VersionInfo().type("a").version(1).id(1);
         Compatibility compatibility = new Compatibility().name(Compatibility.class.getSimpleName())
                                                          .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARDTILL).backwardTill(version).forwardTill(version);
         String codecType = "custom";

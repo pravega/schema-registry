@@ -129,19 +129,19 @@ public abstract class TestEndToEnd {
 
         VersionInfo version1 = client.addSchema(group, schemaInfo);
         assertEquals(version1.getVersion(), 0);
-        assertEquals(version1.getOrdinal(), 0);
+        assertEquals(version1.getId(), 0);
         assertEquals(version1.getType(), myTest);
         // attempt to add an existing schema
         version1 = client.addSchema(group, schemaInfo);
         assertEquals(version1.getVersion(), 0);
-        assertEquals(version1.getOrdinal(), 0);
+        assertEquals(version1.getId(), 0);
         assertEquals(version1.getType(), myTest);
 
         SchemaInfo schemaInfo2 = new SchemaInfo(myTest, SerializationFormat.Avro,
                 ByteBuffer.wrap(schema2.toString().getBytes(Charsets.UTF_8)), ImmutableMap.of());
         VersionInfo version2 = client.addSchema(group, schemaInfo2);
         assertEquals(version2.getVersion(), 1);
-        assertEquals(version2.getOrdinal(), 1);
+        assertEquals(version2.getId(), 1);
         assertEquals(version2.getType(), myTest);
 
         client.updateSchemaValidationRules(group, SchemaValidationRules.of(Compatibility.fullTransitive()), null);
@@ -163,7 +163,7 @@ public abstract class TestEndToEnd {
                 ByteBuffer.wrap(schemaTest2.toString().getBytes(Charsets.UTF_8)), ImmutableMap.of());
         VersionInfo version3 = client.addSchema(group, schemaInfo4);
         assertEquals(version3.getVersion(), 0);
-        assertEquals(version3.getOrdinal(), 2);
+        assertEquals(version3.getId(), 2);
         assertEquals(version3.getType(), myTest2);
 
         List<String> types = client.getSchemas(group).stream().map(x -> x.getSchemaInfo().getType()).collect(Collectors.toList());
@@ -203,7 +203,7 @@ public abstract class TestEndToEnd {
 
         // add the schema again. it should get a new version
         VersionInfo version4 = client.addSchema(group, schemaInfo2);
-        assertEquals(version4.getOrdinal(), 3);
+        assertEquals(version4.getId(), 3);
         assertEquals(version4.getVersion(), 2);
     }
 

@@ -385,24 +385,24 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void getSchemaFromVersionOrdinal(String groupName, Integer versionOrdinal, String namespace, AsyncResponse asyncResponse) {
-        log.info("Get schema from version {} called for group {}", versionOrdinal, groupName);
+    public void getSchemaForId(String groupName, Integer schemaId, String namespace, AsyncResponse asyncResponse) {
+        log.info("Get schema from version {} called for group {}", schemaId, groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("getSchemaFromVersionOrdinal", READ, resource, asyncResponse,
-                () -> getRegistryService().getSchema(namespace, groupName, versionOrdinal)
+        withCompletion("getSchemaForId", READ, resource, asyncResponse,
+                () -> getRegistryService().getSchema(namespace, groupName, schemaId)
                                      .thenApply(schemaWithVersion -> {
                                          SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
-                                         log.info("Schema for version {} for group {} found.", versionOrdinal, groupName);
+                                         log.info("Schema for version {} for group {} found.", schemaId, groupName);
                                          return Response.status(Status.OK).entity(schema).build();
                                      })
                                      .exceptionally(exception -> {
                                          if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} or version {} not found", groupName, versionOrdinal);
+                                             log.warn("Group {} or version {} not found", groupName, schemaId);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         log.warn("getSchemaForId failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -429,7 +429,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                                             log.warn("Group {} or version {} not found", groupName, version);
                                                                             return Response.status(Status.NOT_FOUND).build();
                                                                         }
-                                                                        log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
+                                                                        log.warn("getSchemaFromVersion failed with exception: ", exception);
                                                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                                                     }))
                 .thenApply(response -> {
@@ -439,24 +439,24 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void deleteSchemaFromVersionOrdinal(String groupName, Integer versionOrdinal, String namespace,
+    public void deleteSchemaForId(String groupName, Integer schemaId, String namespace,
                                                AsyncResponse asyncResponse) {
-        log.info("Delete schema from version {} called for group {}", versionOrdinal, groupName);
+        log.info("Delete schema from version {} called for group {}", schemaId, groupName);
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("deleteSchemaFromVersionOrdinal", READ_UPDATE, resource, asyncResponse,
-                () -> getRegistryService().deleteSchema(namespace, groupName, versionOrdinal)
+        withCompletion("deleteSchemaForId", READ_UPDATE, resource, asyncResponse,
+                () -> getRegistryService().deleteSchema(namespace, groupName, schemaId)
                                      .thenApply(v -> {
-                                         log.info("Schema for version {} for group {} deleted.", versionOrdinal, groupName);
+                                         log.info("Schema for version {} for group {} deleted.", schemaId, groupName);
                                          return Response.status(Status.NO_CONTENT).build();
                                      })
                                      .exceptionally(exception -> {
                                          if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                             log.warn("Group {} or version {} not found", groupName, versionOrdinal);
+                                             log.warn("Group {} or version {} not found", groupName, schemaId);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         log.warn("deleteSchemaForId failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -483,7 +483,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {}/{} not found", groupName, schemaType, version);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         log.warn("deleteSchemaVersion failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {

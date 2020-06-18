@@ -50,11 +50,11 @@ public interface SchemaStore {
 
     CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type, VersionInfo from);
     
-    CompletableFuture<Void> deleteSchema(String namespace, String groupId, int versionOrdinal, Etag etag);
+    CompletableFuture<Void> deleteSchema(String namespace, String groupId, int schemaId, Etag etag);
     
     CompletableFuture<Void> deleteSchema(String namespace, String groupId, String schemaType, int version, Etag etag);
     
-    CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int versionOrdinal);
+    CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int schemaId);
     
     CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, String schemaType, int version);
 
