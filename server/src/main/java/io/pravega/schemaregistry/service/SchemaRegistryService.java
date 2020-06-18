@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.service;
 
@@ -133,7 +133,7 @@ public class SchemaRegistryService {
     /**
      * Gets group's properties.
      * {@link GroupProperties#serializationFormat} which identifies the serialization format used to describe the schema.
-     * {@link GroupProperties#compatibility} sets the schema validation policy that needs to be enforced for evolving schemas.
+     * {@link GroupProperties#compatibility} sets the schema compatibility policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#allowMultipleTypes} that specifies multiple schemas with distinct {@link SchemaInfo#type} can
      * be registered.
      * {@link GroupProperties#properties} properties for a group.
@@ -157,28 +157,28 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Update group's schema validation policy. If previous rules are sent, a conditional update is performed.
+     * Update group's schema compatibility policy. If previous rules are sent, a conditional update is performed.
      *
      * @param namespace       namespace for which the request is scoped to.
      * @param group           Name of group.
-     * @param validationRules New validation rules for the group.
-     * @param previousRules   Previous rules validation rules for the group. If null, unconditional update is performed.
-     * @return CompletableFuture which is completed when validation policy update completes.
+     * @param compatibility New compatibility for the group.
+     * @param previousRules   Previous rules compatibility for the group. If null, unconditional update is performed.
+     * @return CompletableFuture which is completed when compatibility policy update completes.
      */
-    public CompletableFuture<Void> updateCompatibility(String namespace, String group, Compatibility validationRules,
+    public CompletableFuture<Void> updateCompatibility(String namespace, String group, Compatibility compatibility,
                                                        @Nullable Compatibility previousRules) {
         Preconditions.checkArgument(group != null);
-        Preconditions.checkArgument(validationRules != null);
-        log.info("updateCompatibility called for group {}. New validation rules {}", group, validationRules);
+        Preconditions.checkArgument(compatibility != null);
+        log.info("updateCompatibility called for group {}. New compatibility {}", group, compatibility);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(pos -> {
                                              return store.getGroupProperties(namespace, group)
                                                          .thenCompose(prop -> {
                                                              if (previousRules == null) {
-                                                                 return store.updateValidationRules(namespace, group, pos, validationRules);
+                                                                 return store.updateCompatibility(namespace, group, pos, compatibility);
                                                              } else {
                                                                  if (previousRules.equals(prop.getCompatibility())) {
-                                                                     return store.updateValidationRules(namespace, group, pos, validationRules);
+                                                                     return store.updateCompatibility(namespace, group, pos, compatibility);
                                                                  } else {
                                                                      throw new PreconditionFailedException("Conditional update failed");
                                                                  }
@@ -205,7 +205,7 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<List<SchemaWithVersion>> getSchemas(String namespace, String group, @Nullable String schemaType) {
         Preconditions.checkArgument(group != null);
-        log.info("getSchemas called for group {}. New validation rules {}", group);
+        log.info("getSchemas called for group {}. New compatibility {}", group);
 
         if (schemaType == null) {
             return store.getLatestSchemas(namespace, group)
@@ -224,9 +224,9 @@ public class SchemaRegistryService {
 
     /**
      * Adds schema to the group. If group is configured with {@link GroupProperties#allowMultipleTypes}, then
-     * the {@link SchemaInfo#type} is used to filter previous schemas and apply schema validation policy against all
+     * the {@link SchemaInfo#type} is used to filter previous schemas and apply schema compatibility policy against all
      * previous versions of schema.
-     * Compatibility that are sent to the registry should be a super set of Validation rules set in
+     * Compatibility that are sent to the registry should be a super set of Compatibility set in
      * {@link GroupProperties#compatibility}
      *
      * @param namespace namespace for which the request is scoped to.
@@ -278,18 +278,18 @@ public class SchemaRegistryService {
      *
      * @param namespace      namespace for which the request is scoped to.
      * @param group          Name of group.
-     * @param versionOrdinal Version which uniquely identifies schema within a group.
+     * @param schemaId Version which uniquely identifies schema within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, int versionOrdinal) {
-        log.info("Group {}, get schema for version {} .", group, versionOrdinal);
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, int schemaId) {
+        log.info("Group {}, get schema for version {} .", group, schemaId);
 
-        return store.getSchema(namespace, group, versionOrdinal)
+        return store.getSchema(namespace, group, schemaId)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return schema for verison {}.", group, versionOrdinal);
+                            log.info("Group {}, return schema for verison {}.", group, schemaId);
                         } else {
-                            log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
+                            log.warn("Group {}, get schema version {} failed with error", e, group, schemaId);
                         }
                     });
     }
@@ -321,19 +321,19 @@ public class SchemaRegistryService {
      *
      * @param namespace      namespace for which the request is scoped to.
      * @param group          Name of group.
-     * @param versionOrdinal Version which uniquely identifies schema within a group.
+     * @param schemaId Version which uniquely identifies schema within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<Void> deleteSchema(String namespace, String group, int versionOrdinal) {
-        log.info("Group {}, delete schema for version {} .", group, versionOrdinal);
+    public CompletableFuture<Void> deleteSchema(String namespace, String group, int schemaId) {
+        log.info("Group {}, delete schema for version {} .", group, schemaId);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(etag ->
-                                                 store.deleteSchema(namespace, group, versionOrdinal, etag)
+                                                 store.deleteSchema(namespace, group, schemaId, etag)
                                                       .whenComplete((r, e) -> {
                                                           if (e == null) {
-                                                              log.info("Group {}, schema for verison {} deleted.", group, versionOrdinal);
+                                                              log.info("Group {}, schema for verison {} deleted.", group, schemaId);
                                                           } else {
-                                                              log.warn("Group {}, get schema version {} failed with error", e, group, versionOrdinal);
+                                                              log.warn("Group {}, get schema version {} failed with error", e, group, schemaId);
                                                           }
                                                       })), executor);
     }
@@ -429,7 +429,7 @@ public class SchemaRegistryService {
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
      * @param type      Object type identified by {@link SchemaInfo#type}.
-     * @return CompletableFuture that holds Ordered list of schemas with versions and validation rules for all schemas in the group.
+     * @return CompletableFuture that holds Ordered list of schemas with versions and compatibility for all schemas in the group.
      */
     public CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String namespace, String group, @Nullable String type) {
         Preconditions.checkArgument(group != null);
@@ -482,7 +482,7 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Checks whether given schema is valid by applying validation rules against previous schemas in the group
+     * Checks whether given schema is valid by applying compatibility against previous schemas in the group
      * subject to current {@link GroupProperties#compatibility} policy.
      * If {@link GroupProperties#allowMultipleTypes} is set, the validation is performed against schemas with same
      * object type identified by {@link SchemaInfo#type}.

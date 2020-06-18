@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.transform;
 
@@ -42,13 +42,11 @@ import java.util.Map;
 public class ModelHelper {
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final String BACKWARD = Backward.class.getSimpleName();
-    private static final String ALLOW_ANY = AllowAny.class.getSimpleName();
-    private static final String DENY_ALL = DenyAll.class.getSimpleName();
-    private static final String BACKWARD_AND_FORWARD = BackwardAndForward.class.getSimpleName();
     private static final String BACKWARD_TRANSITIVE = BackwardTransitive.class.getSimpleName();
     private static final String BACKWARD_TILL = BackwardTill.class.getSimpleName();
     private static final String FORWARD = Forward.class.getSimpleName();
     private static final String FORWARD_TILL = ForwardTill.class.getSimpleName();
+    private static final String FORWARD_TRANSITIVE = ForwardTransitive.class.getSimpleName();
 
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
@@ -137,7 +135,7 @@ public class ModelHelper {
             String name = (String) ((Map) forward.getForwardPolicy()).get("name");
             if (name.equals(FORWARD)) {
                 obj = MAPPER.convertValue(forward.getForwardPolicy(), Forward.class);
-            } else if (name.equals(ForwardTransitive.class.getSimpleName())) {
+            } else if (name.equals(FORWARD_TRANSITIVE)) {
                 obj = MAPPER.convertValue(forward.getForwardPolicy(), ForwardTransitive.class);
             } else if (name.equals(FORWARD_TILL)) {
                 obj = MAPPER.convertValue(forward.getForwardPolicy(), ForwardTill.class);

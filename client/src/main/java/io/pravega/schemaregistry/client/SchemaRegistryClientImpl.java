@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.client;
 
@@ -165,12 +165,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean updateCompatibility(String groupId, Compatibility compatibility, @Nullable Compatibility previousRules) {
+    public boolean updateCompatibility(String groupId, Compatibility compatibility, @Nullable Compatibility previous) {
         return withRetry(() -> {
             UpdateCompatibilityRequest request = new UpdateCompatibilityRequest()
                     .compatibility(ModelHelper.encode(compatibility));
-            if (previousRules != null) {
-                request.setPreviousCompatibility(ModelHelper.encode(previousRules));
+            if (previous != null) {
+                request.setPreviousCompatibility(ModelHelper.encode(previous));
             }
 
             Response response = groupProxy.updateCompatibility(groupId, request, namespace);

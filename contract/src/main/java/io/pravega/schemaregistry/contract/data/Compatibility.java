@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * <p>
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
+ * 
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.data;
 
@@ -66,10 +66,6 @@ public class Compatibility {
      */
     public static Compatibility denyAll() {
         return new Compatibility(Type.DenyAll);
-    }
-
-    private static Compatibility backwardAndForward(BackwardAndForward backwardAndForward) {
-        return new Compatibility(Type.BackwardAndForward, backwardAndForward);
     }
     
     /**
@@ -157,14 +153,14 @@ public class Compatibility {
     }
 
     /**
-     * Method to create a schemaValidationRules policy of type backwardPolicy till and forwardOne till. This is a combination of  
-     * backwardPolicy till and forwardOne till policies. 
+     * Method to create a compatibility policy of type backwardPolicy till and forward till. This is a combination of  
+     * backwardPolicy till and forward till policies. 
      * All previous schemas till schema identified by version specified with {@link BackwardAndForward.BackwardTill} policy
      * can read data written by new schema. New schema can be used to read data written by any of previous schemas till schema 
      * identified by version {@link BackwardAndForward.ForwardTill}. 
      *
-     * @param backwardTill version till which backwardPolicy schemaValidationRules is checked for.
-     * @param forwardTill version till which forwardOne schemaValidationRules is checked for.
+     * @param backwardTill version till which backwardPolicy compatibility is checked for.
+     * @param forwardTill version till which forward compatibility is checked for.
      * @return Compatibility policy with backwardTill check And ForwardTill check.
      */
     public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
@@ -172,12 +168,12 @@ public class Compatibility {
     }
 
     /**
-     * Method to create a schemaValidationRules policy of type backwardPolicy one and forwardOne till. 
+     * Method to create a compatibility policy of type backwardPolicy one and forward till. 
      *
      * All previous schemas till schema identified by version {@link BackwardAndForward.ForwardTill}
      * can read data written by new schema. New schema can be used to read data written by previous schema.
      *
-     * @param forwardTill version till which forwardTill schemaValidationRules is checked for.
+     * @param forwardTill version till which forwardTill compatibility is checked for.
      * @return Compatibility policy that describes backward check And ForwardTill check.
      */
     public static Compatibility backwardOneAndForwardTill(VersionInfo forwardTill) {
@@ -185,16 +181,20 @@ public class Compatibility {
     }
 
     /**
-     * Method to create a schemaValidationRules policy of type backwardPolicy till one and forwardOne one. 
+     * Method to create a compatibility policy of type backwardPolicy till one and forwardOne one. 
      *
      * All previous schemas till schema identified by version {@link BackwardAndForward.BackwardTill}
      * can read data written by new schema. New schema can be used to read data written by previous schema.
      *
-     * @param backwardTill version till which backwardTill schemaValidationRules is checked for.
+     * @param backwardTill version till which backwardTill compatibility is checked for.
      * @return BackwardAndForward with backwardTill check And Forward check.
      */
     public static Compatibility backwardTillAndForwardOne(VersionInfo backwardTill) {
         return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), new BackwardAndForward.Forward()));
+    }
+
+    private static Compatibility backwardAndForward(BackwardAndForward backwardAndForward) {
+        return new Compatibility(Type.BackwardAndForward, backwardAndForward);
     }
 
     public static class CompatibilityBuilder implements ObjectBuilder<Compatibility> {

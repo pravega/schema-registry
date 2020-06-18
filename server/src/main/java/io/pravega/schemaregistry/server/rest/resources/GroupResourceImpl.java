@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
@@ -390,7 +390,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("getSchemaFromVersionOrdinal", READ, resource, asyncResponse,
+        withCompletion("getSchemaForId", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchema(namespace, groupName, schemaId)
                                      .thenApply(schemaWithVersion -> {
                                          SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
@@ -402,7 +402,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {} not found", groupName, schemaId);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         log.warn("getSchemaForId failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -429,7 +429,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                                             log.warn("Group {} or version {} not found", groupName, version);
                                                                             return Response.status(Status.NOT_FOUND).build();
                                                                         }
-                                                                        log.warn("getSchemaFromVersionOrdinal failed with exception: ", exception);
+                                                                        log.warn("getSchemaFromVersion failed with exception: ", exception);
                                                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                                                     }))
                 .thenApply(response -> {
@@ -445,7 +445,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
                 String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
 
-        withCompletion("deleteSchemaFromVersionOrdinal", READ_UPDATE, resource, asyncResponse,
+        withCompletion("deleteSchemaForId", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteSchema(namespace, groupName, schemaId)
                                      .thenApply(v -> {
                                          log.info("Schema for version {} for group {} deleted.", schemaId, groupName);
@@ -456,7 +456,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {} not found", groupName, schemaId);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         log.warn("deleteSchemaForId failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {
@@ -483,7 +483,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              log.warn("Group {} or version {}/{} not found", groupName, schemaType, version);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("deleteSchemaFromVersionOrdinal failed with exception: ", exception);
+                                         log.warn("deleteSchemaVersion failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                      }))
                 .thenApply(response -> {

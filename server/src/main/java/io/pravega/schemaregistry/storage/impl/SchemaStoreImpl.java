@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  *
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.storage.impl;
 
@@ -67,7 +67,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> updateValidationRules(String namespace, String groupId, Etag etag, Compatibility policy) {
+    public CompletableFuture<Void> updateCompatibility(String namespace, String groupId, Etag etag, Compatibility policy) {
         return getGroup(namespace, groupId)
                 .thenCompose(grp -> grp.updateValidationPolicy(policy, etag));
     }
@@ -99,8 +99,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, int versionOrdinal, Etag etag) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(versionOrdinal, etag));
+    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, int schemaId, Etag etag) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(schemaId, etag));
     }
 
     @Override
@@ -109,8 +109,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int versionOrdinal) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(versionOrdinal));
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, int schemaId) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(schemaId));
     }
 
     @Override

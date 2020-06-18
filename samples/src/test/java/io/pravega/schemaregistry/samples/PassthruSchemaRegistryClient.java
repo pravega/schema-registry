@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.samples;
 
@@ -73,8 +73,8 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean updateCompatibility(String group, Compatibility validationRules, Compatibility previousRules) {
-        return service.updateCompatibility(namespace, group, validationRules, previousRules)
+    public boolean updateCompatibility(String group, Compatibility compatibility, Compatibility previousCompatibility) {
+        return service.updateCompatibility(namespace, group, compatibility, previousCompatibility)
                       .handle((r, e) -> e != null).join();
     }
 

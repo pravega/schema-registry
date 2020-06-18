@@ -5,7 +5,7 @@
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
  * 
- * http://www.apache.org/licenses/LICENSE-2.0
+ *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
@@ -98,7 +98,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         // region group properties
         // endregion 
 
-        // region update validation rules
+        // region update compatibility
         // endregion
     }
 
