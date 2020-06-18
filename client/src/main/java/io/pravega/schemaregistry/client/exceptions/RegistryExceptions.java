@@ -140,7 +140,7 @@ public class RegistryExceptions extends RuntimeException {
     }
 
     /**
-     * The schema validation failed as it was validated against the ValidationRules set for the group.
+     * The schema validation failed as it was validated against the Compatibility set for the group.
      */
     public static class SchemaValidationFailedException extends RegistryExceptions {
         public SchemaValidationFailedException(String errorMessage) {

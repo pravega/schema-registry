@@ -155,12 +155,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public boolean updateCompatibility(String groupId, Compatibility compatibility, @Nullable Compatibility previousRules) {
+    public boolean updateCompatibility(String groupId, Compatibility compatibility, @Nullable Compatibility previous) {
         return withRetry(() -> {
             UpdateCompatibilityRequest request = new UpdateCompatibilityRequest()
                     .compatibility(ModelHelper.encode(compatibility));
-            if (previousRules != null) {
-                request.setPreviousCompatibility(ModelHelper.encode(previousRules));
+            if (previous != null) {
+                request.setPreviousCompatibility(ModelHelper.encode(previous));
             }
 
             Response response = groupProxy.updateCompatibility(groupId, request);
