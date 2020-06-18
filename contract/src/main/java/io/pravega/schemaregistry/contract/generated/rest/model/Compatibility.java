@@ -17,20 +17,17 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
+import io.pravega.schemaregistry.contract.generated.rest.model.BackwardAndForward;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Schema Compatibility validation rule.
+ * Compatibility policy.
  */
-@ApiModel(description = "Schema Compatibility validation rule.")
+@ApiModel(description = "Compatibility policy.")
 
 public class Compatibility   {
-  @JsonProperty("name")
-  private String name = null;
-
   /**
    * Compatibility policy enum.
    */
@@ -39,23 +36,7 @@ public class Compatibility   {
     
     DENYALL("DenyAll"),
     
-    BACKWARD("Backward"),
-    
-    FORWARD("Forward"),
-    
-    FORWARDTRANSITIVE("ForwardTransitive"),
-    
-    BACKWARDTRANSITIVE("BackwardTransitive"),
-    
-    BACKWARDTILL("BackwardTill"),
-    
-    FORWARDTILL("ForwardTill"),
-    
-    BACKWARDANDFORWARDTILL("BackwardAndForwardTill"),
-    
-    FULL("Full"),
-    
-    FULLTRANSITIVE("FullTransitive");
+    BACKWARDANDFORWARD("BackwardAndForward");
 
     private String value;
 
@@ -83,31 +64,8 @@ public class Compatibility   {
   @JsonProperty("policy")
   private PolicyEnum policy = null;
 
-  @JsonProperty("backwardTill")
-  private VersionInfo backwardTill = null;
-
-  @JsonProperty("forwardTill")
-  private VersionInfo forwardTill = null;
-
-  public Compatibility name(String name) {
-    this.name = name;
-    return this;
-  }
-
-  /**
-   * Name is used to identify the type of SchemaValidationRule. For Compatibility rule the name should be \&quot;Compatibility\&quot;.
-   * @return name
-   **/
-  @JsonProperty("name")
-  @ApiModelProperty(required = true, value = "Name is used to identify the type of SchemaValidationRule. For Compatibility rule the name should be \"Compatibility\".")
-  @NotNull
-  public String getName() {
-    return name;
-  }
-
-  public void setName(String name) {
-    this.name = name;
-  }
+  @JsonProperty("backwardAndForward")
+  private BackwardAndForward backwardAndForward = null;
 
   public Compatibility policy(PolicyEnum policy) {
     this.policy = policy;
@@ -129,42 +87,23 @@ public class Compatibility   {
     this.policy = policy;
   }
 
-  public Compatibility backwardTill(VersionInfo backwardTill) {
-    this.backwardTill = backwardTill;
+  public Compatibility backwardAndForward(BackwardAndForward backwardAndForward) {
+    this.backwardAndForward = backwardAndForward;
     return this;
   }
 
   /**
-   * Version for backward till if policy is BackwardTill or BackwardAndForwardTill.
-   * @return backwardTill
+   * Backward and forward policy details.
+   * @return backwardAndForward
    **/
-  @JsonProperty("backwardTill")
-  @ApiModelProperty(value = "Version for backward till if policy is BackwardTill or BackwardAndForwardTill.")
-  public VersionInfo getBackwardTill() {
-    return backwardTill;
+  @JsonProperty("backwardAndForward")
+  @ApiModelProperty(value = "Backward and forward policy details.")
+  public BackwardAndForward getBackwardAndForward() {
+    return backwardAndForward;
   }
 
-  public void setBackwardTill(VersionInfo backwardTill) {
-    this.backwardTill = backwardTill;
-  }
-
-  public Compatibility forwardTill(VersionInfo forwardTill) {
-    this.forwardTill = forwardTill;
-    return this;
-  }
-
-  /**
-   * Version for forward till if policy is ForwardTill or BackwardAndForwardTill.
-   * @return forwardTill
-   **/
-  @JsonProperty("forwardTill")
-  @ApiModelProperty(value = "Version for forward till if policy is ForwardTill or BackwardAndForwardTill.")
-  public VersionInfo getForwardTill() {
-    return forwardTill;
-  }
-
-  public void setForwardTill(VersionInfo forwardTill) {
-    this.forwardTill = forwardTill;
+  public void setBackwardAndForward(BackwardAndForward backwardAndForward) {
+    this.backwardAndForward = backwardAndForward;
   }
 
 
@@ -177,15 +116,13 @@ public class Compatibility   {
       return false;
     }
     Compatibility compatibility = (Compatibility) o;
-    return Objects.equals(this.name, compatibility.name) &&
-        Objects.equals(this.policy, compatibility.policy) &&
-        Objects.equals(this.backwardTill, compatibility.backwardTill) &&
-        Objects.equals(this.forwardTill, compatibility.forwardTill);
+    return Objects.equals(this.policy, compatibility.policy) &&
+        Objects.equals(this.backwardAndForward, compatibility.backwardAndForward);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, policy, backwardTill, forwardTill);
+    return Objects.hash(policy, backwardAndForward);
   }
 
 
@@ -194,10 +131,8 @@ public class Compatibility   {
     StringBuilder sb = new StringBuilder();
     sb.append("class Compatibility {\n");
     
-    sb.append("    name: ").append(toIndentedString(name)).append("\n");
     sb.append("    policy: ").append(toIndentedString(policy)).append("\n");
-    sb.append("    backwardTill: ").append(toIndentedString(backwardTill)).append("\n");
-    sb.append("    forwardTill: ").append(toIndentedString(forwardTill)).append("\n");
+    sb.append("    backwardAndForward: ").append(toIndentedString(backwardAndForward)).append("\n");
     sb.append("}");
     return sb.toString();
   }

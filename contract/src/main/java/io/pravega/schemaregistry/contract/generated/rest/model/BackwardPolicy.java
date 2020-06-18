@@ -16,46 +16,37 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
-import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import javax.validation.constraints.*;
 
 /**
- * Map of Group names to versionInfos in the group. This is for all the groups where the schema is registered.
+ * BackwardPolicy policy.
  */
-@ApiModel(description = "Map of Group names to versionInfos in the group. This is for all the groups where the schema is registered.")
+@ApiModel(description = "BackwardPolicy policy.")
 
-public class AddedTo   {
-  @JsonProperty("groups")
-  private Map<String, VersionInfo> groups = new HashMap<String, VersionInfo>();
+public class BackwardPolicy   {
+  @JsonProperty("backwardPolicy")
+  private Object backwardPolicy = null;
 
-  public AddedTo groups(Map<String, VersionInfo> groups) {
-    this.groups = groups;
-    return this;
-  }
-
-  public AddedTo putGroupsItem(String key, VersionInfo groupsItem) {
-    this.groups.put(key, groupsItem);
+  public BackwardPolicy backwardPolicy(Object backwardPolicy) {
+    this.backwardPolicy = backwardPolicy;
     return this;
   }
 
   /**
-   * Version for the schema in the group.
-   * @return groups
+   * BackwardAndForward type backwardPolicy. Can be one of Backward, backwardTill and backwardTransitive.
+   * @return backwardPolicy
    **/
-  @JsonProperty("groups")
-  @ApiModelProperty(required = true, value = "Version for the schema in the group.")
+  @JsonProperty("backwardPolicy")
+  @ApiModelProperty(required = true, value = "BackwardAndForward type backwardPolicy. Can be one of Backward, backwardTill and backwardTransitive.")
   @NotNull
-  public Map<String, VersionInfo> getGroups() {
-    return groups;
+  public Object getBackwardPolicy() {
+    return backwardPolicy;
   }
 
-  public void setGroups(Map<String, VersionInfo> groups) {
-    this.groups = groups;
+  public void setBackwardPolicy(Object backwardPolicy) {
+    this.backwardPolicy = backwardPolicy;
   }
 
 
@@ -67,22 +58,22 @@ public class AddedTo   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    AddedTo addedTo = (AddedTo) o;
-    return Objects.equals(this.groups, addedTo.groups);
+    BackwardPolicy backwardPolicy = (BackwardPolicy) o;
+    return Objects.equals(this.backwardPolicy, backwardPolicy.backwardPolicy);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(groups);
+    return Objects.hash(backwardPolicy);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class AddedTo {\n");
+    sb.append("class BackwardPolicy {\n");
     
-    sb.append("    groups: ").append(toIndentedString(groups)).append("\n");
+    sb.append("    backwardPolicy: ").append(toIndentedString(backwardPolicy)).append("\n");
     sb.append("}");
     return sb.toString();
   }

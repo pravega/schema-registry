@@ -18,7 +18,7 @@ import lombok.Setter;
  * Registry supports Avro, Protobuf and Json serialization formats but any custom type could be used with the registry using custom type. 
  *
  * If a serialization format is not present in the enum it can be specified using {@link SerializationFormat#custom} with {@link SerializationFormat#customTypeName}. 
- * Allowed values of {@link Compatibility} mode with custom type are AllowAny or DenyAll.
+ * Allowed values of {@link BackwardAndForward} mode with custom type are AllowAny or DenyAll.
  */
 
 public enum SerializationFormat {

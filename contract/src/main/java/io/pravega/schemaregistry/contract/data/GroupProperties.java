@@ -17,7 +17,7 @@ import lombok.Data;
  * Different configuration choices for a group. 
  * 
  * {@link GroupProperties#serializationFormat} identifies the serialization format used to describe the schema.
- * {@link GroupProperties#schemaValidationRules} sets the schema validation policy that needs to be enforced for evolving schemas.
+ * {@link GroupProperties#compatibility} sets the schema validation policy that needs to be enforced for evolving schemas.
  * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas with distinct {@link SchemaInfo#type} 
  * are allowed to coexist within the group. A schema describes an object and each object type is distinctly identified by
  * {@link SchemaInfo#type}. Registry service validates new schema with existing schema versions of the same name and versions
@@ -37,9 +37,9 @@ public class GroupProperties {
      */
     private final SerializationFormat serializationFormat;
     /**
-     * Schema validation rules to be applied for the group. 
+     * Compatibility to be applied for the group. 
      */
-    private final SchemaValidationRules schemaValidationRules;
+    private final Compatibility compatibility;
     /**
      * Flag to indicate whether multiple types of schemas can be added to the group or not. If set to false, all schemas
      * added to the group should have the same {@link SchemaInfo#type}.
@@ -50,24 +50,24 @@ public class GroupProperties {
      */
     private final ImmutableMap<String, String> properties;
 
-    public GroupProperties(SerializationFormat serializationFormat, SchemaValidationRules schemaValidationRules, boolean allowMultipleTypes) {
-        this(serializationFormat, schemaValidationRules, allowMultipleTypes, ImmutableMap.of());
+    public GroupProperties(SerializationFormat serializationFormat, Compatibility compatibility, boolean allowMultipleTypes) {
+        this(serializationFormat, compatibility, allowMultipleTypes, ImmutableMap.of());
     }
 
-    public GroupProperties(SerializationFormat serializationFormat, SchemaValidationRules schemaValidationRules, boolean allowMultipleTypes, ImmutableMap<String, String> properties) {
+    public GroupProperties(SerializationFormat serializationFormat, Compatibility compatibility, boolean allowMultipleTypes, ImmutableMap<String, String> properties) {
         this.serializationFormat = serializationFormat;
-        this.schemaValidationRules = schemaValidationRules;
+        this.compatibility = compatibility;
         this.allowMultipleTypes = allowMultipleTypes;
         this.properties = properties;
     }
     
     public static final class GroupPropertiesBuilder {
-        private SchemaValidationRules schemaValidationRules = SchemaValidationRules.of(Compatibility.fullTransitive());
+        private Compatibility compatibility = Compatibility.fullTransitive();
         private boolean allowMultipleTypes = false;
         private ImmutableMap<String, String> properties = ImmutableMap.of();
 
-        public GroupPropertiesBuilder compatibility(Compatibility compatibility) {
-            this.schemaValidationRules = SchemaValidationRules.of(compatibility);
+        public GroupPropertiesBuilder compatibility(Compatibility rule) {
+            this.compatibility = rule;
             return this;
         }
     }

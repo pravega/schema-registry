@@ -16,37 +16,61 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Response object for validateSchema api.
+ * BackwardPolicy compatibility which tells the service to check for backwardPolicy compatibility with all previous schemas till specific version.
  */
-@ApiModel(description = "Response object for validateSchema api.")
+@ApiModel(description = "BackwardPolicy compatibility which tells the service to check for backwardPolicy compatibility with all previous schemas till specific version.")
 
-public class Valid   {
-  @JsonProperty("valid")
-  private Boolean valid = null;
+public class BackwardTill   {
+  @JsonProperty("name")
+  private String name = null;
 
-  public Valid valid(Boolean valid) {
-    this.valid = valid;
+  @JsonProperty("version")
+  private VersionInfo version = null;
+
+  public BackwardTill name(String name) {
+    this.name = name;
+    return this;
+  }
+
+  /**
+   * Get name
+   * @return name
+   **/
+  @JsonProperty("name")
+  @ApiModelProperty(required = true, value = "")
+  @NotNull
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public BackwardTill version(VersionInfo version) {
+    this.version = version;
     return this;
   }
 
   /**
    * Whether given schema is valid with respect to existing group schemas against the configured compatibility.
-   * @return valid
+   * @return version
    **/
-  @JsonProperty("valid")
+  @JsonProperty("version")
   @ApiModelProperty(required = true, value = "Whether given schema is valid with respect to existing group schemas against the configured compatibility.")
   @NotNull
-  public Boolean isValid() {
-    return valid;
+  public VersionInfo getVersion() {
+    return version;
   }
 
-  public void setValid(Boolean valid) {
-    this.valid = valid;
+  public void setVersion(VersionInfo version) {
+    this.version = version;
   }
 
 
@@ -58,22 +82,24 @@ public class Valid   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    Valid valid = (Valid) o;
-    return Objects.equals(this.valid, valid.valid);
+    BackwardTill backwardTill = (BackwardTill) o;
+    return Objects.equals(this.name, backwardTill.name) &&
+        Objects.equals(this.version, backwardTill.version);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(valid);
+    return Objects.hash(name, version);
   }
 
 
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class Valid {\n");
+    sb.append("class BackwardTill {\n");
     
-    sb.append("    valid: ").append(toIndentedString(valid)).append("\n");
+    sb.append("    name: ").append(toIndentedString(name)).append("\n");
+    sb.append("    version: ").append(toIndentedString(version)).append("\n");
     sb.append("}");
     return sb.toString();
   }

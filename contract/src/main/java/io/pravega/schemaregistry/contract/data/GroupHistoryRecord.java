@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.Data;
 
 /**
- * Describes changes to the group and the validation rules {@link GroupHistoryRecord#rules} that were 
+ * Describes changes to the group and the compatibility {@link GroupHistoryRecord#compatibility} that were 
  * applied while registering {@link GroupHistoryRecord#schema} and the unique {@link GroupHistoryRecord#version} identifier 
  * that was assigned to it. 
  * It also has {@link GroupHistoryRecord#timestamp} when the schema was added and includes an optional 
@@ -30,9 +30,9 @@ public class GroupHistoryRecord {
      */
     private final VersionInfo version;
     /**
-     * Validation rules applied at the time when the schema was registered. 
+     * Compatibility applied at the time when the schema was registered. 
      */
-    private final SchemaValidationRules rules;
+    private final Compatibility compatibility;
     /**
      * Service's Time when the schema was registered. 
      */
