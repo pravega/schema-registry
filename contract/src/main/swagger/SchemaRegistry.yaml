@@ -752,8 +752,14 @@ definitions:
         enum:
           - AllowAny
           - DenyAll
-          - BackwardAndForward
-      backwardAndForward:
+          - Forward
+          - Backward
+          - BackwardTransitive
+          - ForwardTransitive
+          - Full
+          - FullTransitive
+          - Advanced
+      advanced:
         description: Backward and forward policy details.
         $ref: "#/definitions/BackwardAndForward"
     required:
@@ -929,5 +935,6 @@ definitions:
         description: Version for the schema in the group. 
         additionalProperties:
           $ref: "#/definitions/VersionInfo"
+          
     required:
       - groups    

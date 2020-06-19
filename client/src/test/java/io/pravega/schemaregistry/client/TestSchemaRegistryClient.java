@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.client;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
-import io.pravega.schemaregistry.contract.data.BackwardAndForward;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -92,7 +91,7 @@ public class TestSchemaRegistryClient {
         Map.Entry<String, io.pravega.schemaregistry.contract.data.GroupProperties> group = 
                 groups.stream().filter(x -> x.getKey().equals(groupName)).findAny().orElseThrow(RuntimeException::new);
         assertEquals(group.getValue().getSerializationFormat(), SerializationFormat.Any);
-        assertTrue(group.getValue().getCompatibility().getBackwardAndForward().getBackwardPolicy() instanceof BackwardAndForward.Backward);
+        assertEquals(group.getValue().getCompatibility(), Compatibility.backward());
 
         reset(response);
     }
@@ -125,7 +124,7 @@ public class TestSchemaRegistryClient {
         Map.Entry<String, io.pravega.schemaregistry.contract.data.GroupProperties> group =
                 groups.stream().filter(x -> x.getKey().equals(groupId)).findAny().orElseThrow(RuntimeException::new);
         assertEquals(group.getValue().getSerializationFormat(), SerializationFormat.Any);
-        assertTrue(group.getValue().getCompatibility().getBackwardAndForward().getBackwardPolicy() instanceof BackwardAndForward.Backward);
+        assertEquals(group.getValue().getCompatibility(), Compatibility.backward());
         
         // Runtime Exception
         doReturn(Response.Status.INTERNAL_SERVER_ERROR.getStatusCode()).when(response).getStatus();
@@ -166,7 +165,7 @@ public class TestSchemaRegistryClient {
         doReturn(mygroup).when(response).readEntity(eq(GroupProperties.class));
         io.pravega.schemaregistry.contract.data.GroupProperties groupProperties = client.getGroupProperties("mygroup");
         assertEquals(groupProperties.getSerializationFormat(), SerializationFormat.Any);
-        assertTrue(groupProperties.getCompatibility().getBackwardAndForward().getBackwardPolicy() instanceof BackwardAndForward.Backward);
+        assertEquals(groupProperties.getCompatibility(), Compatibility.backward());
         // ResourceNotFoundException
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown", () -> client.getGroupProperties(
