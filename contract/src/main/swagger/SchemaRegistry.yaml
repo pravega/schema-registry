@@ -47,8 +47,6 @@ paths:
           name: limit
           type: integer
           description: The numbers of items to return
-      required:
-          - limit
       responses:
         200:
           description: List of all groups
@@ -183,9 +181,6 @@ paths:
                   $ref: "#/definitions/Compatibility"
               previousCompatibility:
                   $ref: "#/definitions/Compatibility"
-                  nullable: true
-            required:
-              - compatibility
         - in: query
           name: namespace
           type: string
@@ -230,6 +225,35 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group's latest schemas
+    post:
+      tags:
+      - "Group"
+      operationId: addSchema
+      description: Adds a new schema to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Add new schema to group
+          required: true
+          schema:
+              $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully added schema to the group
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Group not found
+        409:
+          description: Incompatible schema
+        417:
+          description: Invalid serialization format
+        500:
+          description: Internal server error while adding schema to group
   /groups/{groupName}/schemas/versions:
     parameters:
       - in: path
@@ -262,35 +286,6 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group schema versions
-    post:
-      tags:
-      - "Group"
-      operationId: addSchema
-      description: Adds a new schema to the group
-      consumes:
-        - application/json
-      parameters:
-        - in: body
-          name: schemaInfo
-          description: Add new schema to group
-          required: true
-          schema:
-              $ref: "#/definitions/SchemaInfo"
-      produces:
-        - application/json
-      responses:
-        201:
-          description: Successfully added schema to the group
-          schema:
-            $ref: "#/definitions/VersionInfo"
-        404:
-          description: Group not found
-        409:
-          description: Incompatible schema
-        417:
-          description: Invalid serialization format
-        500:
-          description: Internal server error while adding schema to group
   /groups/{groupName}/schemas/versions/find:
     parameters:
       - in: path

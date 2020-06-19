@@ -69,7 +69,7 @@ public class ApiV1 {
                               @ApiParam(value = "namespace") @QueryParam("namespace") String namespace);
 
         @POST
-        @Path("/{groupName}/schemas/versions")
+        @Path("/{groupName}/schemas")
         @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new schema to the group", response = VersionInfo.class, tags = {"Group", })
@@ -320,7 +320,7 @@ public class ApiV1 {
                           @Suspended AsyncResponse asyncResponse);
 
         @POST
-        @Path("/{groupName}/schemas/versions")
+        @Path("/{groupName}/schemas")
         @Consumes({"application/json"})
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Adds a new schema to the group", response = VersionInfo.class, tags = {"Group", })
