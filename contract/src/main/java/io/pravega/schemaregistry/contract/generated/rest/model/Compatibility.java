@@ -36,7 +36,19 @@ public class Compatibility   {
     
     DENYALL("DenyAll"),
     
-    BACKWARDANDFORWARD("BackwardAndForward");
+    FORWARD("Forward"),
+    
+    BACKWARD("Backward"),
+    
+    BACKWARDTRANSITIVE("BackwardTransitive"),
+    
+    FORWARDTRANSITIVE("ForwardTransitive"),
+    
+    FULL("Full"),
+    
+    FULLTRANSITIVE("FullTransitive"),
+    
+    ADVANCED("Advanced");
 
     private String value;
 
@@ -64,8 +76,8 @@ public class Compatibility   {
   @JsonProperty("policy")
   private PolicyEnum policy = null;
 
-  @JsonProperty("backwardAndForward")
-  private BackwardAndForward backwardAndForward = null;
+  @JsonProperty("advanced")
+  private BackwardAndForward advanced = null;
 
   public Compatibility policy(PolicyEnum policy) {
     this.policy = policy;
@@ -87,23 +99,23 @@ public class Compatibility   {
     this.policy = policy;
   }
 
-  public Compatibility backwardAndForward(BackwardAndForward backwardAndForward) {
-    this.backwardAndForward = backwardAndForward;
+  public Compatibility advanced(BackwardAndForward advanced) {
+    this.advanced = advanced;
     return this;
   }
 
   /**
    * Backward and forward policy details.
-   * @return backwardAndForward
+   * @return advanced
    **/
-  @JsonProperty("backwardAndForward")
+  @JsonProperty("advanced")
   @ApiModelProperty(value = "Backward and forward policy details.")
-  public BackwardAndForward getBackwardAndForward() {
-    return backwardAndForward;
+  public BackwardAndForward getAdvanced() {
+    return advanced;
   }
 
-  public void setBackwardAndForward(BackwardAndForward backwardAndForward) {
-    this.backwardAndForward = backwardAndForward;
+  public void setAdvanced(BackwardAndForward advanced) {
+    this.advanced = advanced;
   }
 
 
@@ -117,12 +129,12 @@ public class Compatibility   {
     }
     Compatibility compatibility = (Compatibility) o;
     return Objects.equals(this.policy, compatibility.policy) &&
-        Objects.equals(this.backwardAndForward, compatibility.backwardAndForward);
+        Objects.equals(this.advanced, compatibility.advanced);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(policy, backwardAndForward);
+    return Objects.hash(policy, advanced);
   }
 
 
@@ -132,7 +144,7 @@ public class Compatibility   {
     sb.append("class Compatibility {\n");
     
     sb.append("    policy: ").append(toIndentedString(policy)).append("\n");
-    sb.append("    backwardAndForward: ").append(toIndentedString(backwardAndForward)).append("\n");
+    sb.append("    advanced: ").append(toIndentedString(advanced)).append("\n");
     sb.append("}");
     return sb.toString();
   }

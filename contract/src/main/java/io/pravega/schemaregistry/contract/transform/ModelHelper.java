@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.transform;
@@ -70,20 +70,42 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
-        io.pravega.schemaregistry.contract.data.Compatibility.Type type = searchEnum(io.pravega.schemaregistry.contract.data.Compatibility.Type.class, compatibility.getPolicy().name());
-        switch (type) {
-            case AllowAny:
-                return io.pravega.schemaregistry.contract.data.Compatibility.allowAny();
-            case DenyAll:
-                return io.pravega.schemaregistry.contract.data.Compatibility.denyAll();
-            case BackwardAndForward:
-                return io.pravega.schemaregistry.contract.data.Compatibility
+        io.pravega.schemaregistry.contract.data.Compatibility decoded;
+        switch (compatibility.getPolicy()) {
+            case ALLOWANY:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.allowAny();
+                break;
+            case BACKWARD:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.backward();
+                break;
+            case BACKWARDTRANSITIVE:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.backwardTransitive();
+                break;
+            case FORWARD:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.forward();
+                break;
+            case FORWARDTRANSITIVE:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.forwardTransitive();
+                break;
+            case FULL:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.full();
+                break;
+            case FULLTRANSITIVE:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.fullTransitive();
+                break;
+            case DENYALL:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility.denyAll();
+                break;
+            case ADVANCED:
+                decoded = io.pravega.schemaregistry.contract.data.Compatibility
                         .builder()
-                        .type(type)
-                        .backwardAndForward(decode(compatibility.getBackwardAndForward())).build();
+                        .type(io.pravega.schemaregistry.contract.data.Compatibility.Type.Advanced)
+                        .backwardAndForward(decode(compatibility.getAdvanced())).build();
+                break;
             default:
                 throw new IllegalArgumentException();
         }
+        return decoded;
     }
 
     public static io.pravega.schemaregistry.contract.data.BackwardAndForward decode(BackwardAndForward compatibility) {
@@ -211,8 +233,8 @@ public class ModelHelper {
     public static Compatibility encode(io.pravega.schemaregistry.contract.data.Compatibility compatibility) {
         Compatibility policy = new io.pravega.schemaregistry.contract.generated.rest.model.Compatibility()
                 .policy(searchEnum(Compatibility.PolicyEnum.class, compatibility.getType().name()));
-        if (policy.getPolicy().equals(Compatibility.PolicyEnum.BACKWARDANDFORWARD)) {
-            policy.backwardAndForward(encode(compatibility.getBackwardAndForward()));
+        if (policy.getPolicy().equals(Compatibility.PolicyEnum.ADVANCED)) {
+            policy.advanced(encode(compatibility.getBackwardAndForward()));
         }
         return policy;
     }

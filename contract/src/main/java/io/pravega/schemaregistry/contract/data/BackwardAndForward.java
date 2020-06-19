@@ -31,7 +31,10 @@ import lombok.EqualsAndHashCode;
 @Data
 @Builder
 public class BackwardAndForward {
-
+    public static final BackwardPolicy BACKWARD = new Backward();
+    public static final BackwardPolicy BACKWARD_TRANSITIVE = new BackwardTransitive();
+    public static final ForwardPolicy FORWARD = new Forward();
+    public static final ForwardPolicy FORWARD_TRANSITIVE = new ForwardTransitive();
     private final BackwardPolicy backwardPolicy;
     private final ForwardPolicy forwardPolicy;
 

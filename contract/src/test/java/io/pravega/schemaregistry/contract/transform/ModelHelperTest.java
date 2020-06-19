@@ -38,15 +38,15 @@ public class ModelHelperTest {
     public void testDecode() {
         SerializationFormat type = new SerializationFormat().serializationFormat(SerializationFormat.SerializationFormatEnum.CUSTOM).customTypeName("a");
         Compatibility backward = new Compatibility()
-                .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARD)
-                .backwardAndForward(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
+                .policy(Compatibility.PolicyEnum.ADVANCED)
+                .advanced(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
                         .backwardPolicy(new Backward().name(Backward.class.getSimpleName()))));
         SchemaInfo schema = new SchemaInfo()
                 .type("a").serializationFormat(type).schemaData(new byte[0]).properties(Collections.emptyMap());
         VersionInfo version = new VersionInfo().type("a").version(1).id(1);
         Compatibility backwardTillForwardTill = new Compatibility()
-                .policy(Compatibility.PolicyEnum.BACKWARDANDFORWARD)
-                .backwardAndForward(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
+                .policy(Compatibility.PolicyEnum.ADVANCED)
+                .advanced(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
                         .backwardPolicy(new BackwardTill().name(BackwardTill.class.getSimpleName()).version(version)))
                                                        .forwardPolicy(new ForwardPolicy().forwardPolicy(new ForwardTill().name(ForwardTill.class.getSimpleName()).version(version)))
                 );
@@ -132,9 +132,9 @@ public class ModelHelperTest {
         assertEquals(encodingInfo.getSchemaInfo(), schema);
 
         Compatibility rules = ModelHelper.encode(compatibility);
-        assertEquals(rules.getPolicy(), Compatibility.PolicyEnum.BACKWARDANDFORWARD);
-        assertTrue(rules.getBackwardAndForward().getBackwardPolicy().getBackwardPolicy() instanceof BackwardTill);
-        assertTrue(rules.getBackwardAndForward().getForwardPolicy().getForwardPolicy() instanceof ForwardTill);
+        assertEquals(rules.getPolicy(), Compatibility.PolicyEnum.ADVANCED);
+        assertTrue(rules.getAdvanced().getBackwardPolicy().getBackwardPolicy() instanceof BackwardTill);
+        assertTrue(rules.getAdvanced().getForwardPolicy().getForwardPolicy() instanceof ForwardTill);
 
         GroupHistoryRecord schemaEvolution = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.GroupHistoryRecord(
                 schemaInfo, versionInfo, compatibility, 100L, ""));
