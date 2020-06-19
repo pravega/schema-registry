@@ -610,7 +610,7 @@ public class SchemaRegistryService {
             case Json:
             case Custom:
             case Any:
-                return !newRules.getType().equals(Compatibility.Type.BackwardAndForward);
+                return newRules.getType().equals(Compatibility.Type.AllowAny) || newRules.getType().equals(Compatibility.Type.DenyAll);
             default:
                 throw new IllegalArgumentException();
         }
@@ -621,7 +621,13 @@ public class SchemaRegistryService {
             case AllowAny:
             case DenyAll:
                 return CompletableFuture.completedFuture(Collections.emptyList());
-            case BackwardAndForward:
+            case Backward:
+            case Forward:
+            case BackwardTransitive:
+            case ForwardTransitive:
+            case Full:
+            case FullTransitive:
+            case Advanced:
                 return getSchemasForBackwardAndForwardPolicy(namespace, group, schema, groupProperties);
             default:
                 throw new IllegalArgumentException();
@@ -631,7 +637,7 @@ public class SchemaRegistryService {
     private CompletableFuture<List<SchemaWithVersion>> getSchemasForBackwardAndForwardPolicy(String namespace, String group, SchemaInfo schema, GroupProperties groupProperties) {
         CompletableFuture<List<SchemaWithVersion>> schemasFuture;
 
-        BackwardAndForward backwardAndForward = groupProperties.getCompatibility().getBackwardAndForward();
+        BackwardAndForward backwardAndForward = convertToBackwardAndForward(groupProperties.getCompatibility());
         BackwardPolicy backward = backwardAndForward.getBackwardPolicy();
         ForwardPolicy forward = backwardAndForward.getForwardPolicy();
 
@@ -668,6 +674,39 @@ public class SchemaRegistryService {
         return schemasFuture;
     }
 
+    private BackwardAndForward convertToBackwardAndForward(Compatibility compatibility) {
+        BackwardAndForward.BackwardPolicy backwardPolicy = null;
+        BackwardAndForward.ForwardPolicy forwardPolicy = null;
+
+        switch (compatibility.getType()) {
+            case Advanced:
+                return compatibility.getBackwardAndForward();
+            case Backward:
+                backwardPolicy = BackwardAndForward.BACKWARD;
+                break;
+            case BackwardTransitive:
+                backwardPolicy = BackwardAndForward.BACKWARD_TRANSITIVE;
+                break;
+            case Forward:
+                forwardPolicy = BackwardAndForward.FORWARD;
+                break;
+            case ForwardTransitive:
+                forwardPolicy = BackwardAndForward.FORWARD_TRANSITIVE;
+                break;
+            case Full:
+                backwardPolicy = BackwardAndForward.BACKWARD;
+                forwardPolicy = BackwardAndForward.FORWARD;
+                break;
+            case FullTransitive:
+                backwardPolicy = BackwardAndForward.BACKWARD_TRANSITIVE;
+                forwardPolicy = BackwardAndForward.FORWARD_TRANSITIVE;
+                break;
+            default:
+                throw new IllegalArgumentException();
+        }
+        return BackwardAndForward.builder().backwardPolicy(backwardPolicy).forwardPolicy(forwardPolicy).build();
+    }
+    
     private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
                                        List<SchemaWithVersion> schemasWithVersion) {
         Preconditions.checkArgument(validateSchemaData(schema));
@@ -682,8 +721,14 @@ public class SchemaRegistryService {
                 return true;
             case DenyAll:
                 return schemasWithVersion.isEmpty();
-            case BackwardAndForward:
-                BackwardAndForward backwardAndForward = groupProperties.getCompatibility().getBackwardAndForward();
+            case Backward:
+            case Forward:
+            case BackwardTransitive:
+            case ForwardTransitive:
+            case Full:
+            case FullTransitive:
+            case Advanced:
+                BackwardAndForward backwardAndForward = convertToBackwardAndForward(groupProperties.getCompatibility());
                 BackwardPolicy backward = backwardAndForward.getBackwardPolicy();
                 ForwardPolicy forward = backwardAndForward.getForwardPolicy();
                 boolean isValid = true;
@@ -771,8 +816,14 @@ public class SchemaRegistryService {
             case DenyAll:
                 return !schemas.isEmpty() &&
                         checker.canRead(schema, Collections.singletonList(schemas.get(0)));
-            case BackwardAndForward:
-                BackwardAndForward backwardAndForward = prop.getCompatibility().getBackwardAndForward();
+            case Backward:
+            case Forward:
+            case BackwardTransitive:
+            case ForwardTransitive:
+            case Full:
+            case FullTransitive:
+            case Advanced:
+                BackwardAndForward backwardAndForward = convertToBackwardAndForward(prop.getCompatibility());
                 BackwardPolicy backward = backwardAndForward.getBackwardPolicy();
                 ForwardPolicy forward = backwardAndForward.getForwardPolicy();
                 boolean canRead = true;

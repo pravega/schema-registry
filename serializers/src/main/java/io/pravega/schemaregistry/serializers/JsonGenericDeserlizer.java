@@ -9,6 +9,8 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.fasterxml.jackson.annotation.JsonAutoDetect;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
@@ -34,6 +36,9 @@ class JsonGenericDeserlizer extends AbstractPravegaDeserializer<JSonGenericObjec
                           SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, null, false, decoder, encodingCache);
         this.objectMapper = new ObjectMapper();
+        objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
+        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
+        objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, JsonSchema>() {
             @Override
             public JsonSchema load(SchemaInfo schemaInfo) throws Exception {

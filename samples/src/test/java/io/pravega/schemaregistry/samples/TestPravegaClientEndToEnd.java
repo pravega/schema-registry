@@ -780,7 +780,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
             readerGroupManager.createReaderGroup(rg4,
                     ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-            Serializer<String> jsonDes = SerializerFactory.deserializerAsJsonString(serializerConfig);
+            Serializer<String> jsonDes = SerializerFactory.deserializeAsJsonString(serializerConfig);
 
             EventStreamReader<String> jsonReader = clientFactory.createReader("r1", rg4, jsonDes, ReaderConfig.builder().build());
 

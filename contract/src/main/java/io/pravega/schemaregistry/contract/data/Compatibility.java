@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.contract.data;
@@ -34,7 +34,7 @@ public class Compatibility {
     }
 
     private Compatibility(Type type, BackwardAndForward backwardAndForward) {
-        Preconditions.checkArgument(!type.equals(Type.BackwardAndForward) || backwardAndForward != null);
+        Preconditions.checkArgument(!type.equals(Type.Advanced) || backwardAndForward != null);
         this.type = type;
         this.backwardAndForward = backwardAndForward;
     }
@@ -42,12 +42,18 @@ public class Compatibility {
     /**
      * {@link Type#AllowAny}: allow any changes to schema without any checks performed by the registry. 
      * {@link Type#DenyAll}: disables any changes to the schema for the group.
-     * {@link Type#BackwardAndForward}: 
+     * {@link Type#Advanced}: 
      */
     public enum Type {
         AllowAny,
         DenyAll,
-        BackwardAndForward,
+        Backward,
+        Forward,
+        BackwardTransitive,
+        ForwardTransitive,
+        Full,
+        FullTransitive,
+        Advanced,
     }
 
     /**
@@ -67,7 +73,7 @@ public class Compatibility {
     public static Compatibility denyAll() {
         return new Compatibility(Type.DenyAll);
     }
-    
+
     /**
      * Method to create a compatibility policy of type backwardPolicy. BackwardPolicy policy implies new schema will be validated
      * to be capable of reading data written using the previous schema. 
@@ -75,7 +81,7 @@ public class Compatibility {
      * @return Compatibility policy with Backward check.
      */
     public static Compatibility backward() {
-        return backwardAndForward(new BackwardAndForward(new BackwardAndForward.Backward(), null));
+        return new Compatibility(Type.Backward);
     }
 
     /**
@@ -86,7 +92,7 @@ public class Compatibility {
      * @return Compatibility policy with BackwardTill version check.
      */
     public static Compatibility backwardTill(VersionInfo backwardTill) {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), null));
+        return backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), null));
     }
 
     /**
@@ -96,7 +102,7 @@ public class Compatibility {
      * @return Compatibility policy with BackwardTransitive check.
      */
     public static Compatibility backwardTransitive() {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTransitive(), null));
+        return new Compatibility(Type.BackwardTransitive);
     }
 
     /**
@@ -106,7 +112,7 @@ public class Compatibility {
      * @return Compatibility policy with Forward compatibility check.
      */
     public static Compatibility forward() {
-        return Compatibility.backwardAndForward(new BackwardAndForward(null, new BackwardAndForward.Forward()));
+        return new Compatibility(Type.Forward);
     }
 
     /**
@@ -117,7 +123,7 @@ public class Compatibility {
      * @return Compatibility policy with ForwardTill check.
      */
     public static Compatibility forwardTill(VersionInfo forwardTill) {
-        return Compatibility.backwardAndForward(new BackwardAndForward(null, new BackwardAndForward.ForwardTill(forwardTill)));
+        return backwardAndForward(new BackwardAndForward(null, new BackwardAndForward.ForwardTill(forwardTill)));
     }
 
     /**
@@ -128,7 +134,7 @@ public class Compatibility {
      * @return Compatibility policy with ForwardTransitive check.
      */
     public static Compatibility forwardTransitive() {
-        return Compatibility.backwardAndForward(new BackwardAndForward(null, new BackwardAndForward.ForwardTransitive()));
+        return new Compatibility(Type.ForwardTransitive);
     }
 
     /**
@@ -138,7 +144,7 @@ public class Compatibility {
      * @return Compatibility policy with Backward and Forward compatibility checks.
      */
     public static Compatibility full() {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.Backward(), new BackwardAndForward.Forward()));
+        return new Compatibility(Type.Full);
     }
 
     /**
@@ -149,7 +155,7 @@ public class Compatibility {
      * @return Compatibility policy of type Backward Transitive and Forward Transitive checks.
      */
     public static Compatibility fullTransitive() {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTransitive(), new BackwardAndForward.ForwardTransitive()));
+        return new Compatibility(Type.FullTransitive);
     }
 
     /**
@@ -164,7 +170,7 @@ public class Compatibility {
      * @return Compatibility policy with backwardTill check And ForwardTill check.
      */
     public static Compatibility backwardTillAndForwardTill(VersionInfo backwardTill, VersionInfo forwardTill) {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), new BackwardAndForward.ForwardTill(forwardTill)));
+        return backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), new BackwardAndForward.ForwardTill(forwardTill)));
     }
 
     /**
@@ -177,7 +183,7 @@ public class Compatibility {
      * @return Compatibility policy that describes backward check And ForwardTill check.
      */
     public static Compatibility backwardOneAndForwardTill(VersionInfo forwardTill) {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.Backward(), new BackwardAndForward.ForwardTill(forwardTill)));
+        return backwardAndForward(new BackwardAndForward(BackwardAndForward.BACKWARD, new BackwardAndForward.ForwardTill(forwardTill)));
     }
 
     /**
@@ -190,11 +196,11 @@ public class Compatibility {
      * @return BackwardAndForward with backwardTill check And Forward check.
      */
     public static Compatibility backwardTillAndForwardOne(VersionInfo backwardTill) {
-        return Compatibility.backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), new BackwardAndForward.Forward()));
+        return backwardAndForward(new BackwardAndForward(new BackwardAndForward.BackwardTill(backwardTill), BackwardAndForward.FORWARD));
     }
 
     private static Compatibility backwardAndForward(BackwardAndForward backwardAndForward) {
-        return new Compatibility(Type.BackwardAndForward, backwardAndForward);
+        return new Compatibility(Type.Advanced, backwardAndForward);
     }
 
     public static class CompatibilityBuilder implements ObjectBuilder<Compatibility> {
