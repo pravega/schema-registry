@@ -43,8 +43,6 @@ paths:
           name: limit
           type: integer
           description: The numbers of items to return
-      required:
-          - limit
       responses:
         200:
           description: List of all groups
@@ -163,9 +161,6 @@ paths:
                   $ref: "#/definitions/Compatibility"
               previousCompatibility:
                   $ref: "#/definitions/Compatibility"
-                  nullable: true
-            required:
-              - compatibility
       responses:
         200:
           description: Updated schema compatibility policy
@@ -202,34 +197,6 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while fetching Group's latest schemas
-  /groups/{groupName}/schemas/versions:
-    parameters:
-      - in: path
-        name: groupName
-        description: Group name
-        required: true
-        type: string
-    get:
-      tags:
-      - "Group"
-      operationId: getSchemaVersions
-      description: Get all schema versions for the group
-      parameters:
-            - in: query
-              name: type
-              type: string
-              description: Type of object the schema describes. 
-      produces:
-        - application/json
-      responses:
-        200:
-          description: Versioned history of schemas registered under the group
-          schema:
-            $ref: "#/definitions/SchemaVersionsList"
-        404:
-          description: Group with given name not found
-        500:
-          description: Internal server error while fetching Group schema versions
     post:
       tags:
       - "Group"
@@ -259,6 +226,34 @@ paths:
           description: Invalid serialization format
         500:
           description: Internal server error while adding schema to group
+  /groups/{groupName}/schemas/versions:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemaVersions
+      description: Get all schema versions for the group
+      parameters:
+            - in: query
+              name: type
+              type: string
+              description: Type of object the schema describes. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaVersionsList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group schema versions
   /groups/{groupName}/schemas/versions/find:
     parameters:
       - in: path
@@ -569,7 +564,6 @@ paths:
         500:
           description: Internal server error while registering codectype to a Group          
   /schemas/addedTo:
-    parameters:
     post:
       tags:
       - "Schemas"
