@@ -15,15 +15,10 @@ import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
 import io.pravega.schemaregistry.storage.impl.groups.PravegaKVGroups;
-import io.pravega.shared.security.token.JsonWebToken;
 import io.pravega.schemaregistry.storage.impl.schemas.InMemorySchemas;
 import io.pravega.schemaregistry.storage.impl.schemas.PravegaKVSchemas;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
-
-import static io.pravega.auth.AuthHandler.Permissions.READ_UPDATE;
 
 /**
  * Factory for creating schema store of different types. 
@@ -37,17 +32,4 @@ public class SchemaStoreFactory {
         TableStore tableStore = new TableStore(clientConfig, serviceConfig, executor);
         return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor), new PravegaKVSchemas(tableStore));
     }
-
-    private static String retrieveMasterToken(ServiceConfig config) {
-        if (config.isAuthEnabled()) {
-            Map<String, Object> customClaims = new HashMap<>();
-            customClaims.put("*", String.valueOf(READ_UPDATE));
-
-            return new JsonWebToken("segmentstoreresource", "segmentstore", config.getTokenSigningKey().getBytes(),
-                    null, customClaims).toCompactString();
-        } else {
-            return "";
-        }
-    }
-
 }

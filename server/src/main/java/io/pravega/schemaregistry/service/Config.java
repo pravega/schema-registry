@@ -59,8 +59,6 @@ public final class Config {
     public static final boolean AUTHORIZATION_ENABLED;
     public static final String USER_PASSWORD_FILE;
 
-    public static final String TOKEN_SIGNING_KEY;
-
     public static final ServiceConfig SERVICE_CONFIG;
 
     //endregion
@@ -82,8 +80,6 @@ public final class Config {
 
     private static final Property<Boolean> PROPERTY_AUTHORIZATION_ENABLED = Property.named("auth.enabled", false);
     private static final Property<String> PROPERTY_AUTHORIZATION_PASSWORD_FILE = Property.named("auth.userPasswordFile", "");
-
-    private static final Property<String> PROPERTY_TOKEN_SIGNING_KEY = Property.named("auth.tokenSigningKey", "");
 
     private static final String COMPONENT_CODE = "schema-registry";
 
@@ -111,8 +107,6 @@ public final class Config {
 
         AUTHORIZATION_ENABLED = p.getBoolean(PROPERTY_AUTHORIZATION_ENABLED);
         USER_PASSWORD_FILE = p.get(PROPERTY_AUTHORIZATION_PASSWORD_FILE);
-
-        TOKEN_SIGNING_KEY = p.get(PROPERTY_TOKEN_SIGNING_KEY);
 
         SERVICE_CONFIG = createServiceConfig();
     }
@@ -206,7 +200,6 @@ public final class Config {
                                    .tlsKeyFilePath(Config.TLS_KEY_FILE)
                                    .tlsKeyFilePath(Config.TLS_KEY_PASSWORD_FILE)
                                    .tlsTrustStore(Config.TLS_TRUST_STORE)
-                                   .tokenSigningKey(Config.TOKEN_SIGNING_KEY)
                                    .build();
     }
 

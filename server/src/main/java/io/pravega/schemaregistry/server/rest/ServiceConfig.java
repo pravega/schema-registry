@@ -30,10 +30,9 @@ public class ServiceConfig implements ServerConfig {
     private final String tlsKeyPasswordFilePath;
     private final boolean authEnabled;
     private final String userPasswordFile;
-    private final String tokenSigningKey;
 
     private ServiceConfig(String host, int port, boolean tlsEnabled, String tlsCertFile, String tlsTrustStore,
-                          String tlsKeyFilePath, String tlsKeyPasswordFilePath, boolean authEnabled, String userPasswordFile, String tokenSigningKey) {
+                          String tlsKeyFilePath, String tlsKeyPasswordFilePath, boolean authEnabled, String userPasswordFile) {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
         Exceptions.checkArgument(!tlsEnabled || (!Strings.isNullOrEmpty(tlsCertFile) &&
@@ -48,7 +47,6 @@ public class ServiceConfig implements ServerConfig {
         this.tlsTrustStore = tlsTrustStore;
         this.authEnabled = authEnabled;
         this.userPasswordFile = userPasswordFile;
-        this.tokenSigningKey = tokenSigningKey;
     }
 
     public static final class ServiceConfigBuilder {
@@ -56,7 +54,6 @@ public class ServiceConfig implements ServerConfig {
         private int port = 9092;
         private boolean tlsEnabled = false;
         private boolean authEnabled = false;
-        private String tokenSigningKey = "";
     }
     
     @Override
