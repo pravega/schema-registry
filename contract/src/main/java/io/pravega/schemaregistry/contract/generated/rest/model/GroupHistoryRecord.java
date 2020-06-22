@@ -74,7 +74,8 @@ public class GroupHistoryRecord   {
    * @return versionInfo
    **/
   @JsonProperty("versionInfo")
-  @ApiModelProperty(value = "Schema version information object.")
+  @ApiModelProperty(required = true, value = "Schema version information object.")
+  @NotNull
   public VersionInfo getVersionInfo() {
     return versionInfo;
   }

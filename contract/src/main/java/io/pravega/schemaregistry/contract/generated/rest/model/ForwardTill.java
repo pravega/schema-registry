@@ -63,7 +63,8 @@ public class ForwardTill   {
    * @return versionInfo
    **/
   @JsonProperty("versionInfo")
-  @ApiModelProperty(value = "Whether given schema is valid with respect to existing group schemas against the configured compatibility.")
+  @ApiModelProperty(required = true, value = "Whether given schema is valid with respect to existing group schemas against the configured compatibility.")
+  @NotNull
   public VersionInfo getVersionInfo() {
     return versionInfo;
   }

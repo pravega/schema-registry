@@ -64,7 +64,8 @@ public class SchemaWithVersion   {
    * @return versionInfo
    **/
   @JsonProperty("versionInfo")
-  @ApiModelProperty(value = "Version information.")
+  @ApiModelProperty(required = true, value = "Version information.")
+  @NotNull
   public VersionInfo getVersionInfo() {
     return versionInfo;
   }
