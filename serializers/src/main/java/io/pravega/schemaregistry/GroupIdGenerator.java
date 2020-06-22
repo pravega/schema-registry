@@ -10,12 +10,12 @@
 package io.pravega.schemaregistry;
 
 import com.google.common.base.Preconditions;
+import io.pravega.shared.NameUtils;
 import lombok.SneakyThrows;
 
 /**
  * Defines strategies for generating groupId for stream. 
- * Currently there is only one naming strategy that uses streams fully qualified scoped stream name and encodes it using
- * URL encoder.
+ * Currently there is only one naming strategy that uses streams fully qualified scoped stream name.
  */
 public class GroupIdGenerator {
     private GroupIdGenerator() {
@@ -27,13 +27,7 @@ public class GroupIdGenerator {
             case QualifiedStreamName:
                 Preconditions.checkNotNull(args);
                 Preconditions.checkArgument(args.length == 2);
-                StringBuilder qualifiedNameBuilder = new StringBuilder();
-                qualifiedNameBuilder.append("pravega://");
-                for (String arg : args) {
-                    qualifiedNameBuilder.append(arg);
-                    qualifiedNameBuilder.append("/");
-                }
-                return qualifiedNameBuilder.toString();
+                return NameUtils.getScopedStreamName(args[0], args[1]);
             default:
                 throw new IllegalArgumentException();
         }
