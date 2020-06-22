@@ -13,32 +13,32 @@ import lombok.Data;
 
 /**
  * Describes changes to the group and the compatibility {@link GroupHistoryRecord#compatibility} that were 
- * applied while registering {@link GroupHistoryRecord#schema} and the unique {@link GroupHistoryRecord#version} identifier 
+ * applied while registering {@link GroupHistoryRecord#schemaInfo} and the unique {@link GroupHistoryRecord#versionInfo} identifier 
  * that was assigned to it. 
- * It also has {@link GroupHistoryRecord#timestamp} when the schema was added and includes an optional 
+ * It also has {@link GroupHistoryRecord#timestamp} when the schemaInfo was added and includes an optional 
  * {@link GroupHistoryRecord#schemaString} which is populated only if serialization format is one of {@link SerializationFormat#Avro}
- * {@link SerializationFormat#Json} or {@link SerializationFormat#Protobuf}. This string is just to help make the schema human readable. 
+ * {@link SerializationFormat#Json} or {@link SerializationFormat#Protobuf}. This string is just to help make the schemaInfo human readable. 
  */
 @Data
 public class GroupHistoryRecord {
     /**
-     * Schema information object for the schema that was added to the group.
+     * Schema information object for the schemaInfo that was added to the group.
      */
-    private final SchemaInfo schema;
+    private final SchemaInfo schemaInfo;
     /**
-     * Version information object that uniquely identifies the schema in the group. 
+     * Version information object that uniquely identifies the schemaInfo in the group. 
      */
-    private final VersionInfo version;
+    private final VersionInfo versionInfo;
     /**
-     * Compatibility applied at the time when the schema was registered. 
+     * Compatibility applied at the time when the schemaInfo was registered. 
      */
     private final Compatibility compatibility;
     /**
-     * Service's Time when the schema was registered. 
+     * Service's Time when the schemaInfo was registered. 
      */
     private final long timestamp;
     /**
-     * A json format string representing the schema. This string will be populated only for serialization formats 
+     * A json format string representing the schemaInfo. This string will be populated only for serialization formats 
      * that the service can parse. 
      */
     private final String schemaString;

@@ -42,8 +42,7 @@ public class UpdateCompatibilityRequest   {
    * @return compatibility
    **/
   @JsonProperty("compatibility")
-  @ApiModelProperty(required = true, value = "")
-  @NotNull
+  @ApiModelProperty(value = "")
   public Compatibility getCompatibility() {
     return compatibility;
   }

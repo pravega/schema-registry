@@ -694,7 +694,7 @@ definitions:
       schemaInfo:
         description: Schema information.
         $ref: "#/definitions/SchemaInfo"
-      version:
+      versionInfo:
         description: Version information.
         $ref: "#/definitions/VersionInfo"
     required: 
@@ -842,7 +842,7 @@ definitions:
     properties:
       name:
         type: string
-      version:
+      versionInfo:
         description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
         $ref: "#/definitions/VersionInfo"
     required:
@@ -854,7 +854,7 @@ definitions:
     properties:
       name:
         type: string
-      version:
+      versionInfo:
         description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
         $ref: "#/definitions/VersionInfo"
     required:
@@ -894,7 +894,7 @@ definitions:
         schemaInfo:
           description: Schema information object.
           $ref: "#/definitions/SchemaInfo"
-        version:
+        versionInfo:
           description: Schema version information object.
           $ref: "#/definitions/VersionInfo"
         compatibility:

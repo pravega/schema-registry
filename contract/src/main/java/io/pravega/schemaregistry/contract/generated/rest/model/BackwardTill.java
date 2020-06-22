@@ -30,8 +30,8 @@ public class BackwardTill   {
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("version")
-  private VersionInfo version = null;
+  @JsonProperty("versionInfo")
+  private VersionInfo versionInfo = null;
 
   public BackwardTill name(String name) {
     this.name = name;
@@ -53,24 +53,23 @@ public class BackwardTill   {
     this.name = name;
   }
 
-  public BackwardTill version(VersionInfo version) {
-    this.version = version;
+  public BackwardTill versionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
     return this;
   }
 
   /**
    * Whether given schema is valid with respect to existing group schemas against the configured compatibility.
-   * @return version
+   * @return versionInfo
    **/
-  @JsonProperty("version")
-  @ApiModelProperty(required = true, value = "Whether given schema is valid with respect to existing group schemas against the configured compatibility.")
-  @NotNull
-  public VersionInfo getVersion() {
-    return version;
+  @JsonProperty("versionInfo")
+  @ApiModelProperty(value = "Whether given schema is valid with respect to existing group schemas against the configured compatibility.")
+  public VersionInfo getVersionInfo() {
+    return versionInfo;
   }
 
-  public void setVersion(VersionInfo version) {
-    this.version = version;
+  public void setVersionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
   }
 
 
@@ -84,12 +83,12 @@ public class BackwardTill   {
     }
     BackwardTill backwardTill = (BackwardTill) o;
     return Objects.equals(this.name, backwardTill.name) &&
-        Objects.equals(this.version, backwardTill.version);
+        Objects.equals(this.versionInfo, backwardTill.versionInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version);
+    return Objects.hash(name, versionInfo);
   }
 
 
@@ -99,7 +98,7 @@ public class BackwardTill   {
     sb.append("class BackwardTill {\n");
     
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }
