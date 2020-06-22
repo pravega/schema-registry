@@ -396,7 +396,7 @@ public class Group<V> {
     
     public CompletableFuture<List<GroupHistoryRecord>> getHistory(String type) {
         return getHistory().thenApply(list ->
-                list.stream().filter(x -> x.getSchema().getType().equals(type))
+                list.stream().filter(x -> x.getSchemaInfo().getType().equals(type))
                     .collect(Collectors.toList()));
     }
 

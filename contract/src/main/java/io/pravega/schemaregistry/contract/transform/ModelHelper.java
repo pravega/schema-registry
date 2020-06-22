@@ -48,21 +48,22 @@ public class ModelHelper {
 
     // region decode
     public static io.pravega.schemaregistry.contract.data.SchemaInfo decode(SchemaInfo schemaInfo) {
-        Preconditions.checkArgument(schemaInfo != null);
-        Preconditions.checkArgument(schemaInfo.getType() != null);
-        Preconditions.checkArgument(schemaInfo.getSerializationFormat() != null);
-        Preconditions.checkArgument(schemaInfo.getProperties() != null);
-        Preconditions.checkArgument(schemaInfo.getSchemaData() != null);
+        Preconditions.checkArgument(schemaInfo != null, "SchemaInfo cannot be null");
+        Preconditions.checkArgument(schemaInfo.getType() != null, "SchemaInfo type cannot be null");
+        Preconditions.checkArgument(schemaInfo.getSerializationFormat() != null, "Serialization format cannot be null");
+        Preconditions.checkArgument(schemaInfo.getSchemaData() != null, "schema data cannot be null");
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = decode(schemaInfo.getSerializationFormat());
+        ImmutableMap<String, String> properties = schemaInfo.getProperties() == null ? ImmutableMap.of() : 
+                ImmutableMap.copyOf(schemaInfo.getProperties());
         return new io.pravega.schemaregistry.contract.data.SchemaInfo(schemaInfo.getType(),
-                serializationFormat, ByteBuffer.wrap(schemaInfo.getSchemaData()), ImmutableMap.copyOf(schemaInfo.getProperties()));
+                serializationFormat, ByteBuffer.wrap(schemaInfo.getSchemaData()), properties);
     }
 
     public static io.pravega.schemaregistry.contract.data.SerializationFormat decode(SerializationFormat serializationFormat) {
-        Preconditions.checkArgument(serializationFormat != null);
+        Preconditions.checkArgument(serializationFormat != null, "serialization format cannot be null");
         switch (serializationFormat.getSerializationFormat()) {
             case CUSTOM:
-                Preconditions.checkArgument(serializationFormat.getCustomTypeName() != null);
+                Preconditions.checkArgument(serializationFormat.getCustomTypeName() != null, "Custom name not supplied");
                 return io.pravega.schemaregistry.contract.data.SerializationFormat.custom(serializationFormat.getCustomTypeName());
             default:
                 return searchEnum(io.pravega.schemaregistry.contract.data.SerializationFormat.class, serializationFormat.getSerializationFormat().name());
@@ -103,13 +104,14 @@ public class ModelHelper {
                         .backwardAndForward(decode(compatibility.getAdvanced())).build();
                 break;
             default:
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Unknown compatibility type");
         }
         return decoded;
     }
 
     public static io.pravega.schemaregistry.contract.data.BackwardAndForward decode(BackwardAndForward compatibility) {
-        Preconditions.checkArgument(compatibility.getBackwardPolicy() != null || compatibility.getForwardPolicy() != null);
+        Preconditions.checkArgument(compatibility.getBackwardPolicy() != null || compatibility.getForwardPolicy() != null, 
+                "At least one of Backward or Forward policy needs to be supplied for Advanced Compatibility");
 
         io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardAndForwardBuilder builder =
                 io.pravega.schemaregistry.contract.data.BackwardAndForward.builder();
@@ -123,6 +125,7 @@ public class ModelHelper {
     }
 
     public static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardPolicy decode(BackwardPolicy backward) {
+        Preconditions.checkArgument(backward != null, "backward policy cannot be null");
         Object obj = backward.getBackwardPolicy();
         if (backward.getBackwardPolicy() instanceof Map) {
             String name = (String) ((Map) backward.getBackwardPolicy()).get("name");
@@ -133,7 +136,7 @@ public class ModelHelper {
             } else if (name.equals(BACKWARD_TILL)) {
                 obj = MAPPER.convertValue(backward.getBackwardPolicy(), BackwardTill.class);
             } else {
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Backward policy needs to be one of Backward, BackwardTill or BackwardTransitive");
             }
         }
 
@@ -141,15 +144,17 @@ public class ModelHelper {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.Backward();
         } else if (obj instanceof BackwardTill) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTill(
-                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.BackwardTill) backward.getBackwardPolicy()).getVersion()));
+                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.BackwardTill) backward.getBackwardPolicy()).getVersionInfo()));
         } else if (obj instanceof BackwardTransitive) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTransitive();
         } else {
-            throw new IllegalArgumentException("Rule not supported");
+            throw new IllegalArgumentException("Backward policy needs to be one of Backward, BackwardTill or BackwardTransitive.");
         }
     }
 
     public static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardPolicy decode(io.pravega.schemaregistry.contract.generated.rest.model.ForwardPolicy forward) {
+        Preconditions.checkArgument(forward != null, "forward policy cannot be null");
+
         Object obj = forward.getForwardPolicy();
         if (forward.getForwardPolicy() instanceof Map) {
             String name = (String) ((Map) forward.getForwardPolicy()).get("name");
@@ -160,7 +165,7 @@ public class ModelHelper {
             } else if (name.equals(FORWARD_TILL)) {
                 obj = MAPPER.convertValue(forward.getForwardPolicy(), ForwardTill.class);
             } else {
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Forward policy needs to be one of Forward, ForwardTill or ForwardTransitive.");
             }
         }
 
@@ -168,63 +173,77 @@ public class ModelHelper {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.Forward();
         } else if (obj instanceof ForwardTill) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTill(
-                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.ForwardTill) forward.getForwardPolicy()).getVersion()));
+                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.ForwardTill) forward.getForwardPolicy()).getVersionInfo()));
         } else if (obj instanceof ForwardTransitive) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTransitive();
         } else {
-            throw new IllegalArgumentException("Rule not supported");
+            throw new IllegalArgumentException("Forward policy needs to be one of Forward, ForwardTill or ForwardTransitive.");
         }
     }
 
     public static io.pravega.schemaregistry.contract.data.VersionInfo decode(VersionInfo versionInfo) {
-        Preconditions.checkArgument(versionInfo != null);
-        Preconditions.checkArgument(versionInfo.getType() != null);
-        Preconditions.checkArgument(versionInfo.getVersion() != null);
-        Preconditions.checkArgument(versionInfo.getId() != null);
+        Preconditions.checkArgument(versionInfo != null, "Version info cannot be null");
+        Preconditions.checkArgument(versionInfo.getType() != null, "type cannot be null");
+        Preconditions.checkArgument(versionInfo.getVersion() != null, "version cannot be null");
+        Preconditions.checkArgument(versionInfo.getId() != null, "id cannot be null");
         return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getType(), versionInfo.getVersion(), versionInfo.getId());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
-        Preconditions.checkArgument(encodingInfo != null);
+        Preconditions.checkArgument(encodingInfo != null, "EncodingInfo cannot be null");
+        Preconditions.checkArgument(encodingInfo.getVersionInfo() != null, "VersionInfo cannot be null");
+        Preconditions.checkArgument(encodingInfo.getSchemaInfo() != null, "SchemaInfo cannot be null");
+        Preconditions.checkArgument(encodingInfo.getCodecType() != null, "CodecType cannot be null");
         return new io.pravega.schemaregistry.contract.data.EncodingInfo(decode(encodingInfo.getVersionInfo()),
                 decode(encodingInfo.getSchemaInfo()), encodingInfo.getCodecType());
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaWithVersion decode(SchemaWithVersion schemaWithVersion) {
-        Preconditions.checkArgument(schemaWithVersion != null);
+        Preconditions.checkArgument(schemaWithVersion != null, "schema with version cannot be null");
+        Preconditions.checkArgument(schemaWithVersion.getVersionInfo() != null, "VersionInfo cannot be null");
+        Preconditions.checkArgument(schemaWithVersion.getSchemaInfo() != null, "SchemaInfo cannot be null");
         return new io.pravega.schemaregistry.contract.data.SchemaWithVersion(decode(schemaWithVersion.getSchemaInfo()),
-                decode(schemaWithVersion.getVersion()));
+                decode(schemaWithVersion.getVersionInfo()));
     }
 
-    public static io.pravega.schemaregistry.contract.data.GroupHistoryRecord decode(GroupHistoryRecord schemaEvolution) {
-        Preconditions.checkArgument(schemaEvolution != null);
+    public static io.pravega.schemaregistry.contract.data.GroupHistoryRecord decode(GroupHistoryRecord historyRecord) {
+        Preconditions.checkArgument(historyRecord != null, "history record be null");
+        Preconditions.checkArgument(historyRecord.getSchemaInfo() != null, "schemaInfo be null");
+        Preconditions.checkArgument(historyRecord.getVersionInfo() != null, "versionInfo be null");
+        Preconditions.checkArgument(historyRecord.getTimestamp() != null, "Timestamp be null");
+        Preconditions.checkArgument(historyRecord.getCompatibility() != null, "Compatibility be null");
 
-        return new io.pravega.schemaregistry.contract.data.GroupHistoryRecord(decode(schemaEvolution.getSchemaInfo()),
-                decode(schemaEvolution.getVersion()), decode(schemaEvolution.getCompatibility()), schemaEvolution.getTimestamp(),
-                schemaEvolution.getSchemaString());
+        return new io.pravega.schemaregistry.contract.data.GroupHistoryRecord(decode(historyRecord.getSchemaInfo()),
+                decode(historyRecord.getVersionInfo()), decode(historyRecord.getCompatibility()), historyRecord.getTimestamp(),
+                historyRecord.getSchemaString());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingId decode(EncodingId encodingId) {
-        Preconditions.checkArgument(encodingId != null);
+        Preconditions.checkArgument(encodingId != null, "EncodingId cannot be null");
+        Preconditions.checkArgument(encodingId.getEncodingId() != null, "EncodingId cannot be null");
         Preconditions.checkArgument(encodingId.getEncodingId() != null);
 
         return new io.pravega.schemaregistry.contract.data.EncodingId(encodingId.getEncodingId());
     }
 
     public static io.pravega.schemaregistry.contract.data.GroupProperties decode(GroupProperties groupProperties) {
-        Preconditions.checkArgument(groupProperties != null);
-        Preconditions.checkArgument(groupProperties.isAllowMultipleTypes() != null);
+        Preconditions.checkArgument(groupProperties != null, "group properties cannot be null");
+        Preconditions.checkArgument(groupProperties.isAllowMultipleTypes() != null, "is allow multiple type cannot be null");
+        Preconditions.checkArgument(groupProperties.getSerializationFormat() != null, "serialization format cannot be null");
+        Preconditions.checkArgument(groupProperties.getCompatibility() != null, "compatibility cannot be null");
 
+        ImmutableMap<String, String> properties = groupProperties.getProperties() == null ? ImmutableMap.of() : 
+                ImmutableMap.copyOf(groupProperties.getProperties());
         return io.pravega.schemaregistry.contract.data.GroupProperties.builder().serializationFormat(decode(groupProperties.getSerializationFormat()))
                                                                       .compatibility(decode(groupProperties.getCompatibility())).allowMultipleTypes(groupProperties.isAllowMultipleTypes())
-                                                                      .properties(ImmutableMap.copyOf(groupProperties.getProperties())).build();
+                                                                      .properties(properties).build();
     }
     // endregion
 
     // region encode
     public static GroupHistoryRecord encode(io.pravega.schemaregistry.contract.data.GroupHistoryRecord groupHistoryRecord) {
-        return new GroupHistoryRecord().schemaInfo(encode(groupHistoryRecord.getSchema()))
-                                       .version(encode(groupHistoryRecord.getVersion()))
+        return new GroupHistoryRecord().schemaInfo(encode(groupHistoryRecord.getSchemaInfo()))
+                                       .versionInfo(encode(groupHistoryRecord.getVersionInfo()))
                                        .compatibility(encode(groupHistoryRecord.getCompatibility()))
                                        .timestamp(groupHistoryRecord.getTimestamp())
                                        .schemaString(groupHistoryRecord.getSchemaString());
@@ -257,9 +276,9 @@ public class ModelHelper {
             return new BackwardPolicy().backwardPolicy(new BackwardTransitive().name(BackwardTransitive.class.getSimpleName()));
         } else if (backwardPolicy instanceof io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTill) {
             VersionInfo version = encode(((io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTill) backwardPolicy).getVersionInfo());
-            return new BackwardPolicy().backwardPolicy(new BackwardTill().name(BackwardTill.class.getSimpleName()).version(version));
+            return new BackwardPolicy().backwardPolicy(new BackwardTill().name(BackwardTill.class.getSimpleName()).versionInfo(version));
         } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Backward policy needs to be one of Backward BackwardTill or BackwardTransitive");
         }
     }
 
@@ -270,15 +289,15 @@ public class ModelHelper {
             return new ForwardPolicy().forwardPolicy(new ForwardTransitive().name(ForwardTransitive.class.getSimpleName()));
         } else if (forwardPolicy instanceof io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTill) {
             VersionInfo version = encode(((io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTill) forwardPolicy).getVersionInfo());
-            return new ForwardPolicy().forwardPolicy(new ForwardTill().name(ForwardTill.class.getSimpleName()).version(version));
+            return new ForwardPolicy().forwardPolicy(new ForwardTill().name(ForwardTill.class.getSimpleName()).versionInfo(version));
         } else {
-            throw new IllegalArgumentException();
+            throw new IllegalArgumentException("Forward policy needs to be one of Forward ForwardTill or ForwardTransitive");
         }
     }
 
     public static SchemaWithVersion encode(io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion) {
         return new SchemaWithVersion().schemaInfo(encode(schemaWithVersion.getSchemaInfo()))
-                                      .version(encode(schemaWithVersion.getVersionInfo()));
+                                      .versionInfo(encode(schemaWithVersion.getVersionInfo()));
     }
 
     public static GroupProperties encode(io.pravega.schemaregistry.contract.data.GroupProperties groupProperties) {
@@ -327,6 +346,6 @@ public class ModelHelper {
                 return each;
             }
         }
-        throw new IllegalArgumentException();
+        throw new IllegalArgumentException(String.format("Value %s not found in enum %s", search, enumeration.getSimpleName()));
     }
 }

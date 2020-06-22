@@ -763,12 +763,12 @@ definitions:
       schemaInfo:
         description: Schema information.
         $ref: "#/definitions/SchemaInfo"
-      version:
+      versionInfo:
         description: Version information.
         $ref: "#/definitions/VersionInfo"
     required: 
       - schemaInfo
-      - version    
+      - versionInfo    
   SchemaVersionsList:
     type: object
     description: List of schemas with their versions.  
@@ -911,24 +911,24 @@ definitions:
     properties:
       name:
         type: string
-      version:
+      versionInfo:
         description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
         $ref: "#/definitions/VersionInfo"
     required:
       - name
-      - version    
+      - versionInfo    
   ForwardTill:
     type: object
     description: ForwardPolicy compatibility which tells the service to check for forwardPolicy compatibility with all previous schemas till specific version.
     properties:
       name:
         type: string
-      version:
+      versionInfo:
         description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
         $ref: "#/definitions/VersionInfo"
     required:
       - name
-      - version
+      - versionInfo
   CodecTypesList:
     type: object
     description: Response object for listCodecTypes.
@@ -963,7 +963,7 @@ definitions:
         schemaInfo:
           description: Schema information object.
           $ref: "#/definitions/SchemaInfo"
-        version:
+        versionInfo:
           description: Schema version information object.
           $ref: "#/definitions/VersionInfo"
         compatibility:
@@ -978,7 +978,7 @@ definitions:
           type: string
       required:
         - schemaInfo
-        - version
+        - versionInfo
         - compatibility
         - timestamp      
   GroupHistory:

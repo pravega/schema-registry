@@ -31,8 +31,8 @@ public class SchemaWithVersion   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
-  @JsonProperty("version")
-  private VersionInfo version = null;
+  @JsonProperty("versionInfo")
+  private VersionInfo versionInfo = null;
 
   public SchemaWithVersion schemaInfo(SchemaInfo schemaInfo) {
     this.schemaInfo = schemaInfo;
@@ -54,24 +54,24 @@ public class SchemaWithVersion   {
     this.schemaInfo = schemaInfo;
   }
 
-  public SchemaWithVersion version(VersionInfo version) {
-    this.version = version;
+  public SchemaWithVersion versionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
     return this;
   }
 
   /**
    * Version information.
-   * @return version
+   * @return versionInfo
    **/
-  @JsonProperty("version")
+  @JsonProperty("versionInfo")
   @ApiModelProperty(required = true, value = "Version information.")
   @NotNull
-  public VersionInfo getVersion() {
-    return version;
+  public VersionInfo getVersionInfo() {
+    return versionInfo;
   }
 
-  public void setVersion(VersionInfo version) {
-    this.version = version;
+  public void setVersionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
   }
 
 
@@ -85,12 +85,12 @@ public class SchemaWithVersion   {
     }
     SchemaWithVersion schemaWithVersion = (SchemaWithVersion) o;
     return Objects.equals(this.schemaInfo, schemaWithVersion.schemaInfo) &&
-        Objects.equals(this.version, schemaWithVersion.version);
+        Objects.equals(this.versionInfo, schemaWithVersion.versionInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, version);
+    return Objects.hash(schemaInfo, versionInfo);
   }
 
 
@@ -100,7 +100,7 @@ public class SchemaWithVersion   {
     sb.append("class SchemaWithVersion {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
-    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }

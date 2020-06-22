@@ -30,8 +30,8 @@ public class ForwardTill   {
   @JsonProperty("name")
   private String name = null;
 
-  @JsonProperty("version")
-  private VersionInfo version = null;
+  @JsonProperty("versionInfo")
+  private VersionInfo versionInfo = null;
 
   public ForwardTill name(String name) {
     this.name = name;
@@ -53,24 +53,24 @@ public class ForwardTill   {
     this.name = name;
   }
 
-  public ForwardTill version(VersionInfo version) {
-    this.version = version;
+  public ForwardTill versionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
     return this;
   }
 
   /**
    * Whether given schema is valid with respect to existing group schemas against the configured compatibility.
-   * @return version
+   * @return versionInfo
    **/
-  @JsonProperty("version")
+  @JsonProperty("versionInfo")
   @ApiModelProperty(required = true, value = "Whether given schema is valid with respect to existing group schemas against the configured compatibility.")
   @NotNull
-  public VersionInfo getVersion() {
-    return version;
+  public VersionInfo getVersionInfo() {
+    return versionInfo;
   }
 
-  public void setVersion(VersionInfo version) {
-    this.version = version;
+  public void setVersionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
   }
 
 
@@ -84,12 +84,12 @@ public class ForwardTill   {
     }
     ForwardTill forwardTill = (ForwardTill) o;
     return Objects.equals(this.name, forwardTill.name) &&
-        Objects.equals(this.version, forwardTill.version);
+        Objects.equals(this.versionInfo, forwardTill.versionInfo);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(name, version);
+    return Objects.hash(name, versionInfo);
   }
 
 
@@ -99,7 +99,7 @@ public class ForwardTill   {
     sb.append("class ForwardTill {\n");
     
     sb.append("    name: ").append(toIndentedString(name)).append("\n");
-    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("}");
     return sb.toString();
   }

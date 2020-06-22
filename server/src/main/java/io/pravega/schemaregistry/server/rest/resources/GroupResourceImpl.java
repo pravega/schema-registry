@@ -272,8 +272,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                      .thenApply(history -> {
                                          SchemaVersionsList list = new SchemaVersionsList()
                                                  .schemas(history.stream().map(x -> new SchemaWithVersion()
-                                                         .schemaInfo(ModelHelper.encode(x.getSchema()))
-                                                         .version(ModelHelper.encode(x.getVersion())))
+                                                         .schemaInfo(ModelHelper.encode(x.getSchemaInfo()))
+                                                         .versionInfo(ModelHelper.encode(x.getVersionInfo())))
                                                                  .collect(Collectors.toList()));
                                          log.info("getSchemaVersions: {} schemas found for group {}", list.getSchemas().size(), groupName);
                                          return Response.status(Status.OK).entity(list).build();
@@ -314,7 +314,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   log.warn("Group {} not found", groupName);
                                                   return Response.status(Status.NOT_FOUND).build();
                                               } else if (unwrap instanceof IncompatibleSchemaException) {
-                                                  log.info("addSchema incompatible schema {} for group {}", schemaInfo.getType(), groupName);
+                                                  log.info("addSchema incompatible schema {}", groupName);
                                                   return Response.status(Status.CONFLICT).build();
                                               } else if (unwrap instanceof SerializationFormatMismatchException) {
                                                   log.info("addSchema serialization format mismatched {}", groupName);

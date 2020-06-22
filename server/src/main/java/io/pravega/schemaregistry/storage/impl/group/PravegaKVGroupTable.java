@@ -123,7 +123,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
         return Futures.exceptionallyExpecting(
                 tablesStore.getEntry(tableName, KEY_SERIALIZER.toBytes(key), x -> fromBytes(key.getClass(), x, tClass))
                            .thenApply(entry -> {
-                               T typedRecord = getTypedRecord(tClass, entry.getRecord());
+                               T typedRecord = getTypedRecord(entry.getRecord());
                                if (IMMUTABLE_RECORDS.contains(key.getClass())) {
                                    tablesStore.cacheRecord(tableName, key, new Version.VersionedRecord<>(typedRecord, entry.getVersion()));
                                }
@@ -184,12 +184,8 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
 
 
     @SuppressWarnings("unchecked")
-    private <T extends TableValue> T getTypedRecord(Class<T> tClass, TableValue value) {
-        if (tClass.isAssignableFrom(value.getClass())) {
-            return (T) value;
-        } else {
-            throw new IllegalArgumentException();
-        }
+    private <T extends TableValue> T getTypedRecord(TableValue value) {
+        return (T) value;
     }
 
     @Override

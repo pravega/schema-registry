@@ -326,7 +326,8 @@ public interface SchemaRegistryClient {
     List<String> getCodecTypes(String groupId) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Add new codec type to be used in encoding in the group. 
+     * Add new codec type to be used in encoding in the group. Adding a new codectype is backward incompatible. 
+     * Make sure all readers are upgraded to use the new codec before any writers use the codec to encode the data. 
      * 
      * @param groupId Id for the group. 
      * @param codecType codec type.
