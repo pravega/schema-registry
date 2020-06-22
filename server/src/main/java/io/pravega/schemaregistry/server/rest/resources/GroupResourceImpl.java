@@ -314,7 +314,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   log.warn("Group {} not found", groupName);
                                                   return Response.status(Status.NOT_FOUND).build();
                                               } else if (unwrap instanceof IncompatibleSchemaException) {
-                                                  log.info("addSchema incompatible schema {}", groupName);
+                                                  log.info("addSchema incompatible schema {} for group {}", schemaInfo.getType(), groupName);
                                                   return Response.status(Status.CONFLICT).build();
                                               } else if (unwrap instanceof SerializationFormatMismatchException) {
                                                   log.info("addSchema serialization format mismatched {}", groupName);

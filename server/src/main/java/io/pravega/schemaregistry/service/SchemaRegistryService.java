@@ -258,7 +258,7 @@ public class SchemaRegistryService {
                                                                               .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
                                                                               .thenCompose(valid -> {
                                                                                   if (!valid) {
-                                                                                      throw new IncompatibleSchemaException(String.format("%s is incomatible", schema.getType()));
+                                                                                      throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
                                                                                   }
                                                                                   return store.addSchema(namespace, group, schema, prop, etag);
                                                                               });
@@ -778,7 +778,7 @@ public class SchemaRegistryService {
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
 
                     isValid = fileDescriptorSet.getFileList().stream()
-                                               .anyMatch(x -> x.getPackage().startsWith(pckg) &&
+                                               .anyMatch(x -> pckg.startsWith(x.getPackage()) &&
                                                        x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)));
                     break;
                 case Avro:
