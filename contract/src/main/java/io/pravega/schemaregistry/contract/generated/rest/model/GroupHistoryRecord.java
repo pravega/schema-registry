@@ -32,8 +32,8 @@ public class GroupHistoryRecord   {
   @JsonProperty("schemaInfo")
   private SchemaInfo schemaInfo = null;
 
-  @JsonProperty("version")
-  private VersionInfo version = null;
+  @JsonProperty("versionInfo")
+  private VersionInfo versionInfo = null;
 
   @JsonProperty("compatibility")
   private Compatibility compatibility = null;
@@ -64,24 +64,23 @@ public class GroupHistoryRecord   {
     this.schemaInfo = schemaInfo;
   }
 
-  public GroupHistoryRecord version(VersionInfo version) {
-    this.version = version;
+  public GroupHistoryRecord versionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
     return this;
   }
 
   /**
    * Schema version information object.
-   * @return version
+   * @return versionInfo
    **/
-  @JsonProperty("version")
-  @ApiModelProperty(required = true, value = "Schema version information object.")
-  @NotNull
-  public VersionInfo getVersion() {
-    return version;
+  @JsonProperty("versionInfo")
+  @ApiModelProperty(value = "Schema version information object.")
+  public VersionInfo getVersionInfo() {
+    return versionInfo;
   }
 
-  public void setVersion(VersionInfo version) {
-    this.version = version;
+  public void setVersionInfo(VersionInfo versionInfo) {
+    this.versionInfo = versionInfo;
   }
 
   public GroupHistoryRecord compatibility(Compatibility compatibility) {
@@ -154,7 +153,7 @@ public class GroupHistoryRecord   {
     }
     GroupHistoryRecord groupHistoryRecord = (GroupHistoryRecord) o;
     return Objects.equals(this.schemaInfo, groupHistoryRecord.schemaInfo) &&
-        Objects.equals(this.version, groupHistoryRecord.version) &&
+        Objects.equals(this.versionInfo, groupHistoryRecord.versionInfo) &&
         Objects.equals(this.compatibility, groupHistoryRecord.compatibility) &&
         Objects.equals(this.timestamp, groupHistoryRecord.timestamp) &&
         Objects.equals(this.schemaString, groupHistoryRecord.schemaString);
@@ -162,7 +161,7 @@ public class GroupHistoryRecord   {
 
   @Override
   public int hashCode() {
-    return Objects.hash(schemaInfo, version, compatibility, timestamp, schemaString);
+    return Objects.hash(schemaInfo, versionInfo, compatibility, timestamp, schemaString);
   }
 
 
@@ -172,7 +171,7 @@ public class GroupHistoryRecord   {
     sb.append("class GroupHistoryRecord {\n");
     
     sb.append("    schemaInfo: ").append(toIndentedString(schemaInfo)).append("\n");
-    sb.append("    version: ").append(toIndentedString(version)).append("\n");
+    sb.append("    versionInfo: ").append(toIndentedString(versionInfo)).append("\n");
     sb.append("    compatibility: ").append(toIndentedString(compatibility)).append("\n");
     sb.append("    timestamp: ").append(toIndentedString(timestamp)).append("\n");
     sb.append("    schemaString: ").append(toIndentedString(schemaString)).append("\n");

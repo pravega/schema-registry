@@ -216,7 +216,7 @@ public class TestSchemaRegistryClient {
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         VersionInfo versionInfo = new VersionInfo("schema1", 5, 5);
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion schemaVersion = new io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion()
-                .schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo));
+                .schemaInfo(ModelHelper.encode(schemaInfo)).versionInfo(ModelHelper.encode(versionInfo));
         SchemaVersionsList schemaList = new SchemaVersionsList();
         schemaList.addSchemasItem(schemaVersion);
         doReturn(schemaList).when(response).readEntity(SchemaVersionsList.class);
@@ -421,7 +421,7 @@ public class TestSchemaRegistryClient {
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         Compatibility compatibility = Compatibility.backward();
         GroupHistoryRecord groupHistoryRecord = new io.pravega.schemaregistry.contract.generated.rest.model.GroupHistoryRecord()
-                .schemaInfo(ModelHelper.encode(schemaInfo)).version(ModelHelper.encode(versionInfo))
+                .schemaInfo(ModelHelper.encode(schemaInfo)).versionInfo(ModelHelper.encode(versionInfo))
                 .compatibility(ModelHelper.encode(compatibility)).timestamp(100L).schemaString("");
         GroupHistory history = new GroupHistory();
         history.addHistoryItem(groupHistoryRecord);
@@ -429,8 +429,8 @@ public class TestSchemaRegistryClient {
         List<io.pravega.schemaregistry.contract.data.GroupHistoryRecord> groupHistoryList = client.getGroupHistory("mygroup");
         assertEquals(1, groupHistoryList.size());
         assertEquals(compatibility, groupHistoryList.get(0).getCompatibility());
-        assertEquals(schemaInfo, groupHistoryList.get(0).getSchema());
-        assertEquals(versionInfo, groupHistoryList.get(0).getVersion());
+        assertEquals(schemaInfo, groupHistoryList.get(0).getSchemaInfo());
+        assertEquals(versionInfo, groupHistoryList.get(0).getVersionInfo());
         assertEquals(100L, groupHistoryList.get(0).getTimestamp());
         assertEquals("", groupHistoryList.get(0).getSchemaString());
         //NotFound Exception

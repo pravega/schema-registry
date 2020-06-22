@@ -47,8 +47,8 @@ public class ModelHelperTest {
         Compatibility backwardTillForwardTill = new Compatibility()
                 .policy(Compatibility.PolicyEnum.ADVANCED)
                 .advanced(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
-                        .backwardPolicy(new BackwardTill().name(BackwardTill.class.getSimpleName()).version(version)))
-                                                       .forwardPolicy(new ForwardPolicy().forwardPolicy(new ForwardTill().name(ForwardTill.class.getSimpleName()).version(version)))
+                        .backwardPolicy(new BackwardTill().name(BackwardTill.class.getSimpleName()).versionInfo(version)))
+                                                       .forwardPolicy(new ForwardPolicy().forwardPolicy(new ForwardTill().name(ForwardTill.class.getSimpleName()).versionInfo(version)))
                 );
         String codecType = "custom";
 
@@ -85,7 +85,7 @@ public class ModelHelperTest {
         assertEquals(encodingInfo.getCodecType(), "custom");
         assertEquals(encodingInfo.getVersionInfo(), versionInfo);
         assertEquals(encodingInfo.getSchemaInfo(), schemaInfo);
-        io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion = ModelHelper.decode(new SchemaWithVersion().schemaInfo(schema).version(version));
+        io.pravega.schemaregistry.contract.data.SchemaWithVersion schemaWithVersion = ModelHelper.decode(new SchemaWithVersion().schemaInfo(schema).versionInfo(version));
         assertEquals(schemaWithVersion.getVersionInfo(), versionInfo);
         assertEquals(schemaWithVersion.getSchemaInfo(), schemaInfo);
 
@@ -140,13 +140,13 @@ public class ModelHelperTest {
                 schemaInfo, versionInfo, compatibility, 100L, ""));
         assertEquals(schemaEvolution.getSchemaInfo(), schema);
         assertEquals(schemaEvolution.getCompatibility(), rules);
-        assertEquals(schemaEvolution.getVersion(), version);
+        assertEquals(schemaEvolution.getVersionInfo(), version);
         assertEquals(schemaEvolution.getTimestamp().longValue(), 100L);
         assertEquals(schemaEvolution.getSchemaString(), "");
         
         SchemaWithVersion schemaWithVersion = ModelHelper.encode(new io.pravega.schemaregistry.contract.data.SchemaWithVersion(schemaInfo, versionInfo));
         assertEquals(schemaWithVersion.getSchemaInfo(), schema);
-        assertEquals(schemaWithVersion.getVersion(), version);
+        assertEquals(schemaWithVersion.getVersionInfo(), version);
 
         GroupProperties groupProperties = ModelHelper.encode(prop);
         assertEquals(groupProperties.getSerializationFormat(), type);
