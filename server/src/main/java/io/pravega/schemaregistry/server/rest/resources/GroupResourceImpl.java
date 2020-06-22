@@ -40,10 +40,14 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.StoreExceptions;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -56,6 +60,8 @@ import java.util.stream.Collectors;
 
 import static io.pravega.auth.AuthHandler.Permissions.READ;
 import static io.pravega.auth.AuthHandler.Permissions.READ_UPDATE;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.*;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.DEFAULT_NAMESPACE;
 import static javax.ws.rs.core.Response.Status;
 
 /**
@@ -91,8 +97,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
             Predicate<Map.Entry<String, GroupProperties>> predicate = x -> {
                 try {
                     String resource = Strings.isNullOrEmpty(namespace) ?
-                            String.format(AuthResources.GROUP_FORMAT, x.getKey()) :
-                            String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, x.getKey());
+                            getGroupResource(x.getKey()) :
+                            getGroupResource(x.getKey(), namespace);
                     authenticateAuthorize(authorizationHeader, resource, READ);
                     return true;
                 } catch (AuthException e) {
@@ -129,7 +135,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void createGroup(CreateGroupRequest createGroupRequest, String namespace,
                             AsyncResponse asyncResponse) {
-        String resource = Strings.isNullOrEmpty(namespace) ? AuthResources.ROOT : String.format(AuthResources.NAMESPACE_FORMAT, namespace);
+        String resource = Strings.isNullOrEmpty(namespace) ? ROOT : getNamespaceResource(namespace);
         withCompletion("createGroup", READ_UPDATE, resource, asyncResponse, () -> {
             GroupProperties groupProperties = ModelHelper.decode(createGroupRequest.getGroupProperties());
             String groupName = createGroupRequest.getGroupName();
@@ -155,8 +161,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getGroupProperties(String groupName, String namespace,
                                    AsyncResponse asyncResponse) {
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) : 
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) : 
+                getGroupResource(groupName, namespace);
         withCompletion("getGroupProperties", READ, resource, asyncResponse,
                 () -> getRegistryService().getGroupProperties(namespace, groupName)
                                      .thenApply(groupProperty -> {
@@ -176,12 +182,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                     return response;
                 });
     }
-
+    
     @Override
     public void getGroupHistory(String groupName, String namespace, AsyncResponse asyncResponse) {
         log.info("Get group history called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
         withCompletion("getGroupHistory", READ, resource, asyncResponse,
                 () -> getRegistryService().getGroupHistory(namespace, groupName, null)
                                      .thenApply(history -> {
@@ -211,8 +217,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     public void updateCompatibility(String groupName, UpdateCompatibilityRequest updateCompatibilityRequest, 
                                             String namespace, AsyncResponse asyncResponse) {
         log.info("Update compatibility called for group {} with new request {}", groupName, updateCompatibilityRequest);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("updateCompatibility", READ_UPDATE, resource, asyncResponse,
                 () -> {
@@ -243,8 +249,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     public void deleteGroup(String groupName, String namespace,
                             AsyncResponse asyncResponse) {
         log.info("Delete group called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
         withCompletion("deleteGroup", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteGroup(namespace, groupName)
                                      .thenApply(status -> {
@@ -264,8 +270,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getSchemaVersions(String groupName, String type, String namespace, AsyncResponse asyncResponse) {
         log.info("Get group schemas called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getSchemaVersions", READ, resource, asyncResponse,
                 () -> getRegistryService().getGroupHistory(namespace, groupName, null)
@@ -297,8 +303,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     public void addSchema(String groupName, SchemaInfo schemaInfo, String namespace,
                                           AsyncResponse asyncResponse) {
         log.info("Add schema to group called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_SCHEMA_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_SCHEMA_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupSchemaResource(groupName) :
+                getGroupSchemaResource(groupName, namespace);
 
         withCompletion("addSchema", READ_UPDATE, resource, asyncResponse,
                 () -> {
@@ -333,8 +339,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void validate(String groupName, ValidateRequest validateRequest, String namespace, AsyncResponse asyncResponse) {
         log.info("Validate schema called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("validate", READ, resource, asyncResponse,
                 () -> {
@@ -360,8 +366,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void canRead(String groupName, SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) {
         log.info("Can read using schema called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("canRead", READ, resource, asyncResponse,
                 () -> {
@@ -387,8 +393,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getSchemaForId(String groupName, Integer schemaId, String namespace, AsyncResponse asyncResponse) {
         log.info("Get schema from version {} called for group {}", schemaId, groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getSchemaForId", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchema(namespace, groupName, schemaId)
@@ -414,8 +420,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getSchemaFromVersion(String groupName, String schemaType, Integer version, String namespace, AsyncResponse asyncResponse) {
         log.info("Get schema from version {} called for group {}", version, groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getSchemaFromVersion", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchema(namespace, groupName, schemaType, version)
@@ -442,8 +448,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     public void deleteSchemaForId(String groupName, Integer schemaId, String namespace,
                                                AsyncResponse asyncResponse) {
         log.info("Delete schema from version {} called for group {}", schemaId, groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("deleteSchemaForId", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteSchema(namespace, groupName, schemaId)
@@ -469,8 +475,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     public void deleteSchemaVersion(String groupName, String schemaType, Integer version, String namespace,
                                     AsyncResponse asyncResponse) {
         log.info("Delete schema from version {}/{} called for group {}", schemaType, version, groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_SCHEMA_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_SCHEMA_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupSchemaResource(groupName) :
+                getGroupSchemaResource(groupName, namespace);
 
         withCompletion("deleteSchemaVersion", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteSchema(namespace, groupName, schemaType, version)
@@ -497,8 +503,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                               AsyncResponse asyncResponse) {
         log.info("getEncodingId called for group {} with version {} and codec {}", groupName,
                 getEncodingIdRequest.getVersionInfo(), getEncodingIdRequest.getCodecType());
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getEncodingId", READ, resource, asyncResponse,
                 () -> {
@@ -532,8 +538,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getSchemaVersion(String groupName, SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) {
         log.info("Get schema version called for group {}", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getSchemaVersion", READ, resource, asyncResponse,
                 () -> {
@@ -561,8 +567,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getSchemas(String groupName, String type, String namespace, AsyncResponse asyncResponse) {
         log.info("getSchemas called for group {} ", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getSchemas", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchemas(namespace, groupName, type)
@@ -590,8 +596,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void getEncodingInfo(String groupName, Integer encodingId, String namespace, AsyncResponse asyncResponse) {
         log.info("getEncodingInfo called for group {} encodingId {}", groupName, encodingId);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getEncodingInfo", READ, resource, asyncResponse,
                 () -> {
@@ -621,8 +627,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     public void getCodecTypesList(String groupName, String namespace,
                                   AsyncResponse asyncResponse) {
         log.info("getCodecTypesList called for group {} ", groupName);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(groupName) :
+                getGroupResource(groupName, namespace);
 
         withCompletion("getCodecTypesList", READ, resource, asyncResponse,
                 () -> getRegistryService().getCodecTypes(namespace, groupName)
@@ -648,8 +654,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void addCodecType(String groupName, String codecType, String namespace, AsyncResponse asyncResponse) {
         log.info("addCodecType called for group {} codecType {}", groupName, codecType);
-        String resource = Strings.isNullOrEmpty(namespace) ? String.format(AuthResources.GROUP_CODEC_FORMAT, groupName) :
-                String.format(AuthResources.NAMESPACE_GROUP_CODEC_FORMAT, namespace, groupName);
+        String resource = Strings.isNullOrEmpty(namespace) ? getGroupCodecResource(groupName) :
+                getGroupCodecResource(groupName, namespace);
 
         withCompletion("addCodecType", READ, resource, asyncResponse,
                 () -> getRegistryService().addCodecType(namespace, groupName, codecType)
@@ -669,5 +675,40 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                     asyncResponse.resume(response);
                     return response;
                 });
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    private String getNamespaceResource(String namespace) {
+        return String.format(NAMESPACE_FORMAT, URLEncoder.encode(namespace, Charsets.UTF_8.toString()));
+    }
+
+    private String getGroupResource(String groupName) {
+        return getGroupResource(groupName, DEFAULT_NAMESPACE);
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    private String getGroupResource(String groupName, String namespace) {
+        return String.format(NAMESPACE_GROUP_FORMAT, URLEncoder.encode(namespace, Charsets.UTF_8.toString()),
+                URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+    }
+
+    private String getGroupSchemaResource(String groupName) {
+        return getGroupSchemaResource(groupName, DEFAULT_NAMESPACE);
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    private String getGroupSchemaResource(String groupName, String namespace) {
+        return String.format(NAMESPACE_GROUP_SCHEMA_FORMAT,
+                URLEncoder.encode(namespace, Charsets.UTF_8.toString()), URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+    }
+
+    private String getGroupCodecResource(String groupName) {
+        return getGroupCodecResource(groupName, DEFAULT_NAMESPACE);
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    private String getGroupCodecResource(String groupName, String namespace) {
+        return String.format(NAMESPACE_GROUP_CODEC_FORMAT,
+                URLEncoder.encode(namespace, Charsets.UTF_8.toString()), URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
     }
 }

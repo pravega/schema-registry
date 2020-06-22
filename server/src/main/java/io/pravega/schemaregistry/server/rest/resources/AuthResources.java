@@ -11,11 +11,9 @@ package io.pravega.schemaregistry.server.rest.resources;
 
 class AuthResources {
     static final String ROOT = "/";
-    static final String NAMESPACE_FORMAT = ROOT + "%s";
-    static final String NAMESPACE_GROUP_FORMAT = NAMESPACE_FORMAT + "%s";
+    static final String DEFAULT_NAMESPACE = "";
+    static final String NAMESPACE_FORMAT = ROOT + "/%s";
+    static final String NAMESPACE_GROUP_FORMAT = NAMESPACE_FORMAT + "/%s";
     static final String NAMESPACE_GROUP_SCHEMA_FORMAT = NAMESPACE_GROUP_FORMAT + "/schemas";
     static final String NAMESPACE_GROUP_CODEC_FORMAT = NAMESPACE_GROUP_FORMAT + "/codecs";
-    static final String GROUP_FORMAT = ROOT + "%s";
-    static final String GROUP_SCHEMA_FORMAT = GROUP_FORMAT + "/schemas";
-    static final String GROUP_CODEC_FORMAT = GROUP_FORMAT + "/codecs";
 }
