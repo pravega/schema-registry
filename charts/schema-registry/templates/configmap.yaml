@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "schema-registry.fullname" . }}-configmap
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "schema-registry.commonLabels" . | indent 4 }}
+data:
+  "CONTROLLER_URL": "{{ .Values.controllerUri }}"
+  "STORE_TYPE": "{{ .Values.storeType }}"
+  "AUTHORIZATION_ENABLED": "{{ .Values.authentication.enabled }}"
+  "TLS_ENABLED": "{{ .Values.tls.enabled }}"
+  "pravega_client_auth_loadDynamic": "{{ .Values.client.loadDynamic }}"
+  "pravega_client_auth_method": "{{ .Values.client.method }}"
+  "pravega_client_auth_token": "{{ .Values.client.token }}"
+  {{- if .Values.authentication.enabled }}
+  "USER_PASSWORD_FILE": "/etc/auth-passwd-volume/{{ .Values.authentication.userPasswordFile }}"
+  "TOKEN_SIGNING_KEY": "{{ .Values.authentication.tokenSigningKey }}"
+  {{- end }}
+  {{- if .Values.tls.enabled }}
+  "TLS_CERT_FILE": "/etc/secret-volume/{{ .Values.tls.certFile }}"
+  "TLS_TRUST_STORE": "{{ .Values.tls.trustStore }}"
+  "TLS_KEY_FILE": "/etc/secret-volume/{{ .Values.tls.keyFile }}"
+  "TLS_KEY_PASSWORD_FILE": "/etc/secret-volume/{{ .Values.tls.keyPasswordFile }}"
+  {{- end }}

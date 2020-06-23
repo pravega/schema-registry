@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ template "schema-registry.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "schema-registry.commonLabels" . | indent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.port }}
+      protocol: TCP
+      name: rest
+  selector:
+{{ include "schema-registry.selectorLabels" . | indent 4 }}

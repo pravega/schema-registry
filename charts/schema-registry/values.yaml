@@ -1,0 +1,46 @@
+## Default values for schema-registry.
+## This is a YAML-formatted file.
+## Declare variables to be passed into your templates.
+
+replicas: 2
+
+image:
+  repository: devops-repo.isus.emc.com:8116/nautilus/pravega-schema-registry
+  tag: 0.0.4
+  pullPolicy: IfNotPresent
+
+## Service account name and whether to create it.
+serviceAccount:
+  create: true
+  name: schema-registry
+  annotations:
+
+service:
+  type: LoadBalancer
+  port: 9092
+
+client:
+  loadDynamic: false
+  method: ""
+  token: ""
+
+controllerUri: tcp://localhost:9090
+storeType: Pravega
+
+authentication:
+  enabled: false
+  ## following values are considered only when
+  ## authentication is enabled
+  passwordAuthSecret:
+  userPasswordFile:
+  tokenSigningKey:
+
+tls:
+  enabled: false
+  ## following values are considered only when
+  ## tls is enabled
+  secret:
+  certFile:
+  trustStore:
+  keyFile:
+  keyPasswordFile:
