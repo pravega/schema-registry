@@ -9,8 +9,10 @@
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
+import io.pravega.schemaregistry.service.Config;
+
 class AuthResources {
-    static final String ROOT = "/";
+    static final String ROOT = Config.AUTH_RESOURCE_QUALIFIER + "/";
     static final String DEFAULT_NAMESPACE = "";
     static final String NAMESPACE_FORMAT = ROOT + "/%s";
     static final String NAMESPACE_GROUP_FORMAT = NAMESPACE_FORMAT + "/%s";

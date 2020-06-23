@@ -56,7 +56,8 @@ public final class Config {
     public static final String TLS_CERT_FILE;
     public static final String TLS_TRUST_STORE;
 
-    public static final boolean AUTHORIZATION_ENABLED;
+    public static final boolean AUTH_ENABLED;
+    public static final String AUTH_RESOURCE_QUALIFIER;
     public static final String USER_PASSWORD_FILE;
 
     public static final ServiceConfig SERVICE_CONFIG;
@@ -78,8 +79,9 @@ public final class Config {
     private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("auth.tlsKeyFile", "");
     private static final Property<String> PROPERTY_TLS_KEY_PASSWORD_FILE = Property.named("auth.tlsKeyPasswordFile", "");
 
-    private static final Property<Boolean> PROPERTY_AUTHORIZATION_ENABLED = Property.named("auth.enabled", false);
-    private static final Property<String> PROPERTY_AUTHORIZATION_PASSWORD_FILE = Property.named("auth.userPasswordFile", "");
+    private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("auth.enabled", false);
+    private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("auth.userPasswordFile", "");
+    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("auth.resourceQualifier", "");
 
     private static final String COMPONENT_CODE = "schema-registry";
 
@@ -105,8 +107,9 @@ public final class Config {
         TLS_CERT_FILE = p.get(PROPERTY_TLS_CERT_FILE);
         TLS_TRUST_STORE = p.get(PROPERTY_TLS_TRUST_STORE);
 
-        AUTHORIZATION_ENABLED = p.getBoolean(PROPERTY_AUTHORIZATION_ENABLED);
-        USER_PASSWORD_FILE = p.get(PROPERTY_AUTHORIZATION_PASSWORD_FILE);
+        AUTH_ENABLED = p.getBoolean(PROPERTY_AUTH_ENABLED);
+        AUTH_RESOURCE_QUALIFIER = p.get(PROPERTY_AUTH_RESOURCE_QUALIFIER);
+        USER_PASSWORD_FILE = p.get(PROPERTY_AUTH_PASSWORD_FILE);
 
         SERVICE_CONFIG = createServiceConfig();
     }
@@ -193,7 +196,7 @@ public final class Config {
         return ServiceConfig.builder()
                             .host(Config.SERVICE_HOST)
                                    .port(Config.SERVICE_PORT)
-                                   .authEnabled(Config.AUTHORIZATION_ENABLED)
+                                   .authEnabled(Config.AUTH_ENABLED)
                                    .userPasswordFile(Config.USER_PASSWORD_FILE)
                                    .tlsEnabled(Config.TLS_ENABLED)
                                    .tlsCertFile(Config.TLS_CERT_FILE)
