@@ -40,14 +40,10 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.StoreExceptions;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -60,8 +56,7 @@ import java.util.stream.Collectors;
 
 import static io.pravega.auth.AuthHandler.Permissions.READ;
 import static io.pravega.auth.AuthHandler.Permissions.READ_UPDATE;
-import static io.pravega.schemaregistry.server.rest.resources.AuthResources.*;
-import static io.pravega.schemaregistry.server.rest.resources.AuthResources.DEFAULT_NAMESPACE;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.ROOT;
 import static javax.ws.rs.core.Response.Status;
 
 /**
@@ -675,40 +670,5 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                     asyncResponse.resume(response);
                     return response;
                 });
-    }
-
-    @SneakyThrows(UnsupportedEncodingException.class)
-    private String getNamespaceResource(String namespace) {
-        return String.format(NAMESPACE_FORMAT, URLEncoder.encode(namespace, Charsets.UTF_8.toString()));
-    }
-
-    private String getGroupResource(String groupName) {
-        return getGroupResource(groupName, DEFAULT_NAMESPACE);
-    }
-
-    @SneakyThrows(UnsupportedEncodingException.class)
-    private String getGroupResource(String groupName, String namespace) {
-        return String.format(NAMESPACE_GROUP_FORMAT, URLEncoder.encode(namespace, Charsets.UTF_8.toString()),
-                URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
-    }
-
-    private String getGroupSchemaResource(String groupName) {
-        return getGroupSchemaResource(groupName, DEFAULT_NAMESPACE);
-    }
-
-    @SneakyThrows(UnsupportedEncodingException.class)
-    private String getGroupSchemaResource(String groupName, String namespace) {
-        return String.format(NAMESPACE_GROUP_SCHEMA_FORMAT,
-                URLEncoder.encode(namespace, Charsets.UTF_8.toString()), URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
-    }
-
-    private String getGroupCodecResource(String groupName) {
-        return getGroupCodecResource(groupName, DEFAULT_NAMESPACE);
-    }
-
-    @SneakyThrows(UnsupportedEncodingException.class)
-    private String getGroupCodecResource(String groupName, String namespace) {
-        return String.format(NAMESPACE_GROUP_CODEC_FORMAT,
-                URLEncoder.encode(namespace, Charsets.UTF_8.toString()), URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
     }
 }

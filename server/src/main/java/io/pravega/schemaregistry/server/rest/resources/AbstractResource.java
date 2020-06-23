@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.server.rest.resources;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
@@ -19,16 +20,24 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
+
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.*;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.DEFAULT_NAMESPACE;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.NAMESPACE_GROUP_CODEC_FORMAT;
 
 @Slf4j
 abstract class AbstractResource {
@@ -92,6 +101,52 @@ abstract class AbstractResource {
         }
     }
 
+    @SneakyThrows(UnsupportedEncodingException.class)
+    String getNamespaceResource(String namespace) {
+        String encode = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+        return String.format(NAMESPACE_FORMAT, encode);
+    }
+
+    String getGroupResource(String groupName) {
+        return getGroupResource(groupName, DEFAULT_NAMESPACE);
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    String getGroupResource(String groupName, String namespace) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+        String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+        return String.format(NAMESPACE_GROUP_FORMAT, encodedNamespace,
+                URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+    }
+
+    String getGroupSchemaResource(String groupName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+        return getGroupSchemaResource(groupName, DEFAULT_NAMESPACE);
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    String getGroupSchemaResource(String groupName, String namespace) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+        String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+
+        return String.format(NAMESPACE_GROUP_SCHEMA_FORMAT,
+                encodedNamespace, URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+    }
+
+    String getGroupCodecResource(String groupName) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+        return getGroupCodecResource(groupName, DEFAULT_NAMESPACE);
+    }
+
+    @SneakyThrows(UnsupportedEncodingException.class)
+    String getGroupCodecResource(String groupName, String namespace) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+        String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+
+        return String.format(NAMESPACE_GROUP_CODEC_FORMAT,
+                encodedNamespace, URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+    }
+
     static String parseCredentials(List<String> authHeader) throws AuthenticationException {
         if (authHeader == null || authHeader.isEmpty()) {
             throw new AuthenticationException("Missing authorization header.");
@@ -102,5 +157,4 @@ abstract class AbstractResource {
         Preconditions.checkNotNull(credentials, "Missing credentials.");
         return credentials;
     }
-
 }
