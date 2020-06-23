@@ -36,8 +36,6 @@ import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
 import static io.pravega.schemaregistry.server.rest.resources.AuthResources.*;
-import static io.pravega.schemaregistry.server.rest.resources.AuthResources.DEFAULT_NAMESPACE;
-import static io.pravega.schemaregistry.server.rest.resources.AuthResources.NAMESPACE_GROUP_CODEC_FORMAT;
 
 @Slf4j
 abstract class AbstractResource {
@@ -99,6 +97,10 @@ abstract class AbstractResource {
                         Response.Status.FORBIDDEN.getStatusCode());
             }
         }
+    }
+
+    String getNamespaceResource() {
+        return DOMAIN;
     }
 
     @SneakyThrows(UnsupportedEncodingException.class)

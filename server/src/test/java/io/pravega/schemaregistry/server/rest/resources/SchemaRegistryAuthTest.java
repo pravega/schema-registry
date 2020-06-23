@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.server.rest.resources;
@@ -61,8 +61,10 @@ public class SchemaRegistryAuthTest extends JerseyTest {
     private final static String GROUP1_USER = "group1read";
     private final static String GROUP2_USER = "group2read";
     private final static String GROUP_1_2_USER = "group1-2read";
+    private final static String NAMESPACE_USER = "namespaceuser";
+    private final static String NAMESPACE_ADMIN = "namespaceadmin";
     private final static String PASSWORD = "1111_aaaa";
-    
+
     private SchemaRegistryService service;
     private File authFile;
     private ScheduledExecutorService executor;
@@ -106,7 +108,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         }).when(service).listGroups(any(), any(), eq(10));
 
         Future<Response> future = target("v1/groups").queryParam("limit", 10)
-                                                     .request().header(HttpHeaders.AUTHORIZATION, 
+                                                     .request().header(HttpHeaders.AUTHORIZATION,
                         AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((SYSTEM_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                                      .async().get();
         Response response = future.get();
@@ -115,16 +117,16 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         assertEquals(list.getGroups().size(), 4);
 
         future = target("v1/groups").queryParam("limit", 10)
-                                                     .request().header(HttpHeaders.AUTHORIZATION, 
+                                    .request().header(HttpHeaders.AUTHORIZATION,
                         AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((NO_PREMISSION + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
-                                                     .async().get();
+                                    .async().get();
         response = future.get();
         assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
 
         future = target("v1/groups").queryParam("limit", 10)
-                                                     .request().header(HttpHeaders.AUTHORIZATION,
+                                    .request().header(HttpHeaders.AUTHORIZATION,
                         AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((GROUP1_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
-                                                     .async().get();
+                                    .async().get();
         response = future.get();
         assertEquals(response.getStatus(), 200);
         list = response.readEntity(ListGroupsResponse.class);
@@ -158,6 +160,27 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         assertTrue(list.getGroups().keySet().contains("group2"));
         assertTrue(list.getGroups().keySet().contains("group11"));
         assertTrue(list.getGroups().keySet().contains("group12"));
+
+        // verify namespace user
+        future = target("v1/groups").queryParam("limit", 10).queryParam("namespace", "namespace")
+                                    .request().header(HttpHeaders.AUTHORIZATION,
+                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((NAMESPACE_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                    .async().get();
+        response = future.get();
+        assertEquals(response.getStatus(), 200);
+        list = response.readEntity(ListGroupsResponse.class);
+        assertEquals(list.getGroups().size(), 1);
+
+        // verify namespace admin
+        future = target("v1/groups").queryParam("limit", 10).queryParam("namespace", "namespace")
+                                    .request().header(HttpHeaders.AUTHORIZATION,
+                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((NAMESPACE_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                    .async().get();
+        response = future.get();
+        assertEquals(response.getStatus(), 200);
+        list = response.readEntity(ListGroupsResponse.class);
+        assertEquals(list.getGroups().size(), 10);
+        assertEquals(list.getContinuationToken(), ContinuationToken.fromString("token").toString());
     }
 
     private File createAuthFile() {
@@ -169,10 +192,12 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                 String defaultPassword = passwordEncryptor.encryptPassword(PASSWORD);
                 writer.write(credentialsAndAclAsString(SYSTEM_ADMIN, defaultPassword, "*,READ_UPDATE;"));
                 writer.write(credentialsAndAclAsString(SYSTEM_READER, defaultPassword, "/*,READ"));
-                writer.write(credentialsAndAclAsString(GROUP1_ADMIN, defaultPassword, "//group1,READ_UPDATE"));
-                writer.write(credentialsAndAclAsString(GROUP1_USER, defaultPassword, "//group1,READ"));
-                writer.write(credentialsAndAclAsString(GROUP2_USER, defaultPassword, "//group2,READ"));
-                writer.write(credentialsAndAclAsString(GROUP_1_2_USER, defaultPassword, "//group1,READ;//group2,READ;//group11,READ;//group12,READ"));
+                writer.write(credentialsAndAclAsString(GROUP1_ADMIN, defaultPassword, "_schemaregistry//group1,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(GROUP1_USER, defaultPassword, "_schemaregistry//group1,READ"));
+                writer.write(credentialsAndAclAsString(GROUP2_USER, defaultPassword, "_schemaregistry//group2,READ"));
+                writer.write(credentialsAndAclAsString(GROUP_1_2_USER, defaultPassword, "_schemaregistry//group1,READ;_schemaregistry//group2,READ;_schemaregistry//group11,READ;_schemaregistry//group12,READ"));
+                writer.write(credentialsAndAclAsString(NAMESPACE_USER, defaultPassword, "_schemaregistry/namespace/group1,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(NAMESPACE_ADMIN, defaultPassword, "_schemaregistry/namespace/*,READ_UPDATE"));
             }
             return authFile;
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {

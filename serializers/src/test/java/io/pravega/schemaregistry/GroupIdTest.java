@@ -21,7 +21,7 @@ public class GroupIdTest {
     @Test
     public void testGroupId() throws UnsupportedEncodingException {
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, "scope", "stream");
-        
+
         assertEquals(URLDecoder.decode(groupId, Charsets.UTF_8.toString()), "scope/stream");
     }
 }

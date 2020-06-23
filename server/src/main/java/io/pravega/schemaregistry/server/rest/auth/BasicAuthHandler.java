@@ -127,13 +127,13 @@ public class BasicAuthHandler implements AuthHandler {
          *  If it is a partial match, the target has to end with a `/`
          */
         for (PravegaAcl acl : pravegaACls.acls) {
-
             // Separating into different blocks, to make the code more understandable.
             // It makes the code look a bit strange, but it is still simpler and easier to decipher than what it be
             // if we combine the conditions.
 
             if (acl.isResource(resource)) {
                 // Example: resource = "mygroup", acl-resource = "mygroup"
+
                 result = acl.permissions;
                 break;
             }
@@ -143,7 +143,7 @@ public class BasicAuthHandler implements AuthHandler {
                 result = acl.permissions;
                 break;
             }
-
+            
             if (acl.resourceEndsWith("/") && acl.resourceStartsWith(resource)) {
                 result = acl.permissions;
                 break;
@@ -153,10 +153,14 @@ public class BasicAuthHandler implements AuthHandler {
             // Auth should return the the ACL's permissions in that case.
             if (resource.contains("/") && !resource.endsWith("/")) {
                 String[] values = resource.split("/");
-                if (acl.isResource(values[0] + "/*")) {
-                    result = acl.permissions;
-                    break;
-                }
+                String res = null;
+                for (String value : values) {
+                    res = res == null ? value : res + "/" + value;
+                    if (acl.isResource(res + "/*")) {
+                        result = acl.permissions;
+                        break;
+                    }
+                } 
             }
 
             if (acl.isResource("*") && acl.hasHigherPermissionsThan(result)) {

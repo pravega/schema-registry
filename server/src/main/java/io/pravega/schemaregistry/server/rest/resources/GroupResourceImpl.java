@@ -56,7 +56,6 @@ import java.util.stream.Collectors;
 
 import static io.pravega.auth.AuthHandler.Permissions.READ;
 import static io.pravega.auth.AuthHandler.Permissions.READ_UPDATE;
-import static io.pravega.schemaregistry.server.rest.resources.AuthResources.ROOT;
 import static javax.ws.rs.core.Response.Status;
 
 /**
@@ -94,6 +93,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                     String resource = Strings.isNullOrEmpty(namespace) ?
                             getGroupResource(x.getKey()) :
                             getGroupResource(x.getKey(), namespace);
+
                     authenticateAuthorize(authorizationHeader, resource, READ);
                     return true;
                 } catch (AuthException e) {
@@ -130,7 +130,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void createGroup(CreateGroupRequest createGroupRequest, String namespace,
                             AsyncResponse asyncResponse) {
-        String resource = Strings.isNullOrEmpty(namespace) ? ROOT : getNamespaceResource(namespace);
+        String resource = Strings.isNullOrEmpty(namespace) ? getNamespaceResource() : getNamespaceResource(namespace);
         withCompletion("createGroup", READ_UPDATE, resource, asyncResponse, () -> {
             GroupProperties groupProperties = ModelHelper.decode(createGroupRequest.getGroupProperties());
             String groupName = createGroupRequest.getGroupName();
