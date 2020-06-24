@@ -36,7 +36,7 @@ import static org.junit.Assert.*;
 public class ModelHelperTest {
     @Test
     public void testDecode() {
-        SerializationFormat type = new SerializationFormat().serializationFormat(SerializationFormat.SerializationFormatEnum.CUSTOM).customTypeName("a");
+        SerializationFormat type = new SerializationFormat().serializationFormat(SerializationFormat.SerializationFormatEnum.CUSTOM).fullTypeName("a");
         Compatibility backward = new Compatibility()
                 .policy(Compatibility.PolicyEnum.ADVANCED)
                 .advanced(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
@@ -55,7 +55,7 @@ public class ModelHelperTest {
         // decodes
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = ModelHelper.decode(type);
         assertEquals(serializationFormat, io.pravega.schemaregistry.contract.data.SerializationFormat.Custom);
-        assertEquals(serializationFormat.getCustomTypeName(), "a");
+        assertEquals(serializationFormat.getFullTypeName(), "a");
 
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = ModelHelper.decode(schema);
         assertEquals(schemaInfo.getType(), "a");

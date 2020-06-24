@@ -28,7 +28,7 @@ import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
 
 /**
  * Defines a registry client for interacting with schema registry service. 
- * The implementation of this interface should provide atomicity and read-after-write-consistency guarantees for all the methods.
+ * The implementation of this interface should provide read-after-write-consistency guarantees for all the methods.
  */
 @Beta
 public interface SchemaRegistryClient {
@@ -63,9 +63,8 @@ public interface SchemaRegistryClient {
      * List all groups that the user is authorized on. This returns an iterator where each element is a pair of group 
      * name and group properties. 
      * This iterator can be used to iterate over each element until all elements are exhausted. 
-     * The implementation should guarantee that all groups added before and till the iterator continues to return 
-     * {@link Iterator#hasNext()} = true should be available for iteration. 
-     * 
+     * The implementation should guarantee that all groups added before the iterator {@link Iterator#hasNext()} = false 
+     * will be included.
      * @return map of names of groups with corresponding group properties for all groups. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
@@ -105,7 +104,9 @@ public interface SchemaRegistryClient {
 
     /**
      * Gets list of latest schemas for each object types registered under the group. Objects are identified by {@link SchemaInfo#type}.
-     * Schemas are retrieved atomically. So all schemas added before this call will be returned by this call. 
+     * Schema registry provides consistency guarantees. So all schemas added before this call will be returned by this call.
+     * However, the service side implementation is not guaranteed to be atomic.
+     * So if schemas are being added concurrently, the schemas returned by this api may or may not include those. 
      *
      * @param groupId Id for the group. 
      * @return Unordered list of different objects within the group.    
@@ -157,28 +158,7 @@ public interface SchemaRegistryClient {
      * @throws UnauthorizedException if the user is unauthorized.
      */
     void deleteSchemaVersion(String groupId, VersionInfo versionInfo) throws ResourceNotFoundException, UnauthorizedException;
-
-    /**
-     * Deletes the schema associated to the given version. Users should be very careful while using this API in production, 
-     * esp if the schema has already been used to write the data. 
-     * An implementation of the delete call is expected to be idempotent. The behaviour of delete schema API invocation 
-     * with the schema registry service is idempotent. 
-     * The service performs a soft delete of the schema. So getSchemaVersion with the version info will still return the schema.
-     * However, the schema will not participate in any compatibility checks once deleted.
-     * It will not be included in listing schema versions for the group using APIs like {@link SchemaRegistryClient#getSchemaVersions}
-     * or {@link SchemaRegistryClient#getGroupHistory} or {@link SchemaRegistryClient#getSchemas} or 
-     * {@link SchemaRegistryClient#getLatestSchemaVersion}
-     * If add schema is called again using this deleted schema will result in a new version being assigned to it upon registration. 
-     * 
-     * @param groupId Id for the group.
-     * @param schemaType schemaType that identifies the type of object the schema represents. This should be same as the 
-     *                   value specified in {@link SchemaInfo#type}. 
-     * @param version Version number which uniquely identifies schema for the schemaType within a group. 
-     * @throws ResourceNotFoundException if group is not found. 
-     * @throws UnauthorizedException if the user is unauthorized.
-     */
-    void deleteSchemaVersion(String groupId, String schemaType, int version) throws ResourceNotFoundException, UnauthorizedException;
-
+    
     /**
      * Gets schema corresponding to the version. 
      * 
@@ -189,19 +169,7 @@ public interface SchemaRegistryClient {
      * @throws UnauthorizedException if the user is unauthorized.
      */
     SchemaInfo getSchemaForVersion(String groupId, VersionInfo versionInfo) throws ResourceNotFoundException, UnauthorizedException;
-
-    /**
-     * Gets schema corresponding to the version. 
-     * 
-     * @param groupId Id for the group. 
-     * @param schemaType schemaType as specified in the {@link SchemaInfo#type} while registering the schema. 
-     * @param version Version which uniquely identifies schema of schemaType within a group. 
-     * @return Schema info corresponding to the version info.
-     * @throws ResourceNotFoundException if group or version is not found. 
-     * @throws UnauthorizedException if the user is unauthorized.
-     */
-    SchemaInfo getSchemaForVersion(String groupId, String schemaType, int version) throws ResourceNotFoundException, UnauthorizedException;
-
+    
     /**
      * Gets encoding info against the requested encoding Id. The purpose of encoding info is to uniquely identify the encoding
      * used on the data at rest. The encoding covers two parts - 
@@ -340,9 +308,11 @@ public interface SchemaRegistryClient {
      * Gets complete schema evolution history of the group with schemas, versions, compatibility policy and  
      * time when the schema was added to the group. 
      * The order in the list matches the order in which schemas were evolved within the group. 
-     * This call is atomic and will get a consistent view at the time when the request is processed on the service. 
+     * This call will get a consistent view at the time when the request is processed on the service.
      * So all schemas that were added before this call are returned and all schemas that were deleted before this call
-     * are excluded. 
+     * are excluded.
+     * The execution of this API is non-atomic and if concurrent requests to add or delete schemas are invoked, it may or may not 
+     * include those schemas in the response. 
      *
      * @param groupId Id for the group.
      * @return Ordered list of schemas with versions and compatibility policy for all schemas in the group. 
