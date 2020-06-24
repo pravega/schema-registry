@@ -629,7 +629,7 @@ definitions:
       - compatibility      
   SerializationFormat:
     type: object
-    description: Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.  
+    description: Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply fullTypeName.  
     properties:
       serializationFormat:
         type: string
@@ -639,7 +639,7 @@ definitions:
           - Json
           - Any
           - Custom
-      customTypeName:
+      fullTypeName:
         type: string  
     required:
       - serializationFormat    
