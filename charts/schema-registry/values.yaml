@@ -15,8 +15,8 @@
 replicas: 2
 
 image:
-  repository: devops-repo.isus.emc.com:8116/nautilus/pravega-schema-registry
-  tag: 0.0.4
+  repository: pravega/schema-registry
+  tag: 0.0.1
   pullPolicy: IfNotPresent
 
 ## Service account name and whether to create it.
