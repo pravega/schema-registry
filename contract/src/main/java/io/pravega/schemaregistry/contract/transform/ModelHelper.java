@@ -63,10 +63,12 @@ public class ModelHelper {
         Preconditions.checkArgument(serializationFormat != null, "serialization format cannot be null");
         switch (serializationFormat.getSerializationFormat()) {
             case CUSTOM:
-                Preconditions.checkArgument(serializationFormat.getCustomTypeName() != null, "Custom name not supplied");
-                return io.pravega.schemaregistry.contract.data.SerializationFormat.custom(serializationFormat.getCustomTypeName());
+                Preconditions.checkArgument(serializationFormat.getFullTypeName() != null, "Custom name not supplied");
+                return io.pravega.schemaregistry.contract.data.SerializationFormat.custom(serializationFormat.getFullTypeName());
             default:
-                return searchEnum(io.pravega.schemaregistry.contract.data.SerializationFormat.class, serializationFormat.getSerializationFormat().name());
+                return io.pravega.schemaregistry.contract.data.SerializationFormat.withName(
+                        searchEnum(io.pravega.schemaregistry.contract.data.SerializationFormat.class, serializationFormat.getSerializationFormat().name()), 
+                        serializationFormat.getFullTypeName());
         }
     }
 
@@ -319,12 +321,13 @@ public class ModelHelper {
 
     public static SerializationFormat encode(io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat) {
         if (serializationFormat.equals(io.pravega.schemaregistry.contract.data.SerializationFormat.Custom)) {
-            Preconditions.checkArgument(serializationFormat.getCustomTypeName() != null);
+            Preconditions.checkArgument(serializationFormat.getFullTypeName() != null);
             SerializationFormat serializationFormatModel = new SerializationFormat().serializationFormat(SerializationFormat.SerializationFormatEnum.CUSTOM);
-            return serializationFormatModel.customTypeName(serializationFormat.getCustomTypeName());
+            return serializationFormatModel.fullTypeName(serializationFormat.getFullTypeName());
         } else {
             return new SerializationFormat().serializationFormat(
-                    searchEnum(SerializationFormat.SerializationFormatEnum.class, serializationFormat.name()));
+                    searchEnum(SerializationFormat.SerializationFormatEnum.class, serializationFormat.name()))
+                                            .fullTypeName(serializationFormat.getFullTypeName());
         }
     }
 

@@ -241,36 +241,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void deleteSchemaVersion(String groupId, String schemaType, int version) {
-        withRetry(() -> {
-            Response response = groupProxy.deleteSchemaVersion(groupId, schemaType, version, namespace);
-            if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
-                throw new ResourceNotFoundException("Group not found.");
-            } else if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                throw new InternalServerError("Internal Service error. Failed to get schema.");
-            }
-        });
-    }
-
-    @Override
     public SchemaInfo getSchemaForVersion(String groupId, VersionInfo versionInfo) {
         return withRetry(() -> {
             Response response = groupProxy.getSchemaForId(groupId, versionInfo.getId(), namespace);
-            switch (Response.Status.fromStatusCode(response.getStatus())) {
-                case OK:
-                    return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
-                case NOT_FOUND:
-                    throw new ResourceNotFoundException("Schema not found.");
-                default:
-                    throw new InternalServerError("Internal Service error. Failed to get schema.");
-            }
-        });
-    }
-
-    @Override
-    public SchemaInfo getSchemaForVersion(String groupId, String schemaType, int version) {
-        return withRetry(() -> {
-            Response response = groupProxy.getSchemaFromVersion(groupId, schemaType, version, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));

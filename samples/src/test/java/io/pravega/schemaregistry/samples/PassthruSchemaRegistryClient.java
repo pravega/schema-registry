@@ -94,18 +94,8 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public void deleteSchemaVersion(String group, String schemaType, int version) {
-        service.deleteSchema(group, schemaType, version).join();
-    }
-
-    @Override
     public SchemaInfo getSchemaForVersion(String group, VersionInfo versionInfo) {
         return service.getSchema(namespace, group, versionInfo.getId()).join();
-    }
-
-    @Override
-    public SchemaInfo getSchemaForVersion(String group, String schemaType, int version) {
-        return service.getSchema(namespace, group, schemaType, version).join();
     }
 
     @Override

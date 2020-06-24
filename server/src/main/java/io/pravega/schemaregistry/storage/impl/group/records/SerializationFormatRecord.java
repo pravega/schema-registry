@@ -54,7 +54,7 @@ public class SerializationFormatRecord {
         private void write00(SerializationFormatRecord e, RevisionDataOutput target) throws IOException {
             target.writeCompactInt(e.serializationFormat.ordinal());
             if (e.serializationFormat.equals(SerializationFormat.Custom)) {
-                target.writeUTF(e.serializationFormat.getCustomTypeName());
+                target.writeUTF(e.serializationFormat.getFullTypeName());
             }
         }
 

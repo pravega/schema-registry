@@ -22,9 +22,9 @@ import io.swagger.annotations.ApiModelProperty;
 import javax.validation.constraints.*;
 
 /**
- * Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.
+ * Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply fullTypeName.
  */
-@ApiModel(description = "Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply customTypeName.")
+@ApiModel(description = "Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply fullTypeName.")
 
 public class SerializationFormat   {
   /**
@@ -67,8 +67,8 @@ public class SerializationFormat   {
   @JsonProperty("serializationFormat")
   private SerializationFormatEnum serializationFormat = null;
 
-  @JsonProperty("customTypeName")
-  private String customTypeName = null;
+  @JsonProperty("fullTypeName")
+  private String fullTypeName = null;
 
   public SerializationFormat serializationFormat(SerializationFormatEnum serializationFormat) {
     this.serializationFormat = serializationFormat;
@@ -90,23 +90,23 @@ public class SerializationFormat   {
     this.serializationFormat = serializationFormat;
   }
 
-  public SerializationFormat customTypeName(String customTypeName) {
-    this.customTypeName = customTypeName;
+  public SerializationFormat fullTypeName(String fullTypeName) {
+    this.fullTypeName = fullTypeName;
     return this;
   }
 
   /**
-   * Get customTypeName
-   * @return customTypeName
+   * Get fullTypeName
+   * @return fullTypeName
    **/
-  @JsonProperty("customTypeName")
+  @JsonProperty("fullTypeName")
   @ApiModelProperty(value = "")
-  public String getCustomTypeName() {
-    return customTypeName;
+  public String getFullTypeName() {
+    return fullTypeName;
   }
 
-  public void setCustomTypeName(String customTypeName) {
-    this.customTypeName = customTypeName;
+  public void setFullTypeName(String fullTypeName) {
+    this.fullTypeName = fullTypeName;
   }
 
 
@@ -120,12 +120,12 @@ public class SerializationFormat   {
     }
     SerializationFormat serializationFormat = (SerializationFormat) o;
     return Objects.equals(this.serializationFormat, serializationFormat.serializationFormat) &&
-        Objects.equals(this.customTypeName, serializationFormat.customTypeName);
+        Objects.equals(this.fullTypeName, serializationFormat.fullTypeName);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(serializationFormat, customTypeName);
+    return Objects.hash(serializationFormat, fullTypeName);
   }
 
 
@@ -135,7 +135,7 @@ public class SerializationFormat   {
     sb.append("class SerializationFormat {\n");
     
     sb.append("    serializationFormat: ").append(toIndentedString(serializationFormat)).append("\n");
-    sb.append("    customTypeName: ").append(toIndentedString(customTypeName)).append("\n");
+    sb.append("    fullTypeName: ").append(toIndentedString(fullTypeName)).append("\n");
     sb.append("}");
     return sb.toString();
   }
