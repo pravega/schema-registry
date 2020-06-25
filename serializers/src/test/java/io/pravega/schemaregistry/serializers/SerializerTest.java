@@ -35,6 +35,9 @@ import io.pravega.schemaregistry.testobjs.generated.ProtobufTest;
 import io.pravega.schemaregistry.testobjs.generated.Test1;
 import io.pravega.schemaregistry.testobjs.generated.Test2;
 import io.pravega.test.common.AssertExtensions;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.junit.Test;
@@ -119,6 +122,32 @@ public class SerializerTest {
 
         fallback = fallbackDeserializer.deserialize(serialized);
         assertTrue(fallback.isRight());
+    }
+
+    @Test
+    @SneakyThrows
+    public void testAvroSerializersReflect() {
+        TestClass test1 = new TestClass("name");
+        AvroSchema<TestClass> schema1 = AvroSchema.of(TestClass.class);
+
+        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
+
+        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
+                .when(client).getGroupProperties(anyString());
+        doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
+        doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
+        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), CodecFactory.NONE)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
+
+        Serializer<TestClass> serializer = SerializerFactory.avroSerializer(config, schema1);
+        ByteBuffer serialized = serializer.serialize(test1);
+
+        Serializer<TestClass> deserializer = SerializerFactory.avroDeserializer(config, schema1);
+        TestClass deserialized = deserializer.deserialize(serialized);
+        assertEquals(deserialized, test1);
     }
 
     @Test
@@ -390,5 +419,15 @@ public class SerializerTest {
         JSonGenericObject generic = genericDeserializer.deserialize(serialized);
         assertNotNull(generic.getObject());
         assertNull(generic.getJsonSchema());
+    }
+
+    @Data
+    @NoArgsConstructor
+    public static class TestClass {
+        private String test;
+
+        public TestClass(String test) {
+            this.test = test;
+        }
     }
 }
