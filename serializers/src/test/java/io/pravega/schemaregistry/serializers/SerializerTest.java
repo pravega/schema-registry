@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
@@ -219,6 +220,11 @@ public class SerializerTest {
         JSonGenericObject generic = genericDeserializer.deserialize(serialized);
         assertEquals(generic.getJsonSchema(), schema1.getSchema());
         assertEquals(generic.getObject().size(), 4);
+
+        serialized = serializer.serialize(user1);
+        Serializer<String> stringDeserializer = SerializerFactory.jsonStringDeserializer(config);
+        String str = stringDeserializer.deserialize(serialized);
+        assertFalse(Strings.isNullOrEmpty(str));
 
         // multi type
         DerivedUser2 user2 = new DerivedUser2("user", new Address("street", "city"), 2, "user2");

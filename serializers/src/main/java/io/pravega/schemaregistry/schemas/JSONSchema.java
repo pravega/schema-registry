@@ -29,6 +29,7 @@ import java.nio.ByteBuffer;
  * @param <T> Type of element. 
  */
 public class JSONSchema<T> implements SchemaContainer<T> {
+    @Getter
     private final String schemaString;
     @Getter
     private final Class<T> tClass;
@@ -78,7 +79,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchema schema = schemaGen.generateSchema(tClass);
         String schemaString = objectMapper.writeValueAsString(schema);
 
-        return new JSONSchema<>(schema, null, schemaString, tClass);
+        return new JSONSchema<>(schema, tClass.getSimpleName(), schemaString, tClass);
     }
 
     /**
@@ -102,7 +103,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchema schema = schemaGen.generateSchema(tDerivedClass);
         String schemaString = objectMapper.writeValueAsString(schema);
 
-        return new JSONSchema<>(schema, null, schemaString, tClass, tDerivedClass);
+        return new JSONSchema<>(schema, tDerivedClass.getSimpleName(), schemaString, tClass, tDerivedClass);
     }
 
     /**

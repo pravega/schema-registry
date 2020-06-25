@@ -20,14 +20,15 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import lombok.SneakyThrows;
 import org.apache.avro.Schema;
-import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
+import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
+import org.apache.avro.specific.SpecificRecordBase;
 
 import java.io.InputStream;
 
-class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserializer<T> {
+class AvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
     private final AvroSchema<T> avroSchema;
     private final LoadingCache<byte[], Schema> knownSchemas;
 
@@ -52,9 +53,14 @@ class AvroDeserlizer<T extends IndexedRecord> extends AbstractPravegaDeserialize
         Preconditions.checkNotNull(writerSchemaInfo);
         Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData().array());
         Schema readerSchema = avroSchema.getSchema();
-        
-        SpecificDatumReader<T> datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
-        return datumReader.read(null, decoder);
+        
+        if (SpecificRecordBase.class.isAssignableFrom(avroSchema.getTClass())) {
+            SpecificDatumReader<T> datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
+            return datumReader.read(null, decoder);
+        } else {
+            ReflectDatumReader<T> datumReader = new ReflectDatumReader<>(writerSchema, readerSchema);
+            return datumReader.read(null, decoder);
+        }
     }
 }
