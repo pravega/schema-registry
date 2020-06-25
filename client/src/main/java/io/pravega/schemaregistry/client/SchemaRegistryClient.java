@@ -62,19 +62,24 @@ public interface SchemaRegistryClient {
     /**
      * List all groups that the user is authorized on. This returns an iterator where each element is a pair of group 
      * name and group properties. 
-     * This iterator can be used to iterate over each element until all elements are exhausted. 
-     * The implementation should guarantee that all groups added before the iterator {@link Iterator#hasNext()} = false 
-     * will be included.
+     * The list group is a non atomic call. The implementation is not necessarily consistent as it uses paginated 
+     * iteration using Continuation Token. This could mean that as the list is being iterated over, the state on the server 
+     * may be updated (some groups added or removed). For example, if a group that has been iterated over is deleted
+     * and recereated, the iterator may deliver a group with identical name twice. Similarly, If a group that has not yet been
+     * iterated over is deleted, the client may or may not see the group as it is iterating over the response depending on
+     * whether the client had received the deleted group from service before it was deleted or not. 
+     * This iterator can be used to iterate over each element until all elements are exhausted and gives a weak guarantee 
+     * that all groups added before the iterator {@link Iterator#hasNext()} = false can be iterated over.
      * @return map of names of groups with corresponding group properties for all groups. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
     Iterator<Map.Entry<String, GroupProperties>> listGroups() throws UnauthorizedException;
-    
+        
     /**
      * Get group properties for the group identified by the group id. 
      * 
      * {@link GroupProperties#serializationFormat} which identifies the serialization format is used to describe the schema.
-     * {@link GroupProperties#compatibility} sets the schema compatibility policy that needs to be enforced for evolving schemas.
+     * {@link GroupProperties#compatibility} sets the schema validation policy that needs to be enforced for evolving schemas.
      * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas are allowed to be registered in the group. 
      * Schemas are validated against existing schema versions that have the same {@link SchemaInfo#type}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
@@ -87,7 +92,7 @@ public interface SchemaRegistryClient {
     GroupProperties getGroupProperties(String groupId) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Update group's schema compatibility policy. If previous compatibility policy are not supplied, then the update to the policy will be
+     * Update group's schema validation policy. If previous compatibility policy are not supplied, then the update to the policy will be
      * performed unconditionally. However, if previous compatibility policy are supplied, then the update will be performed if and only if
      * existing {@link GroupProperties#compatibility} match previous compatibility policy. 
      * 
@@ -305,7 +310,8 @@ public interface SchemaRegistryClient {
     void addCodecType(String groupId, String codecType) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Gets complete schema evolution history of the group with schemas, versions, rules and time for the group. 
+     * Gets complete schema evolution history of the group with schemas, versions, compatibility policy and  
+     * time when the schema was added to the group. 
      * The order in the list matches the order in which schemas were evolved within the group. 
      * This call will get a consistent view at the time when the request is processed on the service.
      * So all schemas that were added before this call are returned and all schemas that were deleted before this call
@@ -314,7 +320,7 @@ public interface SchemaRegistryClient {
      * include those schemas in the response. 
      *
      * @param groupId Id for the group.
-     * @return Ordered list of schemas with versions and compatibility for all schemas in the group. 
+     * @return Ordered list of schemas with versions and compatibility policy for all schemas in the group. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */

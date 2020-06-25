@@ -128,7 +128,7 @@ public class CompressionDemo {
         initialize();
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .decoder(MY_CODEC.getCodecType(), MY_CODEC::decode)
+                                                             .addDecoder(MY_CODEC.getCodecType(), MY_CODEC::decode)
                                                              .registryClient(client)
                                                              .build();
 

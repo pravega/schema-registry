@@ -145,9 +145,9 @@ public class MessageBusProducer {
     }
 
     private EventStreamWriter<SpecificRecordBase> createWriter(String groupId) {
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofBaseType(Type1.class);
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofBaseType(Type2.class);
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofBaseType(Type3.class);
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Type1.class);
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Type2.class);
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofSpecificRecord(Type3.class);
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()

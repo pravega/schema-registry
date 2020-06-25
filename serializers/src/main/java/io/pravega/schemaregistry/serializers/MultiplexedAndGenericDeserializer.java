@@ -10,13 +10,14 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
-import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.io.InputStream;
 import java.util.Map;
+
+import static io.pravega.schemaregistry.common.NameUtil.extractName;
 
 class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserializer<Either<T, G>> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
@@ -35,10 +36,13 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     @Override
     protected Either<T, G> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        if (deserializers.containsKey(writerSchema.getType())) {
-            return Either.left(deserializers.get(writerSchema.getType()).deserialize(inputStream, writerSchema, readerSchema));
-        } else {
+        AbstractPravegaDeserializer<T> deserializer = deserializers.containsKey(writerSchema.getType()) ?
+                deserializers.get(writerSchema.getType()) :
+                deserializers.get(extractName(writerSchema.getType()));
+        if (deserializer == null) {
             return Either.right(genericDeserializer.deserialize(inputStream, writerSchema, readerSchema));
-        }
+        } else {
+            return Either.left(deserializers.get(writerSchema.getType()).deserialize(inputStream, writerSchema, readerSchema));
+        } 
     }
 }

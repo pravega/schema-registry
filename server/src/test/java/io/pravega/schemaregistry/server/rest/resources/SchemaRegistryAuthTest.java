@@ -109,7 +109,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
 
         Future<Response> future = target("v1/groups").queryParam("limit", 10)
                                                      .request().header(HttpHeaders.AUTHORIZATION,
-                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((SYSTEM_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((SYSTEM_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                                      .async().get();
         Response response = future.get();
         assertEquals(response.getStatus(), 200);
@@ -118,14 +118,14 @@ public class SchemaRegistryAuthTest extends JerseyTest {
 
         future = target("v1/groups").queryParam("limit", 10)
                                     .request().header(HttpHeaders.AUTHORIZATION,
-                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((NO_PREMISSION + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((NO_PREMISSION + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
         assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
 
         future = target("v1/groups").queryParam("limit", 10)
                                     .request().header(HttpHeaders.AUTHORIZATION,
-                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((GROUP1_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((GROUP1_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
         assertEquals(response.getStatus(), 200);
@@ -150,7 +150,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
 
         future = target("v1/groups").queryParam("limit", 10)
                                     .request().header(HttpHeaders.AUTHORIZATION,
-                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((GROUP_1_2_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((GROUP_1_2_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
         assertEquals(response.getStatus(), 200);
@@ -164,7 +164,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         // verify namespace user
         future = target("v1/groups").queryParam("limit", 10).queryParam("namespace", "namespace")
                                     .request().header(HttpHeaders.AUTHORIZATION,
-                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((NAMESPACE_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((NAMESPACE_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
         assertEquals(response.getStatus(), 200);
@@ -174,7 +174,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         // verify namespace admin
         future = target("v1/groups").queryParam("limit", 10).queryParam("namespace", "namespace")
                                     .request().header(HttpHeaders.AUTHORIZATION,
-                        AuthHelper.getCredentials("Basic", Base64.getEncoder().encodeToString((NAMESPACE_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((NAMESPACE_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
         assertEquals(response.getStatus(), 200);

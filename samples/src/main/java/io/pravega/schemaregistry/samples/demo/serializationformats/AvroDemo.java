@@ -389,9 +389,9 @@ public class AvroDemo {
                     Compatibility.backward(),
                     true));
 
-            AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofBaseType(Test1.class);
-            AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofBaseType(Test2.class);
-            AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofBaseType(Test3.class);
+            AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Test1.class);
+            AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Test2.class);
+            AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofSpecificRecord(Test3.class);
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)

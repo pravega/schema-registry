@@ -13,7 +13,6 @@ import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Preconditions;
-import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
@@ -43,6 +42,6 @@ class JsonDeserlizer<T> extends AbstractPravegaDeserializer<T> {
     @SneakyThrows({JsonProcessingException.class, IOException.class})
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        return objectMapper.readValue(inputStream, jsonSchema.getTDerivedClass());
+        return objectMapper.readValue(inputStream, jsonSchema.getTClass());
     }
 }

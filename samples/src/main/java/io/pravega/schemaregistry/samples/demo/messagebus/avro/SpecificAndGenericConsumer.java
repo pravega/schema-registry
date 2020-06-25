@@ -137,8 +137,8 @@ public class SpecificAndGenericConsumer {
     }
 
     private EventStreamReader<Either<SpecificRecordBase, GenericRecord>> createReader(String groupId) {
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofBaseType(Type1.class);
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofBaseType(Type2.class);
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Type1.class);
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Type2.class);
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()

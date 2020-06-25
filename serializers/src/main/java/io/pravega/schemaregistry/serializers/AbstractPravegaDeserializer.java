@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.serializers;
 
 import io.pravega.client.stream.Serializer;
-import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;

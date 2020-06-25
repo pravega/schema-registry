@@ -70,7 +70,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (config.isAuthEnabled()) {
             client.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
-                        AuthHelper.getCredentials(config.getAuthMethod(), config.getAuthToken()));
+                        AuthHelper.getAuthorizationHeader(config.getAuthMethod(), config.getAuthToken()));
             });
         }
         this.namespace = config.getNamespace();
@@ -95,7 +95,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         return withRetry(() -> {
             CreateGroupRequest request = new CreateGroupRequest().groupName(groupId).groupProperties(ModelHelper.encode(groupProperties));
             Response response = groupProxy.createGroup(request, namespace);
-            switch (Response.Status.fromStatusCode(response.getStatus())) {
+            Response.Status status = Response.Status.fromStatusCode(response.getStatus());
+            switch (status) {
                 case CREATED:
                     return true;
                 case CONFLICT:
@@ -103,7 +104,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case BAD_REQUEST:
                     throw new BadArgumentException("Group properties invalid.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to add the group.");
+                    return handleResponse(status, "Internal Service error. Failed to add the group.");
             }
         });
     }
@@ -116,7 +117,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NO_CONTENT:
                     return;
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to remove the group.");
+                    handleResponse(Response.Status.fromStatusCode(response.getStatus()), "Internal Service error. Failed to remove the group.");
             }
         });
     }
@@ -144,7 +145,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case OK:
                     return response.readEntity(ListGroupsResponse.class);
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to list groups.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()), "Internal Service error. Failed to list groups.");
             }
         });
     }
@@ -159,7 +160,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to list groups.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()), "Internal Service error. Failed to list groups.");
             }
         });
     }
@@ -182,7 +183,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case OK:
                     return true;
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to update compatibility.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to update compatibility.");
             }
         });
     }
@@ -202,7 +204,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get object types.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get object types.");
             }
         });
     }
@@ -223,7 +226,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case BAD_REQUEST:
                     throw new MalformedSchemaException("Schema is malformed. Verify the schema data and type");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to addSchema.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to addSchema.");
             }
         });
     }
@@ -235,7 +239,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 throw new ResourceNotFoundException("Group not found.");
             } else if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
-                throw new InternalServerError("Internal Service error. Failed to get schema.");
+                handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                        "Internal Service error. Failed to get schema.");
             }
         });
     }
@@ -250,7 +255,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Schema not found.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get schema.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get schema.");
             }
         });
     }
@@ -265,7 +271,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Encoding not found.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get encoding info.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get encoding info.");
             }
         });
     }
@@ -285,7 +292,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case PRECONDITION_FAILED:
                     throw new CodecTypeNotRegisteredException(String.format("Codec type %s not registered.", codecType));
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get encoding info.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get encoding info.");
             }
         });
     }
@@ -311,7 +319,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("getSchemaVersions failed. Group does not exist.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get schema versions for group.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get schema versions for group.");
             }
         });
     }
@@ -327,7 +336,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("getGroupHistory failed. Either Group or Version does not exist.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get schema evolution history for group.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get schema evolution history for group.");
             }
         });
     }
@@ -344,7 +354,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("getSchemaReferences failed. Either Group or Version does not exist.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get schema evolution history for group.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get schema evolution history for group.");
             }
         });
     }
@@ -361,7 +372,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Schema not found.");
                 default:
-                    throw new InternalServerError("Internal Service error. Failed to get schema version.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error. Failed to get schema version.");
             }
         });
     }
@@ -378,7 +390,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
                 default:
-                    throw new InternalServerError("Internal Service error.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error.");
             }
         });
     }
@@ -394,7 +407,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Schema not found.");
                 default:
-                    throw new InternalServerError("Internal Service error.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Internal Service error.");
             }
         });
     }
@@ -410,7 +424,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
                 default:
-                    throw new InternalServerError("Failed to get codecTypes. Internal server error.");
+                    return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Failed to get codecTypes. Internal server error.");
             }
         });
     }
@@ -426,7 +441,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
                 default:
-                    throw new InternalServerError("Failed to add codec type. Internal server error.");
+                    handleResponse(Response.Status.fromStatusCode(response.getStatus()),
+                            "Failed to add codec type. Internal server error.");
             }
         });
     }
@@ -440,5 +456,14 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             runnable.run();
             return null;
         });
+    }
+
+    private <T> T handleResponse(Response.Status status, String errorMessage) {
+        switch (status) {
+            case FORBIDDEN:
+                throw new UnauthorizedException("User not authorized.");
+            default:
+                throw new InternalServerError(errorMessage);
+        }
     }
 }

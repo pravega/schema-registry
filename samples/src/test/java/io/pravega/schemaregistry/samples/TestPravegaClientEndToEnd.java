@@ -419,7 +419,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .decoder(myCodec.getCodecType(), myCodec::decode)
+                                                             .addDecoder(myCodec.getCodecType(), myCodec::decode)
                                                              .registryClient(client)
                                                              .build();
 
@@ -608,9 +608,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Avro;
 
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofBaseType(Test1.class);
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofBaseType(Test2.class);
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofBaseType(Test3.class);
+        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Test1.class);
+        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Test2.class);
+        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofSpecificRecord(Test3.class);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -830,9 +830,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
-        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofBaseType(ProtobufTest.Message3.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class, descriptorSet);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)

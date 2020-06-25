@@ -21,14 +21,14 @@ public class AuthHelper {
      * @param token Auth token.
      * @return Encoded method and token.
      */
-    public static String getCredentials(String method, String token) {
+    public static String getAuthorizationHeader(String method, String token) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(method));
         Preconditions.checkArgument(!Strings.isNullOrEmpty(token));
         return String.format("%s %s", method, token);
     }
 
     /**
-     * Extracts method and token from credentials created using {@link AuthHelper#getCredentials(String, String)}. 
+     * Extracts method and token from credentials created using {@link AuthHelper#getAuthorizationHeader(String, String)}. 
      * 
      * @param credentials credentials
      * @return Array of method and token. 

@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
@@ -44,51 +45,67 @@ public class SerializerConfig {
 
 
     /**
-     * Name of the group. 
+     * Name of the group.
      */
     private final String groupId;
     /**
      * Either the registry client or the {@link SchemaRegistryClientConfig} that can be used for creating a new registry client.
-     * Exactly one of the two option has to be supplied. 
+     * Exactly one of the two option has to be supplied.
      */
     private final Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient;
     /**
-     * Flag to tell the serializer if the schema should be automatically registered before using it in {@link io.pravega.client.stream.EventStreamWriter}. 
+     * Flag to tell the serializer if the schema should be automatically registered before using it in {@link io.pravega.client.stream.EventStreamWriter}.
      * It is recommended to register keep this flag as false in production systems and manage schema evolution explicitly and
-     * in lockstep with upgrade of existing pravega client applications. 
+     * in lockstep with upgrade of existing pravega client applications.
      */
     private final boolean registerSchema;
     /**
-     * Flag to tell the serializer if the codec should be automatically registered before using the serializer in 
-     * {@link io.pravega.client.stream.EventStreamWriter}. 
+     * Flag to tell the serializer if the codec should be automatically registered before using the serializer in
+     * {@link io.pravega.client.stream.EventStreamWriter}.
      * It is recommended to register keep this flag as false in production systems and manage codecTypes used by writers explicitly
-     * so that readers are aware of encodings used. 
+     * so that readers are aware of encodings used.
      */
     private final boolean registerCodec;
     /**
-     * Codec to use for encoding events after serializing them. 
+     * Codec to use for encoding events after serializing them.
      */
     private final Codec codec;
     /**
      * Function that should be applied on serialized data read from stream. This is invoked after reading the codecType
-     * from {@link EncodingInfo} and using the codec type read from it. 
-     * It should return the decoded data back to the deserializer. 
+     * from {@link EncodingInfo} and using the codec type read from it.
+     * It should return the decoded data back to the deserializer.
      */
     private final Decoder decoder;
     /**
-     * Tells the deserializer that if supplied decoder codecTypes do not match group codecTypes then fail and exit upfront.  
+     * Tells the deserializer that if supplied decoder codecTypes do not match group codecTypes then fail and exit upfront.
      */
     private final boolean failOnCodecMismatch;
 
     /**
-     * Flag to tell the serializer if the group should be created automatically. 
-     * It is recommended to register keep this flag as false in production systems and create groups and add schemas 
+     * Flag to tell the serializer if the group should be created automatically.
+     * It is recommended to register keep this flag as false in production systems and create groups and add schemas
      */
     private final boolean createGroup;
     /**
-     * Group properties to use for creating the group if createGroup is set to true. 
+     * Group properties to use for creating the group if createGroup is set to true.
      */
     private final GroupProperties groupProperties;
+
+    private SerializerConfig(String groupId, Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient,
+                             boolean registerSchema, boolean registerCodec, Codec codec, Decoder decoder, boolean failOnCodecMismatch,
+                             boolean createGroup, GroupProperties groupProperties) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId), "Group id needs to be supplied");
+        Preconditions.checkArgument(registryConfigOrClient != null, "Either registry client or config needs to be supplied");
+        this.groupId = groupId;
+        this.registryConfigOrClient = registryConfigOrClient;
+        this.registerSchema = registerSchema;
+        this.registerCodec = registerCodec;
+        this.codec = codec;
+        this.decoder = decoder;
+        this.failOnCodecMismatch = failOnCodecMismatch;
+        this.createGroup = createGroup;
+        this.groupProperties = groupProperties;
+    }
 
     public static final class SerializerConfigBuilder {
         private Codec codec = NOOP;
@@ -103,31 +120,76 @@ public class SerializerConfig {
 
         private GroupProperties groupProperties = GroupProperties.builder().build();
 
-        public SerializerConfigBuilder decoder(String codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+        /**
+         * Add codec type to corresponding decoder function which will be used to decode data encoded using encoding type codecType.
+         *
+         * @param codecType codec type used for encoding.
+         * @param decoder   decoder function to use for decoding the data.
+         * @return Builder.
+         */
+        public SerializerConfigBuilder addDecoder(String codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             this.decoder = new Decoder(codecType, decoder);
             return this;
         }
 
+        /**
+         * Automatically create group with provided group properties values, defaulting compatibility to Full Transitive
+         * and allowMultipleTypes to true.
+         * Group creation is idempotent.
+         *
+         * @param serializationFormat {@link GroupProperties#serializationFormat}.
+         * @return Builder
+         */
         public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat) {
             return createGroup(serializationFormat, true);
         }
 
+        /**
+         * Automatically create group with provided group properties values, defaulting compatibility to Full Transitive.
+         * Group creation is idempotent.
+         *
+         * @param serializationFormat {@link GroupProperties#serializationFormat}.
+         * @param allowMultipleTypes  {@link GroupProperties#allowMultipleTypes}
+         * @return Builder
+         */
         public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, boolean allowMultipleTypes) {
             return createGroup(serializationFormat, Compatibility.fullTransitive(), allowMultipleTypes);
         }
 
-        public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, Compatibility rules, boolean allowMultipleTypes) {
+        /**
+         * Automatically create group with provided group properties. Group creation is idempotent.
+         *
+         * @param serializationFormat {@link GroupProperties#serializationFormat}.
+         * @param policy              {@link GroupProperties#compatibility}
+         * @param allowMultipleTypes  {@link GroupProperties#allowMultipleTypes}
+         * @return Builder
+         */
+        public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, Compatibility policy, boolean allowMultipleTypes) {
             this.createGroup = true;
-            this.groupProperties = new GroupProperties(serializationFormat, rules, allowMultipleTypes);
+            this.groupProperties = new GroupProperties(serializationFormat, policy, allowMultipleTypes);
             return this;
         }
 
+        /**
+         * Schema Registry client. Either this or config should be supplied. Whichever is supplied later overrides
+         * the other.
+         *
+         * @param client Schema Registry client
+         * @return Builder
+         */
         public SerializerConfigBuilder registryClient(SchemaRegistryClient client) {
             Preconditions.checkArgument(client != null);
             this.registryConfigOrClient = Either.right(client);
             return this;
         }
 
+        /**
+         * Schema Registry client config. Either this or client should be supplied. Whichever is supplied later overrides
+         * the other.
+         *
+         * @param config Schema Registry client configuration.
+         * @return Builder
+         */
         public SerializerConfigBuilder registryConfig(SchemaRegistryClientConfig config) {
             Preconditions.checkArgument(config != null);
             this.registryConfigOrClient = Either.left(config);

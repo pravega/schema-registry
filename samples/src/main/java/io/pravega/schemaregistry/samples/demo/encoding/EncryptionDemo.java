@@ -134,7 +134,7 @@ public class EncryptionDemo {
         // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .decoder(myCodec.getCodecType(), myCodec::decode)
+                                                             .addDecoder(myCodec.getCodecType(), myCodec::decode)
                                                              .registryClient(client)
                                                              .build();
 
