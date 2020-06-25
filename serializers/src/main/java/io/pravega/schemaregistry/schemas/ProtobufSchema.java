@@ -72,7 +72,8 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
      */
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
+    public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, 
+                                                                      DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
         return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getName(), tParser, fileDescriptorSet);
@@ -100,15 +101,16 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
      * typed {@link GeneratedMessageV3}.
      * It is useful in multiplexed deserializer to pass all objects to deserialize into as base {@link GeneratedMessageV3} objects. 
      *
-     * @param tDerivedClass Class for code generated protobuf message.  
+     * @param tClass Class for code generated protobuf message.  
      * @param fileDescriptorSet file descriptor set representing a protobuf schema. 
      * @param <T> Type of protobuf message
      * @return {@link ProtobufSchema} with generic type {@link GeneratedMessageV3} that captures protobuf schema and parser of type T. 
      */
     @SneakyThrows
     @SuppressWarnings("unchecked")
-    public static <T extends GeneratedMessageV3> ProtobufSchema<T> ofBaseType(Class<? extends T> tDerivedClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
-        T defaultInstance = (T) tDerivedClass.getMethod("getDefaultInstance").invoke(null);
+    public static <T extends GeneratedMessageV3> ProtobufSchema<T> ofGeneratedMessageV3(
+            Class<? extends T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
+        T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
 
         return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getName(), tParser, fileDescriptorSet);

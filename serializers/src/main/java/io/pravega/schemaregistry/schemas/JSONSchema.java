@@ -20,6 +20,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import org.apache.avro.specific.SpecificRecordBase;
 
 import java.nio.ByteBuffer;
 
@@ -96,14 +97,24 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         return new JSONSchema<>(schema, type, schemaString, Object.class);
     }
 
+    /**
+     * It is same as {@link #of(Class)} except that it generates an JSONSchema typed as supplied base type T. 
+     *
+     * This is useful for supplying a map of POJO schemas for multiplexed serializers and deserializers. 
+     *
+     * @param tBase Base class whose type is used in the JSON schema object.
+     * @param tDerived Class whose schema should be used.
+     * @param <T> Type of base class. 
+     * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
+     */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
-    public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerivedClass, Class<T> tClass) {
+    public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(objectMapper);
-        JsonSchema schema = schemaGen.generateSchema(tDerivedClass);
+        JsonSchema schema = schemaGen.generateSchema(tDerived);
         String schemaString = objectMapper.writeValueAsString(schema);
-
-        return new JSONSchema<>(schema, tDerivedClass.getSimpleName(), schemaString, tClass, tDerivedClass);
+        
+        return new JSONSchema<>(schema, tDerived.getSimpleName(), schemaString, tBase, tDerived);
     }
 
     /**

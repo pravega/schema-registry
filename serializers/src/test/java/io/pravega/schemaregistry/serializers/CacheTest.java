@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.cache;
+package io.pravega.schemaregistry.serializers;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
@@ -33,9 +33,10 @@ public class CacheTest {
         String groupId = "groupId";
         EncodingId encodingId = new EncodingId(0);
         EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", 0, 0),
-                new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), CodecFactory.snappy().getCodecType());
+                new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
+                CodecFactory.snappy().getCodecType());
         doAnswer(x -> encodingInfo).when(client).getEncodingInfo(eq(groupId), eq(encodingId));
-        EncodingCache cache = EncodingCache.getEncodingCacheForGroup(groupId, client);
+        EncodingCache cache = new EncodingCache(groupId, client);
         assertEquals(encodingInfo, cache.getGroupEncodingInfo(encodingId));
     }
 }

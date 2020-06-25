@@ -94,8 +94,8 @@ public class SerializerTest {
         // multi type
         Test2 test2 = new Test2("name", 1, "2");
 
-        AvroSchema<SpecificRecordBase> schema1Base = AvroSchema.ofBaseType(Test1.class);
-        AvroSchema<SpecificRecordBase> schema2Base = AvroSchema.ofBaseType(Test2.class);
+        AvroSchema<SpecificRecordBase> schema1Base = AvroSchema.ofSpecificRecord(Test1.class);
+        AvroSchema<SpecificRecordBase> schema2Base = AvroSchema.ofSpecificRecord(Test2.class);
         Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
         map.put(Test1.class, schema1Base);
         map.put(Test2.class, schema2Base);
@@ -188,8 +188,8 @@ public class SerializerTest {
         // multi type
         ProtobufTest.Message3 message2 = ProtobufTest.Message3.newBuilder().setName("name").setField1(1).setField2(2).build();
 
-        ProtobufSchema<GeneratedMessageV3> schema1Base = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema2Base = ProtobufSchema.ofBaseType(ProtobufTest.Message3.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema1Base = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema2Base = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class, descriptorSet);
         Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
         map.put(ProtobufTest.Message2.class, schema1Base);
         map.put(ProtobufTest.Message3.class, schema2Base);

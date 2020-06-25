@@ -47,11 +47,11 @@ public class TestSchemas {
         assertNotNull(schema3.getSchema());
         assertEquals(schema3.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 
-        AvroSchema<SpecificRecordBase> schemabase1 = AvroSchema.ofBaseType(Test1.class);
+        AvroSchema<SpecificRecordBase> schemabase1 = AvroSchema.ofSpecificRecord(Test1.class);
         assertNotNull(schemabase1.getSchema());
         assertEquals(schemabase1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 
-        AvroSchema<SpecificRecordBase> schemabase2 = AvroSchema.ofBaseType(Test2.class);
+        AvroSchema<SpecificRecordBase> schemabase2 = AvroSchema.ofSpecificRecord(Test2.class);
         assertNotNull(schemabase2.getSchema());
         assertEquals(schemabase2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
     }
@@ -72,12 +72,12 @@ public class TestSchemas {
         assertNotNull(schema2.getDescriptorProto());
         assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
-        ProtobufSchema<GeneratedMessageV3> baseSchema1 = ProtobufSchema.ofBaseType(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> baseSchema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class, descriptorSet);
         assertNotNull(baseSchema1.getParser());
         assertNotNull(baseSchema1.getDescriptorProto());
         assertEquals(baseSchema1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
         
-        ProtobufSchema<GeneratedMessageV3> baseSchema2 = ProtobufSchema.ofBaseType(ProtobufTest.Message2.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> baseSchema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class, descriptorSet);
         assertNotNull(baseSchema2.getParser());
         assertNotNull(baseSchema2.getDescriptorProto());
         assertEquals(baseSchema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);

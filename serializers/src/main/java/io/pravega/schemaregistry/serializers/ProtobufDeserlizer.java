@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.GeneratedMessageV3;
-import io.pravega.schemaregistry.cache.EncodingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;

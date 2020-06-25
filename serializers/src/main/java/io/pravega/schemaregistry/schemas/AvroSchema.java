@@ -79,6 +79,22 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     }
 
     /**
+     * It is same as {@link #of(Class)} except that it generates an AvroSchema typed as T. 
+     *
+     * This is useful for supplying a map of Avro schemas for multiplexed serializers and deserializers. 
+     *
+     * @param tDerived Class whose schema should be used.
+     * @param tBase Base class for the typed AvroSchema object.
+     * @param <T> Type of base class. 
+     * @return Returns an AvroSchema with T type. 
+     */
+    public static <T> AvroSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
+        Preconditions.checkArgument(tBase.isAssignableFrom(tDerived));
+
+        return new AvroSchema<>(ReflectData.get().getSchema(tDerived), tBase);
+    }
+    
+    /**
      * It is same as {@link #of(Class)} except that it generates an AvroSchema typed as {@link SpecificRecordBase}. 
      *
      * This is useful for supplying a map of Avro schemas for multiplexed serializers and deserializers. 
@@ -87,7 +103,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @param <T> Type of class whose schema is to be used. 
      * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
      */
-    public static <T extends SpecificRecordBase> AvroSchema<SpecificRecordBase> ofBaseType(Class<T> tClass) {
+    public static <T extends SpecificRecordBase> AvroSchema<SpecificRecordBase> ofSpecificRecord(Class<T> tClass) {
         Preconditions.checkArgument(SpecificRecordBase.class.isAssignableFrom(tClass));
 
         return new AvroSchema<>(SpecificData.get().getSchema(tClass), SpecificRecordBase.class);
