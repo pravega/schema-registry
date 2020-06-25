@@ -1,0 +1,934 @@
+#
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Description of the Pravega Schema Registry APIs.
+
+swagger: "2.0"
+info:
+  description: "REST APIs for Pravega Schema Registry."
+  version: "0.0.1"
+  title: Pravega Schema Registry APIs
+  license:
+    name: "Apache 2.0"
+    url: "http://www.apache.org/licenses/LICENSE-2.0"
+basePath: "/v1"
+tags:
+- name: "Group"
+  description: "Group related APIs"
+- name: "Schemas"
+  description: "Schema related APIs"
+schemes:
+  - http
+paths:
+  /groups:
+    get:
+      tags:
+      - "Group"
+      operationId: listGroups
+      description: List all groups
+      produces:
+        - application/json
+      parameters:
+        - in: query
+          name: continuationToken
+          type: string
+          description: Continuation token
+        - in: query
+          name: limit
+          type: integer
+          description: The numbers of items to return
+      responses:
+        200:
+          description: List of all groups
+          schema:
+            $ref: "#/definitions/ListGroupsResponse"
+        500:
+          description: Internal server error while fetching the list of Groups
+    post:
+      tags:
+      - "Group"
+      operationId: createGroup
+      description: Create a new Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: CreateGroupRequest
+          description: The Group configuration
+          required: true
+          schema:
+            type: object
+            properties:
+              groupName:
+                  type: string
+              groupProperties:
+                  $ref: "#/definitions/GroupProperties"
+            required:
+                - groupName
+                - groupProperties
+      responses:
+        201:
+          description: Successfully added group
+        409:
+          description: Group with given name already exists
+        500:
+          description: Internal server error while creating a Group
+  /groups/{groupName}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getGroupProperties
+      description: Fetch the properties of an existing Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group properties
+          schema:
+            $ref: "#/definitions/GroupProperties"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group details
+    delete:
+      tags:
+      - "Group"
+      operationId: deleteGroup
+      description: Delete a Group
+      responses:
+        204:
+          description: Successfully deleted the Group
+        500:
+          description: Internal server error while deleting the Group
+  /groups/{groupName}/history:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getGroupHistory
+      description: Fetch the history of schema evolution of a Group
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Group history
+          schema:
+            $ref: "#/definitions/GroupHistory"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group history
+  /groups/{groupName}/compatibility:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    put:
+      tags:
+      - "Group"
+      operationId: updateCompatibility
+      description: update schema compatibility of an existing Group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: UpdateCompatibilityRequest
+          description: update group policy
+          required: true
+          schema:
+            type: object
+            properties:
+              compatibility:
+                  $ref: "#/definitions/Compatibility"
+              previousCompatibility:
+                  $ref: "#/definitions/Compatibility"
+      responses:
+        200:
+          description: Updated schema compatibility policy
+        404:
+          description: Group with given name not found
+        409:
+          description: Write conflict 
+        500:
+          description: Internal server error while updating Group's schema compatibility 
+  /groups/{groupName}/schemas:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: query
+        name: type
+        type: string
+        description: Type of object
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemas
+      description: Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Latest schemas for all objects identified by SchemaInfo#type under the group
+          schema:
+            $ref: "#/definitions/SchemaVersionsList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group's latest schemas
+    post:
+      tags:
+      - "Group"
+      operationId: addSchema
+      description: Adds a new schema to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Add new schema to group
+          required: true
+          schema:
+              $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully added schema to the group
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Group not found
+        409:
+          description: Incompatible schema
+        417:
+          description: Invalid serialization format
+        500:
+          description: Internal server error while adding schema to group
+  /groups/{groupName}/schemas/versions:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemaVersions
+      description: Get all schema versions for the group
+      parameters:
+            - in: query
+              name: type
+              type: string
+              description: Type of object the schema describes. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Versioned history of schemas registered under the group
+          schema:
+            $ref: "#/definitions/SchemaVersionsList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group schema versions
+  /groups/{groupName}/schemas/versions/find:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    post:
+      tags:
+      - "Group"
+      operationId: getSchemaVersion
+      description: Get the version for the schema if it is registered. It does not automatically register the schema. To add new schema use addSchema   
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+              $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema version
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error fetching version for schema
+  /groups/{groupName}/schemas/schema/{schemaId}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: schemaId
+        description: Schema Id
+        required: true
+        type: integer
+        format: int32
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemaForId
+      description: Get schema from the schema id that uniquely identifies the schema in the group. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching schema from version  
+    delete:
+      tags:
+      - "Group"
+      operationId: deleteSchemaForId
+      description: Delete schema identified by version from the group.
+      produces:
+        - application/json
+      responses:
+        204:
+          description: Schema corresponding to the version
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while deleting schema from group  
+  /groups/{groupName}/schemas/{type}/versions/{version}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: type
+        description: Schema type from SchemaInfo#type or VersionInfo#type
+        required: true
+        type: string
+      - in: path
+        name: version
+        description: Version number
+        required: true
+        type: integer
+        format: int32
+    get:
+      tags:
+      - "Group"
+      operationId: getSchemaFromVersion
+      description: Get schema from the version number that uniquely identifies the schema in the group. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema corresponding to the version
+          schema:
+            $ref: "#/definitions/SchemaInfo"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching schema from version  
+    delete:
+      tags:
+      - "Group"
+      operationId: deleteSchemaVersion
+      description: Delete schema version from the group.
+      produces:
+        - application/json
+      responses:
+        204:
+          description: Schema corresponding to the version
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while deleting schema from group  
+  /groups/{groupName}/schemas/versions/validate:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    post:
+      tags:
+      - "Group"
+      operationId: validate
+      description: Checks if given schema is compatible with schemas in the registry for current policy setting. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: ValidateRequest
+          description: Checks if schema is valid with respect to supplied compatibility
+          required: true
+          schema:
+            type: object
+            properties:
+              schemaInfo:
+                  $ref: "#/definitions/SchemaInfo"
+              compatibility:
+                  $ref: "#/definitions/Compatibility"
+            required:
+              - schemaInfo      
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema validation response 
+          schema:
+             $ref: "#/definitions/Valid"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while trying to validate schema
+  /groups/{groupName}/schemas/versions/canRead:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    post:
+      tags:
+      - "Group"
+      operationId: canRead
+      description: Checks if given schema can be used for reads subject to compatibility policy in the schema compatibility. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Checks if schema can be used to read the data in the stream based on compatibility policy. 
+          required: true
+          schema:
+              $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Response to tell whether schema can be used to read existing schemas
+          schema:
+             $ref: "#/definitions/CanRead"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while checking schema for readability
+  /groups/{groupName}/encodings:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    put:
+      tags:
+      - "Group"
+      operationId: getEncodingId
+      description: Get an encoding id that uniquely identifies a schema version and codec type pair. 
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: GetEncodingIdRequest
+          description: Get schema corresponding to the version
+          required: true
+          schema:
+            type: object
+            properties:
+              versionInfo:
+                  $ref: "#/definitions/VersionInfo"
+              codecType:
+                  type: string
+            required:
+              - versionInfo
+              - codecType
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Encoding
+          schema:
+            $ref: "#/definitions/EncodingId"
+        404:
+          description: Group with given name or version not found
+        412:
+          description: Codec type not registered
+        500:
+          description: Internal server error while getting encoding id
+  /groups/{groupName}/encodings/{encodingId}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: path
+        name: encodingId
+        description: Encoding id that identifies a unique combination of schema and codec type
+        required: true
+        type: integer
+        format: int32
+    get:
+      tags:
+      - "Group"
+      operationId: getEncodingInfo
+      description: Get the encoding information corresponding to the encoding id. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found Encoding
+          schema:
+            $ref: "#/definitions/EncodingInfo"
+        404:
+          description: Group or encoding id with given name not found
+        500:
+          description: Internal server error while getting encoding info corresponding to encoding id
+  /groups/{groupName}/codecTypes:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+    get:
+      tags:
+      - "Group"
+      operationId: getCodecTypesList
+      description: Get codecTypes for the group. 
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Found CodecTypes
+          schema:
+            $ref: "#/definitions/CodecTypesList"
+        404:
+          description: Group or encoding id with given name not found
+        500:
+          description: Internal server error while fetching codecTypes registered
+    post:
+      tags:
+      - "Group"
+      operationId: addCodecType
+      description: Adds a new codecType to the group.
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: codecType
+          description: The codecType
+          required: true
+          schema:
+              type: string
+      responses:
+        201:
+          description: Successfully added codecType to group
+        404: 
+          description: Group not found
+        500:
+          description: Internal server error while registering codectype to a Group          
+  /schemas/addedTo:
+    post:
+      tags:
+      - "Schemas"
+      operationId: getSchemaReferences
+      description: Gets a map of groups to version info where the schema if it is registered. SchemaInfo#properties is ignored while comparing the schema.   
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Get schema references for the supplied schema
+          required: true
+          schema:
+              $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Schema version
+          schema:
+            $ref: "#/definitions/AddedTo"
+        404:
+          description: Schema not found
+        500:
+          description: Internal server error while fetching Schema references
+definitions:
+  ListGroupsResponse:
+    type: object
+    description: Map of Group names to group properties. For partially created groups, the group properties may be null.   
+    properties:
+      groups:
+        type: object
+        additionalProperties:
+          $ref: "#/definitions/GroupProperties"
+      continuationToken:
+        description: Continuation token to identify the position of last group in the response.   
+        type: string
+    required:
+      - continuationToken    
+  GroupProperties:
+    type: object
+    description: Metadata for a group.    
+    properties:
+      serializationFormat:
+          description: serialization format for the group.    
+          $ref: "#/definitions/SerializationFormat"
+      compatibility:
+          description: Compatibility to apply while registering new schema.    
+          $ref: "#/definitions/Compatibility"
+      allowMultipleTypes:
+          description: Flag to indicate whether to allow multiple schemas representing distinct objects to be registered in the group.      
+          type: boolean
+      properties:
+        description: User defined Key value strings.     
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
+    required:
+      - serializationFormat
+      - allowMultipleTypes
+      - compatibility      
+  SerializationFormat:
+    type: object
+    description: Serialization format enum that lists different serialization formats supported by the service. To use additional formats, use serializationFormat.Custom and supply fullTypeName.  
+    properties:
+      serializationFormat:
+        type: string
+        enum: 
+          - Avro
+          - Protobuf
+          - Json
+          - Any
+          - Custom
+      fullTypeName:
+        type: string  
+    required:
+      - serializationFormat    
+  SchemaInfo:
+    type: object
+    description: Schema information object that encapsulates various properties of a schema.   
+    properties:
+      type:
+        description: Name of the schema. This identifies the type of object the schema payload represents.    
+        type: string
+      serializationFormat:
+          description: Type of schema.    
+          $ref: "#/definitions/SerializationFormat"
+      schemaData:
+        description: Base64 encoded string for binary data for schema.    
+        type: string
+        format: binary
+      properties:
+        description: User defined key value strings.    
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 40
+    required:
+      - type
+      - serializationFormat
+      - schemaData      
+  VersionInfo:
+    description: Version information object.    
+    type: object
+    properties:
+      type:
+        description: Type of schema for this version. This is same value used in SchemaInfo#Type for the schema this version identifies.
+        type: string
+      version:
+        description: Version number that uniquely identifies the schema version among all schemas in the group that share the same Type. 
+        type: integer
+        format: int32
+      id:
+        description: schema id that uniquely identifies schema version and describes the absolute order in which the schema was added to the group.
+        type: integer
+        format: int32
+    required:
+      - type
+      - version
+      - id    
+  SchemaWithVersion:
+    type: object
+    description: Object that encapsulates SchemaInfo and its corresponding VersionInfo objects. 
+    properties:
+      schemaInfo:
+        description: Schema information.
+        $ref: "#/definitions/SchemaInfo"
+      versionInfo:
+        description: Version information.
+        $ref: "#/definitions/VersionInfo"
+    required: 
+      - schemaInfo
+      - versionInfo    
+  SchemaVersionsList:
+    type: object
+    description: List of schemas with their versions.  
+    properties:
+      schemas:
+        description: List of schemas with their versions.
+        type: array
+        items:
+          $ref: "#/definitions/SchemaWithVersion"
+  EncodingId:
+    type: object
+    description: Encoding id that uniquely identifies a schema version and codec type pair. 
+    properties:
+      encodingId:
+        type: integer
+        format: int32
+        description: encoding id generated by service. 
+    required:
+      - encodingId    
+  EncodingInfo:
+    type: object
+    description: Encoding information object that resolves the schema version and codec type used for corresponding encoding id. 
+    properties:
+      schemaInfo:
+          description: Schema information object.
+          $ref: "#/definitions/SchemaInfo"        
+      versionInfo:
+          description: Version information object.
+          $ref: "#/definitions/VersionInfo"        
+      codecType:
+          description: Codec type.
+          type: string
+    required:
+      - schemaInfo
+      - versionInfo
+      - codecType      
+  Compatibility:
+    type: object
+    description: Compatibility policy.
+    properties:
+      policy:
+        description: Compatibility policy enum.
+        type: string
+        enum:
+          - AllowAny
+          - DenyAll
+          - Forward
+          - Backward
+          - BackwardTransitive
+          - ForwardTransitive
+          - Full
+          - FullTransitive
+          - Advanced
+      advanced:
+        description: Backward and forward policy details.
+        $ref: "#/definitions/BackwardAndForward"
+    required:
+      - policy
+  BackwardAndForward:
+    type: object
+    description: BackwardPolicy and forwardPolicy policy. 
+    properties:
+      backwardPolicy:
+        description: BackwardAndForward policy type that describes different types of BackwardPolicy policies like Backward, BackwardTransitive and BackwardTill.    
+        $ref: "#/definitions/BackwardPolicy"
+      forwardPolicy:
+        description: BackwardAndForward policy type that describes different types of ForwardPolicy policies like Forward, ForwardTransitive and ForwardTill.  
+        $ref: "#/definitions/ForwardPolicy"
+  BackwardPolicy:
+    type: object
+    description: BackwardPolicy policy.
+    required:
+      - backwardPolicy
+    properties:
+      backwardPolicy:
+        description: BackwardAndForward type backwardPolicy. Can be one of Backward, backwardTill and backwardTransitive.  
+        oneOf:
+          - $ref: '#/definitions/Backward'
+          - $ref: '#/definitions/BackwardTill'
+          - $ref: '#/definitions/BackwardTransitive'
+        discriminator:
+          propertyName: name
+          mapping:
+            Backward: "#/definitions/Backward"
+            BackwardTill: "#/definitions/BackwardTill"
+            BackwardTransitive: "#/definitions/BackwardTransitive"
+  ForwardPolicy:
+    type: object
+    description: ForwardPolicy policy.
+    required:
+      - forwardPolicy
+    properties:
+      forwardPolicy:
+        description: BackwardAndForward type forwardPolicy. Can be one of forward, forwardTill and forwardTransitive.  
+        oneOf:
+          - $ref: "#/definitions/Forward"
+          - $ref: "#/definitions/ForwardTill"
+          - $ref: "#/definitions/ForwardTransitive"
+        discriminator:
+          propertyName: name
+          mapping:
+            Forward: "#/definitions/Forward"
+            ForwardTill: "#/definitions/ForwardTill"
+            ForwardTransitive: "#/definitions/ForwardTransitive"
+  Backward:
+    type: object
+    description: BackwardPolicy compatibility type which tells the service to check for backwardPolicy compatibility with latest schema.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  Forward:
+    type: object
+    description: ForwardPolicy compatibility type which tells the service to check for forwardPolicy compatibilty with latest schema.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  BackwardTransitive:
+    type: object
+    description: BackwardPolicy compatibility type which tells the service to check for backwardPolicy compatibility with all previous schemas.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  ForwardTransitive:
+    type: object
+    description: ForwardPolicy compatibility type which tells the service to check for forwardPolicy compatibility with all previous schemas.
+    properties:
+      name:
+        type: string
+    required:
+      - name
+  BackwardTill:
+    type: object
+    description: BackwardPolicy compatibility which tells the service to check for backwardPolicy compatibility with all previous schemas till specific version.
+    properties:
+      name:
+        type: string
+      versionInfo:
+        description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
+        $ref: "#/definitions/VersionInfo"
+    required:
+      - name
+      - versionInfo    
+  ForwardTill:
+    type: object
+    description: ForwardPolicy compatibility which tells the service to check for forwardPolicy compatibility with all previous schemas till specific version.
+    properties:
+      name:
+        type: string
+      versionInfo:
+        description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
+        $ref: "#/definitions/VersionInfo"
+    required:
+      - name
+      - versionInfo
+  CodecTypesList:
+    type: object
+    description: Response object for listCodecTypes.
+    properties:
+       codecTypes:
+        type: array
+        description: List of codecTypes.
+        items:
+          type: string
+  Valid:
+    type: object
+    description: Response object for validateSchema api.
+    properties:
+      valid:
+        description: Whether given schema is valid with respect to existing group schemas against the configured compatibility. 
+        type: boolean
+    required:
+      - valid    
+  CanRead:
+    type: object
+    description: Response object for canRead api.
+    properties:
+      compatible:
+        description: Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy. 
+        type: boolean
+    required:
+      - compatible    
+  GroupHistoryRecord:
+      type: object
+      description: Group History Record that describes each schema evolution - schema information, version generated for the schema, time and compatibility policy used for schema validation.
+      properties:
+        schemaInfo:
+          description: Schema information object.
+          $ref: "#/definitions/SchemaInfo"
+        versionInfo:
+          description: Schema version information object.
+          $ref: "#/definitions/VersionInfo"
+        compatibility:
+          description: Schema compatibility applied.
+          $ref: "#/definitions/Compatibility"
+        timestamp:
+          description: Timestamp when the schema was added.
+          type: integer
+          format: int64
+        schemaString:
+          description: Schema as json string for serialization formats that registry service understands.
+          type: string
+      required:
+        - schemaInfo
+        - versionInfo
+        - compatibility
+        - timestamp      
+  GroupHistory:
+    type: object
+    properties:
+      history:
+        type: array
+        description: Chronological list of Group History records.
+        items:
+          $ref: "#/definitions/GroupHistoryRecord"
+  AddedTo:
+    type: object
+    description: Map of Group names to versionInfos in the group. This is for all the groups where the schema is registered.   
+    properties:
+      groups:
+        type: object
+        description: Version for the schema in the group. 
+        additionalProperties:
+          $ref: "#/definitions/VersionInfo"
+          
+    required:
+      - groups    
