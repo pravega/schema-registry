@@ -32,17 +32,21 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     @Getter
     private final Schema schema;
     private final SchemaInfo schemaInfo;
-
-    private AvroSchema(Schema schema) {
+    @Getter
+    private final Class<T> tClass;
+    
+    private AvroSchema(Schema schema, Class<T> tClass) {
         this.schema = schema;
         this.schemaInfo = new SchemaInfo(schema.getName(),
                 SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
+        this.tClass = tClass;
     }
 
-    private AvroSchema(SchemaInfo schemaInfo) {
+    private AvroSchema(SchemaInfo schemaInfo, Class<T> tClass) {
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
         this.schema = new Schema.Parser().parse(schemaString);
         this.schemaInfo = schemaInfo;
+        this.tClass = tClass;
     }
 
     /**
@@ -61,7 +65,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
         } else {
             schema = ReflectData.get().getSchema(tClass);
         }
-        return new AvroSchema<>(schema);
+        return new AvroSchema<>(schema, tClass);
     }
 
     /**
@@ -71,7 +75,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
     public static AvroSchema<GenericRecord> of(Schema schema) {
-        return new AvroSchema<>(schema);
+        return new AvroSchema<>(schema, null);
     }
 
     /**
@@ -83,10 +87,10 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @param <T> Type of class whose schema is to be used. 
      * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
      */
-    public static <T extends SpecificRecordBase> AvroSchema<T> ofBaseType(Class<? extends T> tClass) {
+    public static <T extends SpecificRecordBase> AvroSchema<SpecificRecordBase> ofBaseType(Class<T> tClass) {
         Preconditions.checkArgument(SpecificRecordBase.class.isAssignableFrom(tClass));
 
-        return new AvroSchema<>(SpecificData.get().getSchema(tClass));
+        return new AvroSchema<>(SpecificData.get().getSchema(tClass), SpecificRecordBase.class);
     }
 
     /**
@@ -96,7 +100,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
     public static AvroSchema<GenericRecord> from(SchemaInfo schemaInfo) {
-        return new AvroSchema<>(schemaInfo);
+        return new AvroSchema<>(schemaInfo, null);
     }
 
     private ByteBuffer getSchemaBytes() {

@@ -59,6 +59,9 @@ import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.shared.NameUtils;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -481,10 +484,26 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
+        String rg = "rgx" + stream;
         readerGroupManager.createReaderGroup(rg, 
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
         
+        AvroSchema<TestClass> readSchema1 = AvroSchema.of(TestClass.class);
+
+        Serializer<TestClass> deserializer1 = SerializerFactory.avroDeserializer(serializerConfig, readSchema1);
+
+        EventStreamReader<TestClass> reader1 = clientFactory.createReader("r1", rg, deserializer1, ReaderConfig.builder().build());
+
+        EventRead<TestClass> event1 = reader1.readNextEvent(10000);
+        assertNotNull(event1.getEvent());
+        reader1.close();
+        // endregion
+        // region read into specific schema
+        readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        rg = "rg" + stream;
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
         AvroSchema<GenericRecord> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
         Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
@@ -1085,16 +1104,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         //endregion
     }
 
-    private static class TestClass {
-        private final String test;
-
-        public TestClass(String test) {
-            this.test = test;
-        }
-
-        public String getTest() {
-            return test;
-        }
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    static class TestClass {
+        private String test;
     }
 }
 
