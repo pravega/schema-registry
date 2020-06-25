@@ -32,10 +32,9 @@ import java.nio.ByteBuffer;
 public class JSONSchema<T> implements SchemaContainer<T> {
     @Getter
     private final String schemaString;
+    private final Class<T> base;
     @Getter
-    private final Class<T> tClass;
-    @Getter
-    private final Class<? extends T> tDerivedClass;
+    private final Class<? extends T> tClass;
 
     @Getter
     private final JsonSchema schema;
@@ -46,22 +45,22 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         this(schema, name, schemaString, tClass, tClass);
     }
 
-    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass, Class<? extends T> tDerivedClass) {
+    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> base, Class<? extends T> derived) {
         String type = name != null ? name : schema.getId();
         // Add empty name if the name is not supplied and cannot be extracted from the json schema id. 
         type = type != null ? type : "";
         this.schemaString = schemaString;
         this.schemaInfo = new SchemaInfo(type, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
-        this.tClass = tClass;
-        this.tDerivedClass = tDerivedClass;
+        this.base = base;
+        this.tClass = derived;
         this.schema = schema;
     }
 
     private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> tClass) {
         this.schemaString = schemaString;
         this.schemaInfo = schemaInfo;
+        this.base = tClass;
         this.tClass = tClass;
-        this.tDerivedClass = tClass;
         this.schema = schema;
     }
 

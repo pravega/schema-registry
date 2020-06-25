@@ -42,6 +42,6 @@ class JsonDeserlizer<T> extends AbstractPravegaDeserializer<T> {
     @SneakyThrows({JsonProcessingException.class, IOException.class})
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        return objectMapper.readValue(inputStream, jsonSchema.getTDerivedClass());
+        return objectMapper.readValue(inputStream, jsonSchema.getTClass());
     }
 }
