@@ -31,10 +31,14 @@ paths:
       tags:
       - "Group"
       operationId: listGroups
-      description: List all groups
+      description: List all groups within the namespace. If namespace is not specified, All groups in default namespace are listed. 
       produces:
         - application/json
       parameters:
+        - in: query
+          name: namespace
+          type: string
+          description: Namespace in which to look up groups
         - in: query
           name: continuationToken
           type: string
@@ -58,6 +62,10 @@ paths:
       consumes:
         - application/json
       parameters:
+        - in: query
+          name: namespace
+          type: string
+          description: Namespace in which to create group
         - in: body
           name: CreateGroupRequest
           description: The Group configuration
@@ -86,6 +94,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     get:
       tags:
       - "Group"
@@ -119,6 +131,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     get:
       tags:
       - "Group"
@@ -142,6 +158,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     put:
       tags:
       - "Group"
@@ -161,6 +181,10 @@ paths:
                   $ref: "#/definitions/Compatibility"
               previousCompatibility:
                   $ref: "#/definitions/Compatibility"
+        - in: query
+          name: namespace
+          type: string
+          description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
       responses:
         200:
           description: Updated schema compatibility policy
@@ -181,6 +205,10 @@ paths:
         name: type
         type: string
         description: Type of object
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     get:
       tags:
       - "Group"
@@ -233,6 +261,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     get:
       tags:
       - "Group"
@@ -261,6 +293,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     post:
       tags:
       - "Group"
@@ -293,6 +329,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
       - in: path
         name: schemaId
         description: Schema Id
@@ -336,6 +376,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
       - in: path
         name: type
         description: Schema type from SchemaInfo#type or VersionInfo#type
@@ -384,6 +428,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     post:
       tags:
       - "Group"
@@ -423,6 +471,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     post:
       tags:
       - "Group"
@@ -455,6 +507,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     put:
       tags:
       - "Group"
@@ -497,6 +553,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
       - in: path
         name: encodingId
         description: Encoding id that identifies a unique combination of schema and codec type
@@ -526,6 +586,10 @@ paths:
         description: Group name
         required: true
         type: string
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
     get:
       tags:
       - "Group"
@@ -564,6 +628,11 @@ paths:
         500:
           description: Internal server error while registering codectype to a Group          
   /schemas/addedTo:
+    parameters:
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup schemas used in groups. If no namespace is specified, default namespace is used.
     post:
       tags:
       - "Schemas"

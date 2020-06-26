@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.client;
 import com.google.common.annotations.VisibleForTesting;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
+import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -38,8 +39,9 @@ import org.glassfish.jersey.client.proxy.WebResourceFactory;
 import javax.annotation.Nullable;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
+import javax.ws.rs.client.ClientRequestFilter;
+import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
-import java.net.URI;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Comparator;
@@ -58,15 +60,22 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             .withExpBackoff(100, 2, 10, 1000)
             .retryWhen(x -> Exceptions.unwrap(x) instanceof ConnectionException);
     private static final int GROUP_LIMIT = 100;
-    private static final int SCHEMA_LIMIT = 10;
 
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
+    private final String namespace;
 
-    SchemaRegistryClientImpl(URI uri) {
+    SchemaRegistryClientImpl(SchemaRegistryClientConfig config) {
         Client client = ClientBuilder.newClient(new ClientConfig());
-        this.groupProxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(uri));
-        this.schemaProxy = WebResourceFactory.newResource(ApiV1.SchemasApi.class, client.target(uri));
+        if (config.isAuthEnabled()) {
+            client.register((ClientRequestFilter) context -> {
+                context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
+                        AuthHelper.getAuthorizationHeader(config.getAuthMethod(), config.getAuthToken()));
+            });
+        }
+        this.namespace = config.getNamespace();
+        this.groupProxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(config.getSchemaRegistryUri()));
+        this.schemaProxy = WebResourceFactory.newResource(ApiV1.SchemasApi.class, client.target(config.getSchemaRegistryUri()));
     }
 
     @VisibleForTesting
@@ -78,13 +87,14 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     SchemaRegistryClientImpl(ApiV1.GroupsApi groupProxy, ApiV1.SchemasApi schemaProxy) {
         this.groupProxy = groupProxy;
         this.schemaProxy = schemaProxy;
+        this.namespace = null;
     }
 
     @Override
     public boolean addGroup(String groupId, GroupProperties groupProperties) {
         return withRetry(() -> {
             CreateGroupRequest request = new CreateGroupRequest().groupName(groupId).groupProperties(ModelHelper.encode(groupProperties));
-            Response response = groupProxy.createGroup(request);
+            Response response = groupProxy.createGroup(request, namespace);
             Response.Status status = Response.Status.fromStatusCode(response.getStatus());
             switch (status) {
                 case CREATED:
@@ -102,7 +112,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void removeGroup(String groupId) {
         withRetry(() -> {
-            Response response = groupProxy.deleteGroup(groupId);
+            Response response = groupProxy.deleteGroup(groupId, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case NO_CONTENT:
                     return;
@@ -130,7 +140,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     private ListGroupsResponse getListGroupsResponse(String continuationToken) {
         return withRetry(() -> {
-            Response response = groupProxy.listGroups(continuationToken, GROUP_LIMIT);
+            Response response = groupProxy.listGroups(continuationToken, GROUP_LIMIT, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return response.readEntity(ListGroupsResponse.class);
@@ -143,7 +153,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public GroupProperties getGroupProperties(String groupId) {
         return withRetry(() -> {
-            Response response = groupProxy.getGroupProperties(groupId);
+            Response response = groupProxy.getGroupProperties(groupId, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupProperties.class));
@@ -164,7 +174,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 request.setPreviousCompatibility(ModelHelper.encode(previous));
             }
 
-            Response response = groupProxy.updateCompatibility(groupId, request);
+            Response response = groupProxy.updateCompatibility(groupId, request, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case CONFLICT:
                     return false;
@@ -186,7 +196,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     private List<SchemaWithVersion> latestSchemas(String groupId, String type) {
         return withRetry(() -> {
-            Response response = groupProxy.getSchemas(groupId, type);
+            Response response = groupProxy.getSchemas(groupId, type, namespace);
             SchemaVersionsList objectsList = response.readEntity(SchemaVersionsList.class);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
@@ -203,7 +213,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public VersionInfo addSchema(String groupId, SchemaInfo schemaInfo) {
         return withRetry(() -> {
-            Response response = groupProxy.addSchema(groupId, ModelHelper.encode(schemaInfo));
+            Response response = groupProxy.addSchema(groupId, ModelHelper.encode(schemaInfo), namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case CREATED:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
@@ -225,7 +235,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void deleteSchemaVersion(String groupId, VersionInfo versionInfo) {
         withRetry(() -> {
-            Response response = groupProxy.deleteSchemaForId(groupId, versionInfo.getId());
+            Response response = groupProxy.deleteSchemaForId(groupId, versionInfo.getId(), namespace);
             if (response.getStatus() == Response.Status.NOT_FOUND.getStatusCode()) {
                 throw new ResourceNotFoundException("Group not found.");
             } else if (response.getStatus() != Response.Status.NO_CONTENT.getStatusCode()) {
@@ -238,7 +248,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public SchemaInfo getSchemaForVersion(String groupId, VersionInfo versionInfo) {
         return withRetry(() -> {
-            Response response = groupProxy.getSchemaForId(groupId, versionInfo.getId());
+            Response response = groupProxy.getSchemaForId(groupId, versionInfo.getId(), namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class));
@@ -254,7 +264,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public EncodingInfo getEncodingInfo(String groupId, EncodingId encodingId) {
         return withRetry(() -> {
-            Response response = groupProxy.getEncodingInfo(groupId, encodingId.getId());
+            Response response = groupProxy.getEncodingInfo(groupId, encodingId.getId(), namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo.class));
@@ -273,7 +283,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest();
             getEncodingIdRequest.codecType(codecType)
                                 .versionInfo(ModelHelper.encode(versionInfo));
-            Response response = groupProxy.getEncodingId(groupId, getEncodingIdRequest);
+            Response response = groupProxy.getEncodingId(groupId, getEncodingIdRequest, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class));
@@ -301,7 +311,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public List<SchemaWithVersion> getSchemaVersions(String groupId, @Nullable String schemaType) {
         return withRetry(() -> {
-            Response response = groupProxy.getSchemaVersions(groupId, schemaType);
+            Response response = groupProxy.getSchemaVersions(groupId, schemaType, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     SchemaVersionsList schemaList = response.readEntity(SchemaVersionsList.class);
@@ -318,7 +328,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public List<GroupHistoryRecord> getGroupHistory(String groupId) {
         return withRetry(() -> {
-            Response response = groupProxy.getGroupHistory(groupId);
+            Response response = groupProxy.getGroupHistory(groupId, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory history = response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.GroupHistory.class);
@@ -335,7 +345,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public Map<String, VersionInfo> getSchemaReferences(SchemaInfo schemaInfo) throws ResourceNotFoundException, UnauthorizedException {
         return withRetry(() -> {
-            Response response = schemaProxy.getSchemaReferences(ModelHelper.encode(schemaInfo));
+            Response response = schemaProxy.getSchemaReferences(ModelHelper.encode(schemaInfo), namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     io.pravega.schemaregistry.contract.generated.rest.model.AddedTo addedTo = response
@@ -355,7 +365,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         return withRetry(() -> {
             io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo = ModelHelper.encode(schema);
 
-            Response response = groupProxy.getSchemaVersion(groupId, schemaInfo);
+            Response response = groupProxy.getSchemaVersion(groupId, schemaInfo, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
@@ -373,7 +383,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         return withRetry(() -> {
             ValidateRequest validateRequest = new ValidateRequest()
                     .schemaInfo(ModelHelper.encode(schemaInfo));
-            Response response = groupProxy.validate(groupId, validateRequest);
+            Response response = groupProxy.validate(groupId, validateRequest, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return response.readEntity(Valid.class).isValid();
@@ -390,7 +400,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public boolean canReadUsing(String groupId, SchemaInfo schemaInfo) {
         return withRetry(() -> {
             io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo request = ModelHelper.encode(schemaInfo);
-            Response response = groupProxy.canRead(groupId, request);
+            Response response = groupProxy.canRead(groupId, request, namespace);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return response.readEntity(CanRead.class).isCompatible();
@@ -406,7 +416,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public List<String> getCodecTypes(String groupId) {
         return withRetry(() -> {
-            Response response = groupProxy.getCodecTypesList(groupId);
+            Response response = groupProxy.getCodecTypesList(groupId, namespace);
             CodecTypesList list = response.readEntity(CodecTypesList.class);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
@@ -423,7 +433,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     @Override
     public void addCodecType(String groupId, String codecType) {
         withRetry(() -> {
-            Response response = groupProxy.addCodecType(groupId, codecType);
+            Response response = groupProxy.addCodecType(groupId, codecType, namespace);
 
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case CREATED:
