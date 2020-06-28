@@ -29,6 +29,7 @@ import lombok.SneakyThrows;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -265,8 +266,7 @@ public interface TableRecords {
     class SchemaFingerprintKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
-        // TODO: change fingerprint to 256 bit -- 4 longs
-        private final long fingerprint;
+        private final BigInteger fingerprint;
 
         private static class SchemaFingerprintKeyBuilder implements ObjectBuilder<SchemaFingerprintKey> {
         }
@@ -288,11 +288,12 @@ public interface TableRecords {
             }
 
             private void write00(SchemaFingerprintKey e, RevisionDataOutput target) throws IOException {
-                target.writeLong(e.fingerprint);
+                byte[] b = e.fingerprint.toByteArray();
+                target.writeArray(b);
             }
 
             private void read00(RevisionDataInput source, SchemaFingerprintKey.SchemaFingerprintKeyBuilder b) throws IOException {
-                b.fingerprint(source.readLong());
+                b.fingerprint(new BigInteger(source.readArray()));
             }
         }
     }
@@ -637,6 +638,7 @@ public interface TableRecords {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final String type;
+        private final String typeQualifier;
         private final int latestVersion;
         private final int latestId;
         private final int nextVersion;

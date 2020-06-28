@@ -141,10 +141,10 @@ public interface SchemaStore {
      *
      * @param namespace namespace
      * @param group group
-     * @param type type of schemas to fetch. 
+     * @param schemaType type of schemas to fetch. 
      * @return Completablefuture that holds List of latest schemas with versions for specified type in the group. 
      */
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String group, String type);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String group, String schemaType);
 
     /**
      * Gets all schemas for specified type in the group. 
@@ -154,11 +154,11 @@ public interface SchemaStore {
      *
      * @param namespace namespace
      * @param group group
-     * @param type type of schemas to fetch.
+     * @param schemaType type of schemas to fetch.
      * @param from version from which to fetch the schemas. 
      * @return Completablefuture that holds List of latest schemas with versions for the specified in the group. 
      */
-    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String group, String type, VersionInfo from);
+    CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String group, String schemaType, VersionInfo from);
 
     /**
      * Deletes the schema identified by schema id. This should perform soft delete schema. The implementation should guarantee atomic soft deletion. 

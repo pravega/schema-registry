@@ -73,15 +73,15 @@ public final class Config {
     private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.storeType", "Pravega");
     private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPoolSize", 50);
 
-    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("auth.tlsEnabled", false);
-    private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("auth.tlsCertFile", "");
-    private static final Property<String> PROPERTY_TLS_TRUST_STORE = Property.named("auth.tlsTrustStore", "");
-    private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("auth.tlsKeyFile", "");
-    private static final Property<String> PROPERTY_TLS_KEY_PASSWORD_FILE = Property.named("auth.tlsKeyPasswordFile", "");
+    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("auth.tls.enabled", false);
+    private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("security.tls.server.certificate.location", "");
+    private static final Property<String> PROPERTY_TLS_TRUST_STORE = Property.named("security.tls.trustStore.location", "");
+    private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("security.tls.server.privateKey.location", "");
+    private static final Property<String> PROPERTY_TLS_KEY_PASSWORD_FILE = Property.named("security.tls.server.privateKey.pwd.location", "");
 
-    private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("auth.enabled", false);
-    private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("auth.userPasswordFile", "");
-    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("auth.resourceQualifier", "_schemaregistry");
+    private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("security.auth.enable", false);
+    private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("security.pwdAuthHandler.accountsDb.location", "");
+    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resourceQualifier", "_schemaregistry");
 
     private static final String COMPONENT_CODE = "schema-registry";
 

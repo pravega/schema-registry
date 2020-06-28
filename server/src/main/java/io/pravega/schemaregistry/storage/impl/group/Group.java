@@ -35,6 +35,7 @@ import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.math.BigInteger;
 import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -298,7 +299,7 @@ public class Group<V> {
     }
 
     public CompletableFuture<VersionInfo> getVersion(SchemaInfo schemaInfo) {
-        long fingerprint = getFingerprint(schemaInfo);
+        BigInteger fingerprint = getFingerprint(schemaInfo);
         SchemaFingerprintKey key = new SchemaFingerprintKey(fingerprint);
 
         return groupTable.getEntry(key, SchemaVersionList.class)
@@ -539,7 +540,7 @@ public class Group<V> {
                          });
     }
 
-    private long getFingerprint(SchemaInfo schemaInfo) {
+    private BigInteger getFingerprint(SchemaInfo schemaInfo) {
         return HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
     }
 
@@ -596,7 +597,8 @@ public class Group<V> {
             VersionInfo version = iterator.next();
             return Futures.exceptionallyExpecting(getSchema(version.getId(), true)
                     .thenAccept(schema -> {
-                        if (Arrays.equals(schema.getSchemaData().array(), toFind.getSchemaData().array()) && schema.getType().equals(toFind.getType())) {
+                        if (Arrays.equals(schema.getSchemaData().array(), toFind.getSchemaData().array()) 
+                                && schema.getType().equals(toFind.getType()) && schema.getSerializationFormat().equals(toFind.getSerializationFormat())) {
                             found.set(version);
                         }
                     }), e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);

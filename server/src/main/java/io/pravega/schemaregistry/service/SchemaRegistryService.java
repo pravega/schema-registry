@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.protobuf.DescriptorProtos;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
@@ -708,9 +709,10 @@ public class SchemaRegistryService {
         return BackwardAndForward.builder().backwardPolicy(backwardPolicy).forwardPolicy(forwardPolicy).build();
     }
     
-    private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
+    private boolean checkCompatibility(SchemaInfo schemaInfo, GroupProperties groupProperties,
                                        List<SchemaWithVersion> schemasWithVersion) {
-        Preconditions.checkArgument(validateSchemaData(schema));
+        SchemaInfo schema = generalizeSchemaInfo(schemaInfo);
+        Preconditions.checkArgument(validateSchema(schema));
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         // Verify that the type matches the type in schemas it will be validated against.
@@ -767,10 +769,10 @@ public class SchemaRegistryService {
         }
     }
 
-    private boolean validateSchemaData(SchemaInfo schemaInfo) {
+    private boolean validateSchema(SchemaInfo schemaInfo) {
         String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
-        String name = tokens[0];
-        String pckg = tokens[1];
+        String qualifier = tokens[0]; // this can be empty string if schema info had no qualifier
+        String name = tokens[1];
         boolean isValid = true;
         try {
             String schemaString;
@@ -779,27 +781,38 @@ public class SchemaRegistryService {
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
 
                     isValid = fileDescriptorSet.getFileList().stream()
-                                               .anyMatch(x -> x.getPackage().startsWith(pckg) &&
-                                                       x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)));
+                                               .anyMatch(x -> {
+                                                   // type = name or type = qualified name
+                                                   if (x.getPackage() == null) {
+                                                       return schemaInfo.getType().equals(x.getName());
+                                                   } else {
+                                                       return name.equals(x.getName()) &&
+                                                               (Strings.isNullOrEmpty(qualifier) || qualifier.equals(x.getPackage()));
+                                                   }
+                                               });
                     break;
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    isValid = ((schema.getNamespace() == null) || schema.getNamespace().startsWith(pckg)) &&
-                            schema.getName().equals(name);
+                    
+                    if (schema.getNamespace() == null) {
+                        isValid = schemaInfo.getType().equals(schema.getName());
+                    } else {
+                        isValid = name.equals(schema.getName()) &&
+                                (Strings.isNullOrEmpty(qualifier) || qualifier.equals(schema.getNamespace()));
+                    }
+
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
                     break;
-                case Custom:
-                case Any:
                 default:
                     break;
             }
         } catch (Exception e) {
             log.info("unable to parse schema {}", e.getMessage());
-            isValid = false;
+            throw new IllegalArgumentException("Unable to parse schema", e);
         }
         return isValid;
     }

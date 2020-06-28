@@ -89,13 +89,13 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(type));
+    public CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String schemaType) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(schemaType));
     }
 
     @Override
-    public CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String type, VersionInfo from) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(type, from.getId()));
+    public CompletableFuture<List<SchemaWithVersion>> listSchemasByType(String namespace, String groupId, String schemaType, VersionInfo from) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchemas(schemaType, from.getId()));
     }
 
     @Override
