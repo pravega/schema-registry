@@ -69,13 +69,25 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     }
 
     /**
-     * Method to create a typed AvroSchema of type {@link GenericRecord} from the given schema. 
+     * Method to create a typed AvroSchema of type {@link Object} from the given schema. 
+     * This schema can be used to express any non record schema.
      *
      * @param schema Schema to use. 
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
     public static AvroSchema<Object> of(Schema schema) {
         return new AvroSchema<>(schema, Object.class);
+    }
+
+    /**
+     * Method to create a typed AvroSchema of type {@link GenericRecord} from the given schema. 
+     *
+     * @param schema Schema to use. 
+     * @return Returns an AvroSchema with {@link GenericRecord} type. 
+     */
+    public static AvroSchema<GenericRecord> ofRecord(Schema schema) {
+        Preconditions.checkArgument(schema.getType().equals(Schema.Type.RECORD));
+        return new AvroSchema<>(schema, GenericRecord.class);
     }
 
     /**
