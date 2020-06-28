@@ -31,6 +31,7 @@ import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.testobjs.Address;
 import io.pravega.schemaregistry.testobjs.DerivedUser1;
 import io.pravega.schemaregistry.testobjs.DerivedUser2;
+import io.pravega.schemaregistry.testobjs.SchemaDefinitions;
 import io.pravega.schemaregistry.testobjs.generated.ProtobufTest;
 import io.pravega.schemaregistry.testobjs.generated.Test1;
 import io.pravega.schemaregistry.testobjs.generated.Test2;
@@ -38,6 +39,7 @@ import io.pravega.test.common.AssertExtensions;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.SneakyThrows;
+import org.apache.avro.generic.GenericData;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.junit.Test;
@@ -64,7 +66,6 @@ public class SerializerTest {
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
         AvroSchema<Test2> schema2 = AvroSchema.of(Test2.class);
-
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
@@ -77,6 +78,20 @@ public class SerializerTest {
         doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), CodecFactory.NONE)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
+        AvroSchema<Object> of = AvroSchema.of(SchemaDefinitions.ENUM);
+        VersionInfo versionInfo3 = new VersionInfo(of.getSchema().getFullName(), 0, 2);
+        doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(of.getSchemaInfo()));
+        doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
+        doAnswer(x -> new EncodingInfo(versionInfo3, of.getSchemaInfo(), CodecFactory.NONE)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
+
+        Serializer<Object> serializerStr = SerializerFactory.avroSerializer(config, of);
+        GenericData.EnumSymbol enumSymbol = new GenericData.EnumSymbol(of.getSchema(), "a");
+        ByteBuffer serialized1 = serializerStr.serialize(enumSymbol);
+
+        Serializer<Object> deserializer1 = SerializerFactory.avroDeserializer(config, of);
+        Object deserializedEnum = deserializer1.deserialize(serialized1);
+        assertEquals(deserializedEnum, enumSymbol);
+        
         Serializer<Test1> serializer = SerializerFactory.avroSerializer(config, schema1);
         Test1 test1 = new Test1("name", 1);
         ByteBuffer serialized = serializer.serialize(test1);
