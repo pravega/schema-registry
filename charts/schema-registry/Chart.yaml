@@ -1,0 +1,17 @@
+# /**
+#  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#  *
+#  * Licensed under the Apache License, Version 2.0 (the "License");
+#  * you may not use this file except in compliance with the License.
+#  * You may obtain a copy of the License at
+#  *
+#  *     http://www.apache.org/licenses/LICENSE-2.0
+#  */
+
+apiVersion: v2
+name: schema-registry
+description: Schema Registry Helm chart for Kubernetes
+type: application
+version: 0.0.1
+appVersion: 0.0.1
+home: https://github.com/pravega/schema-registry
