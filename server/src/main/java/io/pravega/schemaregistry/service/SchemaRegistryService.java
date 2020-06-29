@@ -163,11 +163,11 @@ public class SchemaRegistryService {
      * @param namespace       namespace for which the request is scoped to.
      * @param group           Name of group.
      * @param compatibility New compatibility for the group.
-     * @param previousRules   Previous rules compatibility for the group. If null, unconditional update is performed.
+     * @param previousCompatibility   Previous rules compatibility for the group. If null, unconditional update is performed.
      * @return CompletableFuture which is completed when compatibility policy update completes.
      */
     public CompletableFuture<Void> updateCompatibility(String namespace, String group, Compatibility compatibility,
-                                                       @Nullable Compatibility previousRules) {
+                                                       @Nullable Compatibility previousCompatibility) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(compatibility != null);
         log.info("updateCompatibility called for group {}. New compatibility {}", group, compatibility);
@@ -175,10 +175,10 @@ public class SchemaRegistryService {
                                          .thenCompose(pos -> {
                                              return store.getGroupProperties(namespace, group)
                                                          .thenCompose(prop -> {
-                                                             if (previousRules == null) {
+                                                             if (previousCompatibility == null) {
                                                                  return store.updateCompatibility(namespace, group, pos, compatibility);
                                                              } else {
-                                                                 if (previousRules.equals(prop.getCompatibility())) {
+                                                                 if (previousCompatibility.equals(prop.getCompatibility())) {
                                                                      return store.updateCompatibility(namespace, group, pos, compatibility);
                                                                  } else {
                                                                      throw new PreconditionFailedException("Conditional update failed");
