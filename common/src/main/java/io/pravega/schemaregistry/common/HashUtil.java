@@ -26,15 +26,12 @@ public class HashUtil {
     }
 
     /**
-     * Computes a 64 bit hash of supplied bytes using 128 bit murmur3 hash function and taking its first 8 bytes.
+     * Computes a 64 bit hash of supplied bytes using sha-256 hash function.
      *
      * @param bytes bytes to compute hash of. 
-     * @return a 64 bit hash of the given bytes.
+     * @return a 256 bit hash of the given bytes.
      */
     public static BigInteger getFingerprint(byte[] bytes) {
-        // digest() method called  
-        // to calculate message digest of an input  
-        // and return array of byte 
         return new BigInteger(MD.digest(bytes));
     }
 }
