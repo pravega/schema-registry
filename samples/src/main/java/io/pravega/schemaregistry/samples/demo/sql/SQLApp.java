@@ -147,15 +147,13 @@ public class SQLApp {
         assert from.toLowerCase().equals("from");
 
         String qualifiedStreamName = tokens[4];
-        String[] streamToken = qualifiedStreamName.split("[:/]");
-        String protocol = streamToken[0];
-        assert protocol.toLowerCase().equals("pravega");
+        String[] streamToken = qualifiedStreamName.split("[/]");
         String scope = streamToken[1];
         String stream = streamToken[2];
         createTable(scope, stream, tableName);
     }
 
-    private void createTable(String scope, String stream, String tableName) throws UnsupportedEncodingException {
+    private void createTable(String scope, String stream, String tableName) {
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
         GroupProperties properties = client.getGroupProperties(groupId);
         
@@ -289,7 +287,7 @@ public class SQLApp {
                                                             .build();
 
         SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
-        AvroSchema<GenericRecord> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchemaInfo().getSchemaData().array(), Charsets.UTF_8)));
+        AvroSchema<GenericRecord> avroSchema = AvroSchema.ofRecord(new Schema.Parser().parse(new String(latestSchema.getSchemaInfo().getSchemaData().array(), Charsets.UTF_8)));
         Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, avroSchema);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

@@ -145,7 +145,7 @@ public class Writer2 {
                                                             .registryConfig(config)
                                                             .build();
 
-        AvroSchema<GenericRecord> schema = AvroSchema.of(SCHEMA);
+        AvroSchema<GenericRecord> schema = AvroSchema.ofRecord(SCHEMA);
         Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
         // endregion
 

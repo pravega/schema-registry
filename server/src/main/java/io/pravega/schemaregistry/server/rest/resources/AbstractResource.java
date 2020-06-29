@@ -109,44 +109,44 @@ abstract class AbstractResource {
         return String.format(NAMESPACE_FORMAT, encode);
     }
 
-    String getGroupResource(String groupName) {
-        return getGroupResource(groupName, DEFAULT_NAMESPACE);
+    String getGroupResource(String group) {
+        return getGroupResource(group, DEFAULT_NAMESPACE);
     }
 
     @SneakyThrows(UnsupportedEncodingException.class)
-    String getGroupResource(String groupName, String namespace) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+    String getGroupResource(String group, String namespace) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
         String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
         return String.format(NAMESPACE_GROUP_FORMAT, encodedNamespace,
-                URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+                URLEncoder.encode(group, Charsets.UTF_8.toString()));
     }
 
-    String getGroupSchemaResource(String groupName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
-        return getGroupSchemaResource(groupName, DEFAULT_NAMESPACE);
+    String getGroupSchemaResource(String group) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
+        return getGroupSchemaResource(group, DEFAULT_NAMESPACE);
     }
 
     @SneakyThrows(UnsupportedEncodingException.class)
-    String getGroupSchemaResource(String groupName, String namespace) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+    String getGroupSchemaResource(String group, String namespace) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
         String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
 
         return String.format(NAMESPACE_GROUP_SCHEMA_FORMAT,
-                encodedNamespace, URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+                encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
     }
 
-    String getGroupCodecResource(String groupName) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
-        return getGroupCodecResource(groupName, DEFAULT_NAMESPACE);
+    String getGroupCodecResource(String group) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
+        return getGroupCodecResource(group, DEFAULT_NAMESPACE);
     }
 
     @SneakyThrows(UnsupportedEncodingException.class)
-    String getGroupCodecResource(String groupName, String namespace) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(groupName));
+    String getGroupCodecResource(String group, String namespace) {
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
         String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
 
         return String.format(NAMESPACE_GROUP_CODEC_FORMAT,
-                encodedNamespace, URLEncoder.encode(groupName, Charsets.UTF_8.toString()));
+                encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
     }
 
     static String parseCredentials(List<String> authHeader) throws AuthenticationException {

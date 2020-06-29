@@ -13,6 +13,9 @@ import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 
 public class SchemaDefinitions {
+    public static final Schema ENUM = SchemaBuilder
+            .enumeration("a").symbols("a", "b", "c");
+    
     public static final Schema SCHEMA1 = SchemaBuilder
             .record("MyTest")
             .fields()

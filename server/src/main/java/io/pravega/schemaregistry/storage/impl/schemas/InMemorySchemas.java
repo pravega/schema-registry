@@ -16,6 +16,7 @@ import lombok.Data;
 import lombok.Synchronized;
 
 import javax.annotation.concurrent.GuardedBy;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -38,7 +39,7 @@ public class InMemorySchemas implements Schemas<Integer> {
     @Override
     public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
         String namespace = nameSpace == null ? "" : nameSpace;
-        long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
         String schemaId = fingerprintValue == null ? null : findSchemaId(schemaInfo, fingerprintValue);
@@ -95,7 +96,7 @@ public class InMemorySchemas implements Schemas<Integer> {
     @Override
     public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, SchemaInfo schemaInfo) {
         String namespace = nameSpace == null ? "" : nameSpace;
-        long fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
         String schemaId = fingerprintValue == null ? null : findSchemaId(schemaInfo, fingerprintValue);

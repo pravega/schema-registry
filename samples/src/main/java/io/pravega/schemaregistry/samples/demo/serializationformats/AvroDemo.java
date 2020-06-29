@@ -140,7 +140,7 @@ public class AvroDemo {
                     true));
 
             System.out.println("registering schema " + SCHEMA1.toString(true));
-            AvroSchema<GenericRecord> schema1 = AvroSchema.of(SCHEMA1);
+            AvroSchema<GenericRecord> schema1 = AvroSchema.ofRecord(SCHEMA1);
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
@@ -160,7 +160,7 @@ public class AvroDemo {
 
             System.out.println("registering schema with default value for new field:" + SCHEMA2.toString(true));
 
-            AvroSchema<GenericRecord> schema2 = AvroSchema.of(SCHEMA2);
+            AvroSchema<GenericRecord> schema2 = AvroSchema.ofRecord(SCHEMA2);
 
             // region writer with schema2
             serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
@@ -176,7 +176,7 @@ public class AvroDemo {
             try {
                 System.out.println("registering schema " + SCHEMA3.toString(true));
 
-                AvroSchema<GenericRecord> schema3 = AvroSchema.of(SCHEMA3);
+                AvroSchema<GenericRecord> schema3 = AvroSchema.ofRecord(SCHEMA3);
 
                 SerializerFactory.avroSerializer(serializerConfig, schema3);
             } catch (Exception ex) {
@@ -193,7 +193,7 @@ public class AvroDemo {
 
                 System.out.println("reading all records into schema2" + SCHEMA2.toString(true));
 
-                AvroSchema<GenericRecord> readSchema = AvroSchema.of(SCHEMA2);
+                AvroSchema<GenericRecord> readSchema = AvroSchema.ofRecord(SCHEMA2);
 
                 Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
 
@@ -213,7 +213,7 @@ public class AvroDemo {
 
                     System.out.println("creating new reader to read using schema 3:" + SCHEMA3.toString(true));
 
-                    readSchema = AvroSchema.of(SCHEMA3);
+                    readSchema = AvroSchema.ofRecord(SCHEMA3);
 
                     exceptionThrown = false;
                     try {
@@ -285,7 +285,7 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                AvroSchema<GenericRecord> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
+                AvroSchema<GenericRecord> readSchema = AvroSchema.ofRecord(ReflectData.get().getSchema(TestClass.class));
 
                 Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
 

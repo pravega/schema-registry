@@ -20,7 +20,6 @@ import io.pravega.schemaregistry.testobjs.User;
 import io.pravega.schemaregistry.testobjs.generated.ProtobufTest;
 import io.pravega.schemaregistry.testobjs.generated.Test1;
 import io.pravega.schemaregistry.testobjs.generated.Test2;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.junit.Test;
 
@@ -35,7 +34,7 @@ import static org.junit.Assert.*;
 public class TestSchemas {
     @Test
     public void testAvroSchema() {
-        AvroSchema<GenericRecord> schema = AvroSchema.of(SchemaDefinitions.SCHEMA1);
+        AvroSchema<Object> schema = AvroSchema.of(SchemaDefinitions.SCHEMA1);
         assertNotNull(schema.getSchema());
         assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Avro);
 

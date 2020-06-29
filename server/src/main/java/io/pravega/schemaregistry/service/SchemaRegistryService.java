@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.protobuf.DescriptorProtos;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
@@ -125,7 +126,7 @@ public class SchemaRegistryService {
                                 log.info("Group {} exists.", group);
                             }
                         } else {
-                            log.warn("create group {} request failed with error", e, group);
+                            log.warn("create group {} request failed with error", group, e);
                         }
                     });
     }
@@ -150,7 +151,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {} properties.", group);
                         } else {
-                            log.warn("getGroupProperties for group {} request failed with error", e, group);
+                            log.warn("getGroupProperties for group {} request failed with error", group, e);
                         }
                     });
 
@@ -189,7 +190,7 @@ public class SchemaRegistryService {
                                              if (e == null) {
                                                  log.info("Group {} updateCompatibility successful.", group);
                                              } else {
-                                                 log.warn("getGroupProperties for group {} request failed with error", e, group);
+                                                 log.warn("getGroupProperties for group {} request failed with error", group, e);
                                              }
                                          }), executor);
     }
@@ -213,7 +214,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {} getSchemas {}.", group, r);
                             } else {
-                                log.warn("getSchemas for group {} request failed with error", e, group);
+                                log.warn("getSchemas for group {} request failed with error", group, e);
                             }
                         });
         } else {
@@ -268,7 +269,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, schema {} added successfully.", group, schema.getType());
                         } else {
-                            log.warn("Group {}, schema {} add failed with error", e, group);
+                            log.warn("Group {}, schema {} add failed with error", group, e);
                         }
                     });
     }
@@ -289,7 +290,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, return schema for verison {}.", group, schemaId);
                         } else {
-                            log.warn("Group {}, get schema version {} failed with error", e, group, schemaId);
+                            log.warn("Group {}, get schema version {} failed with error", group, schemaId, e);
                         }
                     });
     }
@@ -311,7 +312,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, return schema for verison {}/{}.", group, schemaType, version);
                         } else {
-                            log.warn("Group {}, get schema version {}/{} failed with error", e, group, schemaType, version);
+                            log.warn("Group {}, get schema version {}/{} failed with error", group, schemaType, version, e);
                         }
                     });
     }
@@ -333,7 +334,7 @@ public class SchemaRegistryService {
                                                           if (e == null) {
                                                               log.info("Group {}, schema for verison {} deleted.", group, schemaId);
                                                           } else {
-                                                              log.warn("Group {}, get schema version {} failed with error", e, group, schemaId);
+                                                              log.warn("Group {}, get schema version {} failed with error", group, schemaId, e);
                                                           }
                                                       })), executor);
     }
@@ -356,7 +357,7 @@ public class SchemaRegistryService {
                                                           if (e == null) {
                                                               log.info("Group {}, schema for verison {}/{} deleted.", group, schemaType, version);
                                                           } else {
-                                                              log.warn("Group {}, get schema version {}/{} failed with error", e, group, schemaType, version);
+                                                              log.warn("Group {}, get schema version {}/{} failed with error", group, schemaType, version, e);
                                                           }
                                                       })), executor);
     }
@@ -381,7 +382,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, return getEncodingInfo {} {}.", group, r.getVersionInfo(), r.getCodecType());
                         } else {
-                            log.warn("Group {}, get getEncodingInfo for id {} failed with error", e, group, encodingId);
+                            log.warn("Group {}, get getEncodingInfo for id {} failed with error", group, encodingId, e);
                         }
                     });
     }
@@ -415,7 +416,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, getEncodingId for {} {}. returning {}.", group, version, codecType, r);
                         } else {
-                            log.warn("Group {}, getEncodingId for {} {} failed with error", e, group, version, codecType);
+                            log.warn("Group {}, getEncodingId for {} {} failed with error", group, version, codecType, e);
                         }
                     });
     }
@@ -441,7 +442,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {}, object type = {}, history size = {}.", group, type, r.size());
                             } else {
-                                log.warn("Group {}, object type = {}, getGroupHistory failed with error", e, group, type);
+                                log.warn("Group {}, object type = {}, getGroupHistory failed with error", group, type, e);
                             }
                         });
         } else {
@@ -450,7 +451,7 @@ public class SchemaRegistryService {
                             if (e == null) {
                                 log.info("Group {}, history size = {}.", group, r.size());
                             } else {
-                                log.warn("Group {}, getGroupHistory failed with error", e, group);
+                                log.warn("Group {}, getGroupHistory failed with error", group, e);
                             }
                         });
 
@@ -476,7 +477,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, version = {}.", group, r);
                         } else {
-                            log.warn("Group {}, getSchemaVersion failed with error", e, group);
+                            log.warn("Group {}, getSchemaVersion failed with error", group, e);
                         }
                     });
     }
@@ -504,7 +505,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, validateSchema response = {}.", group, r);
                         } else {
-                            log.warn("Group {}, validateSchema failed with error", e, group);
+                            log.warn("Group {}, validateSchema failed with error", group, e);
                         }
                     });
     }
@@ -529,7 +530,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, canRead response = {}.", group, r);
                         } else {
-                            log.warn("Group {}, canRead failed with error", e, group);
+                            log.warn("Group {}, canRead failed with error", group, e);
                         }
                     });
     }
@@ -550,7 +551,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, group deleted", group);
                         } else {
-                            log.warn("Group {}, group delete failed with error", e, group);
+                            log.warn("Group {}, group delete failed with error", group, e);
                         }
                     });
     }
@@ -571,7 +572,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, codecTypes = {}", group, r);
                         } else {
-                            log.warn("Group {}, getcodecTypes failed with error", e, group);
+                            log.warn("Group {}, getcodecTypes failed with error", group, e);
                         }
                     });
     }
@@ -596,7 +597,7 @@ public class SchemaRegistryService {
                         if (e == null) {
                             log.info("Group {}, addCodecType {} successful", group, codecType);
                         } else {
-                            log.warn("Group {}, addCodecType {} failed with error", e, group, codecType);
+                            log.warn("Group {}, addCodecType {} failed with error", group, codecType, e);
                         }
                     });
 
@@ -619,8 +620,9 @@ public class SchemaRegistryService {
     private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String namespace, String group, SchemaInfo schema, GroupProperties groupProperties) {
         switch (groupProperties.getCompatibility().getType()) {
             case AllowAny:
-            case DenyAll:
                 return CompletableFuture.completedFuture(Collections.emptyList());
+            case DenyAll:
+                return store.getLatestSchemas(namespace, group);
             case Backward:
             case Forward:
             case BackwardTransitive:
@@ -709,7 +711,7 @@ public class SchemaRegistryService {
     
     private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
                                        List<SchemaWithVersion> schemasWithVersion) {
-        Preconditions.checkArgument(validateSchemaData(schema));
+        validateSchemaData(schema);
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         // Verify that the type matches the type in schemas it will be validated against.
@@ -766,41 +768,59 @@ public class SchemaRegistryService {
         }
     }
 
-    private boolean validateSchemaData(SchemaInfo schemaInfo) {
-        String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
-        String name = tokens[0];
-        String pckg = tokens[1];
+    private void validateSchemaData(SchemaInfo schemaInfo) {
         boolean isValid = true;
+        String invalidityCause = "";
         try {
             String schemaString;
             switch (schemaInfo.getSerializationFormat()) {
                 case Protobuf:
-                    DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+                    String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    String qualifier = tokens[1]; // this can be empty string if schema info had no qualifier
+                    String name = tokens[0];
+                    DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(
+                            schemaInfo.getSchemaData());
 
-                    isValid = fileDescriptorSet.getFileList().stream()
-                                               .anyMatch(x -> x.getPackage().startsWith(pckg) &&
-                                                       x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)));
+                    isValid = fileDescriptorSet
+                            .getFileList().stream()
+                            .anyMatch(x -> {
+                                boolean match;
+                                if (x.getPackage() == null) {
+                                    match = Strings.isNullOrEmpty(qualifier);
+                                } else {
+                                    match = x.getPackage().equals(qualifier);
+                                }
+                                return match && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name));
+                            });
+                    if (!isValid) {
+                        invalidityCause = "Type mismatch. Type should be full name for protobuf message. Hint: package.messageName";
+                    } 
                     break;
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    isValid = ((schema.getNamespace() == null) || schema.getNamespace().startsWith(pckg)) &&
-                            schema.getName().equals(name);
+                    
+                    isValid = schema.getFullName().equals(schemaInfo.getType());
+                    if (!isValid) {
+                        invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
+                    }
+
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
                     break;
-                case Custom:
-                case Any:
                 default:
                     break;
             }
         } catch (Exception e) {
             log.info("unable to parse schema {}", e.getMessage());
             isValid = false;
+            invalidityCause = "Unable to parse schema";
         }
-        return isValid;
+        if (!isValid) {
+            throw new IllegalArgumentException(invalidityCause);
+        }
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {

@@ -17,8 +17,6 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import java.io.InputStream;
 import java.util.Map;
 
-import static io.pravega.schemaregistry.common.NameUtil.extractName;
-
 class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserializer<Either<T, G>> {
     private final Map<String, AbstractPravegaDeserializer<T>> deserializers;
     private final AbstractPravegaDeserializer<G> genericDeserializer;
@@ -36,9 +34,7 @@ class MultiplexedAndGenericDeserializer<T, G> extends AbstractPravegaDeserialize
     @Override
     protected Either<T, G> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        AbstractPravegaDeserializer<T> deserializer = deserializers.containsKey(writerSchema.getType()) ?
-                deserializers.get(writerSchema.getType()) :
-                deserializers.get(extractName(writerSchema.getType()));
+        AbstractPravegaDeserializer<T> deserializer = deserializers.get(writerSchema.getType());
         if (deserializer == null) {
             return Either.right(genericDeserializer.deserialize(inputStream, writerSchema, readerSchema));
         } else {

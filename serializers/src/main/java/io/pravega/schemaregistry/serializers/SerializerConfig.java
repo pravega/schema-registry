@@ -42,8 +42,7 @@ public class SerializerConfig {
     private final static Codec NOOP = CodecFactory.none();
     private final static Codec GZIP = CodecFactory.gzip();
     private final static Codec SNAPPY = CodecFactory.snappy();
-
-
+    
     /**
      * Name of the group.
      */

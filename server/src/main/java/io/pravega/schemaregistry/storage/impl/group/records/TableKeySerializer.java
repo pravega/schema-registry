@@ -22,7 +22,7 @@ public class TableKeySerializer extends VersionedSerializer.MultiType<TableRecor
     protected void declareSerializers(Builder builder) {
         // Unused values (Do not repurpose!):
         // - 0: Unsupported Serializer.
-        builder.serializer(TableRecords.VersionKey.class, 1, new TableRecords.VersionKey.Serializer())
+        builder.serializer(TableRecords.SchemaIdKey.class, 1, new TableRecords.SchemaIdKey.Serializer())
                .serializer(TableRecords.ValidationPolicyKey.class, 2, new TableRecords.ValidationPolicyKey.Serializer())
                .serializer(TableRecords.Etag.class, 3, new TableRecords.Etag.Serializer())
                .serializer(TableRecords.GroupPropertyKey.class, 4, new TableRecords.GroupPropertyKey.Serializer())
@@ -30,12 +30,10 @@ public class TableKeySerializer extends VersionedSerializer.MultiType<TableRecor
                .serializer(TableRecords.EncodingInfoRecord.class, 6, new TableRecords.EncodingInfoRecord.Serializer())
                .serializer(TableRecords.EncodingIdRecord.class, 7, new TableRecords.EncodingIdRecord.Serializer())
                .serializer(TableRecords.LatestEncodingIdKey.class, 8, new TableRecords.LatestEncodingIdKey.Serializer())
-               .serializer(TableRecords.LatestSchemaVersionKey.class, 9, new TableRecords.LatestSchemaVersionKey.Serializer())
-               .serializer(TableRecords.LatestSchemaVersionForTypeKey.class, 10, new TableRecords.LatestSchemaVersionForTypeKey.Serializer())
-               .serializer(TableRecords.CodecTypesKey.class, 11, new TableRecords.CodecTypesKey.Serializer())
-               .serializer(TableRecords.SchemaTypesKey.class, 12, new TableRecords.SchemaTypesKey.Serializer())
-               .serializer(TableRecords.SchemaTypeVersionKey.class, 13, new TableRecords.SchemaTypeVersionKey.Serializer())
-               .serializer(TableRecords.VersionDeletedRecord.class, 14, new TableRecords.VersionDeletedRecord.Serializer());
+               .serializer(TableRecords.CodecTypesKey.class, 9, new TableRecords.CodecTypesKey.Serializer())
+               .serializer(TableRecords.LatestSchemasKey.class, 10, new TableRecords.LatestSchemasKey.Serializer())
+               .serializer(TableRecords.IndexTypeVersionToIdKey.class, 11, new TableRecords.IndexTypeVersionToIdKey.Serializer())
+               .serializer(TableRecords.VersionDeletedRecord.class, 12, new TableRecords.VersionDeletedRecord.Serializer());
     }
 
     /**

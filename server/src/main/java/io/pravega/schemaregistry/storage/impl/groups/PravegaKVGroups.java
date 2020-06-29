@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class PravegaKVGroups implements Groups<Version> {
-    private static final String GROUPS = TableStore.SCHEMA_REGISTRY_SCOPE + "/groups/0";
+    public static final String GROUPS = TableStore.SCHEMA_REGISTRY_SCOPE + "/groups/0";
 
     private final TableStore tableStore;
     private final ScheduledExecutorService executor;
@@ -50,34 +50,43 @@ public class PravegaKVGroups implements Groups<Version> {
     }
 
     @Override
-    public CompletableFuture<Group<Version>> getGroup(String namespace, String groupName) {
+    public CompletableFuture<Group<Version>> getGroup(String namespace, String group) {
         return withCreateGroupsTableIfAbsent(() -> tableStore.getEntry(GROUPS, 
-                new NamespaceAndGroup(namespace, groupName).toBytes(), GroupsValue::fromBytes))
-                .thenApply(entry -> {
-                    if (!entry.getRecord().getState().equals(GroupsValue.State.Active)) {
-                        throw new IllegalStateException();
+                new NamespaceAndGroup(namespace, group).toBytes(), GroupsValue::fromBytes))
+                .thenCompose(entry -> {
+                    if (entry.getRecord().getState().equals(GroupsValue.State.Creating)) {
+                        // if a group is in creating state, we will throw data not found exception as this group is not 
+                        // available for any action. 
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group not created yet.");
+                    } else if (entry.getRecord().getState().equals(GroupsValue.State.Deleting)) {
+                        // if a get group request is made for a deleting group, we will delete it and throw data not found.
+                        return deleteGroup(namespace, group)
+                                .thenApply(v -> {
+                                    throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group not found.");
+                                });
                     } else {
-                        return getGroupObject(entry.getRecord()).getGroup();
+                        return CompletableFuture.completedFuture(getGroupObject(entry.getRecord()).getGroup());
                     }
                 });
     }
 
     @Override
-    public CompletableFuture<Boolean> addNewGroup(String namespace, String groupName, GroupProperties groupProperties) {
+    public CompletableFuture<Boolean> addNewGroup(String namespace, String group, GroupProperties groupProperties) {
         // 1. add entry to groups table
-        // 2. if entry already exists - if its state is creating only then proceed, else if it is created return
-        // 3. create group object and call create on it. 
+        // 2. if group is already present and active, return false. If group entry is either created with state = creating
+        // or was already present but the state was creating, proceed with creation of group metadata.
+        // 3. create group metadata by calling `create` method on the group object. 
         // 4. update groups entry to active
         String id = UUID.randomUUID().toString();
         GroupsValue value = new GroupsValue(id, GroupsValue.State.Creating);
-        byte[] key = new NamespaceAndGroup(namespace, groupName).toBytes();
+        byte[] key = new NamespaceAndGroup(namespace, group).toBytes();
         return withCreateGroupsTableIfAbsent(() -> tableStore.addNewEntryIfAbsent(GROUPS, key, value.toBytes()))
                 .thenCompose(v -> tableStore.getEntry(GROUPS, key, GroupsValue::fromBytes))
                 .thenCompose(entry -> {
                     if (entry.getRecord().getState().equals(GroupsValue.State.Creating)) {
                         GroupObj groupObject = getGroupObject(entry.getRecord());
                         Group<Version> grp = groupObject.getGroup();
-                        PravegaKVGroupTable index = groupObject.getIndex();
+                        PravegaKVGroupTable index = groupObject.getGroupTable();
 
                         boolean toReturn = entry.getRecord().getId().equals(id);
                         return index.create()
@@ -96,7 +105,7 @@ public class PravegaKVGroups implements Groups<Version> {
 
     @SneakyThrows
     @Override
-    public CompletableFuture<ListWithToken<String>> getGroups(String nameSpace, ContinuationToken token, int limit) {
+    public CompletableFuture<ListWithToken<String>> listGroups(String nameSpace, ContinuationToken token, int limit) {
         String namespace = nameSpace == null ? "" : nameSpace;
         ByteBuf continuationToken;
         if (token == null || token.equals(ContinuationToken.EMPTY)) {
@@ -118,30 +127,33 @@ public class PravegaKVGroups implements Groups<Version> {
     }
 
     @Override
-    public CompletableFuture<Void> deleteGroup(String namespace, String groupName) {
-        // 1. mark group as deleting
+    public CompletableFuture<Void> deleteGroup(String namespace, String group) {
+        // 1. if group state is "active" or "deleting", mark group entry in groups table as deleting.
         // 2. call group.delete
-        //  2.1 delete index
-        //  2.2 delete log
-        // 3. delete the groups entry
-        byte[] key = new NamespaceAndGroup(namespace, groupName).toBytes();
-        return Futures.exceptionallyExpecting(tableStore.getEntry(GROUPS, key, GroupsValue::fromBytes)
-                                                        .thenCompose(entry -> {
-                                                            GroupsValue newValue = new GroupsValue(entry.getRecord().getId(), GroupsValue.State.Deleting);
-                                                            return tableStore.updateEntry(GROUPS, key, newValue.toBytes(), entry.getVersion())
-                                                                             .thenCompose(version -> {
-                                                                                 GroupObj grpObj = getGroupObject(newValue);
-                                                                                 return grpObj.getIndex().delete();
-                                                                             });
-                                                        })
-                                                        .thenCompose(v -> tableStore.removeEntry(GROUPS, key)),
+        // 3. delete the entry in groups table
+        byte[] key = new NamespaceAndGroup(namespace, group).toBytes();
+        return Futures.exceptionallyExpecting(
+                tableStore.getEntry(GROUPS, key, GroupsValue::fromBytes)
+                          .thenCompose(entry -> {
+                              if (!entry.getRecord().getState().equals(GroupsValue.State.Creating)) {
+                                  GroupsValue newValue = new GroupsValue(entry.getRecord().getId(), GroupsValue.State.Deleting);
+                                  return tableStore.updateEntry(GROUPS, key, newValue.toBytes(), entry.getVersion())
+                                                   .thenCompose(version -> {
+                                                       GroupObj grpObj = getGroupObject(newValue);
+                                                       return grpObj.getGroupTable().delete()
+                                                                    .thenCompose(v -> tableStore.removeEntry(GROUPS, key));
+                                                   });
+                              } else {
+                                  return CompletableFuture.completedFuture(null);
+                              }
+                          }),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);
     }
 
     private GroupObj getGroupObject(GroupsValue value) {
-        PravegaKVGroupTable index = new PravegaKVGroupTable(value.getId(), tableStore);
-        Group<Version> group = new Group<>(index, executor);
-        return new GroupObj(group, index);
+        PravegaKVGroupTable groupTable = new PravegaKVGroupTable(value.getId(), tableStore);
+        Group<Version> group = new Group<>(groupTable, executor);
+        return new GroupObj(group, groupTable);
     }
 
     private <T> CompletableFuture<T> withCreateGroupsTableIfAbsent(Supplier<CompletableFuture<T>> supplier) {
@@ -153,6 +165,6 @@ public class PravegaKVGroups implements Groups<Version> {
     @Data
     private static class GroupObj {
         private final Group<Version> group;
-        private final PravegaKVGroupTable index;
+        private final PravegaKVGroupTable groupTable;
     }
 }

@@ -197,17 +197,5 @@ public class EncryptionDemo {
             }
         };
     }
-
-    private static class TestClass {
-        private final String test;
-
-        private TestClass(String test) {
-            this.test = test;
-        }
-
-        public String getTest() {
-            return test;
-        }
-    }
 }
 

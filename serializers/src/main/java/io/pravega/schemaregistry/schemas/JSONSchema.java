@@ -79,7 +79,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchema schema = schemaGen.generateSchema(tClass);
         String schemaString = objectMapper.writeValueAsString(schema);
 
-        return new JSONSchema<>(schema, tClass.getSimpleName(), schemaString, tClass);
+        return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
     }
 
     /**
@@ -113,7 +113,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
         JsonSchema schema = schemaGen.generateSchema(tDerived);
         String schemaString = objectMapper.writeValueAsString(schema);
         
-        return new JSONSchema<>(schema, tDerived.getSimpleName(), schemaString, tBase, tDerived);
+        return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
     }
 
     /**

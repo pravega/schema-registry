@@ -37,16 +37,16 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     
     private AvroSchema(Schema schema, Class<T> tClass) {
         this.schema = schema;
-        this.schemaInfo = new SchemaInfo(schema.getName(),
+        this.schemaInfo = new SchemaInfo(schema.getFullName(),
                 SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
         this.tClass = tClass;
     }
 
-    private AvroSchema(SchemaInfo schemaInfo, Class<T> tClass) {
+    private AvroSchema(SchemaInfo schemaInfo) {
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
         this.schema = new Schema.Parser().parse(schemaString);
         this.schemaInfo = schemaInfo;
-        this.tClass = tClass;
+        this.tClass = null;
     }
 
     /**
@@ -69,13 +69,25 @@ public class AvroSchema<T> implements SchemaContainer<T> {
     }
 
     /**
+     * Method to create a typed AvroSchema of type {@link Object} from the given schema. 
+     * This schema can be used to express any non record schema.
+     *
+     * @param schema Schema to use. 
+     * @return Returns an AvroSchema with {@link GenericRecord} type. 
+     */
+    public static AvroSchema<Object> of(Schema schema) {
+        return new AvroSchema<>(schema, Object.class);
+    }
+
+    /**
      * Method to create a typed AvroSchema of type {@link GenericRecord} from the given schema. 
      *
      * @param schema Schema to use. 
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
-    public static AvroSchema<GenericRecord> of(Schema schema) {
-        return new AvroSchema<>(schema, null);
+    public static AvroSchema<GenericRecord> ofRecord(Schema schema) {
+        Preconditions.checkArgument(schema.getType().equals(Schema.Type.RECORD));
+        return new AvroSchema<>(schema, GenericRecord.class);
     }
 
     /**
@@ -116,7 +128,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
     public static AvroSchema<GenericRecord> from(SchemaInfo schemaInfo) {
-        return new AvroSchema<>(schemaInfo, null);
+        return new AvroSchema<>(schemaInfo);
     }
 
     private ByteBuffer getSchemaBytes() {

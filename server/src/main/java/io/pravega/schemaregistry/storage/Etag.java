@@ -10,8 +10,9 @@
 package io.pravega.schemaregistry.storage;
 
 /**
- * Pointer to a group entity etag where any record has been written. 
- * @param <T> Type of position. 
+ * An entity tag for a group. All group metadata is written with optimistic concurrency using atomic compare and swap
+ * on metadata and the Group's entity tag. 
+ * @param <T> Type of entity tag. 
  */
 public interface Etag<T> {
     T etag();

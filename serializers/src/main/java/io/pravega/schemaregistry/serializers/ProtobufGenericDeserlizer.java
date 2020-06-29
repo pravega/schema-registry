@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -43,9 +44,17 @@ public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<Dynam
                 String[] tokens = NameUtil.extractNameAndQualifier(schemaToUse.getType());
                 String name = tokens[0];
                 String pckg = tokens[1];
-                DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet.getFileList().stream()
-                        .filter(x -> x.getPackage().startsWith(pckg) &&
-                                x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name)))
+                DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet
+                        .getFileList().stream()
+                        .filter(x -> {
+                            boolean match;
+                            if (x.getPackage() == null) {
+                                match = Strings.isNullOrEmpty(pckg);
+                            } else {
+                                match = x.getPackage().equals(pckg);
+                            }
+                            return match && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name));
+                        })
                         .findAny().orElseThrow(IllegalArgumentException::new);
                 
                 Descriptors.FileDescriptor[] dependencyArray = new Descriptors.FileDescriptor[count];

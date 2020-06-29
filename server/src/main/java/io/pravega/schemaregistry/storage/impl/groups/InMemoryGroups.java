@@ -13,7 +13,6 @@ import io.pravega.schemaregistry.ListWithToken;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.impl.group.Group;
-import io.pravega.schemaregistry.storage.impl.group.GroupTable;
 import io.pravega.schemaregistry.storage.impl.group.InMemoryGroupTable;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.Synchronized;
@@ -34,7 +33,7 @@ import java.util.stream.Collectors;
 public class InMemoryGroups implements Groups<Integer> {
     @GuardedBy("$lock")
     private final Map<NamespaceAndGroup, Group<Integer>> groups = new HashMap<>();
-    private final Supplier<GroupTable<Integer>> kvFactory;
+    private final Supplier<InMemoryGroupTable> kvFactory;
     private final ScheduledExecutorService executor;
 
     public InMemoryGroups(ScheduledExecutorService executor) {
@@ -44,17 +43,17 @@ public class InMemoryGroups implements Groups<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<Group<Integer>> getGroup(String namespace, String groupName) {
-        return CompletableFuture.completedFuture(groups.get(new NamespaceAndGroup(namespace, groupName)));
+    public CompletableFuture<Group<Integer>> getGroup(String namespace, String group) {
+        return CompletableFuture.completedFuture(groups.get(new NamespaceAndGroup(namespace, group)));
     }
 
     @Synchronized
     @Override
-    public CompletableFuture<Boolean> addNewGroup(String namespace, String groupName, GroupProperties groupProperties) {
-        if (groups.containsKey(new NamespaceAndGroup(namespace, groupName))) {
+    public CompletableFuture<Boolean> addNewGroup(String namespace, String group, GroupProperties groupProperties) {
+        if (groups.containsKey(new NamespaceAndGroup(namespace, group))) {
             return CompletableFuture.completedFuture(false);
         }
-        Group<Integer> grp = groups.computeIfAbsent(new NamespaceAndGroup(namespace, groupName), 
+        Group<Integer> grp = groups.computeIfAbsent(new NamespaceAndGroup(namespace, group), 
                 x -> new Group<>(kvFactory.get(), executor));
         return grp.create(groupProperties.getSerializationFormat(), groupProperties.getProperties(), groupProperties.isAllowMultipleTypes(), 
                 groupProperties.getCompatibility()).thenApply(v -> true);
@@ -62,7 +61,7 @@ public class InMemoryGroups implements Groups<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<ListWithToken<String>> getGroups(String namespace, ContinuationToken token, int limit) {
+    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, ContinuationToken token, int limit) {
         // TODO: pagination -- return only limit number of records!!
         String nameSpace = namespace == null ? "" : namespace;
         ContinuationToken next = ContinuationToken.fromString(Integer.toString(groups.size()));
@@ -80,8 +79,8 @@ public class InMemoryGroups implements Groups<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<Void> deleteGroup(String namespace, String groupName) {
-        groups.remove(new NamespaceAndGroup(namespace, groupName));
+    public CompletableFuture<Void> deleteGroup(String namespace, String group) {
+        groups.remove(new NamespaceAndGroup(namespace, group));
         return CompletableFuture.completedFuture(null);
     }
 }

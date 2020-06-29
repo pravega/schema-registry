@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
@@ -57,7 +58,7 @@ public interface SchemaRecords {
     class SchemaFingerprintKey implements Key {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final long fingerprint;
+        private final BigInteger fingerprint;
 
         private static class SchemaFingerprintKeyBuilder implements ObjectBuilder<SchemaFingerprintKey> {
         }
@@ -79,11 +80,12 @@ public interface SchemaRecords {
             }
 
             private void write00(SchemaFingerprintKey e, RevisionDataOutput target) throws IOException {
-                target.writeLong(e.fingerprint);
+                byte[] b = e.fingerprint.toByteArray();
+                target.writeArray(b);
             }
 
             private void read00(RevisionDataInput source, SchemaFingerprintKey.SchemaFingerprintKeyBuilder b) throws IOException {
-                b.fingerprint(source.readLong());
+                b.fingerprint(new BigInteger(source.readArray()));
             }
         }
     }

@@ -123,7 +123,7 @@ public class CompressionDemo {
         scope = "scope" + id;
         stream = "avrocompression";
         groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
-        schema1 = AvroSchema.of(SCHEMA1);
+        schema1 = AvroSchema.ofRecord(SCHEMA1);
         clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         initialize();
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
