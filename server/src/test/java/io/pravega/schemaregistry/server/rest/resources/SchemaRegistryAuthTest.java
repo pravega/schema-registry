@@ -192,12 +192,12 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                 String defaultPassword = passwordEncryptor.encryptPassword(PASSWORD);
                 writer.write(credentialsAndAclAsString(SYSTEM_ADMIN, defaultPassword, "*,READ_UPDATE;"));
                 writer.write(credentialsAndAclAsString(SYSTEM_READER, defaultPassword, "/*,READ"));
-                writer.write(credentialsAndAclAsString(GROUP1_ADMIN, defaultPassword, "_schemaregistry//group1,READ_UPDATE"));
-                writer.write(credentialsAndAclAsString(GROUP1_USER, defaultPassword, "_schemaregistry//group1,READ"));
-                writer.write(credentialsAndAclAsString(GROUP2_USER, defaultPassword, "_schemaregistry//group2,READ"));
-                writer.write(credentialsAndAclAsString(GROUP_1_2_USER, defaultPassword, "_schemaregistry//group1,READ;_schemaregistry//group2,READ;_schemaregistry//group11,READ;_schemaregistry//group12,READ"));
-                writer.write(credentialsAndAclAsString(NAMESPACE_USER, defaultPassword, "_schemaregistry/namespace/group1,READ_UPDATE"));
-                writer.write(credentialsAndAclAsString(NAMESPACE_ADMIN, defaultPassword, "_schemaregistry/namespace/*,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(GROUP1_ADMIN, defaultPassword, "/group1,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(GROUP1_USER, defaultPassword, "/group1,READ"));
+                writer.write(credentialsAndAclAsString(GROUP2_USER, defaultPassword, "/group2,READ"));
+                writer.write(credentialsAndAclAsString(GROUP_1_2_USER, defaultPassword, "/group1,READ;/group2,READ;/group11,READ;/group12,READ"));
+                writer.write(credentialsAndAclAsString(NAMESPACE_USER, defaultPassword, "namespace/group1,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(NAMESPACE_ADMIN, defaultPassword, "namespace/*,READ_UPDATE"));
             }
             return authFile;
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {

@@ -81,7 +81,7 @@ public final class Config {
 
     private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("security.auth.enable", false);
     private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("security.pwdAuthHandler.accountsDb.location", "");
-    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resourceQualifier", "_schemaregistry");
+    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resourceQualifier", "");
 
     private static final String COMPONENT_CODE = "schema-registry";
 
