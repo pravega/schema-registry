@@ -341,7 +341,9 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
         withCompletion("validate", READ, resource, asyncResponse,
                 () -> {
-                    return getRegistryService().validateSchema(namespace, group, ModelHelper.decode(validateRequest.getSchemaInfo()))
+                    return getRegistryService().validateSchema(namespace, group, 
+                            ModelHelper.decode(validateRequest.getSchemaInfo()),
+                            ModelHelper.decode(validateRequest.getCompatibility()))
                                           .thenApply(compatible -> {
                                               log.info("Schema is valid for group {}", group);
                                               return Response.status(Status.OK).entity(new Valid().valid(compatible)).build();

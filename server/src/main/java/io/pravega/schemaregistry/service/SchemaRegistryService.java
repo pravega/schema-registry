@@ -485,22 +485,29 @@ public class SchemaRegistryService {
     /**
      * Checks whether given schema is valid by applying compatibility against previous schemas in the group
      * subject to current {@link GroupProperties#compatibility} policy.
+     * Optionally a compatibility can be specified to specifically check against that policy. 
      * If {@link GroupProperties#allowMultipleTypes} is set, the validation is performed against schemas with same
      * object type identified by {@link SchemaInfo#type}.
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
      * @param schema    Schema to check for validity.
+     * @param compatibility Optional compatibility to use. 
      * @return True if it satisfies validation checks, false otherwise.
      */
-    public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schema) {
+    public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schema, Compatibility compatibility) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schema != null);
         log.info("Group {}, validateSchema for {}.", group, schema.getType());
 
         return store.getGroupProperties(namespace, group)
-                    .thenCompose(prop -> getSchemasForValidation(namespace, group, schema, prop)
-                            .thenApply(schemas -> checkCompatibility(schema, prop, schemas)))
+                    .thenCompose(prop -> {
+                        GroupProperties toApply = new GroupProperties(prop.getSerializationFormat(), 
+                                compatibility == null ? prop.getCompatibility() : compatibility,
+                                prop.isAllowMultipleTypes(), prop.getProperties());
+                        return getSchemasForValidation(namespace, group, schema, toApply)
+                                .thenApply(schemas -> checkCompatibility(schema, toApply, schemas));
+                    })
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.info("Group {}, validateSchema response = {}.", group, r);
@@ -617,11 +624,13 @@ public class SchemaRegistryService {
         }
     }
 
-    private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String namespace, String group, SchemaInfo schema, GroupProperties groupProperties) {
+    private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String namespace, String group, SchemaInfo schema, 
+                                                                               GroupProperties groupProperties) {
         switch (groupProperties.getCompatibility().getType()) {
             case AllowAny:
                 return CompletableFuture.completedFuture(Collections.emptyList());
             case DenyAll:
+                // Deny all is applicable as long as there is at least one schema in the group. 
                 return store.getLatestSchemas(namespace, group);
             case Backward:
             case Forward:
