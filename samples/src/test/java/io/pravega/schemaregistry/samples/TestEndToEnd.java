@@ -13,6 +13,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -22,11 +25,13 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.server.rest.RestServer;
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
-import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.test.common.AssertExtensions;
+import io.pravega.test.common.TestUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -37,17 +42,15 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
+import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 @Slf4j
 public abstract class TestEndToEnd {
@@ -97,21 +100,36 @@ public abstract class TestEndToEnd {
             .noDefault()
             .endRecord();
     
+    private int port;
+    private RestServer restServer;
+    
     @Before
     public void setUp() {
         executor = Executors.newScheduledThreadPool(10);
+        ScheduledExecutorService executor = Executors.newScheduledThreadPool(Config.THREAD_POOL_SIZE);
+
+        port = TestUtils.getAvailableListenPort();
+        ServiceConfig serviceConfig = ServiceConfig.builder().port(port).build();
+        SchemaStore store = getStore(serviceConfig);
+
+        SchemaRegistryService service = new SchemaRegistryService(store, executor);
+
+        restServer = new RestServer(service, serviceConfig);
+        restServer.startAsync();
+        restServer.awaitRunning();
     }
 
     @After
     public void tearDown() {
+        restServer.stopAsync();
+        restServer.awaitTerminated();
         executor.shutdownNow();
     }
     
     @Test
     public void testEndToEnd() {
-        SchemaStore store = getStore();
-        SchemaRegistryService service = new SchemaRegistryService(store, executor);
-        SchemaRegistryClient client = new PassthruSchemaRegistryClient(service);
+        SchemaRegistryClient client = SchemaRegistryClientFactory.createRegistryClient(
+                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
 
         String group = "group";
 
@@ -143,19 +161,21 @@ public abstract class TestEndToEnd {
         assertEquals(version2.getId(), 1);
         assertEquals(version2.getType(), myTest);
 
-        client.updateCompatibility(group, Compatibility.fullTransitive(), null);
+        assertFalse(client.updateCompatibility(group, Compatibility.fullTransitive(), Compatibility.forward()));
+
+        assertTrue(client.updateCompatibility(group, Compatibility.fullTransitive(), null));
+        
+        assertTrue(client.updateCompatibility(group, Compatibility.backward(), Compatibility.fullTransitive()));
+
+        assertFalse(client.updateCompatibility(group, Compatibility.backward(), Compatibility.fullTransitive()));
+
+        assertTrue(client.updateCompatibility(group, Compatibility.fullTransitive(), Compatibility.backward()));
 
         SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SerializationFormat.Avro,
                 ByteBuffer.wrap(schema3.toString().getBytes(Charsets.UTF_8)), ImmutableMap.of());
 
-        AtomicReference<Throwable> exceptionRef = new AtomicReference<>();
-        CompletableFuture.supplyAsync(() -> client.addSchema(group, schemaInfo3))
-                         .exceptionally(e -> {
-                             exceptionRef.set(Exceptions.unwrap(e));
-                             return null;
-                         }).join();
-
-        assertTrue(exceptionRef.get() instanceof IncompatibleSchemaException);
+        AssertExtensions.assertThrows("", () -> client.addSchema(group, schemaInfo3), 
+            e -> Exceptions.unwrap(e) instanceof RegistryExceptions.SchemaValidationFailedException);
 
         String myTest2 = "MyTest2";
         SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SerializationFormat.Avro,
@@ -183,11 +203,11 @@ public abstract class TestEndToEnd {
         SchemaInfo schema = client.getSchemaForVersion(group, version2);
         assertEquals(schema, schemaInfo2);
         AssertExtensions.assertThrows("", () -> client.getVersionForSchema(group, schemaInfo2),
-                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException);
+                e -> Exceptions.unwrap(e) instanceof RegistryExceptions.ResourceNotFoundException);
         encodingId = client.getEncodingId(group, version2, CodecFactory.NONE);
         assertEquals(encodingId.getId(), 0);
         AssertExtensions.assertThrows("", () -> client.getEncodingId(group, version2, CodecFactory.MIME_GZIP),
-                e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException);
+                e -> Exceptions.unwrap(e) instanceof RegistryExceptions.ResourceNotFoundException);
 
         groupEvolutionHistory = client.getGroupHistory(group);
         assertEquals(groupEvolutionHistory.size(), 2);
@@ -206,7 +226,6 @@ public abstract class TestEndToEnd {
         assertEquals(version4.getVersion(), 2);
     }
 
-    abstract SchemaStore getStore();
-
+    abstract SchemaStore getStore(ServiceConfig serviceConfig);
 }
 

@@ -219,7 +219,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                 () -> {
                     Compatibility rules = ModelHelper.decode(updateCompatibilityRequest.getCompatibility());
                     Compatibility previousRules = updateCompatibilityRequest.getPreviousCompatibility() == null ?
-                            null : ModelHelper.decode(updateCompatibilityRequest.getCompatibility());
+                            null : ModelHelper.decode(updateCompatibilityRequest.getPreviousCompatibility());
                     return getRegistryService().updateCompatibility(namespace, group, rules, previousRules)
                                           .thenApply(groupProperty -> Response.status(Status.OK).build())
                                           .exceptionally(exception -> {
@@ -270,7 +270,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                 getGroupResource(group, namespace);
 
         withCompletion("getSchemaVersions", READ, resource, asyncResponse,
-                () -> getRegistryService().getGroupHistory(namespace, group, null)
+                () -> getRegistryService().getGroupHistory(namespace, group, type)
                                      .thenApply(history -> {
                                          SchemaVersionsList list = new SchemaVersionsList()
                                                  .schemas(history.stream().map(x -> new SchemaWithVersion()

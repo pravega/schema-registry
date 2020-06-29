@@ -10,8 +10,8 @@
 package io.pravega.schemaregistry.samples;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import org.junit.Before;
@@ -27,7 +27,10 @@ public class TestPravegaEndToEnd extends TestEndToEnd {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(pravegaStandaloneUtils.getControllerURI())).build();
     }
     
-    SchemaStore getStore() {
-        return SchemaStoreFactory.createPravegaStore(Config.SERVICE_CONFIG, clientConfig, executor);
+    SchemaStore getStore(ServiceConfig serviceConfig) {
+        if (clientConfig == null) {
+            startPravega();
+        }
+        return SchemaStoreFactory.createPravegaStore(serviceConfig, clientConfig, executor);
     }
 }

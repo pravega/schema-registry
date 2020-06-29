@@ -32,13 +32,15 @@ import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
+import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
@@ -54,11 +56,15 @@ import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.JSonGenericObject;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.server.rest.RestServer;
+import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.shared.NameUtils;
+import io.pravega.test.common.AssertExtensions;
+import io.pravega.test.common.TestUtils;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -137,6 +143,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     private final SchemaRegistryClient client;
     private final PravegaStandaloneUtils pravegaStandaloneUtils;
     private Random random;
+    private final int port;
+    private final RestServer restServer;
 
     public TestPravegaClientEndToEnd() throws Exception {
         pravegaStandaloneUtils = PravegaStandaloneUtils.startPravega();
@@ -147,13 +155,22 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         schemaStore = SchemaStoreFactory.createPravegaStore(Config.SERVICE_CONFIG, clientConfig, executor);
 
         service = new SchemaRegistryService(schemaStore, executor);
-        client = new PassthruSchemaRegistryClient(service);
+        port = TestUtils.getAvailableListenPort();
+        ServiceConfig serviceConfig = ServiceConfig.builder().port(port).build();
+
+        restServer = new RestServer(service, serviceConfig);
+        restServer.startAsync();
+        restServer.awaitRunning();
+        client =  SchemaRegistryClientFactory.createRegistryClient(
+                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
         random = new Random();
     }
     
     @Override
     @After
     public void close() throws Exception {
+        restServer.stopAsync();
+        restServer.awaitTerminated();
         executor.shutdownNow();
     }
     
@@ -203,13 +220,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         
         // region writer with schema3
         // this should throw exception as schema change is not backwardPolicy compatible.
-        boolean exceptionThrown = false;
-        try {
-            serializer = SerializerFactory.avroSerializer(serializerConfig, schema3);
-        } catch (Exception ex) {
-            exceptionThrown = Exceptions.unwrap(ex) instanceof IncompatibleSchemaException;
-        }
-        assertTrue(exceptionThrown);
+        AssertExtensions.assertThrows("", () -> SerializerFactory.avroSerializer(serializerConfig, schema3),
+                ex -> Exceptions.unwrap(ex) instanceof RegistryExceptions.SchemaValidationFailedException);
         // endregion
 
         // region read into specific schema
@@ -236,16 +248,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String rg1 = "rg1" + stream;
         readerGroupManager.createReaderGroup(rg1, 
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
-        readSchema = AvroSchema.ofRecord(SCHEMA3);
 
-        exceptionThrown = false;
-        try {
-            deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
-        } catch (Exception ex) {
-            exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
-        }
-        assertTrue(exceptionThrown);
+        AvroSchema<GenericRecord> readSchemaEx = AvroSchema.ofRecord(SCHEMA3);
+        
+        AssertExtensions.assertThrows("",  () -> SerializerFactory.avroGenericDeserializer(serializerConfig, readSchemaEx), 
+                ex -> Exceptions.unwrap(ex) instanceof IllegalArgumentException);
         reader.close();
         // endregion
         
