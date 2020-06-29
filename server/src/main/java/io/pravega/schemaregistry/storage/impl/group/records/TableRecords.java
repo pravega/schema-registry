@@ -9,16 +9,16 @@
  */
 package io.pravega.schemaregistry.storage.impl.group.records;
 
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.google.common.collect.ImmutableSet;
 import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
+import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.AllArgsConstructor;
@@ -30,10 +30,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Index Records with different implementations for {@link TableKey} and {@link TableValue}.
@@ -43,6 +40,7 @@ public interface TableRecords {
             ? extends ObjectBuilder<? extends TableValue>>> SERIALIZERS_BY_KEY_TYPE =
             ImmutableMap.<Class<? extends TableKey>, VersionedSerializer.WithBuilder<? extends TableValue, ? extends ObjectBuilder<? extends TableValue>>>builder()
                     .put(SchemaIdKey.class, SchemaRecord.SERIALIZER)
+                    .put(VersionDeletedRecord.class, VersionDeletedRecord.SERIALIZER)
                     .put(SchemaFingerprintKey.class, SchemaVersionList.SERIALIZER)
                     .put(GroupPropertyKey.class, GroupPropertiesRecord.SERIALIZER)
                     .put(ValidationPolicyKey.class, ValidationRecord.SERIALIZER)
@@ -104,8 +102,8 @@ public interface TableRecords {
 
         private final SerializationFormat serializationFormat;
         private final boolean allowMultipleTypes;
-        private final Map<String, String> properties;
-
+        private final ImmutableMap<String, String> properties;
+        
         @Override
         @SneakyThrows
         public byte[] toBytes() {
@@ -139,8 +137,10 @@ public interface TableRecords {
 
             private void read00(RevisionDataInput source, GroupPropertiesRecord.GroupPropertiesRecordBuilder b) throws IOException {
                 b.serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat())
-                 .allowMultipleTypes(source.readBoolean())
-                 .properties(source.readMap(DataInput::readUTF, DataInput::readUTF));
+                 .allowMultipleTypes(source.readBoolean());
+                ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.<String, String>builder();
+                source.readMap(DataInput::readUTF, DataInput::readUTF, mapBuilder);
+                b.properties(mapBuilder.build());
             }
         }
     }
@@ -304,8 +304,8 @@ public interface TableRecords {
     class SchemaVersionList implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final List<VersionInfo> versions;
-
+        private final ImmutableList<VersionInfo> versions;
+        
         @SneakyThrows
         @Override
         public byte[] toBytes() {
@@ -336,7 +336,9 @@ public interface TableRecords {
             }
 
             private void read00(RevisionDataInput source, SchemaVersionList.SchemaVersionListBuilder b) throws IOException {
-                b.versions(new ArrayList<>(source.readCollection(VersionInfoSerializer.SERIALIZER::deserialize)));
+                ImmutableList.Builder<VersionInfo> builder = ImmutableList.builder();
+                source.readCollection(VersionInfoSerializer.SERIALIZER::deserialize, builder);
+                b.versions(builder.build());
             }
         }
     }
@@ -417,7 +419,50 @@ public interface TableRecords {
             }
         }
     }
-    
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class VersionDeletedRecord implements TableKey, TableValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final int id;
+
+        @SneakyThrows
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class VersionDeletedRecordBuilder implements ObjectBuilder<VersionDeletedRecord> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<VersionDeletedRecord, VersionDeletedRecord.VersionDeletedRecordBuilder> {
+            @Override
+            protected VersionDeletedRecord.VersionDeletedRecordBuilder newBuilder() {
+                return VersionDeletedRecord.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(VersionDeletedRecord e, RevisionDataOutput target) throws IOException {
+                target.writeInt(e.id);
+            }
+
+            private void read00(RevisionDataInput source, VersionDeletedRecord.VersionDeletedRecordBuilder b) throws IOException {
+                b.id(source.readInt());
+            }
+        }
+    }
+
     @Data
     @Builder
     @AllArgsConstructor
@@ -512,7 +557,7 @@ public interface TableRecords {
     class CodecTypesListValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final List<String> codecTypes;
+        private final ImmutableList<String> codecTypes;
 
         @SneakyThrows
         @Override
@@ -544,7 +589,9 @@ public interface TableRecords {
             }
 
             private void read00(RevisionDataInput source, CodecTypesListValue.CodecTypesListValueBuilder b) throws IOException {
-                b.codecTypes(Lists.newArrayList(source.readCollection(DataInput::readUTF)));
+                ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
+                source.readCollection(DataInput::readUTF, builder);
+                b.codecTypes(builder.build());
             }
         }
     }
@@ -588,10 +635,10 @@ public interface TableRecords {
     class LatestSchemasValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final List<SchemaTypeValue> types;
+        private final ImmutableMap<String, SchemaTypeValue> types;
         private final int nextId;
-        private final Set<Integer> deletedIds;
-
+        private final ImmutableSet<Integer> deletedIds;
+        
         @SneakyThrows
         @Override
         public byte[] toBytes() {
@@ -618,15 +665,19 @@ public interface TableRecords {
             }
 
             private void write00(LatestSchemasValue e, RevisionDataOutput target) throws IOException {
-                target.writeCollection(e.types, SchemaTypeValue.SERIALIZER::serialize);
+                target.writeMap(e.types, DataOutput::writeUTF, SchemaTypeValue.SERIALIZER::serialize);
                 target.writeCompactInt(e.nextId);
                 target.writeCollection(e.deletedIds, DataOutput::writeInt);
             }
 
             private void read00(RevisionDataInput source, LatestSchemasValue.LatestSchemasValueBuilder b) throws IOException {
-                b.types(Lists.newArrayList(source.readCollection(SchemaTypeValue.SERIALIZER::deserialize)));
+                ImmutableMap.Builder<String, SchemaTypeValue> mapBuilder = ImmutableMap.builder();
+                source.readMap(DataInput::readUTF, SchemaTypeValue.SERIALIZER::deserialize, mapBuilder);
+                b.types(mapBuilder.build());
                 b.nextId(source.readCompactInt());
-                b.deletedIds(Sets.newHashSet(source.readCollection(DataInput::readInt)));
+                ImmutableSet.Builder<Integer> builder = ImmutableSet.<Integer>builder();
+                source.readCollection(DataInput::readInt, builder);
+                b.deletedIds(builder.build());
             }
         }
     }
@@ -637,14 +688,12 @@ public interface TableRecords {
     class SchemaTypeValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final String type;
-        private final String typeQualifier;
         private final int latestVersion;
         private final int latestId;
         private final int nextVersion;
 
-        private final List<Integer> deletedVersions;
-
+        private final ImmutableSet<Integer> deletedVersions;
+        
         @SneakyThrows
         @Override
         public byte[] toBytes() {
@@ -671,19 +720,19 @@ public interface TableRecords {
             }
 
             private void write00(SchemaTypeValue e, RevisionDataOutput target) throws IOException {
-                target.writeUTF(e.type);
-                target.writeCompactInt(e.latestVersion);
-                target.writeCompactInt(e.latestId);
+                target.writeInt(e.latestVersion);
+                target.writeInt(e.latestId);
                 target.writeCompactInt(e.nextVersion);
                 target.writeCollection(e.deletedVersions, DataOutput::writeInt);
             }
 
             private void read00(RevisionDataInput source, SchemaTypeValue.SchemaTypeValueBuilder b) throws IOException {
-                b.type(source.readUTF())
-                 .latestVersion(source.readCompactInt())
-                 .latestId(source.readCompactInt())
-                 .nextVersion(source.readCompactInt())
-                 .deletedVersions(Lists.newArrayList(source.readCollection(DataInput::readInt)));
+                b.latestVersion(source.readInt())
+                 .latestId(source.readInt())
+                 .nextVersion(source.readCompactInt());
+                ImmutableSet.Builder<Integer> builder = ImmutableSet.<Integer>builder();
+                source.readCollection(DataInput::readInt, builder);
+                b.deletedVersions(builder.build());
             }
         }
     }

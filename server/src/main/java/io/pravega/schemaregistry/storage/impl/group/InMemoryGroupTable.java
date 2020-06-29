@@ -33,7 +33,7 @@ import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.
  */
 public class InMemoryGroupTable implements GroupTable<Integer> {
     @GuardedBy("$lock")
-    @Getter(AccessLevel.NONE)
+    @Getter(AccessLevel.PACKAGE)
     private final Map<TableKey, Value<TableValue, Integer>> table = new HashMap<>();
 
     @Override

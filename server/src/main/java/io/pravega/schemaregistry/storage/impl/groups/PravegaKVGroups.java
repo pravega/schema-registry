@@ -39,7 +39,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 public class PravegaKVGroups implements Groups<Version> {
-    private static final String GROUPS = TableStore.SCHEMA_REGISTRY_SCOPE + "/groups/0";
+    public static final String GROUPS = TableStore.SCHEMA_REGISTRY_SCOPE + "/groups/0";
 
     private final TableStore tableStore;
     private final ScheduledExecutorService executor;

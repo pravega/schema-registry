@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
@@ -34,12 +35,13 @@ import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.
  * Pravega tables based index implementation.
  */
 public class PravegaKVGroupTable implements GroupTable<Version> {
-    private static final String TABLE_NAME_FORMAT = TableStore.SCHEMA_REGISTRY_SCOPE + "/%s.#.metadata/0";
+    @VisibleForTesting
+    static final String TABLE_NAME_FORMAT = TableStore.SCHEMA_REGISTRY_SCOPE + "/%s.#.metadata/0";
     private static final TableKeySerializer KEY_SERIALIZER = new TableKeySerializer();
     // for immutable keys check in the local cache. If its not in the cache, fetch it from the store and load it 
     // in the cache. 
     private static final List<Class<? extends TableKey>> IMMUTABLE_RECORDS =
-            Lists.newArrayList(SchemaIdKey.class, IndexTypeVersionToIdKey.class,
+            Lists.newArrayList(SchemaIdKey.class, VersionDeletedRecord.class, IndexTypeVersionToIdKey.class,
                     GroupPropertyKey.class, EncodingIdRecord.class, EncodingInfoRecord.class);
 
     private final TableStore tablesStore;
