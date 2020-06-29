@@ -135,7 +135,7 @@ public class Group<V> {
                              return groupTable.getEntries(keys, SchemaRecord.class)
                                      .thenApply(entries -> entries
                                              .stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), 
-                                                     new VersionInfo(x.getSchemaInfo().getType(), x.getId(), x.getVersion())))
+                                                     new VersionInfo(x.getSchemaInfo().getType(), x.getVersion(), x.getId())))
                                              .collect(Collectors.toList()));
                          });
     }
@@ -148,7 +148,7 @@ public class Group<V> {
         return getSchemaRecords(fromPos)
                 .thenApply(entries -> entries
                         .stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), 
-                                new VersionInfo(x.getSchemaInfo().getType(), x.getId(), x.getVersion())))
+                                new VersionInfo(x.getSchemaInfo().getType(), x.getVersion(), x.getId())))
                         .collect(Collectors.toList()));
     }
 
@@ -436,7 +436,7 @@ public class Group<V> {
     public CompletableFuture<List<GroupHistoryRecord>> getHistory() {
         return getSchemaRecords(0).thenApply(schemaRecords -> schemaRecords
                 .stream().map(x -> new GroupHistoryRecord(x.getSchemaInfo(), 
-                        new VersionInfo(x.getSchemaInfo().getType(), x.getId(), x.getVersion()), 
+                        new VersionInfo(x.getSchemaInfo().getType(), x.getVersion(), x.getId()), 
                         x.getCompatibility(), x.getTimestamp(), getSchemaString(x.getSchemaInfo())))
                 .collect(Collectors.toList()));
     }
