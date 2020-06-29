@@ -141,7 +141,7 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
 
     @Override
     public boolean validateSchema(String group, SchemaInfo schemaInfo) {
-        return service.validateSchema(namespace, group, schemaInfo).join();
+        return service.validateSchema(namespace, group, schemaInfo, null).join();
     }
 
     @Override
