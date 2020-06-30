@@ -218,9 +218,9 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         withCompletion("updateCompatibility", READ_UPDATE, resource, asyncResponse,
                 () -> {
                     Compatibility rules = ModelHelper.decode(updateCompatibilityRequest.getCompatibility());
-                    Compatibility previousRules = updateCompatibilityRequest.getPreviousCompatibility() == null ?
+                    Compatibility previous = updateCompatibilityRequest.getPreviousCompatibility() == null ?
                             null : ModelHelper.decode(updateCompatibilityRequest.getPreviousCompatibility());
-                    return getRegistryService().updateCompatibility(namespace, group, rules, previousRules)
+                    return getRegistryService().updateCompatibility(namespace, group, rules, previous)
                                           .thenApply(groupProperty -> Response.status(Status.OK).build())
                                           .exceptionally(exception -> {
                                               Throwable unwrap = Exceptions.unwrap(exception);

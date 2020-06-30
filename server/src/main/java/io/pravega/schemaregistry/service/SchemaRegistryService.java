@@ -9,7 +9,9 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -65,6 +67,11 @@ public class SchemaRegistryService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final VersionInfo EMPTY_VERSION = new VersionInfo("", -1, -1);
 
+    static {
+        OBJECT_MAPPER.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+        OBJECT_MAPPER.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+    }
+    
     private final SchemaStore store;
 
     private final ScheduledExecutorService executor;
@@ -164,11 +171,11 @@ public class SchemaRegistryService {
      * @param namespace       namespace for which the request is scoped to.
      * @param group           Name of group.
      * @param compatibility New compatibility for the group.
-     * @param previousRules   Previous rules compatibility for the group. If null, unconditional update is performed.
+     * @param previousCompatibility   Previous rules compatibility for the group. If null, unconditional update is performed.
      * @return CompletableFuture which is completed when compatibility policy update completes.
      */
     public CompletableFuture<Void> updateCompatibility(String namespace, String group, Compatibility compatibility,
-                                                       @Nullable Compatibility previousRules) {
+                                                       @Nullable Compatibility previousCompatibility) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(compatibility != null);
         log.info("updateCompatibility called for group {}. New compatibility {}", group, compatibility);
@@ -176,10 +183,10 @@ public class SchemaRegistryService {
                                          .thenCompose(pos -> {
                                              return store.getGroupProperties(namespace, group)
                                                          .thenCompose(prop -> {
-                                                             if (previousRules == null) {
+                                                             if (previousCompatibility == null) {
                                                                  return store.updateCompatibility(namespace, group, pos, compatibility);
                                                              } else {
-                                                                 if (previousRules.equals(prop.getCompatibility())) {
+                                                                 if (previousCompatibility.equals(prop.getCompatibility())) {
                                                                      return store.updateCompatibility(namespace, group, pos, compatibility);
                                                                  } else {
                                                                      throw new PreconditionFailedException("Conditional update failed");
@@ -257,9 +264,7 @@ public class SchemaRegistryService {
                                                                   e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                                                                   () -> { // Schema doesnt exist. Validate and add it
                                                                       return getSchemasForValidation(namespace, group, schema, prop)
-                                                                              .thenApply(schemas -> {
-                                                                                  return checkCompatibility(schema, prop, schemas);
-                                                                              })
+                                                                              .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
                                                                               .thenCompose(valid -> {
                                                                                   if (!valid) {
                                                                                       throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
@@ -533,7 +538,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.info("Group {}, canRead for {}.", group, schemaInfo.getType());
-        
+
         SchemaInfo schema = validateSchemaData(schemaInfo);
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> getSchemasForValidation(namespace, group, schema, prop)
@@ -782,6 +787,7 @@ public class SchemaRegistryService {
     }
 
     private SchemaInfo validateSchemaData(SchemaInfo schemaInfo) {
+        // validates and the schema binary. 
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
         boolean isValid = true;
         String invalidityCause = "";
@@ -815,7 +821,7 @@ public class SchemaRegistryService {
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    
+
                     isValid = schema.getFullName().equals(schemaInfo.getType());
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
