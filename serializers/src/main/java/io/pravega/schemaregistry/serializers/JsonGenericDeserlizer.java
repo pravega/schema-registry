@@ -27,7 +27,7 @@ import java.io.InputStream;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
-class JsonGenericDeserlizer extends AbstractPravegaDeserializer<MapWithJsonSchema> {
+class JsonGenericDeserlizer extends AbstractPravegaDeserializer<JsonGenericObject> {
     private final ObjectMapper objectMapper;
     private final LoadingCache<SchemaInfo, JsonSchema> knownSchemas;
 
@@ -48,9 +48,9 @@ class JsonGenericDeserlizer extends AbstractPravegaDeserializer<MapWithJsonSchem
     
     @SneakyThrows({JsonProcessingException.class, ExecutionException.class, IOException.class})
     @Override
-    protected MapWithJsonSchema deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected JsonGenericObject deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Map obj = objectMapper.readValue(inputStream, Map.class);
         JsonSchema schema = writerSchemaInfo == null ? null : knownSchemas.get(writerSchemaInfo);
-        return new MapWithJsonSchema(obj, schema);
+        return new JsonGenericObject(obj, schema);
     }
 }

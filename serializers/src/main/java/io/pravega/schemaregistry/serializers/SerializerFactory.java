@@ -279,7 +279,7 @@ public class SerializerFactory {
      * @param schema Schema data that encapsulates an ProtobufSchema.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<DynamicMessage> protobufGenericDeserializer(SerializerConfig config, ProtobufSchema<DynamicMessage> schema) {
+    public static Serializer<DynamicMessage> protobufGenericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
         SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
                 SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
@@ -433,7 +433,7 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<MapWithJsonSchema> jsonGenericDeserializer(SerializerConfig config) {
+    public static Serializer<JsonGenericObject> jsonGenericDeserializer(SerializerConfig config) {
         SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
                 SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
@@ -525,7 +525,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> Serializer<Either<T, MapWithJsonSchema>> jsonTypedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, JsonGenericObject>> jsonTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
@@ -713,7 +713,7 @@ public class SerializerFactory {
             case Protobuf:
                 return printer.print((DynamicMessage) deserialize);
             case Json:
-                return objectMapper.writeValueAsString(((MapWithJsonSchema) deserialize).getObject());
+                return objectMapper.writeValueAsString(((JsonGenericObject) deserialize).getObject());
             default:
                 throw new IllegalArgumentException("only avro protobuf and json can be converted to json string");
         } 
