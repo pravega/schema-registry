@@ -49,7 +49,7 @@ public class SchemaDefinitions {
             .noDefault()
             .endRecord();
 
-    public static final String JSON_SCHEMA_STRING = "{\"id\": \"person.json\", " +
+    public static final String JSON_SCHEMA_STRING = "{" +
             "\"title\": \"Person\", " +
             "\"type\": \"object\", " +
             "\"properties\": { " +
