@@ -260,8 +260,8 @@ public class SerializerTest {
         assertEquals(deserialized, user1);
 
         serialized = serializer.serialize(user1);
-        Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
-        JSonGenericObject generic = genericDeserializer.deserialize(serialized);
+        Serializer<MapWithJsonSchema> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        MapWithJsonSchema generic = genericDeserializer.deserialize(serialized);
         assertEquals(generic.getJsonSchema(), schema1.getSchema());
         assertEquals(generic.getObject().size(), 4);
 
@@ -290,9 +290,9 @@ public class SerializerTest {
 
         Map<Class<? extends Object>, JSONSchema<Object>> map2 = new HashMap<>();
         map2.put(DerivedUser1.class, schema1Base);
-        Serializer<Either<Object, JSonGenericObject>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
+        Serializer<Either<Object, MapWithJsonSchema>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
         serialized = multiSerializer.serialize(user1);
-        Either<Object, JSonGenericObject> fallback = fallbackDeserializer.deserialize(serialized);
+        Either<Object, MapWithJsonSchema> fallback = fallbackDeserializer.deserialize(serialized);
         assertTrue(fallback.isLeft());
         assertEquals(fallback.getLeft(), user1);
 
@@ -349,7 +349,7 @@ public class SerializerTest {
         deserialized = deserializer.deserialize(serializedProto);
         assertTrue(deserialized instanceof DynamicMessage);
         deserialized = deserializer.deserialize(serializedJson);
-        assertTrue(deserialized instanceof JSonGenericObject);
+        assertTrue(deserialized instanceof MapWithJsonSchema);
 
         Serializer<String> jsonStringDeserializer = SerializerFactory.deserializeAsJsonString(config);
         serializedAvro.position(0);
@@ -429,9 +429,9 @@ public class SerializerTest {
         
         serialized = serializer.serialize(user1);
 
-        Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        Serializer<MapWithJsonSchema> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
 
-        JSonGenericObject generic = genericDeserializer.deserialize(serialized);
+        MapWithJsonSchema generic = genericDeserializer.deserialize(serialized);
         assertNotNull(generic.getObject());
         assertNull(generic.getJsonSchema());
     }

@@ -15,7 +15,7 @@ import lombok.Data;
 import java.util.Map;
 
 @Data
-public class JSonGenericObject {
+public class MapWithJsonSchema {
     private final Map object;
     private final JsonSchema jsonSchema;
 }
