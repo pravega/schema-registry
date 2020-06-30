@@ -66,7 +66,6 @@ public class SerializerTest {
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
         AvroSchema<Test2> schema2 = AvroSchema.of(Test2.class);
-
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
@@ -261,8 +260,8 @@ public class SerializerTest {
         assertEquals(deserialized, user1);
 
         serialized = serializer.serialize(user1);
-        Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
-        JSonGenericObject generic = genericDeserializer.deserialize(serialized);
+        Serializer<JsonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        JsonGenericObject generic = genericDeserializer.deserialize(serialized);
         assertEquals(generic.getJsonSchema(), schema1.getSchema());
         assertEquals(generic.getObject().size(), 4);
 
@@ -291,9 +290,9 @@ public class SerializerTest {
 
         Map<Class<? extends Object>, JSONSchema<Object>> map2 = new HashMap<>();
         map2.put(DerivedUser1.class, schema1Base);
-        Serializer<Either<Object, JSonGenericObject>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
+        Serializer<Either<Object, JsonGenericObject>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
         serialized = multiSerializer.serialize(user1);
-        Either<Object, JSonGenericObject> fallback = fallbackDeserializer.deserialize(serialized);
+        Either<Object, JsonGenericObject> fallback = fallbackDeserializer.deserialize(serialized);
         assertTrue(fallback.isLeft());
         assertEquals(fallback.getLeft(), user1);
 
@@ -350,7 +349,7 @@ public class SerializerTest {
         deserialized = deserializer.deserialize(serializedProto);
         assertTrue(deserialized instanceof DynamicMessage);
         deserialized = deserializer.deserialize(serializedJson);
-        assertTrue(deserialized instanceof JSonGenericObject);
+        assertTrue(deserialized instanceof JsonGenericObject);
 
         Serializer<String> jsonStringDeserializer = SerializerFactory.deserializeAsJsonString(config);
         serializedAvro.position(0);
@@ -430,9 +429,9 @@ public class SerializerTest {
         
         serialized = serializer.serialize(user1);
 
-        Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        Serializer<JsonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
 
-        JSonGenericObject generic = genericDeserializer.deserialize(serialized);
+        JsonGenericObject generic = genericDeserializer.deserialize(serialized);
         assertNotNull(generic.getObject());
         assertNull(generic.getJsonSchema());
     }

@@ -40,7 +40,7 @@ import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
 import io.pravega.schemaregistry.samples.demo.objects.User;
 import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.serializers.JSonGenericObject;
+import io.pravega.schemaregistry.serializers.JsonGenericObject;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
@@ -141,13 +141,13 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<JsonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
-                EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<JsonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<JSonGenericObject> event2 = reader2.readNextEvent(1000);
+                EventRead<JsonGenericObject> event2 = reader2.readNextEvent(1000);
                 assert event2.getEvent() != null;
-                JSonGenericObject obj = event2.getEvent();
+                JsonGenericObject obj = event2.getEvent();
 
                 com.fasterxml.jackson.module.jsonSchema.JsonSchema jsonSchema = obj.getJsonSchema();
                 if (encodeHeaders) {
@@ -219,11 +219,11 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<JSonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<JsonGenericObject> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
-                EventStreamReader<JSonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<JsonGenericObject> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<JSonGenericObject> genEvent = reader2.readNextEvent(1000);
+                EventRead<JsonGenericObject> genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;
                 genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;
@@ -238,12 +238,12 @@ public class JsonDemo {
                 // add only one schema
                 map2.put(DerivedUser1.class, schema1);
 
-                Serializer<Either<User, JSonGenericObject>> eitherDeserializer =
+                Serializer<Either<User, JsonGenericObject>> eitherDeserializer =
                         SerializerFactory.jsonTypedOrGenericDeserializer(serializerConfig, map2);
 
-                EventStreamReader<Either<User, JSonGenericObject>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Either<User, JsonGenericObject>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Either<User, JSonGenericObject>> e1 = reader3.readNextEvent(1000);
+                EventRead<Either<User, JsonGenericObject>> e1 = reader3.readNextEvent(1000);
                 assert e1.getEvent() != null;
                 assert e1.getEvent().isRight();
                 

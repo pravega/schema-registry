@@ -47,8 +47,8 @@ class MultipleFormatJsonStringDeserializer extends AbstractPravegaDeserializer<S
         } else if (deserialize instanceof DynamicMessage) {
             JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
             return printer.print((DynamicMessage) deserialize);
-        } else if (deserialize instanceof JSonGenericObject) {
-            Map myobject = ((JSonGenericObject) deserialize).getObject();
+        } else if (deserialize instanceof JsonGenericObject) {
+            Map myobject = ((JsonGenericObject) deserialize).getObject();
             return objectMapper.writeValueAsString(myobject);
         } else {
             return deserialize.toString();
