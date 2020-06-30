@@ -78,8 +78,10 @@ public class TableStore {
         hostStore = new HostStoreImpl(clientConfig, executor);
         segmentHelper = new SegmentHelper(connectionFactory, hostStore);
         this.executor = executor;
-        this.tokenSupplier = x -> serviceConfig.isAuthEnabled() ? 
-                hostStore.getController().getOrRefreshDelegationTokenFor(SCHEMA_REGISTRY_SCOPE, x).join() : "";
+        this.tokenSupplier = x -> {
+            String[] splits = x.split("/");
+            return hostStore.getController().getOrRefreshDelegationTokenFor(splits[0], splits[1]).join();
+        };
         numOfRetries = NUM_OF_RETRIES;
         this.cache = CacheBuilder.newBuilder()
                                  .maximumSize(10000)
