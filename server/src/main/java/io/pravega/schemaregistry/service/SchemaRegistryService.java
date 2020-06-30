@@ -9,7 +9,9 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
@@ -43,6 +45,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
@@ -64,6 +67,11 @@ public class SchemaRegistryService {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     private static final VersionInfo EMPTY_VERSION = new VersionInfo("", -1, -1);
 
+    static {
+        OBJECT_MAPPER.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
+        OBJECT_MAPPER.configure(SerializationFeature.ORDER_MAP_ENTRIES_BY_KEYS, true);
+    }
+    
     private final SchemaStore store;
 
     private final ScheduledExecutorService executor;
@@ -232,14 +240,14 @@ public class SchemaRegistryService {
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
-     * @param schema    Schema to add.
+     * @param schemaInfo    Schema to add.
      * @return CompletableFuture that holds versionInfo which uniquely identifies where the schema is added in the group.
      */
-    public CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schema) {
+    public CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
-        Preconditions.checkArgument(schema != null);
-        log.info("addSchema called for group {}. schema {}", schema.getType());
-
+        Preconditions.checkArgument(schemaInfo != null);
+        log.info("addSchema called for group {}. schema {}", schemaInfo.getType());
+        SchemaInfo schema = validateSchemaData(schemaInfo);
         // 1. get group policy
         // 2. get checker for serialization format.
         // validate schema against group policy + rules on schema
@@ -248,8 +256,8 @@ public class SchemaRegistryService {
                                          .thenCompose(etag ->
                                                  store.getGroupProperties(namespace, group)
                                                       .thenCompose(prop -> {
-                                                          if (!schema.getSerializationFormat().equals(prop.getSerializationFormat()) &&
-                                                                  !prop.getSerializationFormat().equals(SerializationFormat.Any)) {
+                                                          if (!prop.getSerializationFormat().equals(SerializationFormat.Any) &&
+                                                                  !schema.getSerializationFormat().equals(prop.getSerializationFormat())) {
                                                               throw new SerializationFormatMismatchException(schema.getSerializationFormat().name());
                                                           }
                                                           return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, schema),
@@ -491,14 +499,15 @@ public class SchemaRegistryService {
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
-     * @param schema    Schema to check for validity.
+     * @param schemaInfo    Schema to check for validity.
      * @param compatibility Optional compatibility to use. 
      * @return True if it satisfies validation checks, false otherwise.
      */
-    public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schema, Compatibility compatibility) {
+    public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schemaInfo, Compatibility compatibility) {
         Preconditions.checkArgument(group != null);
-        Preconditions.checkArgument(schema != null);
-        log.info("Group {}, validateSchema for {}.", group, schema.getType());
+        Preconditions.checkArgument(schemaInfo != null);
+        log.info("Group {}, validateSchema for {}.", group, schemaInfo.getType());
+        SchemaInfo schema = validateSchemaData(schemaInfo);
 
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
@@ -522,14 +531,15 @@ public class SchemaRegistryService {
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of the group.
-     * @param schema    Schema to check for ability to read.
+     * @param schemaInfo    Schema to check for ability to read.
      * @return True if schema can be used for reading subject to compatibility policy, false otherwise.
      */
-    public CompletableFuture<Boolean> canRead(String namespace, String group, SchemaInfo schema) {
+    public CompletableFuture<Boolean> canRead(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
-        Preconditions.checkArgument(schema != null);
-        log.info("Group {}, canRead for {}.", group, schema.getType());
+        Preconditions.checkArgument(schemaInfo != null);
+        log.info("Group {}, canRead for {}.", group, schemaInfo.getType());
 
+        SchemaInfo schema = validateSchemaData(schemaInfo);
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> getSchemasForValidation(namespace, group, schema, prop)
                             .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)))
@@ -720,7 +730,6 @@ public class SchemaRegistryService {
     
     private boolean checkCompatibility(SchemaInfo schema, GroupProperties groupProperties,
                                        List<SchemaWithVersion> schemasWithVersion) {
-        validateSchemaData(schema);
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         // Verify that the type matches the type in schemas it will be validated against.
@@ -777,7 +786,9 @@ public class SchemaRegistryService {
         }
     }
 
-    private void validateSchemaData(SchemaInfo schemaInfo) {
+    private SchemaInfo validateSchemaData(SchemaInfo schemaInfo) {
+        // validates and the schema binary. 
+        ByteBuffer schemaBinary = schemaInfo.getSchemaData();
         boolean isValid = true;
         String invalidityCause = "";
         try {
@@ -803,21 +814,29 @@ public class SchemaRegistryService {
                             });
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for protobuf message. Hint: package.messageName";
-                    } 
+                    } else {
+                        schemaBinary = ByteBuffer.wrap(fileDescriptorSet.toByteArray());
+                    }
                     break;
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    
+
                     isValid = schema.getFullName().equals(schemaInfo.getType());
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
+                    } else {
+                        schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
                     }
-
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-                    OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+                    JsonSchema jsonSchema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonSchema).getBytes(Charsets.UTF_8));
+                    break;
+                case Any:
+                    break;
+                case Custom:
                     break;
                 default:
                     break;
@@ -830,6 +849,7 @@ public class SchemaRegistryService {
         if (!isValid) {
             throw new IllegalArgumentException(invalidityCause);
         }
+        return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {
