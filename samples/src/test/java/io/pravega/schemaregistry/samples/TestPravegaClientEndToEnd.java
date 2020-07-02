@@ -41,7 +41,9 @@ import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
@@ -104,6 +106,7 @@ import static org.junit.Assert.*;
 public class TestPravegaClientEndToEnd implements AutoCloseable {
     private static final Schema SCHEMA1 = SchemaBuilder
             .record("MyTest")
+            .namespace("a.b.c")
             .fields()
             .name("a")
             .type(Schema.create(Schema.Type.STRING))
@@ -112,6 +115,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
     private static final Schema SCHEMA2 = SchemaBuilder
             .record("MyTest")
+            .namespace("a.b.c")
             .fields()
             .name("a")
             .type(Schema.create(Schema.Type.STRING))
@@ -123,6 +127,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
     private static final Schema SCHEMA3 = SchemaBuilder
             .record("MyTest")
+            .namespace("a.b.c")
             .fields()
             .name("a")
             .type(Schema.create(Schema.Type.STRING))
@@ -178,6 +183,37 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     }
     
     @Test
+    public void testRestApis() {
+        // create stream
+        String groupId = "myGroup";
+
+        client.addGroup(groupId, new GroupProperties(SerializationFormat.Avro, Compatibility.allowAny(), true));
+        SchemaInfo schemaInfo = AvroSchema.of(SCHEMA1).getSchemaInfo();
+        client.addSchema(groupId, schemaInfo);
+        SchemaInfo schemaInfo1 = AvroSchema.of(SCHEMA2).getSchemaInfo();
+        client.addSchema(groupId, schemaInfo1);
+        SchemaInfo schemaInfo2 = AvroSchema.of(SCHEMA3).getSchemaInfo();
+        client.addSchema(groupId, schemaInfo2);
+
+        VersionInfo version1 = client.getVersionForSchema(groupId, schemaInfo);
+        assertEquals(version1.getId(), 0);
+        VersionInfo version2 = client.getVersionForSchema(groupId, schemaInfo1);
+        assertEquals(version2.getId(), 1);
+        VersionInfo version3 = client.getVersionForSchema(groupId, schemaInfo2);
+        assertEquals(version3.getId(), 2);
+
+        Map<String, VersionInfo> references = client.getSchemaReferences(schemaInfo);
+        assertEquals(references.size(), 1);
+
+        String groupId2 = "mygrp2";
+        client.addGroup(groupId2, new GroupProperties(SerializationFormat.Avro, Compatibility.allowAny(), true));
+        client.addSchema(groupId2, schemaInfo);
+
+        references = client.getSchemaReferences(schemaInfo);
+        assertEquals(references.size(), 2);
+    }
+    
+    @Test
     public void testAvroSchemaEvolution() {
         // create stream
         String scope = "scope";
@@ -187,7 +223,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Avro;
 
         AvroSchema<Object> schema1 = AvroSchema.of(SCHEMA1);
@@ -276,6 +311,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader.close();
         readerGroupManager.close();
         // endregion
+        
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -288,7 +328,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Avro;
 
         AvroSchema<Object> schema1 = AvroSchema.of(SCHEMA1);
@@ -451,6 +490,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader.close();
         reader2.close();
         readerGroupManager.close();
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     private String generateBigString(int sizeInKb) {
@@ -469,7 +513,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Avro;
 
         AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
@@ -538,6 +581,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader.close();
         readerGroupManager.close();
         // endregion
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -550,7 +598,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Avro;
 
         AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
@@ -603,6 +650,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event2.getEvent());
         readerGroupManager.close();
         // endregion
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -615,7 +667,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Avro;
 
         AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Test1.class);
@@ -713,6 +764,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader3.close();
         readerGroupManager.close();
         //endregion
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -730,7 +786,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Protobuf;
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(),
@@ -822,6 +877,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
             jsonReader.close();
         }
         readerGroupManager.close();
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -834,7 +894,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Protobuf;
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(), true));
@@ -938,6 +997,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader3.close();
         readerGroupManager.close();
         //endregion
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -955,7 +1019,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Json;
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(), 
@@ -1016,6 +1079,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader2.close();
         readerGroupManager.close();
         // endregion
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test
@@ -1028,7 +1096,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
         SerializationFormat serializationFormat = SerializationFormat.Json;
 
         JSONSchema<User> schema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
@@ -1114,6 +1181,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         reader3.close();
         readerGroupManager.close();
         //endregion
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
 
     @Test 
@@ -1121,15 +1193,15 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     public void testMultiFormatSerializerAndDeserializer() {
         String scope = "multi";
         String stream = "multi";
+        String groupId = "multi";
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        streamManager.close();
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         // region avro
         SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(stream)
+                                                            .groupId(groupId)
                                                             .createGroup(SerializationFormat.Any, Compatibility.allowAny(), true)
                                                             .registerSchema(true)
                                                             .registryClient(client)
@@ -1203,6 +1275,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
         event3 = reader.readNextEvent(1000);
         assertTrue(event3.getEvent().getObject() instanceof Map);
+
+        client.removeGroup(groupId);
+        streamManager.sealStream(scope, stream);
+        streamManager.deleteStream(scope, stream);
+        streamManager.close();
     }
     
     @Data

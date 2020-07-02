@@ -224,6 +224,8 @@ public abstract class TestEndToEnd {
         VersionInfo version4 = client.addSchema(group, schemaInfo2);
         assertEquals(version4.getId(), 3);
         assertEquals(version4.getVersion(), 2);
+        
+        client.removeGroup(group);
     }
 
     abstract SchemaStore getStore(ServiceConfig serviceConfig);

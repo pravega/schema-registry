@@ -247,7 +247,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.info("addSchema called for group {}. schema {}", schemaInfo.getType());
-        SchemaInfo schema = validateSchemaData(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         // 1. get group policy
         // 2. get checker for serialization format.
         // validate schema against group policy + rules on schema
@@ -472,13 +472,14 @@ public class SchemaRegistryService {
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
-     * @param schema    SchemaInfo that captures format and structure of the data.
+     * @param schemaInfo    SchemaInfo that captures format and structure of the data.
      * @return CompletableFuture that holds VersionInfo corresponding to schema.
      */
-    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schema) {
+    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
-        Preconditions.checkArgument(schema != null);
-        log.info("Group {}, getSchemaVersion for {}.", group, schema.getType());
+        Preconditions.checkArgument(schemaInfo != null);
+        log.info("Group {}, getSchemaVersion for {}.", group, schemaInfo.getType());
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
         return store.getSchemaVersion(namespace, group, schema)
                     .whenComplete((r, e) -> {
@@ -507,7 +508,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.info("Group {}, validateSchema for {}.", group, schemaInfo.getType());
-        SchemaInfo schema = validateSchemaData(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
@@ -539,7 +540,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(schemaInfo != null);
         log.info("Group {}, canRead for {}.", group, schemaInfo.getType());
 
-        SchemaInfo schema = validateSchemaData(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> getSchemasForValidation(namespace, group, schema, prop)
                             .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)))
@@ -786,7 +787,7 @@ public class SchemaRegistryService {
         }
     }
 
-    private SchemaInfo validateSchemaData(SchemaInfo schemaInfo) {
+    private SchemaInfo normalizeSchemaBinary(SchemaInfo schemaInfo) {
         // validates and the schema binary. 
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
         boolean isValid = true;
@@ -908,10 +909,12 @@ public class SchemaRegistryService {
      * @return Map of group id to version that identifies the schema in the group.
      */
     public CompletableFuture<Map<String, VersionInfo>> getSchemaReferences(String namespace, SchemaInfo schemaInfo) {
-        return store.getGroupsUsing(namespace, schemaInfo)
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+
+        return store.getGroupsUsing(namespace, schema)
                     .thenCompose(groups -> Futures.allOfWithResults(
                             groups.stream().collect(Collectors.toMap(x -> x, x ->
-                                    Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, schemaInfo),
+                                    Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, schema),
                                             e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, EMPTY_VERSION))))
                                                   .thenApply(result -> {
                                                       return result.entrySet().stream().filter(x -> !x.getValue().equals(EMPTY_VERSION))
