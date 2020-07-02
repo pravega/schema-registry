@@ -370,7 +370,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 case OK:
                     return ModelHelper.decode(response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class));
                 case NOT_FOUND:
-                    throw new ResourceNotFoundException("Schema not found.");
+                    throw new ResourceNotFoundException("Schema not registered.");
                 default:
                     return handleResponse(Response.Status.fromStatusCode(response.getStatus()),
                             "Internal Service error. Failed to get schema version.");

@@ -691,7 +691,7 @@ definitions:
         additionalProperties:
           type: string
           minLength: 0
-          maxLength: 40
+          maxLength: 200
     required:
       - serializationFormat
       - allowMultipleTypes
