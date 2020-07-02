@@ -127,7 +127,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @param schemaInfo Schema info object that has schema data in binary form.  
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
-    public static AvroSchema<GenericRecord> from(SchemaInfo schemaInfo) {
+    public static AvroSchema<Object> from(SchemaInfo schemaInfo) {
         return new AvroSchema<>(schemaInfo);
     }
 

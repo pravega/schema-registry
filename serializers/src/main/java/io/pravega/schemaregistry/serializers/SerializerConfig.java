@@ -152,7 +152,9 @@ public class SerializerConfig {
          * @return Builder
          */
         public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, boolean allowMultipleTypes) {
-            return createGroup(serializationFormat, Compatibility.fullTransitive(), allowMultipleTypes);
+            Compatibility policy = serializationFormat.equals(SerializationFormat.Any) ? Compatibility.allowAny() : 
+                    Compatibility.fullTransitive();
+            return createGroup(serializationFormat, policy, allowMultipleTypes);
         }
 
         /**
