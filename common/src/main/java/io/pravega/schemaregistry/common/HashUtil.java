@@ -26,7 +26,7 @@ public class HashUtil {
     }
 
     /**
-     * Computes a 64 bit hash of supplied bytes using sha-256 hash function.
+     * Computes a 256 bit hash of supplied bytes using sha-256 hash function.
      *
      * @param bytes bytes to compute hash of. 
      * @return a 256 bit hash of the given bytes.
