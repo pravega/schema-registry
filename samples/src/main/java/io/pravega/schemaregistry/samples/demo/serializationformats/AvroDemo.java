@@ -193,14 +193,14 @@ public class AvroDemo {
 
                 System.out.println("reading all records into schema2" + SCHEMA2.toString(true));
 
-                AvroSchema<GenericRecord> readSchema = AvroSchema.ofRecord(SCHEMA2);
+                AvroSchema<Object> readSchema = AvroSchema.of(SCHEMA2);
 
-                Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
 
-                EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
                 // read two events successfully
-                EventRead<GenericRecord> event = reader.readNextEvent(1000);
+                EventRead<Object> event = reader.readNextEvent(1000);
                 assert event.getEvent() != null;
                 event = reader.readNextEvent(1000);
                 assert event.getEvent() != null;
@@ -213,7 +213,7 @@ public class AvroDemo {
 
                     System.out.println("creating new reader to read using schema 3:" + SCHEMA3.toString(true));
 
-                    readSchema = AvroSchema.ofRecord(SCHEMA3);
+                    readSchema = AvroSchema.of(SCHEMA3);
 
                     exceptionThrown = false;
                     try {
@@ -285,13 +285,13 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                AvroSchema<GenericRecord> readSchema = AvroSchema.ofRecord(ReflectData.get().getSchema(TestClass.class));
+                AvroSchema<Object> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
-                Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
 
-                EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<GenericRecord> event = reader.readNextEvent(1000);
+                EventRead<Object> event = reader.readNextEvent(1000);
                 assert null != event.getEvent();
 
                 // endregion
@@ -363,11 +363,11 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GenericRecord> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
 
-                EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<GenericRecord> event2 = reader2.readNextEvent(1000);
+                EventRead<Object> event2 = reader2.readNextEvent(1000);
                 assert null != event2.getEvent();
                 // endregion
             }
@@ -439,11 +439,11 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<GenericRecord> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
 
-                EventStreamReader<GenericRecord> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<GenericRecord> genEvent = reader2.readNextEvent(1000);
+                EventRead<Object> genEvent = reader2.readNextEvent(1000);
                 assert null != genEvent.getEvent();
                 genEvent = reader2.readNextEvent(1000);
                 assert null != genEvent.getEvent();
@@ -461,12 +461,12 @@ public class AvroDemo {
                 map2.put(Test1.class, schema1);
                 map2.put(Test2.class, schema2);
 
-                Serializer<Either<SpecificRecordBase, GenericRecord>> eitherDeserializer =
+                Serializer<Either<SpecificRecordBase, Object>> eitherDeserializer =
                         SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map2);
 
-                EventStreamReader<Either<SpecificRecordBase, GenericRecord>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Either<SpecificRecordBase, Object>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Either<SpecificRecordBase, GenericRecord>> e1 = reader3.readNextEvent(1000);
+                EventRead<Either<SpecificRecordBase, Object>> e1 = reader3.readNextEvent(1000);
                 assert e1.getEvent() != null;
                 assert e1.getEvent().isLeft();
                 assert e1.getEvent().getLeft() instanceof Test1;

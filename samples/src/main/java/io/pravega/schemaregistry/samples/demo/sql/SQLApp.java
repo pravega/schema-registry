@@ -287,16 +287,16 @@ public class SQLApp {
                                                             .build();
 
         SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
-        AvroSchema<GenericRecord> avroSchema = AvroSchema.ofRecord(new Schema.Parser().parse(new String(latestSchema.getSchemaInfo().getSchemaData().array(), Charsets.UTF_8)));
-        Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, avroSchema);
+        AvroSchema<Object> avroSchema = AvroSchema.of(new Schema.Parser().parse(new String(latestSchema.getSchemaInfo().getSchemaData().array(), Charsets.UTF_8)));
+        Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, avroSchema);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
-        EventStreamReader<GenericRecord> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+        EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         while (true) {
-            EventRead<GenericRecord> event = reader.readNextEvent(1000);
-            GenericRecord record = event.getEvent();
+            EventRead<Object> event = reader.readNextEvent(1000);
+            GenericRecord record = (GenericRecord) event.getEvent();
             if (record == null || !predicate.test(record)) {
                 continue;
             }

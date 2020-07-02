@@ -19,17 +19,16 @@ import io.pravega.schemaregistry.schemas.AvroSchema;
 import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 
 import javax.annotation.Nullable;
 import java.io.InputStream;
 
-class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
+class AvroGenericDeserlizer extends AbstractPravegaDeserializer<Object> {
     private final LoadingCache<SchemaInfo, Schema> knownSchemas;
 
-    AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<GenericRecord> schema,
+    AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<Object> schema,
                           SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);
         this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Schema>() {
@@ -42,12 +41,12 @@ class AvroGenericDeserlizer extends AbstractPravegaDeserializer<GenericRecord> {
 
     @SneakyThrows
     @Override
-    protected GenericRecord deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected Object deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
         Preconditions.checkNotNull(writerSchemaInfo);
         Schema writerSchema = knownSchemas.get(writerSchemaInfo);
         Schema readerSchema = knownSchemas.get(readerSchemaInfo);
         
-        GenericDatumReader<GenericRecord> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
+        GenericDatumReader<Object> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
         
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         return genericDatumReader.read(null, decoder);

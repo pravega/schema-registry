@@ -54,7 +54,7 @@ public class SpecificAndGenericConsumer {
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamReader<Either<SpecificRecordBase, GenericRecord>> reader;
+    private final EventStreamReader<Either<SpecificRecordBase, Object>> reader;
 
     private SpecificAndGenericConsumer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
@@ -108,9 +108,9 @@ public class SpecificAndGenericConsumer {
         SpecificAndGenericConsumer consumer = new SpecificAndGenericConsumer(controllerUri, registryUri, scope, stream);
         
         while (true) {
-            EventRead<Either<SpecificRecordBase, GenericRecord>> event = consumer.consume();
+            EventRead<Either<SpecificRecordBase, Object>> event = consumer.consume();
             if (event.getEvent() != null) {
-                Either<SpecificRecordBase, GenericRecord> record = event.getEvent();
+                Either<SpecificRecordBase, Object> record = event.getEvent();
                 if (record.isLeft()) {
                     if (record.getLeft() instanceof Type1) {
                         Type1 type1 = (Type1) record.getLeft();
@@ -122,7 +122,7 @@ public class SpecificAndGenericConsumer {
                         throw new IllegalArgumentException(" we should not be here ");
                     }
                 } else {
-                    GenericRecord rec = record.getRight();
+                    Object rec = record.getRight();
                     System.err.println("processing generic record " + rec);
                 }
             }
@@ -136,7 +136,7 @@ public class SpecificAndGenericConsumer {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
     }
 
-    private EventStreamReader<Either<SpecificRecordBase, GenericRecord>> createReader(String groupId) {
+    private EventStreamReader<Either<SpecificRecordBase, Object>> createReader(String groupId) {
         AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Type1.class);
         AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Type2.class);
 
@@ -159,7 +159,7 @@ public class SpecificAndGenericConsumer {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<Either<SpecificRecordBase, GenericRecord>> deserializer = SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map);
+        Serializer<Either<SpecificRecordBase, Object>> deserializer = SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
@@ -167,7 +167,7 @@ public class SpecificAndGenericConsumer {
         // endregion
     }
 
-    private EventRead<Either<SpecificRecordBase, GenericRecord>> consume() {
+    private EventRead<Either<SpecificRecordBase, Object>> consume() {
         return reader.readNextEvent(1000);
     }
 }

@@ -113,7 +113,7 @@ public class CompressionDemo {
     private final String groupId;
     private final AvroSchema<GenericRecord> schema1;
     private final EventStreamClientFactory clientFactory;
-    private final EventStreamReader<GenericRecord> reader;
+    private final EventStreamReader<Object> reader;
     
     public CompressionDemo() {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
@@ -132,7 +132,7 @@ public class CompressionDemo {
                                                              .registryClient(client)
                                                              .build();
 
-        Serializer<GenericRecord> readerDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
+        Serializer<Object> readerDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
 
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroup = "rg" + stream + System.currentTimeMillis();
@@ -305,9 +305,9 @@ public class CompressionDemo {
     }
 
     private void readMessages() {
-        EventRead<GenericRecord> event = reader.readNextEvent(1000);
+        EventRead<Object> event = reader.readNextEvent(1000);
         while (event.isCheckpoint() || event.getEvent() != null) {
-            GenericRecord e = event.getEvent();
+            Object e = event.getEvent();
             System.out.println("event read = " + e.toString());
             event = reader.readNextEvent(1000);
         }

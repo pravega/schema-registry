@@ -39,7 +39,6 @@ import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.crypto.Cipher;
@@ -138,18 +137,18 @@ public class EncryptionDemo {
                                                              .registryClient(client)
                                                              .build();
 
-        Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
+        Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
 
         try (ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig))) {
             String rg = "rg" + stream + System.currentTimeMillis();
             readerGroupManager.createReaderGroup(rg,
                     ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-            EventStreamReader<GenericRecord> reader = clientFactory.createReader("r2", rg, deserializer, ReaderConfig.builder().build());
+            EventStreamReader<Object> reader = clientFactory.createReader("r2", rg, deserializer, ReaderConfig.builder().build());
 
-            EventRead<GenericRecord> event = reader.readNextEvent(1000);
+            EventRead<Object> event = reader.readNextEvent(1000);
             while (event.isCheckpoint() || event.getEvent() != null) {
-                GenericRecord e = event.getEvent();
+                Object e = event.getEvent();
                 System.out.println(e.toString());
                 event = reader.readNextEvent(1000);
             }

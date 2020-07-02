@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.serializers;
@@ -16,21 +16,28 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 
 import java.io.InputStream;
 import java.util.Map;
+import java.util.function.BiFunction;
 
-class MultipleFormatGenericDeserializer extends AbstractPravegaDeserializer<Object> {
+class MultiFormatWithSchemaDeserializer<T> extends AbstractPravegaDeserializer<WithSchema<T>> {
     private final Map<SerializationFormat, AbstractPravegaDeserializer> genericDeserializers;
+    private final BiFunction<SerializationFormat, Object, T> transform;
 
-    MultipleFormatGenericDeserializer(String groupId, SchemaRegistryClient client,
+    MultiFormatWithSchemaDeserializer(String groupId, SchemaRegistryClient client,
                                       Map<SerializationFormat, AbstractPravegaDeserializer> genericDeserializers,
                                       SerializerConfig.Decoder decoder,
-                                      EncodingCache encodingCache) {
+                                      EncodingCache encodingCache, BiFunction<SerializationFormat, Object, T> transform) {
         super(groupId, client, null, false, decoder, encodingCache);
         this.genericDeserializers = genericDeserializers;
+        this.transform = transform;
     }
 
     @Override
-    protected Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+    protected WithSchema<T> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         Preconditions.checkNotNull(writerSchema);
-        return genericDeserializers.get(writerSchema.getSerializationFormat()).deserialize(inputStream, writerSchema, readerSchema); 
+        Object obj = genericDeserializers.get(writerSchema.getSerializationFormat()).deserialize(inputStream, writerSchema, readerSchema);
+        if (obj instanceof WithSchema) {
+            obj = ((WithSchema) obj).getObject();
+        }
+        return new WithSchema<>(writerSchema, obj, transform);
     }
 }

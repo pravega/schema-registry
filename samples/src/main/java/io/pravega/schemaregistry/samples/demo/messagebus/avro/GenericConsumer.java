@@ -31,7 +31,6 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
-import org.apache.avro.generic.GenericRecord;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
@@ -47,7 +46,7 @@ public class GenericConsumer {
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
-    private final EventStreamReader<GenericRecord> reader;
+    private final EventStreamReader<Object> reader;
 
     private GenericConsumer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
@@ -101,9 +100,9 @@ public class GenericConsumer {
         GenericConsumer consumer = new GenericConsumer(controllerUri, registryUri, scope, stream);
         
         while (true) {
-            EventRead<GenericRecord> event = consumer.consume();
+            EventRead<Object> event = consumer.consume();
             if (event.getEvent() != null) {
-                GenericRecord record = event.getEvent();
+                Object record = event.getEvent();
                 System.err.println("processing as generic record: " + record);
             }
         }
@@ -116,7 +115,7 @@ public class GenericConsumer {
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
     }
 
-    private EventStreamReader<GenericRecord> createReader(String groupId) {
+    private EventStreamReader<Object> createReader(String groupId) {
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -133,7 +132,7 @@ public class GenericConsumer {
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<GenericRecord> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+        Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
@@ -141,7 +140,7 @@ public class GenericConsumer {
         // endregion
     }
 
-    private EventRead<GenericRecord> consume() {
+    private EventRead<Object> consume() {
         return reader.readNextEvent(1000);
     }
 }

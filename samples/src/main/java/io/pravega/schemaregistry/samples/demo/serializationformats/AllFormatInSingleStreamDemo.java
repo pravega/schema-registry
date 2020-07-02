@@ -27,6 +27,7 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
+import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -54,7 +55,7 @@ import java.util.Scanner;
 /**
  * This sample writes objects of all json protobuf and avro formats into a single stream. For this the `serialization format` property
  * of the group is set as {@link SerializationFormat#Any}. 
- * During reads it uses {@link SerializerFactory#multiFormatGenericDeserializer(SerializerConfig)} to deserialize them into generic records 
+ * During reads it uses {@link SerializerFactory#genericDeserializer} to deserialize them into generic records 
  * of each type and the reader returns the common base class {@link Object}. 
  */
 public class AllFormatInSingleStreamDemo {
@@ -62,12 +63,14 @@ public class AllFormatInSingleStreamDemo {
     private final SchemaRegistryClient client;
     private final String scope;
     private final String stream;
+    private final String outputStream;
 
     public AllFormatInSingleStreamDemo(ClientConfig clientConfig, SchemaRegistryClient client, String scope, String stream, String groupId) {
         this.clientConfig = clientConfig;
         this.client = client;
         this.scope = scope;
         this.stream = stream;
+        this.outputStream = stream + "_out";
         initialize(groupId);
     }
 
@@ -76,9 +79,13 @@ public class AllFormatInSingleStreamDemo {
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
         streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+        streamManager.createStream(scope, outputStream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
         SerializationFormat serializationFormat = SerializationFormat.Any;
         client.addGroup(groupId, new GroupProperties(serializationFormat,
+                Compatibility.allowAny(),
+                true));
+        client.addGroup(GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, outputStream), new GroupProperties(serializationFormat,
                 Compatibility.allowAny(),
                 true));
     }
@@ -87,6 +94,7 @@ public class AllFormatInSingleStreamDemo {
         String scope = "scope" + System.currentTimeMillis();
         String stream = "stream";
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream + "_out");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClient schemaRegistryClient = SchemaRegistryClientFactory.createRegistryClient(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build());
@@ -95,13 +103,18 @@ public class AllFormatInSingleStreamDemo {
         EventStreamWriter<Type1> avro = demo.createAvroWriter(groupId);
         EventStreamWriter<ProtobufTest.Message1> proto = demo.createProtobufWriter(groupId);
         EventStreamWriter<DerivedUser1> json = demo.createJsonWriter(groupId);
-        EventStreamReader<Object> reader = demo.createReader(groupId);
+        EventStreamReader<WithSchema<Object>> reader = demo.createReader(groupId);
+        
+        EventStreamReader<String> outReader = demo.createReaderOutputStream(groupIdOut);
+        EventStreamWriter<WithSchema<Object>> genericWriter = demo.createOutputStreamWriter(groupIdOut);
+
         while (true) {
             System.out.println("choose: (1, 2 or 3)");
             System.out.println("1. write avro message");
             System.out.println("2. write protobuf message");
             System.out.println("3. write json message");
-            System.out.println("4. read all messages");
+            System.out.println("4. read all messages and write to output stream");
+            System.out.println("5. read all messages from output stream");
             System.out.print("> ");
             Scanner in = new Scanner(System.in);
             String s = in.nextLine();
@@ -121,10 +134,20 @@ public class AllFormatInSingleStreamDemo {
                         json.writeEvent(new DerivedUser1("json", new Address("a", "b"), 1, "users")).join();
                         break;
                     case 4:
-                        EventRead<Object> event = reader.readNextEvent(1000);
+                        EventRead<WithSchema<Object>> event = reader.readNextEvent(1000);
                         while (event.getEvent() != null || event.isCheckpoint()) {
-                            System.out.println("event read:" + event.getEvent());
+                            System.out.println("event read:" + event.getEvent().getObject());
+                            // write the event into the output branch
+                            genericWriter.writeEvent(event.getEvent()).join();
                             event = reader.readNextEvent(1000);
+                        }
+                        break;
+                    case 5:
+                        EventRead<String> event2 = outReader.readNextEvent(1000);
+                        while (event2.getEvent() != null || event2.isCheckpoint()) {
+                            System.out.println("event read:" + event2.getEvent());
+                            
+                            event2 = outReader.readNextEvent(1000);
                         }
                         break;
                     default:
@@ -134,15 +157,50 @@ public class AllFormatInSingleStreamDemo {
             }
         }
     }
-
-    private EventStreamReader<Object> createReader(String groupId) {
+    
+    private EventStreamReader<WithSchema<Object>> createReader(String groupId) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
                                                             .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
 
-        Serializer<Object> deserializer = SerializerFactory.multiFormatGenericDeserializer(serializerConfig);
+        Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
+        // region read into specific schema
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream + System.currentTimeMillis();
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        return clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+    }
+
+    private EventStreamWriter<WithSchema<Object>> createOutputStreamWriter(String groupId) {
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .registerSchema(true)
+                                                            .registryClient(client)
+                                                            .build();
+
+        Serializer<WithSchema<Object>> serializer = SerializerFactory.serializerWithSchema(serializerConfig);
+        // endregion
+
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        return clientFactory
+                .createEventWriter(outputStream, serializer, EventWriterConfig.builder().build());
+    }
+
+    private EventStreamReader<String> createReaderOutputStream(String groupId) {
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .groupId(groupId)
+                                                            .registerSchema(true)
+                                                            .registryClient(client)
+                                                            .build();
+
+        Serializer<String> deserializer = SerializerFactory.deserializeAsJsonString(serializerConfig);
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream + System.currentTimeMillis();
