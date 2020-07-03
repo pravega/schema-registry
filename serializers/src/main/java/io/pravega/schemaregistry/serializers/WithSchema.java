@@ -81,7 +81,7 @@ public class WithSchema<T> {
     }
 
     /**
-     * Avro Schema for the underlying deserialized object. This is available if {@link this#hasAvroSchema()} returns true.
+     * Avro Schema for the underlying deserialized object. This is available if {@link WithSchema#hasAvroSchema()} returns true.
      * This means underlying object was serialized as avro. 
      *
      * @return Protobuf {@link Schema} representing the schema for the object. 
@@ -101,7 +101,7 @@ public class WithSchema<T> {
     }
 
     /**
-     * Protobuf Schema for the underlying deserialized object. This is available if {@link this#hasProtobufSchema()} returns true.
+     * Protobuf Schema for the underlying deserialized object. This is available if {@link WithSchema#hasProtobufSchema()} returns true.
      * This means underlying object was serialized as protobuf. 
      * 
      * @return Protobuf {@link com.google.protobuf.DescriptorProtos.FileDescriptorSet} representing the schema for the object. 
@@ -121,7 +121,7 @@ public class WithSchema<T> {
     }
 
     /**
-     * Json Schema for the underlying deserialized object. This is available if {@link this#hasJsonSchema()} returns true.
+     * Json Schema for the underlying deserialized object. This is available if {@link WithSchema#hasJsonSchema()} returns true.
      * This means underlying object was serialized as Json. 
      *
      * @return Protobuf {@link JsonSchema} representing the schema for the object. 
