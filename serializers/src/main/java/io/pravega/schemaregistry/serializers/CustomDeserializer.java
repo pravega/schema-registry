@@ -13,6 +13,6 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.io.InputStream;
 
-public interface PravegaDeserializer<T> {
+public interface CustomDeserializer<T> {
     T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema);
 }

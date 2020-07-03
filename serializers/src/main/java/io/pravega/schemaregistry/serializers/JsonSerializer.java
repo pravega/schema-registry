@@ -16,11 +16,11 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
-import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.io.OutputStream;
 
-class JsonSerializer<T> extends AbstractPravegaSerializer<T> {
+class JsonSerializer<T> extends AbstractSerializer<T> {
     private final ObjectMapper objectMapper;
     JsonSerializer(String groupId, SchemaRegistryClient client, JSONSchema<T> schema,
                    Codec codec, boolean registerSchema) {
@@ -31,9 +31,8 @@ class JsonSerializer<T> extends AbstractPravegaSerializer<T> {
         objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
     }
 
-    @SneakyThrows
     @Override
-    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
+    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) throws IOException {
         objectMapper.writeValue(outputStream, var);
         outputStream.flush();
     }

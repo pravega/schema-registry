@@ -11,9 +11,6 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
@@ -21,66 +18,72 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.SerializationException;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ConcurrentHashMap;
 
-public class ProtobufGenericDeserlizer extends AbstractPravegaDeserializer<DynamicMessage> {
-    private final LoadingCache<SchemaInfo, Descriptors.Descriptor> knownSchemas;
+public class ProtobufGenericDeserlizer extends AbstractDeserializer<DynamicMessage> {
+    private final ConcurrentHashMap<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
     ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
                               SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);
         Preconditions.checkArgument(isEncodeHeader() || schema != null);
-        
-        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Descriptors.Descriptor>() {
-            @Override
-            public Descriptors.Descriptor load(SchemaInfo schemaToUse) throws Exception {
-                DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getDescriptorProto();
-                
-                int count = descriptorSet.getFileCount();
-                String[] tokens = NameUtil.extractNameAndQualifier(schemaToUse.getType());
-                String name = tokens[0];
-                String pckg = tokens[1];
-                DescriptorProtos.FileDescriptorProto mainDescriptor = descriptorSet
-                        .getFileList().stream()
-                        .filter(x -> {
-                            boolean match;
-                            if (x.getPackage() == null) {
-                                match = Strings.isNullOrEmpty(pckg);
-                            } else {
-                                match = x.getPackage().equals(pckg);
-                            }
-                            return match && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name));
-                        })
-                        .findAny().orElseThrow(IllegalArgumentException::new);
-                
-                Descriptors.FileDescriptor[] dependencyArray = new Descriptors.FileDescriptor[count];
-                for (int i = 0; i < count; i++) {
-                    Descriptors.FileDescriptor fd = Descriptors.FileDescriptor.buildFrom(
-                            descriptorSet.getFile(i),
-                            new Descriptors.FileDescriptor[]{});
-                    dependencyArray[i] = fd;
-                }
-
-                Descriptors.FileDescriptor fd = Descriptors.FileDescriptor.buildFrom(mainDescriptor, dependencyArray);
-
-                return fd.getMessageTypes().stream().filter(x -> x.getName().equals(name))
-                                                       .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getType())));
-            }
-        });
+        knownSchemas = new ConcurrentHashMap<>();
     }
 
-    @SneakyThrows
     @Override
-    protected DynamicMessage deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected DynamicMessage deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkArgument(writerSchemaInfo != null || readerSchemaInfo != null);
-        
+
         SchemaInfo schemaToUse = readerSchemaInfo == null ? writerSchemaInfo : readerSchemaInfo;
-        Descriptors.Descriptor messageType = knownSchemas.get(schemaToUse);
+        Descriptors.Descriptor messageType = knownSchemas.computeIfAbsent(schemaToUse, this::parseSchema);
 
         return DynamicMessage.parseFrom(messageType, inputStream);
+    }
+
+    private Descriptors.Descriptor parseSchema(SchemaInfo schemaToUse) {
+        DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getDescriptorProto();
+
+        int count = descriptorSet.getFileCount();
+        String[] tokens = NameUtil.extractNameAndQualifier(schemaToUse.getType());
+        String name = tokens[0];
+        String pckg = tokens[1];
+        DescriptorProtos.FileDescriptorProto mainDescriptor = null;
+        for (DescriptorProtos.FileDescriptorProto x : descriptorSet.getFileList()) {
+            boolean packageMatch;
+            if (x.getPackage() == null) {
+                packageMatch = Strings.isNullOrEmpty(pckg);
+            } else {
+                packageMatch = x.getPackage().equals(pckg);
+            }
+            if (packageMatch && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name))) {
+                mainDescriptor = x;
+                break;
+            }
+        }
+        if (mainDescriptor == null) {
+            throw new IllegalArgumentException("FileDescriptorSet doesn't contain the schema for the object type.");
+        }
+
+        Descriptors.FileDescriptor[] dependencyArray = new Descriptors.FileDescriptor[count];
+        Descriptors.FileDescriptor fd;
+        try {
+            for (int i = 0; i < count; i++) {
+                fd = Descriptors.FileDescriptor.buildFrom(
+                        descriptorSet.getFile(i),
+                        new Descriptors.FileDescriptor[]{});
+                dependencyArray[i] = fd;
+            }
+
+            fd = Descriptors.FileDescriptor.buildFrom(mainDescriptor, dependencyArray);
+        } catch (Descriptors.DescriptorValidationException e) {
+            throw new IllegalArgumentException("Invalid protobuf schema.");
+        }
+        return fd.getMessageTypes().stream().filter(x -> x.getName().equals(name))
+                 .findAny().orElseThrow(() -> new SerializationException(String.format("schema for %s not found", schemaToUse.getType())));
     }
 }

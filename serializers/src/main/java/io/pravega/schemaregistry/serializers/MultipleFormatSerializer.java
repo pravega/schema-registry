@@ -18,19 +18,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
 class MultipleFormatSerializer implements Serializer<WithSchema<Object>> {
-    private final Function<SchemaInfo, AbstractPravegaSerializer<Object>> serializerFunction;
+    private final Function<SchemaInfo, AbstractSerializer<Object>> serializerFunction;
 
-    private final ConcurrentHashMap<SchemaInfo, AbstractPravegaSerializer<Object>> serializersMap;
+    private final ConcurrentHashMap<SchemaInfo, AbstractSerializer<Object>> serializersMap;
 
-    MultipleFormatSerializer(Function<SchemaInfo, AbstractPravegaSerializer<Object>> serializerFunction) {
+    MultipleFormatSerializer(Function<SchemaInfo, AbstractSerializer<Object>> serializerFunction) {
         this.serializerFunction = serializerFunction;
         this.serializersMap = new ConcurrentHashMap<>();
     }
     
     @Override
     public ByteBuffer serialize(WithSchema<Object> value) {
-        AbstractPravegaSerializer<Object> serializer = serializersMap.computeIfAbsent(value.getSchemaContainer().getSchemaInfo(), 
-                x -> serializerFunction.apply(value.getSchemaContainer().getSchemaInfo()));
+        AbstractSerializer<Object> serializer = serializersMap.computeIfAbsent(value.getSchema().getSchemaInfo(), 
+                x -> serializerFunction.apply(value.getSchema().getSchemaInfo()));
         return serializer.serialize(value.getObject());
     }
 

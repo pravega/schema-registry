@@ -14,19 +14,18 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import lombok.SneakyThrows;
 
+import java.io.IOException;
 import java.io.OutputStream;
 
-class ProtobufSerializer<T extends Message> extends AbstractPravegaSerializer<T> {
+class ProtobufSerializer<T extends Message> extends AbstractSerializer<T> {
     ProtobufSerializer(String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
                        Codec codec, boolean registerSchema) {
         super(groupId, client, schema, codec, registerSchema);
     }
 
-    @SneakyThrows
     @Override
-    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
+    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) throws IOException {
         var.writeTo(outputStream);
     }
 }

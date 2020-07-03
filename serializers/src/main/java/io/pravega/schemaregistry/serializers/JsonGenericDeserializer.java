@@ -11,17 +11,15 @@ package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-class JsonGenericDeserializer extends AbstractPravegaDeserializer<WithSchema<Object>> {
+class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<Object>> {
     private final ObjectMapper objectMapper;
 
     JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
@@ -33,9 +31,8 @@ class JsonGenericDeserializer extends AbstractPravegaDeserializer<WithSchema<Obj
         objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
     }
     
-    @SneakyThrows({JsonProcessingException.class, IOException.class})
     @Override
-    protected WithSchema<Object> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected WithSchema<Object> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Object obj = objectMapper.readValue(inputStream, Object.class);
         return new WithSchema<>(writerSchemaInfo, obj, (x, y) -> (Map) y);
     }

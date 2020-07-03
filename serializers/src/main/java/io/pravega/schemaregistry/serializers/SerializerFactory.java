@@ -19,7 +19,7 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.schemas.SchemaContainer;
+import io.pravega.schemaregistry.schemas.Schema;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -328,7 +328,7 @@ public class SerializerFactory {
     // region custom
 
     /**
-     * A serializer that uses user supplied implementation of {@link PravegaSerializer} for serializing the objects.
+     * A serializer that uses user supplied implementation of {@link CustomSerializer} for serializing the objects.
      * It also takes user supplied schema and registers/validates it against the registry.
      *
      * @param config     Serializer config.
@@ -337,12 +337,12 @@ public class SerializerFactory {
      * @param <T>        Type of object to serialize
      * @return Serializer that uses user supplied serialization function for serializing events.
      */
-    public static <T> Serializer<T> customSerializer(SerializerConfig config, SchemaContainer<T> schema, PravegaSerializer<T> serializer) {
+    public static <T> Serializer<T> customSerializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
         return CustomSerializerFactory.serializer(config, schema, serializer);
     }
 
     /**
-     * A deserializer that uses user supplied implementation of {@link PravegaDeserializer} for deserializing the data into
+     * A deserializer that uses user supplied implementation of {@link CustomDeserializer} for deserializing the data into
      * typed java objects.
      *
      * @param config       Serializer config.
@@ -351,8 +351,8 @@ public class SerializerFactory {
      * @param <T>          Type of object to deserialize
      * @return Deserializer that uses user supplied deserialization function for deserializing payload into typed events.
      */
-    public static <T> Serializer<T> customDeserializer(SerializerConfig config, @Nullable SchemaContainer<T> schema,
-                                                       PravegaDeserializer<T> deserializer) {
+    public static <T> Serializer<T> customDeserializer(SerializerConfig config, @Nullable Schema<T> schema,
+                                                       CustomDeserializer<T> deserializer) {
         return CustomSerializerFactory.deserializer(config, schema, deserializer);
     }
     // endregion

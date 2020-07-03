@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import lombok.extern.slf4j.Slf4j;
@@ -31,11 +30,7 @@ class AvroSerializerFactory {
     static <T> Serializer<T> serializer(SerializerConfig config, AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         String groupId = config.getGroupId();
         return new AvroSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(), config.isRegisterSchema());
     }
@@ -43,13 +38,8 @@ class AvroSerializerFactory {
     static <T> Serializer<T> deserializer(SerializerConfig config, AvroSchema<T> schemaData) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemaData);
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
         String groupId = config.getGroupId();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
@@ -58,11 +48,7 @@ class AvroSerializerFactory {
 
     static Serializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         return new AvroGenericDeserlizer(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
@@ -73,12 +59,8 @@ class AvroSerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
-        Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
+        Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new AvroSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
                                 config.isRegisterSchema())));
@@ -91,15 +73,11 @@ class AvroSerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new AvroDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
         return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(),
@@ -112,18 +90,14 @@ class AvroSerializerFactory {
         Preconditions.checkNotNull(schemas);
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new AvroDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
-        AbstractPravegaDeserializer<Object> genericDeserializer = new AvroGenericDeserlizer(groupId, schemaRegistryClient,
+        AbstractDeserializer<Object> genericDeserializer = new AvroGenericDeserlizer(groupId, schemaRegistryClient,
                 null, config.getDecoder(), encodingCache);
         return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer,
                 config.getDecoder(), encodingCache);

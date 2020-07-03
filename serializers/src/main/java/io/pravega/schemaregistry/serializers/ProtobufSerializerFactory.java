@@ -14,7 +14,6 @@ import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.extern.slf4j.Slf4j;
@@ -33,11 +32,7 @@ class ProtobufSerializerFactory {
     static <T extends Message> Serializer<T> serializer(SerializerConfig config,
                                                         ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         return new ProtobufSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(),
                 config.isRegisterSchema());
     }
@@ -45,11 +40,7 @@ class ProtobufSerializerFactory {
     static <T extends GeneratedMessageV3> Serializer<T> deserializer(SerializerConfig config,
                                                                      ProtobufSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
@@ -58,14 +49,9 @@ class ProtobufSerializerFactory {
     }
 
     static Serializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         String groupId = config.getGroupId();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
-
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         return new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache);
@@ -74,12 +60,9 @@ class ProtobufSerializerFactory {
     static <T extends GeneratedMessageV3> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
-        Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
+        
+        Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new ProtobufSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
                                 config.isRegisterSchema())));
@@ -89,15 +72,11 @@ class ProtobufSerializerFactory {
     static <T extends GeneratedMessageV3> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
         return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(), encodingCache);
@@ -106,15 +85,11 @@ class ProtobufSerializerFactory {
     static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
         ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null,

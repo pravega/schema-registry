@@ -15,7 +15,6 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
-import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.reflect.ReflectData;
 import org.apache.avro.specific.SpecificData;
@@ -28,14 +27,14 @@ import java.nio.ByteBuffer;
  *
  * @param <T> Type of element. 
  */
-public class AvroSchema<T> implements SchemaContainer<T> {
+public class AvroSchema<T> implements Schema<T> {
     @Getter
-    private final Schema schema;
+    private final org.apache.avro.Schema schema;
     private final SchemaInfo schemaInfo;
     @Getter
     private final Class<T> tClass;
     
-    private AvroSchema(Schema schema, Class<T> tClass) {
+    private AvroSchema(org.apache.avro.Schema schema, Class<T> tClass) {
         this.schema = schema;
         this.schemaInfo = new SchemaInfo(schema.getFullName(),
                 SerializationFormat.Avro, getSchemaBytes(), ImmutableMap.of());
@@ -44,7 +43,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
 
     private AvroSchema(SchemaInfo schemaInfo) {
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-        this.schema = new Schema.Parser().parse(schemaString);
+        this.schema = new org.apache.avro.Schema.Parser().parse(schemaString);
         this.schemaInfo = schemaInfo;
         this.tClass = null;
     }
@@ -59,7 +58,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @return {@link AvroSchema} with generic type T that extracts and captures the avro schema. 
      */
     public static <T> AvroSchema<T> of(Class<T> tClass) {
-        Schema schema;
+        org.apache.avro.Schema schema;
         if (SpecificRecordBase.class.isAssignableFrom(tClass)) {
             schema = SpecificData.get().getSchema(tClass);
         } else {
@@ -75,7 +74,7 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @param schema Schema to use. 
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
-    public static AvroSchema<Object> of(Schema schema) {
+    public static AvroSchema<Object> of(org.apache.avro.Schema schema) {
         return new AvroSchema<>(schema, Object.class);
     }
 
@@ -85,8 +84,8 @@ public class AvroSchema<T> implements SchemaContainer<T> {
      * @param schema Schema to use. 
      * @return Returns an AvroSchema with {@link GenericRecord} type. 
      */
-    public static AvroSchema<GenericRecord> ofRecord(Schema schema) {
-        Preconditions.checkArgument(schema.getType().equals(Schema.Type.RECORD));
+    public static AvroSchema<GenericRecord> ofRecord(org.apache.avro.Schema schema) {
+        Preconditions.checkArgument(schema.getType().equals(org.apache.avro.Schema.Type.RECORD));
         return new AvroSchema<>(schema, GenericRecord.class);
     }
 

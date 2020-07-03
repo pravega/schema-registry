@@ -10,41 +10,33 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumReader;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ConcurrentHashMap;
 
-class AvroGenericDeserlizer extends AbstractPravegaDeserializer<Object> {
-    private final LoadingCache<SchemaInfo, Schema> knownSchemas;
+class AvroGenericDeserlizer extends AbstractDeserializer<Object> {
+    private final ConcurrentHashMap<SchemaInfo, Schema> knownSchemas;
 
     AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<Object> schema,
                           SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache);
-        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<SchemaInfo, Schema>() {
-            @Override
-            public Schema load(SchemaInfo schemaInfo) throws Exception {
-                return AvroSchema.from(schemaInfo).getSchema();
-            }
-        });
+        this.knownSchemas = new ConcurrentHashMap<>();
     }
 
-    @SneakyThrows
     @Override
-    protected Object deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected Object deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.get(writerSchemaInfo);
-        Schema readerSchema = knownSchemas.get(readerSchemaInfo);
+        Schema writerSchema = knownSchemas.computeIfAbsent(writerSchemaInfo, x -> AvroSchema.from(x).getSchema());
+        Schema readerSchema = knownSchemas.computeIfAbsent(readerSchemaInfo, x -> AvroSchema.from(x).getSchema());
         
         GenericDatumReader<Object> genericDatumReader = new GenericDatumReader<>(writerSchema, readerSchema);
         

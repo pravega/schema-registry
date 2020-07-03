@@ -13,14 +13,15 @@ import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Data;
 import lombok.Getter;
-import lombok.SneakyThrows;
 
+import java.lang.reflect.InvocationTargetException;
 import java.nio.ByteBuffer;
 
 /**
@@ -30,7 +31,7 @@ import java.nio.ByteBuffer;
  * @param <T> Type of element. 
  */
 @Data
-public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
+public class ProtobufSchema<T extends Message> implements Schema<T> {
     @Getter
     private final Parser<T> parser;
     @Getter
@@ -44,15 +45,12 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
 
-    @SneakyThrows
-    private ProtobufSchema(SchemaInfo schemaInfo) {
-        DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
-
+    private ProtobufSchema(DescriptorProtos.FileDescriptorSet fileDescriptorSet, SchemaInfo schemaInfo) {
         this.parser = null;
         this.descriptorProto = fileDescriptorSet;
         this.schemaInfo = schemaInfo;
     }
-
+    
     private ByteBuffer getSchemaBytes() {
         return ByteBuffer.wrap(descriptorProto.toByteArray());
     }
@@ -70,11 +68,15 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
      * @param <T> Type of protobuf message
      * @return {@link ProtobufSchema} with generic type T that captures protobuf schema and parser. 
      */
-    @SneakyThrows
     @SuppressWarnings("unchecked")
     public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, 
                                                                       DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
-        T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
+        T defaultInstance;
+        try {
+            defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new IllegalArgumentException(e);
+        }
         Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
         return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
     }
@@ -89,8 +91,6 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
      * @param fileDescriptorSet file descriptor set representing a protobuf schema.
      * @return {@link ProtobufSchema} with generic type {@link DynamicMessage} that captures protobuf schema.
      */
-    @SneakyThrows
-    @SuppressWarnings("unchecked")
     public static ProtobufSchema<DynamicMessage> of(String name, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
         return new ProtobufSchema<>(name, null, fileDescriptorSet);
     }
@@ -106,12 +106,16 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
      * @param <T> Type of protobuf message
      * @return {@link ProtobufSchema} with generic type {@link GeneratedMessageV3} that captures protobuf schema and parser of type T. 
      */
-    @SneakyThrows
     @SuppressWarnings("unchecked")
-    public static <T extends GeneratedMessageV3> ProtobufSchema<T> ofGeneratedMessageV3(
-            Class<? extends T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
-        T defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
-        Parser<T> tParser = (Parser<T>) defaultInstance.getParserForType();
+    public static <T extends GeneratedMessageV3> ProtobufSchema<GeneratedMessageV3> ofGeneratedMessageV3(
+            Class<T> tClass, DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
+        T defaultInstance;
+        try {
+            defaultInstance = (T) tClass.getMethod("getDefaultInstance").invoke(null);
+        } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+            throw new IllegalArgumentException(e);
+        }
+        Parser<GeneratedMessageV3> tParser = (Parser<GeneratedMessageV3>) defaultInstance.getParserForType();
 
         return new ProtobufSchema<>(defaultInstance.getDescriptorForType().getFullName(), tParser, fileDescriptorSet);
     }
@@ -122,10 +126,14 @@ public class ProtobufSchema<T extends Message> implements SchemaContainer<T> {
      * @param schemaInfo              Schema Info
      * @return {@link ProtobufSchema} with generic type {@link DynamicMessage} that captures protobuf schema.
      */
-    @SneakyThrows
-    @SuppressWarnings("unchecked")
     public static ProtobufSchema<DynamicMessage> from(SchemaInfo schemaInfo) {
-        return new ProtobufSchema<>(schemaInfo);
+        try {
+            DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+
+            return new ProtobufSchema<>(fileDescriptorSet, schemaInfo);
+        } catch (InvalidProtocolBufferException ex) {
+            throw new IllegalArgumentException(ex);
+        }
     }
 }
 

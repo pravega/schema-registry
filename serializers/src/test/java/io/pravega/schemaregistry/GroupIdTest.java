@@ -20,7 +20,7 @@ import static org.junit.Assert.assertEquals;
 public class GroupIdTest {
     @Test
     public void testGroupId() throws UnsupportedEncodingException {
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, "scope", "stream");
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, "scope", "stream");
 
         assertEquals(URLDecoder.decode(groupId, Charsets.UTF_8.toString()), "scope/stream");
     }

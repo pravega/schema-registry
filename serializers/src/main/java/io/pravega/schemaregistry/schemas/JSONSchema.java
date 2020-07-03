@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.schemas;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
@@ -19,7 +18,6 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import org.apache.avro.specific.SpecificRecordBase;
 
 import java.nio.ByteBuffer;
@@ -29,7 +27,7 @@ import java.nio.ByteBuffer;
  *
  * @param <T> Type of element. 
  */
-public class JSONSchema<T> implements SchemaContainer<T> {
+public class JSONSchema<T> implements Schema<T> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
     @Getter
@@ -74,13 +72,16 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      * @param <T> Type of the Java class. 
      * @return {@link JSONSchema} with generic type T that extracts and captures the json schema. 
      */
-    @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static <T> JSONSchema<T> of(Class<T> tClass) {
-        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
-        JsonSchema schema = schemaGen.generateSchema(tClass);
-        String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
+        try {
+            JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
+            JsonSchema schema = schemaGen.generateSchema(tClass);
+            String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
 
-        return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
+            return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**
@@ -90,10 +91,13 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      * @param schemaString Schema string to use. 
      * @return Returns an JSONSchema with {@link Object} type. 
      */
-    @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> of(String type, String schemaString) {
-        JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-        return new JSONSchema<>(schema, type, schemaString, Object.class);
+        try {
+            JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+            return new JSONSchema<>(schema, type, schemaString, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**
@@ -106,13 +110,16 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      * @param <T> Type of base class. 
      * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
      */
-    @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
-        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
-        JsonSchema schema = schemaGen.generateSchema(tDerived);
-        String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
-        
-        return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
+        try {
+            JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
+            JsonSchema schema = schemaGen.generateSchema(tDerived);
+            String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
+
+            return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     /**
@@ -121,12 +128,15 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      * @param schemaInfo Schema info to translate into json schema. 
      * @return Returns an JSONSchema with {@link Object} type. 
      */
-    @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
-        String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
+        try {
+            String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
 
-        JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-        return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
+            JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+            return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException(e);
+        }
     }
 
     private ByteBuffer getSchemaBytes() {

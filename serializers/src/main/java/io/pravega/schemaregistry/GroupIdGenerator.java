@@ -11,7 +11,6 @@ package io.pravega.schemaregistry;
 
 import com.google.common.base.Preconditions;
 import io.pravega.shared.NameUtils;
-import lombok.SneakyThrows;
 
 /**
  * Defines strategies for generating groupId for stream. 
@@ -21,19 +20,18 @@ public class GroupIdGenerator {
     private GroupIdGenerator() {
     }
 
-    @SneakyThrows
-    public static String getGroupId(Type type, String... args) {
-        switch (type) {
+    public static String getGroupId(Scheme scheme, String... args) {
+        switch (scheme) {
             case QualifiedStreamName:
                 Preconditions.checkNotNull(args);
                 Preconditions.checkArgument(args.length == 2);
                 return NameUtils.getScopedStreamName(args[0], args[1]);
             default:
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Unknown Group id generation schema.");
         }
     }
     
-    public enum Type {
+    public enum Scheme {
         QualifiedStreamName,
     }
 }

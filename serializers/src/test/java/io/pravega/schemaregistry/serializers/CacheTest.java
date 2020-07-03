@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -20,6 +19,7 @@ import io.pravega.schemaregistry.contract.data.VersionInfo;
 import org.junit.Test;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.ArgumentMatchers.eq;
@@ -28,13 +28,13 @@ import static org.mockito.Mockito.mock;
 
 public class CacheTest {
     @Test
-    public void testCache() {
+    public void testCache() throws ExecutionException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         String groupId = "groupId";
         EncodingId encodingId = new EncodingId(0);
         EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", 0, 0),
                 new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
-                CodecFactory.snappy().getCodecType());
+                Codecs.SnappyCompressor.getCodec().getCodecType());
         doAnswer(x -> encodingInfo).when(client).getEncodingInfo(eq(groupId), eq(encodingId));
         EncodingCache cache = new EncodingCache(groupId, client);
         assertEquals(encodingInfo, cache.getGroupEncodingInfo(encodingId));

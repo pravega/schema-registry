@@ -12,22 +12,28 @@ package io.pravega.schemaregistry.serializers;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
+import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import lombok.Data;
-import lombok.SneakyThrows;
 
+import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Local cache for storing schemas that are retrieved from the registry service.  
  */
 public class EncodingCache {
+    private static final Duration EXPIRY_AFTER_ACCESS = Duration.ofMinutes(20);
+    
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
     
     EncodingCache(String groupId, SchemaRegistryClient schemaRegistryClient) {
-        encodingCache = CacheBuilder.newBuilder().build(new CacheLoader<EncodingId, EncodingInfo>() {
+        encodingCache = CacheBuilder.newBuilder()
+                                    .expireAfterAccess(EXPIRY_AFTER_ACCESS)
+                                    .build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
             public EncodingInfo load(EncodingId key) {
                 return schemaRegistryClient.getEncodingInfo(groupId, key);
@@ -35,9 +41,16 @@ public class EncodingCache {
         });
     }
     
-    @SneakyThrows(ExecutionException.class)
-    public EncodingInfo getGroupEncodingInfo(EncodingId encodingId) {
-        return encodingCache.get(encodingId);
+    EncodingInfo getGroupEncodingInfo(EncodingId encodingId) {
+        try {
+            return encodingCache.get(encodingId);
+        } catch (ExecutionException e) {
+            if (e.getCause() != null && Exceptions.unwrap(e.getCause()) instanceof RegistryExceptions) {
+                throw (RegistryExceptions) e.getCause();
+            } else {
+                throw new RuntimeException(e.getCause());
+            }
+        }
     }
     
     @Data

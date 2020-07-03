@@ -11,30 +11,26 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.schemas.SchemaContainer;
+import io.pravega.schemaregistry.schemas.Schema;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.*;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForSerializer;
 
 /**
  * Internal Factory class for Custom serializers and deserializers. 
  */
 @Slf4j
 class CustomSerializerFactory {
-    static <T> Serializer<T> serializer(SerializerConfig config, SchemaContainer<T> schema, PravegaSerializer<T> serializer) {
+    static <T> Serializer<T> serializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
-        return new AbstractPravegaSerializer<T>(groupId, schemaRegistryClient,
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
+        return new AbstractSerializer<T>(groupId, schemaRegistryClient,
                 schema, config.getCodec(), config.isRegisterSchema()) {
             @Override
             protected void serialize(T var, SchemaInfo schema, OutputStream outputStream) {
@@ -43,19 +39,15 @@ class CustomSerializerFactory {
         };
     }
 
-    static <T> Serializer<T> deserializer(SerializerConfig config, @Nullable SchemaContainer<T> schema,
-                                          PravegaDeserializer<T> deserializer) {
+    static <T> Serializer<T> deserializer(SerializerConfig config, @Nullable Schema<T> schema,
+                                          CustomDeserializer<T> deserializer) {
 
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AbstractPravegaDeserializer<T>(groupId, schemaRegistryClient, schema, false,
+        return new AbstractDeserializer<T>(groupId, schemaRegistryClient, schema, false,
                 config.getDecoder(), encodingCache) {
             @Override
             protected T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
