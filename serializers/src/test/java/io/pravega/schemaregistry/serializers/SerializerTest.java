@@ -9,6 +9,8 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatTypes;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.JsonObject;
@@ -281,10 +283,10 @@ public class SerializerTest {
         doAnswer(x -> new EncodingInfo(versionInfo3, myData.getSchemaInfo(), CodecFactory.NONE)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
 
         Serializer<Object> serializer2 = SerializerFactory.jsonSerializer(config, myData);
-        JsonObject jsonObject = new JsonObject();
-        jsonObject.addProperty("content", "mxx");
-
-        ByteBuffer s = serializer2.serialize(jsonObject.toString());
+        Map<String, String> jsonObject = new HashMap<>();
+        jsonObject.put("content", "mxx");
+        
+        ByteBuffer s = serializer2.serialize(jsonObject);
         str = stringDeserializer.deserialize(s);
         // multi type
         DerivedUser2 user2 = new DerivedUser2("user", new Address("street", "city"), 2, "user2");

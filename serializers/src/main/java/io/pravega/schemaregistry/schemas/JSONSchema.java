@@ -30,6 +30,8 @@ import java.nio.ByteBuffer;
  * @param <T> Type of element. 
  */
 public class JSONSchema<T> implements SchemaContainer<T> {
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+
     @Getter
     private final String schemaString;
     private final Class<T> base;
@@ -74,10 +76,9 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static <T> JSONSchema<T> of(Class<T> tClass) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(objectMapper);
+        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
         JsonSchema schema = schemaGen.generateSchema(tClass);
-        String schemaString = objectMapper.writeValueAsString(schema);
+        String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
 
         return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
     }
@@ -91,8 +92,7 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> of(String type, String schemaString) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
+        JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
         return new JSONSchema<>(schema, type, schemaString, Object.class);
     }
 
@@ -108,10 +108,9 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
-        ObjectMapper objectMapper = new ObjectMapper();
-        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(objectMapper);
+        JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
         JsonSchema schema = schemaGen.generateSchema(tDerived);
-        String schemaString = objectMapper.writeValueAsString(schema);
+        String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
         
         return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
     }
@@ -124,10 +123,9 @@ public class JSONSchema<T> implements SchemaContainer<T> {
      */
     @SneakyThrows({JsonMappingException.class, JsonProcessingException.class})
     public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
-        ObjectMapper objectMapper = new ObjectMapper();
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
 
-        JsonSchema schema = objectMapper.readValue(schemaString, JsonSchema.class);
+        JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
         return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
     }
 
