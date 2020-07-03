@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
+import com.google.gson.JsonObject;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -271,6 +272,20 @@ public class SerializerTest {
         String str = stringDeserializer.deserialize(serialized);
         assertFalse(Strings.isNullOrEmpty(str));
 
+        String schemaString = "{\"type\": \"object\",\"title\": \"The external data schema\",\"properties\": {\"content\": {\"type\": \"string\"}}}";
+
+        JSONSchema<Object> myData = JSONSchema.of("MyData", schemaString);
+        VersionInfo versionInfo3 = new VersionInfo("myData", 0, 2);
+        doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(myData.getSchemaInfo()));
+        doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
+        doAnswer(x -> new EncodingInfo(versionInfo3, myData.getSchemaInfo(), CodecFactory.NONE)).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
+
+        Serializer<Object> serializer2 = SerializerFactory.jsonSerializer(config, myData);
+        JsonObject jsonObject = new JsonObject();
+        jsonObject.addProperty("content", "mxx");
+
+        ByteBuffer s = serializer2.serialize(jsonObject.toString());
+        str = stringDeserializer.deserialize(s);
         // multi type
         DerivedUser2 user2 = new DerivedUser2("user", new Address("street", "city"), 2, "user2");
 
