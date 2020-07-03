@@ -10,14 +10,14 @@
 package io.pravega.schemaregistry.samples.demo.serde;
 
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.serializers.PravegaSerializer;
+import io.pravega.schemaregistry.serializers.CustomSerializer;
 import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 
-public class MySerializer implements PravegaSerializer<MyPojo> {
+public class MySerializer implements CustomSerializer<MyPojo> {
     @SneakyThrows
     @Override
     public void serialize(MyPojo var, SchemaInfo schema, OutputStream outputStream) {

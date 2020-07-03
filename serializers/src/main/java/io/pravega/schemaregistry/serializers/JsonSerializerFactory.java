@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import lombok.extern.slf4j.Slf4j;
@@ -28,22 +27,14 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.*;
 class JsonSerializerFactory {
     static <T> Serializer<T> serializer(SerializerConfig config, JSONSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         return new JsonSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(),
                 config.isRegisterSchema());
     }
 
     static <T> Serializer<T> deserializer(SerializerConfig config, JSONSchema<T> schemaData) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
@@ -52,9 +43,7 @@ class JsonSerializerFactory {
     }
 
     static Serializer<WithSchema<Object>> genericDeserializer(SerializerConfig config) {
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         String groupId = config.getGroupId();
 
@@ -65,9 +54,7 @@ class JsonSerializerFactory {
     }
 
     static Serializer<String> jsonStringDeserializer(SerializerConfig config) {
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         String groupId = config.getGroupId();
 
@@ -79,12 +66,8 @@ class JsonSerializerFactory {
     static <T> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        registerCodec(schemaRegistryClient, config);
-        Map<Class<? extends T>, AbstractPravegaSerializer<T>> serializerMap = schemas
+        SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
+        Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new JsonSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
                                 config.isRegisterSchema())));
@@ -94,13 +77,11 @@ class JsonSerializerFactory {
     static <T> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new JsonDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(),
                                 encodingCache)));
@@ -111,15 +92,11 @@ class JsonSerializerFactory {
     static <T> Serializer<Either<T, WithSchema<Object>>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         String groupId = config.getGroupId();
-        SchemaRegistryClient schemaRegistryClient = config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
-                config.getRegistryConfigOrClient().getRight();
-        autoCreateGroup(schemaRegistryClient, config);
-        failOnCodecMismatch(schemaRegistryClient, config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        Map<String, AbstractPravegaDeserializer<T>> deserializerMap = schemas
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new JsonDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
         JsonGenericDeserializer genericDeserializer = new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoder(),

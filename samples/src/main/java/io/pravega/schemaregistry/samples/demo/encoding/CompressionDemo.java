@@ -30,7 +30,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.codec.CodecFactory;
+import io.pravega.schemaregistry.serializers.Codecs;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -38,12 +38,14 @@ import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 
+import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Base64;
@@ -73,6 +75,7 @@ public class CompressionDemo {
             return MYCOMPRESSION;
         }
 
+        @SneakyThrows
         @Override
         public ByteBuffer encode(ByteBuffer data) {
             // left rotate by 1 byte
@@ -88,6 +91,7 @@ public class CompressionDemo {
             return ByteBuffer.wrap(array);
         }
 
+        @SneakyThrows
         @Override
         public ByteBuffer decode(ByteBuffer data) {
             byte[] array = new byte[data.remaining()];
@@ -122,13 +126,19 @@ public class CompressionDemo {
         id = Long.toString(System.currentTimeMillis());
         scope = "scope" + id;
         stream = "avrocompression";
-        groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
         schema1 = AvroSchema.ofRecord(SCHEMA1);
         clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         initialize();
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .addDecoder(MY_CODEC.getCodecType(), MY_CODEC::decode)
+                                                             .addDecoder(MY_CODEC.getCodecType(), x -> {
+                                                                 try {
+                                                                     return MY_CODEC.decode(x);
+                                                                 } catch (IOException e) {
+                                                                     throw new RuntimeException(e);
+                                                                 }
+                                                             })
                                                              .registryClient(client)
                                                              .build();
 
@@ -224,7 +234,7 @@ public class CompressionDemo {
                                                             .groupId(groupId)
                                                             .registerSchema(true)
                                                             .registerCodec(true)
-                                                            .codec(CodecFactory.gzip())
+                                                            .codec(Codecs.GzipCompressor.getCodec())
                                                             .registryClient(client)
                                                             .build();
 
@@ -242,7 +252,7 @@ public class CompressionDemo {
     private void writeSnappy(String input) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .codec(CodecFactory.snappy())
+                                                            .codec(Codecs.SnappyCompressor.getCodec())
                                                             .registerSchema(true)
                                                             .registerCodec(true)
                                                             .registryClient(client)

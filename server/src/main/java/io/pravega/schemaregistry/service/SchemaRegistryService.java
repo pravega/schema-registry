@@ -21,7 +21,7 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.MapWithToken;
-import io.pravega.schemaregistry.common.FuturesCollector;
+import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.BackwardAndForward;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -91,7 +91,7 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<MapWithToken<String, GroupProperties>> listGroups(String namespace, ContinuationToken continuationToken, int limit) {
         log.info("List groups called");
-        return FuturesCollector.filteredWithTokenAndLimit(
+        return FuturesUtility.filteredWithTokenAndLimit(
                 (ContinuationToken c, Integer l) -> store.listGroups(namespace, c, l)
                                                          .thenCompose(reply -> {
                                                              List<String> list = reply.getList();
@@ -102,7 +102,7 @@ public class SchemaRegistryService {
                                                                            .thenApply(result -> new AbstractMap.SimpleEntry<>(reply.getToken(), result));
                                                          }),
                 x -> x.getValue().get() != null, continuationToken, limit, executor)
-                               .thenApply(groupsList -> {
+                             .thenApply(groupsList -> {
                                    log.info("Returning groups {}", groupsList);
                                    Map<String, GroupProperties> collect = groupsList.getValue().stream().collect(
                                            Collectors.toMap(AbstractMap.SimpleEntry::getKey, x -> x.getValue().get()));

@@ -73,7 +73,7 @@ public class Writer2 {
         this.config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(registryUri)).build();
         this.scope = scope;
         this.stream = stream;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
         initialize();
         this.writer = createWriter(groupId);
     }

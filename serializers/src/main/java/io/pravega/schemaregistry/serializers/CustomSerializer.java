@@ -13,6 +13,6 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.io.OutputStream;
 
-public interface PravegaSerializer<T> {
+public interface CustomSerializer<T> {
     void serialize(T var, SchemaInfo schema, OutputStream outputStream);
 }

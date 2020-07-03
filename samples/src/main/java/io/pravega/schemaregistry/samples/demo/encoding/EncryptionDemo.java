@@ -43,6 +43,7 @@ import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -74,7 +75,7 @@ public class EncryptionDemo {
         id = Long.toString(System.currentTimeMillis());
         scope = "scope" + id;
         stream = "avroEncryption";
-        groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
         myEncryption = "myEncryption";
         clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         this.encryptionkey = encryptionkey;
@@ -133,7 +134,13 @@ public class EncryptionDemo {
         // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .addDecoder(myCodec.getCodecType(), myCodec::decode)
+                                                             .addDecoder(myCodec.getCodecType(), x -> {
+                                                                 try {
+                                                                     return myCodec.decode(x);
+                                                                 } catch (IOException e) {
+                                                                     throw new RuntimeException(e);
+                                                                 }
+                                                             })
                                                              .registryClient(client)
                                                              .build();
 

@@ -12,21 +12,11 @@ package io.pravega.schemaregistry.serializers;
 import io.pravega.client.stream.Serializer;
 
 import java.nio.ByteBuffer;
-import java.util.Map;
 
-class MultiplexedSerializer<T> implements Serializer<T> {
-    private final Map<Class<? extends T>, AbstractSerializer<T>> serializers;
-
-    MultiplexedSerializer(Map<Class<? extends T>, AbstractSerializer<T>> serializers) {
-        this.serializers = serializers;
-    }
-    
+class FailingSerializer<T> implements Serializer<T> {
     @Override
-    @SuppressWarnings("unchecked")
-    public ByteBuffer serialize(T obj) {
-        Class<? extends T> tClass = (Class<? extends T>) obj.getClass();
-        AbstractSerializer<T> serializer = serializers.get(tClass);
-        return serializer.serialize(obj);
+    public ByteBuffer serialize(T value) {
+        throw new IllegalStateException();
     }
 
     @Override

@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
@@ -34,7 +35,6 @@ import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -626,7 +626,6 @@ public class Group<V> {
         }, executor).thenApply(v -> found.get());
     }
 
-    @SneakyThrows
     private String getSchemaString(SchemaInfo schemaInfo) {
         String schemaString;
         switch (schemaInfo.getSerializationFormat()) {
@@ -635,9 +634,15 @@ public class Group<V> {
                 schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                 break;
             case Protobuf:
-                DescriptorProtos.FileDescriptorSet descriptor = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
-                JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
-                schemaString = printer.print(descriptor);
+                try {
+                    DescriptorProtos.FileDescriptorSet descriptor = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+                    JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
+
+                    schemaString = printer.print(descriptor);
+                } catch (InvalidProtocolBufferException e) {
+                    log.warn("unable to convert protobuf schema to json string", e);
+                    throw new IllegalArgumentException(e);
+                }
                 break;
             default:
                 schemaString = "";

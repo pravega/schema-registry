@@ -11,14 +11,14 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
 import com.google.protobuf.GeneratedMessageV3;
+import com.google.protobuf.InvalidProtocolBufferException;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import lombok.SneakyThrows;
 
 import java.io.InputStream;
 
-public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractPravegaDeserializer<T> {
+public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractDeserializer<T> {
     private final ProtobufSchema<T> protobufSchema;
     ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
                        ProtobufSchema<T> schema, SerializerConfig.Decoder decoder,
@@ -28,9 +28,12 @@ public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractPr
         this.protobufSchema = schema;
     }
 
-    @SneakyThrows
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        return protobufSchema.getParser().parseFrom(inputStream);
+        try {
+            return protobufSchema.getParser().parseFrom(inputStream);
+        } catch (InvalidProtocolBufferException e) {
+            throw new IllegalArgumentException("Invalid bytes", e);
+        }
     }
 }

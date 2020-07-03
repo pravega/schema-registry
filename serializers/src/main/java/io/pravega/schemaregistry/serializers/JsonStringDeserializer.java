@@ -11,16 +11,14 @@ package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
 
-class JsonStringDeserializer extends AbstractPravegaDeserializer<String> {
+class JsonStringDeserializer extends AbstractDeserializer<String> {
     private final ObjectMapper objectMapper;
 
     JsonStringDeserializer(String groupId, SchemaRegistryClient client,
@@ -32,9 +30,8 @@ class JsonStringDeserializer extends AbstractPravegaDeserializer<String> {
         objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
     }
     
-    @SneakyThrows({JsonProcessingException.class, IOException.class})
     @Override
-    protected String deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected String deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Object obj = objectMapper.readValue(inputStream, Object.class);
         return objectMapper.writeValueAsString(obj);
     }

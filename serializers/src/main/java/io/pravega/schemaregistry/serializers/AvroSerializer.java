@@ -13,7 +13,6 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.IndexedRecord;
@@ -23,10 +22,10 @@ import org.apache.avro.reflect.ReflectDatumWriter;
 import org.apache.avro.specific.SpecificDatumWriter;
 import org.apache.avro.specific.SpecificRecord;
 
-import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 
-class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
+class AvroSerializer<T> extends AbstractSerializer<T> {
     private final AvroSchema<T> avroSchema;
     AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
                    Codec codec, boolean registerSchema) {
@@ -34,13 +33,11 @@ class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
         this.avroSchema = schema;
     }
 
-    @SneakyThrows
     @Override
-    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) {
+    protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) throws IOException {
         Schema schema = avroSchema.getSchema();
         
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(out, null);
+        BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
 
         if (IndexedRecord.class.isAssignableFrom(var.getClass())) {
             if (SpecificRecord.class.isAssignableFrom(var.getClass())) {
@@ -56,7 +53,6 @@ class AvroSerializer<T> extends AbstractPravegaSerializer<T> {
         }
 
         encoder.flush();
-        outputStream.write(out.toByteArray());
         outputStream.flush();
     }
 }

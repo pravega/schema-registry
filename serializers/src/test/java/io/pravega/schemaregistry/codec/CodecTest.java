@@ -10,8 +10,10 @@
 package io.pravega.schemaregistry.codec;
 
 import com.google.common.base.Charsets;
+import io.pravega.schemaregistry.serializers.Codecs;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
@@ -21,24 +23,24 @@ import static org.junit.Assert.assertTrue;
 
 public class CodecTest {
     @Test
-    public void testCodec() {
+    public void testCodec() throws IOException {
         byte[] testStringBytes = "this is a test string".getBytes(Charsets.UTF_8);
-        Codec snappy = CodecFactory.snappy();
-        assertEquals(snappy.getCodecType(), CodecFactory.MIME_SNAPPY);
+        Codec snappy = Codecs.SnappyCompressor.getCodec();
+        assertEquals(snappy.getCodecType(), Codecs.SnappyCompressor.getMimeType());
         ByteBuffer encoded = snappy.encode(ByteBuffer.wrap(testStringBytes));
         assertFalse(Arrays.equals(encoded.array(), testStringBytes));
         ByteBuffer decoded = snappy.decode(encoded);
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
         
-        Codec gzip = CodecFactory.gzip();
-        assertEquals(gzip.getCodecType(), CodecFactory.MIME_GZIP);
+        Codec gzip = Codecs.GzipCompressor.getCodec();
+        assertEquals(gzip.getCodecType(), Codecs.GzipCompressor.getMimeType());
         encoded = gzip.encode(ByteBuffer.wrap(testStringBytes));
         assertFalse(Arrays.equals(encoded.array(), testStringBytes));
         decoded = gzip.decode(encoded);
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
 
-        Codec none = CodecFactory.none();
-        assertEquals(none.getCodecType(), CodecFactory.NONE);
+        Codec none = Codecs.None.getCodec();
+        assertEquals(none.getCodecType(), Codecs.None.getMimeType());
         encoded = none.encode(ByteBuffer.wrap(testStringBytes));
         assertTrue(Arrays.equals(encoded.array(), testStringBytes));
         decoded = none.decode(encoded);

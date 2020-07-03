@@ -14,6 +14,9 @@ public class NameUtil {
      * Extracts the name from the fully qualified type name. Name represents the last token after ".". 
      * If the qualified name does not contain "." then the name is same as qualified name. 
      * 
+     * Example: io.pravega.MyObject will return MyObject
+     * Example: MyObject will return MyObject
+     * 
      * @param qualifiedName qualified name to extract name from. 
      * @return extracted name. 
      */
@@ -25,7 +28,10 @@ public class NameUtil {
     /**
      * Extracts name and the prefix qualifier before the name. Name represents the last token after ".".
      * Qualifier is the prefix before the name. 
-     * If the qualified name does not contain "." then the name is same as qualified name and qualifier is empty string. 
+     * If the qualified name does not contain "." then the name is same as qualified name and qualifier is empty string.
+     * 
+     * Example: io.pravega.MyObject will return ["MyObject", "io.pravega"]
+     * Example: MyObject will return ["MyObject", ""]
      * 
      * @param qualifiedName qualified name to extract tokens from. 
      * @return an array containing name at index 0 and qualifier at index 1. 

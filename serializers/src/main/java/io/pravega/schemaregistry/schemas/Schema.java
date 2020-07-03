@@ -16,6 +16,12 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
  * 
  * @param <T> Type of object. 
  */
-public interface SchemaContainer<T> {
+public interface Schema<T> {
+    /**
+     * Returns the {@link SchemaInfo} object that is computed from the schema object. SchemaInfo is the object that encapsulates
+     * all schema metadata to be shared with the schema registry service.
+     *
+     * @return Schema Info object derived from the schema object.
+     */
     SchemaInfo getSchemaInfo();
 }

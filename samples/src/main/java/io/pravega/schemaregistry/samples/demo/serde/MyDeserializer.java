@@ -10,13 +10,13 @@
 package io.pravega.schemaregistry.samples.demo.serde;
 
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.serializers.PravegaDeserializer;
+import io.pravega.schemaregistry.serializers.CustomDeserializer;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectInputStream;
 
-public class MyDeserializer implements PravegaDeserializer<MyPojo> {
+public class MyDeserializer implements CustomDeserializer<MyPojo> {
     @Override
     public MyPojo deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
         ObjectInputStream oin;

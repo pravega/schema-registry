@@ -10,26 +10,25 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
-import io.pravega.client.stream.Serializer;
-import io.pravega.common.util.BitConverter;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.schemas.SchemaContainer;
+import io.pravega.schemaregistry.schemas.Schema;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
+abstract class AbstractSerializer<T> extends FailingSerializer<T> {
     private static final byte PROTOCOL = 0x0;
 
     private final String groupId;
@@ -42,11 +41,11 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
     private final Codec codec;
     private final boolean registerSchema;
 
-    protected AbstractPravegaSerializer(String groupId,
-                                        SchemaRegistryClient client,
-                                        SchemaContainer<T> schema,
-                                        Codec codec, 
-                                        boolean registerSchema) {
+    protected AbstractSerializer(String groupId,
+                                 SchemaRegistryClient client,
+                                 Schema<T> schema,
+                                 Codec codec,
+                                 boolean registerSchema) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(codec);
@@ -82,18 +81,10 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
         }
     }
     
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     @Override
     public ByteBuffer serialize(T obj) {
-        ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
         ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
-        
-        if (this.encodeHeader.get()) {
-            Preconditions.checkNotNull(schemaInfo);
-
-            outputStream.write(PROTOCOL);
-            BitConverter.writeInt(outputStream, encodingId.get().getId());
-        }
         
         // if schema is not null, pass the schema to the serializer implementation
         if (schemaInfo != null) {
@@ -104,20 +95,24 @@ abstract class AbstractPravegaSerializer<T> implements Serializer<T> {
 
         dataStream.flush();
 
-        byte[] array = dataStream.toByteArray();
-
-        ByteBuffer encoded = codec.encode(ByteBuffer.wrap(array));
-        array = new byte[encoded.remaining()];
-        encoded.get(array);
-
-        outputStream.write(array);
-        return ByteBuffer.wrap(outputStream.toByteArray());
+        byte[] serialized = dataStream.toByteArray();
+        
+        ByteBuffer byteBuffer;
+        if (this.encodeHeader.get()) {
+            Preconditions.checkNotNull(schemaInfo);
+            ByteBuffer encoded = codec.encode(ByteBuffer.wrap(serialized));
+            int bufferSize = 5 + encoded.remaining();
+            byteBuffer = ByteBuffer.allocate(bufferSize);
+            byteBuffer.put(PROTOCOL);
+            byteBuffer.putInt(encodingId.get().getId());
+            byteBuffer.put(encoded);
+            byteBuffer.rewind();
+        } else {
+            byteBuffer = ByteBuffer.wrap(serialized);
+        }
+        
+        return byteBuffer;
     }
 
-    protected abstract void serialize(T var, SchemaInfo schema, OutputStream outputStream);
-
-    @Override
-    public T deserialize(ByteBuffer bytes) {
-        throw new IllegalStateException();
-    }
+    protected abstract void serialize(T var, SchemaInfo schema, OutputStream outputStream) throws IOException;
 }

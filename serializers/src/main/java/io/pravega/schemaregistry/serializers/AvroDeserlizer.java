@@ -11,13 +11,9 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import lombok.SneakyThrows;
 import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
 import org.apache.avro.io.DecoderFactory;
@@ -25,11 +21,13 @@ import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
 import org.apache.avro.specific.SpecificRecordBase;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.util.concurrent.ConcurrentHashMap;
 
-class AvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
+class AvroDeserlizer<T> extends AbstractDeserializer<T> {
     private final AvroSchema<T> avroSchema;
-    private final LoadingCache<byte[], Schema> knownSchemas;
+    private final ConcurrentHashMap<SchemaInfo, Schema> knownSchemas;
 
     AvroDeserlizer(String groupId, SchemaRegistryClient client,
                    AvroSchema<T> schema,
@@ -37,20 +35,17 @@ class AvroDeserlizer<T> extends AbstractPravegaDeserializer<T> {
         super(groupId, client, schema, false, decoder, encodingCache);
         Preconditions.checkNotNull(schema);
         this.avroSchema = schema;
-        this.knownSchemas = CacheBuilder.newBuilder().build(new CacheLoader<byte[], Schema>() {
-            @Override
-            public Schema load(byte[] schemaData) throws Exception {
-                String schemaString = new String(schemaData, Charsets.UTF_8);
-                return new Schema.Parser().parse(schemaString);
-            }
-        });
+        this.knownSchemas = new ConcurrentHashMap<>();
     }
 
-    @SneakyThrows
     @Override
-    protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.get(writerSchemaInfo.getSchemaData().array());
+        Schema writerSchema = knownSchemas.computeIfAbsent(writerSchemaInfo, x -> {
+            String schemaString = new String(x.getSchemaData().array(), Charsets.UTF_8);
+            return new Schema.Parser().parse(schemaString);
+
+        });
         Schema readerSchema = avroSchema.getSchema();
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         

@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.samples.demo.serializationformats;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.DescriptorProtos;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -85,16 +86,16 @@ public class AllFormatInSingleStreamDemo {
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(),
                 true));
-        client.addGroup(GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, outputStream), new GroupProperties(serializationFormat,
+        client.addGroup(GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, outputStream), new GroupProperties(serializationFormat,
                 Compatibility.allowAny(),
                 true));
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws JsonProcessingException {
         String scope = "scope" + System.currentTimeMillis();
         String stream = "stream";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
-        String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream + "_out");
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream + "_out");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClient schemaRegistryClient = SchemaRegistryClientFactory.createRegistryClient(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build());
@@ -230,7 +231,7 @@ public class AllFormatInSingleStreamDemo {
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
     }
 
-    private EventStreamWriter<DerivedUser1> createJsonWriter(String groupId) {
+    private EventStreamWriter<DerivedUser1> createJsonWriter(String groupId) throws JsonProcessingException {
 
         // region serializer
         SerializerConfig serializerConfig = SerializerConfig.builder()

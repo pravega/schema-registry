@@ -14,7 +14,6 @@ import com.google.common.base.Strings;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -25,13 +24,12 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-
-import static io.pravega.schemaregistry.codec.CodecFactory.*;
 
 /**
  * Serializer Config class that is passed to {@link SerializerFactory} for creating serializer. 
@@ -39,10 +37,6 @@ import static io.pravega.schemaregistry.codec.CodecFactory.*;
 @Data
 @Builder
 public class SerializerConfig {
-    private final static Codec NOOP = CodecFactory.none();
-    private final static Codec GZIP = CodecFactory.gzip();
-    private final static Codec SNAPPY = CodecFactory.snappy();
-    
     /**
      * Name of the group.
      */
@@ -107,7 +101,7 @@ public class SerializerConfig {
     }
 
     public static final class SerializerConfigBuilder {
-        private Codec codec = NOOP;
+        private Codec codec = Codecs.None.getCodec();
 
         private Decoder decoder = new Decoder();
 
@@ -200,15 +194,19 @@ public class SerializerConfig {
 
     static class Decoder {
         private static final BiFunction<String, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
-            switch (x) {
-                case NONE:
-                    return NOOP.decode(y);
-                case MIME_GZIP:
-                    return GZIP.decode(y);
-                case MIME_SNAPPY:
-                    return SNAPPY.decode(y);
-                default:
-                    throw new IllegalArgumentException();
+            try {
+                switch (x) {
+                    case Codecs.Constants.NONE:
+                        return Codecs.None.getCodec().decode(y);
+                    case Codecs.Constants.APPLICATION_X_GZIP:
+                        return Codecs.GzipCompressor.getCodec().decode(y);
+                    case Codecs.Constants.APPLICATION_X_SNAPPY_FRAMED:
+                        return Codecs.SnappyCompressor.getCodec().decode(y);
+                    default:
+                        throw new IllegalArgumentException("Unknown codec");
+                }
+            } catch (IOException ex) {
+                throw new RuntimeException(ex);
             }
         };
 
@@ -225,18 +223,18 @@ public class SerializerConfig {
                 }
             };
             codecTypes = new HashSet<>();
-            this.codecTypes.add(NONE);
-            this.codecTypes.add(MIME_GZIP);
-            this.codecTypes.add(MIME_SNAPPY);
+            this.codecTypes.add(Codecs.Constants.NONE);
+            this.codecTypes.add(Codecs.Constants.APPLICATION_X_GZIP);
+            this.codecTypes.add(Codecs.Constants.APPLICATION_X_SNAPPY_FRAMED);
             this.codecTypes.add(codecType);
         }
 
         private Decoder() {
             this.decoder = DEFAULT;
             codecTypes = new HashSet<>();
-            this.codecTypes.add(NONE);
-            this.codecTypes.add(MIME_GZIP);
-            this.codecTypes.add(MIME_SNAPPY);
+            this.codecTypes.add(Codecs.Constants.NONE);
+            this.codecTypes.add(Codecs.Constants.APPLICATION_X_GZIP);
+            this.codecTypes.add(Codecs.Constants.APPLICATION_X_SNAPPY_FRAMED);
         }
 
         ByteBuffer decode(String codecType, ByteBuffer bytes) {

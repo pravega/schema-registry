@@ -20,7 +20,6 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
 
@@ -103,9 +102,13 @@ abstract class AbstractResource {
         return DOMAIN;
     }
 
-    @SneakyThrows(UnsupportedEncodingException.class)
     String getNamespaceResource(String namespace) {
-        String encode = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+        String encode = null;
+        try {
+            encode = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Invalid namespace name.");
+        }
         return String.format(NAMESPACE_FORMAT, encode);
     }
 
@@ -113,12 +116,15 @@ abstract class AbstractResource {
         return getGroupResource(group, DEFAULT_NAMESPACE);
     }
 
-    @SneakyThrows(UnsupportedEncodingException.class)
     String getGroupResource(String group, String namespace) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
-        String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
-        return String.format(NAMESPACE_GROUP_FORMAT, encodedNamespace,
-                URLEncoder.encode(group, Charsets.UTF_8.toString()));
+        try {
+            String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+            return String.format(NAMESPACE_GROUP_FORMAT, encodedNamespace,
+                    URLEncoder.encode(group, Charsets.UTF_8.toString()));
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Invalid group or namespace name.");
+        }
     }
 
     String getGroupSchemaResource(String group) {
@@ -126,13 +132,16 @@ abstract class AbstractResource {
         return getGroupSchemaResource(group, DEFAULT_NAMESPACE);
     }
 
-    @SneakyThrows(UnsupportedEncodingException.class)
     String getGroupSchemaResource(String group, String namespace) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
-        String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+        try {
+            String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
 
-        return String.format(NAMESPACE_GROUP_SCHEMA_FORMAT,
-                encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
+            return String.format(NAMESPACE_GROUP_SCHEMA_FORMAT,
+                    encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Invalid group or namespace name.");
+        }
     }
 
     String getGroupCodecResource(String group) {
@@ -140,13 +149,16 @@ abstract class AbstractResource {
         return getGroupCodecResource(group, DEFAULT_NAMESPACE);
     }
 
-    @SneakyThrows(UnsupportedEncodingException.class)
     String getGroupCodecResource(String group, String namespace) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(group));
-        String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
+        try {
+            String encodedNamespace = namespace == null ? "" : URLEncoder.encode(namespace, Charsets.UTF_8.toString());
 
-        return String.format(NAMESPACE_GROUP_CODEC_FORMAT,
-                encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
+            return String.format(NAMESPACE_GROUP_CODEC_FORMAT,
+                    encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
+        } catch (UnsupportedEncodingException e) {
+            throw new IllegalArgumentException("Invalid group or namespace name.");
+        }
     }
 
     static String parseCredentials(List<String> authHeader) throws AuthenticationException {

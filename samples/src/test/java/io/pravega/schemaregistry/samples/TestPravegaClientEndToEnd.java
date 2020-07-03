@@ -37,7 +37,6 @@ import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.codec.CodecFactory;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -57,6 +56,7 @@ import io.pravega.schemaregistry.samples.generated.Type1;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializers.Codecs;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.WithSchema;
@@ -186,13 +186,16 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     public void testRestApis() {
         // create stream
         String groupId = "myGroup";
-
-        client.addGroup(groupId, new GroupProperties(SerializationFormat.Avro, Compatibility.allowAny(), true));
         SchemaInfo schemaInfo = AvroSchema.of(SCHEMA1).getSchemaInfo();
-        client.addSchema(groupId, schemaInfo);
         SchemaInfo schemaInfo1 = AvroSchema.of(SCHEMA2).getSchemaInfo();
-        client.addSchema(groupId, schemaInfo1);
         SchemaInfo schemaInfo2 = AvroSchema.of(SCHEMA3).getSchemaInfo();
+
+        Map<String, VersionInfo> references = client.getSchemaReferences(schemaInfo);
+        int preTestCount = references.size();
+        
+        client.addGroup(groupId, new GroupProperties(SerializationFormat.Avro, Compatibility.allowAny(), true));
+        client.addSchema(groupId, schemaInfo);
+        client.addSchema(groupId, schemaInfo1);
         client.addSchema(groupId, schemaInfo2);
 
         VersionInfo version1 = client.getVersionForSchema(groupId, schemaInfo);
@@ -202,15 +205,15 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         VersionInfo version3 = client.getVersionForSchema(groupId, schemaInfo2);
         assertEquals(version3.getId(), 2);
 
-        Map<String, VersionInfo> references = client.getSchemaReferences(schemaInfo);
-        assertEquals(references.size(), 1);
+        references = client.getSchemaReferences(schemaInfo);
+        assertEquals(references.size(), preTestCount + 1);
 
         String groupId2 = "mygrp2";
         client.addGroup(groupId2, new GroupProperties(SerializationFormat.Avro, Compatibility.allowAny(), true));
         client.addSchema(groupId2, schemaInfo);
 
         references = client.getSchemaReferences(schemaInfo);
-        assertEquals(references.size(), 2);
+        assertEquals(references.size(), preTestCount + 2);
     }
     
     @Test
@@ -218,7 +221,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "avroevolution";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -323,7 +326,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "avrocodec";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -348,7 +351,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         // region writer with schema1
         Serializer<Object> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
-        
+
         EventStreamWriter<Object> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
         writer.writeEvent(record).join();
@@ -367,19 +370,19 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                            .groupId(groupId)
                                            .registerSchema(true)
                                            .registerCodec(true)
-                                           .codec(CodecFactory.gzip())
+                                           .codec(Codecs.GzipCompressor.getCodec())
                                            .registryClient(client)
                                            .build();
 
         Serializer<Test1> serializer3 = SerializerFactory.avroSerializer(serializerConfig, schema3);
         EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
-        String bigString = generateBigString(100);
+        String bigString = generateBigString(1);
         writer3.writeEvent(new Test1(bigString, 1)).join();
 
         List<String> list = client.getCodecTypes(groupId);
         assertEquals(2, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.NONE)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_GZIP)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getMimeType())));
         // endregion
         
         // region writer with codec snappy
@@ -387,7 +390,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                            .groupId(groupId)
                                            .registerSchema(true)
                                            .registerCodec(true)
-                                           .codec(CodecFactory.snappy())
+                                           .codec(Codecs.SnappyCompressor.getCodec())
                                            .registryClient(client)
                                            .build();
 
@@ -398,9 +401,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         list = client.getCodecTypes(groupId);
         assertEquals(3, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.NONE)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_GZIP)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_SNAPPY)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getMimeType())));
         // endregion
         
         // region reader
@@ -432,11 +435,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 return mycodec;
             }
 
+            @SneakyThrows
             @Override
             public ByteBuffer encode(ByteBuffer data) {
                 return data;
             }
 
+            @SneakyThrows
             @Override
             public ByteBuffer decode(ByteBuffer data) {
                 return data;
@@ -458,9 +463,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         list = client.getCodecTypes(groupId);
         assertEquals(4, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.NONE)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_GZIP)));
-        assertTrue(list.stream().anyMatch(x -> x.equals(CodecFactory.MIME_SNAPPY)));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getMimeType())));
         assertTrue(list.stream().anyMatch(x -> x.equals(mycodec)));
         reader.close();
 
@@ -468,7 +473,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .addDecoder(myCodec.getCodecType(), myCodec::decode)
+                                                             .addDecoder(myCodec.getCodecType(), x -> {
+                                                                 try {
+                                                                     return myCodec.decode(x);
+                                                                 } catch (IOException e) {
+                                                                     throw new RuntimeException(e);
+                                                                 }
+                                                             })
                                                              .registryClient(client)
                                                              .build();
 
@@ -508,7 +519,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "avroreflect";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -593,7 +604,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "avrogenerated";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -662,7 +673,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "avromultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -781,7 +792,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "protobuf" + encodeHeaders;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -889,7 +900,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "protomultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -1014,7 +1025,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "json" + encodeHeaders;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);
@@ -1091,7 +1102,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // create stream
         String scope = "scope";
         String stream = "jsonmultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         StreamManager streamManager = new StreamManagerImpl(clientConfig);
         streamManager.createScope(scope);

@@ -154,7 +154,7 @@ public class SQLApp {
     }
 
     private void createTable(String scope, String stream, String tableName) {
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
         GroupProperties properties = client.getGroupProperties(groupId);
         
         SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
@@ -275,7 +275,7 @@ public class SQLApp {
 
     private List<GenericRecord> printColumns(String scope, String stream, TableSchema tableSchema, Predicate<GenericRecord> predicate) {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         String rg = "rg" + scope + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,

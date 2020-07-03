@@ -14,16 +14,17 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 
+import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 import java.util.function.BiFunction;
 
-class MultiFormatWithSchemaDeserializer<T> extends AbstractPravegaDeserializer<WithSchema<T>> {
-    private final Map<SerializationFormat, AbstractPravegaDeserializer> genericDeserializers;
+class MultiFormatWithSchemaDeserializer<T> extends AbstractDeserializer<WithSchema<T>> {
+    private final Map<SerializationFormat, AbstractDeserializer> genericDeserializers;
     private final BiFunction<SerializationFormat, Object, T> transform;
 
     MultiFormatWithSchemaDeserializer(String groupId, SchemaRegistryClient client,
-                                      Map<SerializationFormat, AbstractPravegaDeserializer> genericDeserializers,
+                                      Map<SerializationFormat, AbstractDeserializer> genericDeserializers,
                                       SerializerConfig.Decoder decoder,
                                       EncodingCache encodingCache, BiFunction<SerializationFormat, Object, T> transform) {
         super(groupId, client, null, false, decoder, encodingCache);
@@ -32,7 +33,7 @@ class MultiFormatWithSchemaDeserializer<T> extends AbstractPravegaDeserializer<W
     }
 
     @Override
-    protected WithSchema<T> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+    protected WithSchema<T> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) throws IOException {
         Preconditions.checkNotNull(writerSchema);
         Object obj = genericDeserializers.get(writerSchema.getSerializationFormat()).deserialize(inputStream, writerSchema, readerSchema);
         if (obj instanceof WithSchema) {

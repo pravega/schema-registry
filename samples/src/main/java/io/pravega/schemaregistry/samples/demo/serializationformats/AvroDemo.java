@@ -126,7 +126,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avroevolution";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -251,7 +251,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avroreflect";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -315,7 +315,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avrogenerated";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -378,7 +378,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avromultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);

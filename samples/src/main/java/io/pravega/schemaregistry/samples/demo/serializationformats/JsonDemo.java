@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.samples.demo.serializationformats;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
@@ -84,7 +85,7 @@ public class JsonDemo {
         System.exit(0);
     }
     
-    private void testJson(boolean encodeHeaders) {
+    private void testJson(boolean encodeHeaders) throws JsonProcessingException {
         if (encodeHeaders) {
             System.out.println("testing json WITH headers encoded in the stream payload");
         } else {
@@ -95,7 +96,7 @@ public class JsonDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "json" + encodeHeaders;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -161,11 +162,11 @@ public class JsonDemo {
         }
     }
 
-    private void testJsonMultiplexed() {
+    private void testJsonMultiplexed() throws JsonProcessingException {
         // create stream
         String scope = "scope" + id;
         String stream = "jsonmultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);

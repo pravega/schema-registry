@@ -90,7 +90,7 @@ public class ProtobufDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "protobuf" + encodeHeaders;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -172,7 +172,7 @@ public class ProtobufDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "protomultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);

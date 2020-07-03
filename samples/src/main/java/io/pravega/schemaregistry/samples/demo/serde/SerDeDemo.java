@@ -34,7 +34,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.serializers.PravegaDeserializer;
+import io.pravega.schemaregistry.serializers.CustomDeserializer;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
@@ -66,7 +66,7 @@ public class SerDeDemo {
         client = SchemaRegistryClientFactory.createRegistryClient(config);
         this.scope = scope;
         this.stream = stream;
-        this.groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Type.QualifiedStreamName, scope, stream);
+        this.groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
         this.filePath = filePath;
         createScopeAndStream(scope, stream, groupId);
     }
@@ -139,7 +139,7 @@ public class SerDeDemo {
         String urlString = new String(schema.getSchemaData().array(), Charsets.UTF_8);
         URL url = new URL(urlString);
 
-        PravegaDeserializer<Object> myDeserializer = SerdeLoader.getDeserializer(schema.getProperties().get(DESERIALIZER_CLASS_NAME), url);
+        CustomDeserializer<Object> myDeserializer = SerdeLoader.getDeserializer(schema.getProperties().get(DESERIALIZER_CLASS_NAME), url);
         Serializer<Object> deserializer = SerializerFactory.customDeserializer(serializerConfig, () -> schema, myDeserializer);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);

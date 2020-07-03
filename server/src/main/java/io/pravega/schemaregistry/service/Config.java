@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -129,7 +128,6 @@ public final class Config {
         return properties;
     }
 
-    @SneakyThrows(IOException.class)
     private static Properties loadFromFile() {
         Properties result = new Properties();
 
@@ -148,6 +146,9 @@ public final class Config {
         if (file != null) {
             try (FileReader reader = new FileReader(file)) {
                 result.load(reader);
+            } catch (IOException e) {
+                log.error("Unable to read config file.", e);
+                throw new RuntimeException("Unable to read Config file");
             }
             log.info("Loaded {} config properties from {}.", result.size(), file);
         }

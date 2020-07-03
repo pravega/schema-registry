@@ -9,27 +9,26 @@
  */
 package io.pravega.schemaregistry.serializers;
 
-import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.schemas.SchemaContainer;
+import io.pravega.schemaregistry.schemas.Schema;
+import lombok.SneakyThrows;
 import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import static io.pravega.schemaregistry.codec.CodecFactory.NONE;
-
 @Slf4j
-abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
+abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
     private static final byte PROTOCOL = 0x0;
     private static final int HEADER_SIZE = 1 + Integer.BYTES;
 
@@ -43,12 +42,12 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
     
-    protected AbstractPravegaDeserializer(String groupId,
-                                          SchemaRegistryClient client,
-                                          @Nullable SchemaContainer<T> schema,
-                                          boolean skipHeaders,
-                                          SerializerConfig.Decoder decoder,
-                                          EncodingCache encodingCache) {
+    protected AbstractDeserializer(String groupId,
+                                   SchemaRegistryClient client,
+                                   @Nullable Schema<T> schema,
+                                   boolean skipHeaders,
+                                   SerializerConfig.Decoder decoder,
+                                   EncodingCache encodingCache) {
         this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
@@ -81,50 +80,43 @@ abstract class AbstractPravegaDeserializer<T> implements Serializer<T> {
         }
     }
     
-    @Override
-    public ByteBuffer serialize(T obj) {
-        throw new IllegalStateException();
-    }
-    
+    @SneakyThrows(IOException.class)
     @Override
     public T deserialize(ByteBuffer data) {
+        int start = data.arrayOffset() + data.position();
         if (this.encodeHeader.get()) {
             SchemaInfo writerSchema = null;
-            String codecType = NONE;
+            ByteBuffer decoded;
             if (skipHeaders) {
-                int currentPos = data.position();
-                data.position(currentPos + HEADER_SIZE);
+                data.position(start + HEADER_SIZE);
+                decoded = data;
             } else {
                 byte protocol = data.get();
                 EncodingId encodingId = new EncodingId(data.getInt());
                 EncodingInfo encodingInfo = encodingCache.getGroupEncodingInfo(encodingId);
-                codecType = encodingInfo.getCodecType();
                 writerSchema = encodingInfo.getSchemaInfo();
+                decoded = decoder.decode(encodingInfo.getCodecType(), data);
             }
-            
-            ByteBuffer decoded = decoder.decode(codecType, data);
-            byte[] array = new byte[decoded.remaining()];
-            decoded.get(array);
 
-            InputStream inputStream = new ByteArrayInputStream(array);
+            ByteArrayInputStream bais = new ByteArrayInputStream(decoded.array(), 
+                    decoded.arrayOffset() + decoded.position(), decoded.remaining());
             if (schemaInfo == null) { // deserialize into writer schema
                 // pass writer schema for schema to be read into
-                return deserialize(inputStream, writerSchema, writerSchema);
+                return deserialize(bais, writerSchema, writerSchema);
             } else {
                 // pass reader schema for schema on read to the underlying implementation
-                return deserialize(inputStream, writerSchema, schemaInfo);
+                return deserialize(bais, writerSchema, schemaInfo);
             }
         } else {
             // pass reader schema for schema on read to the underlying implementation
-            byte[] array = new byte[data.remaining()];
-            data.get(array);
-            InputStream inputStream = new ByteArrayInputStream(array);
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(data.array(), 
+                    data.arrayOffset() + data.position(), data.remaining());
 
             return deserialize(inputStream, null, schemaInfo);
         }
     }
     
-    protected abstract T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema);
+    protected abstract T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) throws IOException;
     
     boolean isEncodeHeader() {
         return encodeHeader.get();

@@ -98,7 +98,7 @@ public interface SchemaRecords {
 
         private final List<String> schemaIds;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -179,7 +179,7 @@ public interface SchemaRecords {
         private final SchemaInfo schemaInfo;
 
         @Override
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
@@ -257,7 +257,7 @@ public interface SchemaRecords {
 
         private final List<NamespaceAndGroup> groupIds;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -292,7 +292,7 @@ public interface SchemaRecords {
         }
     }
 
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     @SuppressWarnings("unchecked")
     static <T extends Value> T fromBytes(Class<? extends Key> keyClass, byte[] bytes, Class<T> valueClass) {
         return (T) SERIALIZERS_BY_KEY_TYPE.get(keyClass).deserialize(bytes);

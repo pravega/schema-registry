@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.server.rest.resources;
 import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.common.FuturesCollector;
+import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
@@ -101,13 +101,13 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                 }
             };
             
-            return FuturesCollector.filteredWithTokenAndLimit(
+            return FuturesUtility.filteredWithTokenAndLimit(
                     (ContinuationToken t, Integer l) ->
                             getRegistryService().listGroups(namespace, t, l)
                                            .thenApply(mwt -> new AbstractMap.SimpleEntry<>(mwt.getToken(),
                                                    new ArrayList<>(mwt.getMap().entrySet()))), 
                     predicate, ContinuationToken.fromString(continuationToken), toFetch, getExecutorService())
-                                   .thenAccept(result -> {
+                                 .thenAccept(result -> {
                                           String contToken = result.getKey() == null ?
                                                   ContinuationToken.EMPTY.toString() : result.getKey().toString();
                                           groupsList.groups(
@@ -115,12 +115,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                           Collectors.toMap(Map.Entry::getKey, x -> ModelHelper.encode(x.getValue()))))
                                                     .setContinuationToken(contToken);
                                       })
-                                   .thenApply(r -> Response.status(Status.OK).entity(groupsList).build())
-                                   .exceptionally(exception -> {
+                                 .thenApply(r -> Response.status(Status.OK).entity(groupsList).build())
+                                 .exceptionally(exception -> {
                        log.warn("listGroups failed with exception: ", Exceptions.unwrap(exception));
                        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                    })
-                                   .thenApply(response -> {
+                                 .thenApply(response -> {
                        asyncResponse.resume(response);
                        return response;
                    });

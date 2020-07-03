@@ -9,8 +9,8 @@
  */
 package io.pravega.schemaregistry.samples.demo.serde;
 
-import io.pravega.schemaregistry.serializers.PravegaDeserializer;
-import io.pravega.schemaregistry.serializers.PravegaSerializer;
+import io.pravega.schemaregistry.serializers.CustomDeserializer;
+import io.pravega.schemaregistry.serializers.CustomSerializer;
 import lombok.SneakyThrows;
 
 import java.net.URL;
@@ -19,18 +19,18 @@ import java.security.PrivilegedAction;
 import static java.security.AccessController.doPrivileged;
 
 public class SerdeLoader {
-    public static PravegaSerializer getSerializer(String className, URL url) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        final PrivilegedAction<PravegaSerializer> action = new PrivilegedAction<PravegaSerializer>() {
+    public static CustomSerializer getSerializer(String className, URL url) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        final PrivilegedAction<CustomSerializer> action = new PrivilegedAction<CustomSerializer>() {
             @Override
             @SneakyThrows
             @SuppressWarnings("unchecked")
-            public PravegaSerializer run() {
+            public CustomSerializer run() {
                     Class<?> aClass;
                     // Load the class.
                     URL[] urls = {url};
                     aClass = Class.forName(className, true, new java.net.URLClassLoader(urls));
-                if (PravegaSerializer.class.isAssignableFrom(aClass)) {
-                    return (PravegaSerializer) aClass.getDeclaredConstructor().newInstance();
+                if (CustomSerializer.class.isAssignableFrom(aClass)) {
+                    return (CustomSerializer) aClass.getDeclaredConstructor().newInstance();
                 } else {
                     throw new RuntimeException("implementation not found");
                 }
@@ -40,19 +40,19 @@ public class SerdeLoader {
     }
 
     @SuppressWarnings("unchecked")
-    public static PravegaDeserializer getDeserializer(String className, URL url) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
-        final PrivilegedAction<PravegaDeserializer> action = new PrivilegedAction<PravegaDeserializer>() {
+    public static CustomDeserializer getDeserializer(String className, URL url) throws ClassNotFoundException, IllegalAccessException, InstantiationException {
+        final PrivilegedAction<CustomDeserializer> action = new PrivilegedAction<CustomDeserializer>() {
             @Override
             @SneakyThrows
             @SuppressWarnings("unchecked")
-            public PravegaDeserializer run() {
+            public CustomDeserializer run() {
                 Class<?> theClass;
                 // Load the class.
                 URL[] urls = {url};
                 theClass = Class.forName(className, true, new java.net.URLClassLoader(urls));
-                if (PravegaDeserializer.class.isAssignableFrom(theClass)) {
+                if (CustomDeserializer.class.isAssignableFrom(theClass)) {
                     // Create an instance of the class.
-                    return (PravegaDeserializer) theClass.getDeclaredConstructor().newInstance();
+                    return (CustomDeserializer) theClass.getDeclaredConstructor().newInstance();
                 } else {
                     throw new RuntimeException("Implementation not found");
                 }

@@ -105,7 +105,7 @@ public interface TableRecords {
         private final ImmutableMap<String, String> properties;
         
         @Override
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
@@ -187,7 +187,7 @@ public interface TableRecords {
         private final Compatibility compatibility;
 
         @Override
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
@@ -228,7 +228,7 @@ public interface TableRecords {
         public static final Serializer SERIALIZER = new Serializer();
 
         @Override
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
@@ -306,7 +306,7 @@ public interface TableRecords {
 
         private final ImmutableList<VersionInfo> versions;
         
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -428,7 +428,7 @@ public interface TableRecords {
 
         private final int id;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -476,7 +476,7 @@ public interface TableRecords {
         private final long timestamp;
 
         @Override
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
@@ -559,7 +559,7 @@ public interface TableRecords {
 
         private final ImmutableList<String> codecTypes;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -639,7 +639,7 @@ public interface TableRecords {
         private final int nextId;
         private final ImmutableSet<Integer> deletedIds;
         
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -694,7 +694,7 @@ public interface TableRecords {
 
         private final ImmutableSet<Integer> deletedVersions;
         
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -746,7 +746,7 @@ public interface TableRecords {
         private final VersionInfo versionInfo;
         private final String codecType;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -791,7 +791,7 @@ public interface TableRecords {
 
         private final EncodingId encodingId;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -867,7 +867,7 @@ public interface TableRecords {
 
         private final EncodingId encodingId;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -910,7 +910,7 @@ public interface TableRecords {
 
         private final int id;
 
-        @SneakyThrows
+        @SneakyThrows(IOException.class)
         @Override
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
@@ -945,7 +945,7 @@ public interface TableRecords {
         }
     }
 
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     @SuppressWarnings("unchecked")
     static <T extends TableValue> T fromBytes(Class<? extends TableKey> keyClass, byte[] bytes, Class<T> valueClass) {
         return (T) SERIALIZERS_BY_KEY_TYPE.get(keyClass).deserialize(bytes);

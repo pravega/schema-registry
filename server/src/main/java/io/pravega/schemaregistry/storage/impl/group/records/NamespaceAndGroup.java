@@ -32,12 +32,12 @@ public class NamespaceAndGroup {
         this.groupId = groupId;
     }
 
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     public byte[] toBytes() {
         return SERIALIZER.serialize(this).getCopy();    
     }
     
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     public static NamespaceAndGroup fromBytes(byte[] bytes) {
         return SERIALIZER.deserialize(bytes);
     }
