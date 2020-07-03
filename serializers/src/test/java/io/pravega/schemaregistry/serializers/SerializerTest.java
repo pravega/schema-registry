@@ -261,8 +261,8 @@ public class SerializerTest {
         assertEquals(deserialized, user1);
 
         serialized = serializer.serialize(user1);
-        Serializer<WithSchema<Map>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
-        WithSchema<Map> generic = genericDeserializer.deserialize(serialized);
+        Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        WithSchema<Object> generic = genericDeserializer.deserialize(serialized);
         assertEquals(((JSONSchema) generic.getSchemaContainer()).getSchema(), schema1.getSchema());
         assertEquals(((Map) generic.getObject()).size(), 4);
 
@@ -291,9 +291,9 @@ public class SerializerTest {
 
         Map<Class<? extends Object>, JSONSchema<Object>> map2 = new HashMap<>();
         map2.put(DerivedUser1.class, schema1Base);
-        Serializer<Either<Object, WithSchema<Map>>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
+        Serializer<Either<Object, WithSchema<Object>>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
         serialized = multiSerializer.serialize(user1);
-        Either<Object, WithSchema<Map>> fallback = fallbackDeserializer.deserialize(serialized);
+        Either<Object, WithSchema<Object>> fallback = fallbackDeserializer.deserialize(serialized);
         assertTrue(fallback.isLeft());
         assertEquals(fallback.getLeft(), user1);
 
@@ -430,9 +430,9 @@ public class SerializerTest {
         
         serialized = serializer.serialize(user1);
 
-        Serializer<WithSchema<Map>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
 
-        WithSchema<Map> generic = genericDeserializer.deserialize(serialized);
+        WithSchema<Object> generic = genericDeserializer.deserialize(serialized);
         assertNotNull(generic.getObject());
         assertNull(generic.getSchemaContainer());
     }

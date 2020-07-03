@@ -98,7 +98,7 @@ public class MultiFormatSerializerFactory {
         failOnCodecMismatch(schemaRegistryClient, config);
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), schemaRegistryClient,
+        AbstractPravegaDeserializer json = new JsonGenericDeserializer(config.getGroupId(), schemaRegistryClient,
                 config.getDecoder(), encodingCache);
         AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoder(),
                 encodingCache);
@@ -133,7 +133,7 @@ public class MultiFormatSerializerFactory {
         failOnCodecMismatch(schemaRegistryClient, config);
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        AbstractPravegaDeserializer json = new JsonGenericDeserlizer(config.getGroupId(), schemaRegistryClient,
+        AbstractPravegaDeserializer json = new JsonGenericDeserializer(config.getGroupId(), schemaRegistryClient,
                 config.getDecoder(), encodingCache);
         AbstractPravegaDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoder(),
                 encodingCache);

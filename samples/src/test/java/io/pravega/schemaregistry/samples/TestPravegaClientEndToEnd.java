@@ -1063,13 +1063,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         readerGroupManager.createReaderGroup(rg2,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<WithSchema<Map>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+        Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
-        EventStreamReader<WithSchema<Map>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+        EventStreamReader<WithSchema<Object>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<WithSchema<Map>> event2 = reader2.readNextEvent(10000);
+        EventRead<WithSchema<Object>> event2 = reader2.readNextEvent(10000);
         assertNotNull(event2.getEvent());
-        WithSchema<Map> obj = event2.getEvent();
+        WithSchema<Object> obj = event2.getEvent();
         
         assertEquals(obj.hasJsonSchema(), encodeHeaders);
         if (encodeHeaders) {
@@ -1147,11 +1147,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         readerGroupManager.createReaderGroup(rg2,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<WithSchema<Map>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+        Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
-        EventStreamReader<WithSchema<Map>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+        EventStreamReader<WithSchema<Object>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<WithSchema<Map>> genEvent = reader2.readNextEvent(10000);
+        EventRead<WithSchema<Object>> genEvent = reader2.readNextEvent(10000);
         assertNotNull(genEvent.getEvent());
         genEvent = reader2.readNextEvent(10000);
         assertNotNull(genEvent.getEvent());
@@ -1167,12 +1167,12 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // add only one schema
         map2.put(DerivedUser1.class, schema1);
 
-        Serializer<Either<User, WithSchema<Map>>> eitherDeserializer =
+        Serializer<Either<User, WithSchema<Object>>> eitherDeserializer =
                 SerializerFactory.jsonTypedOrGenericDeserializer(serializerConfig, map2);
 
-        EventStreamReader<Either<User, WithSchema<Map>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+        EventStreamReader<Either<User, WithSchema<Object>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-        EventRead<Either<User, WithSchema<Map>>> e1 = reader3.readNextEvent(10000);
+        EventRead<Either<User, WithSchema<Object>>> e1 = reader3.readNextEvent(10000);
         assertNotNull(e1.getEvent());
         assertTrue(e1.getEvent().isRight());
         e1 = reader3.readNextEvent(10000);
