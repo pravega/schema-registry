@@ -21,11 +21,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
-class JsonGenericDeserlizer extends AbstractPravegaDeserializer<WithSchema<Map>> {
+class JsonGenericDeserializer extends AbstractPravegaDeserializer<WithSchema<Object>> {
     private final ObjectMapper objectMapper;
 
-    JsonGenericDeserlizer(String groupId, SchemaRegistryClient client,
-                          SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
+    JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
+                            SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
         super(groupId, client, null, false, decoder, encodingCache);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
@@ -35,8 +35,8 @@ class JsonGenericDeserlizer extends AbstractPravegaDeserializer<WithSchema<Map>>
     
     @SneakyThrows({JsonProcessingException.class, IOException.class})
     @Override
-    protected WithSchema<Map> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        Map obj = objectMapper.readValue(inputStream, Map.class);
+    protected WithSchema<Object> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+        Object obj = objectMapper.readValue(inputStream, Object.class);
         return new WithSchema<>(writerSchemaInfo, obj, (x, y) -> (Map) y);
     }
 }

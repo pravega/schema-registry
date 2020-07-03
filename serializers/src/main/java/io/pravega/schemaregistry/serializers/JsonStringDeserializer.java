@@ -19,7 +19,6 @@ import lombok.SneakyThrows;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 class JsonStringDeserializer extends AbstractPravegaDeserializer<String> {
     private final ObjectMapper objectMapper;
@@ -36,7 +35,7 @@ class JsonStringDeserializer extends AbstractPravegaDeserializer<String> {
     @SneakyThrows({JsonProcessingException.class, IOException.class})
     @Override
     protected String deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
-        Map obj = objectMapper.readValue(inputStream, Map.class);
+        Object obj = objectMapper.readValue(inputStream, Object.class);
         return objectMapper.writeValueAsString(obj);
     }
 }
