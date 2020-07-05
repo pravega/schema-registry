@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.groups;
 
-import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.impl.group.Group;
@@ -66,7 +66,7 @@ public interface Groups<T> {
      * @param limit number of groups to return. 
      * @return List of groups with continuation token. 
      */
-    CompletableFuture<ListWithToken<String>> listGroups(String namespace, ContinuationToken token, int limit);
+    CompletableFuture<ResultPage<String>> listGroups(String namespace, ContinuationToken token, int limit);
 
     /**
      * Deletes a group. This api is idempotent and invoking it multiple times is safe. A group can only be deleted

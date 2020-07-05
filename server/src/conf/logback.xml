@@ -9,13 +9,6 @@
       http://www.apache.org/licenses/LICENSE-2.0
 -->
 <configuration scan="true" scanPeriod="30 seconds">
-    <appender name="consoleAppender" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <charset>UTF-8</charset>
-            <Pattern>%d %-4relative [%thread] %-5level %logger{35} - %msg%n</Pattern>
-        </encoder>
-    </appender>
-
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>schema-registry.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -37,7 +30,6 @@
     </appender>
 
     <root level="${log.level:-INFO}">
-        <appender-ref ref="consoleAppender"/>
         <appender-ref ref="FILE"/>
     </root>
 

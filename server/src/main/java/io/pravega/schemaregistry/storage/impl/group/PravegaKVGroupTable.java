@@ -29,7 +29,15 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.fromBytes;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.VersionDeletedRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingIdRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingInfoRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.GroupPropertyKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.IndexTypeVersionToIdKey;
 
 /**
  * Pravega tables based index implementation.

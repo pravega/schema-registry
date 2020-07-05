@@ -18,7 +18,16 @@ import lombok.SneakyThrows;
 
 import java.io.IOException;
 
-import static io.pravega.schemaregistry.contract.data.BackwardAndForward.*;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.Forward;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.Backward;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardAndForwardBuilder;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTransitive;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTransitive;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardPolicy;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardPolicy;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTill;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTill;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.builder;
 
 public class BackwardAndForwardSerializer extends VersionedSerializer.WithBuilder<BackwardAndForward, BackwardAndForwardBuilder> {
     public static final BackwardAndForwardSerializer SERIALIZER = new BackwardAndForwardSerializer();

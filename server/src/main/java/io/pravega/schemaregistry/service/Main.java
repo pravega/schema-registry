@@ -17,9 +17,12 @@ import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.schemaregistry.storage.StoreType;
 import lombok.extern.slf4j.Slf4j;
 
+import java.lang.management.ManagementFactory;
+import java.lang.management.MemoryMXBean;
 import java.net.URI;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.BiConsumer;
 
 @Slf4j
 public class Main {
@@ -40,10 +43,40 @@ public class Main {
         
         SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
 
+        setUncaughtExceptionHandler(Main::logUncaughtException);
+
         RestServer restServer = new RestServer(service, serviceConfig);
         restServer.startAsync();
         log.info("Awaiting start of REST server");
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            onShutdown(restServer);
+        }));
+
         restServer.awaitRunning();
         restServer.awaitTerminated();
+        System.exit(0);
+    }
+
+    private static void setUncaughtExceptionHandler(BiConsumer<Thread, Throwable> exceptionConsumer) {
+        Thread.setDefaultUncaughtExceptionHandler(exceptionConsumer::accept);
+    }
+
+    private static void logUncaughtException(Thread t, Throwable e) {
+        log.error("Thread {} with stackTrace {} failed with uncaught exception", t.getName(), t.getStackTrace(), e);
+    }
+
+    private static void onShutdown(RestServer restServer) {
+        MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
+        memoryMXBean.setVerbose(true);
+        log.info("Shutdown hook memory usage dump: Heap memory usage: {}, non heap memory usage {}", memoryMXBean.getHeapMemoryUsage(),
+                memoryMXBean.getNonHeapMemoryUsage());
+
+        try {
+            restServer.stopAsync();
+            restServer.awaitTerminated();
+        } finally {
+            Thread.getAllStackTraces().forEach((key, value) ->
+                    log.info("Shutdown Hook Thread dump: Thread {} stackTrace: {} ", key.getName(), value));
+        }
     }
 }

@@ -24,7 +24,13 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.ResourceNotFoundException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.BadArgumentException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.SchemaValidationFailedException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.SerializationMismatchException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.UnauthorizedException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.CodecTypeNotRegisteredException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.MalformedSchemaException;
 
 /**
  * Defines a registry client for interacting with schema registry service. 

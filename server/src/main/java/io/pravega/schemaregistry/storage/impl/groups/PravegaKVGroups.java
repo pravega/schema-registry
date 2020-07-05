@@ -14,8 +14,8 @@ import io.netty.buffer.Unpooled;
 import io.pravega.client.tables.impl.IteratorState;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
-import io.pravega.schemaregistry.ListWithToken;
-import io.pravega.schemaregistry.common.FuturesCollector;
+import io.pravega.schemaregistry.ResultPage;
+import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -25,7 +25,6 @@ import io.pravega.schemaregistry.storage.impl.group.Group;
 import io.pravega.schemaregistry.storage.impl.group.PravegaKVGroupTable;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.Data;
-import lombok.SneakyThrows;
 
 import java.util.Base64;
 import java.util.List;
@@ -103,9 +102,8 @@ public class PravegaKVGroups implements Groups<Version> {
                 });
     }
 
-    @SneakyThrows
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String nameSpace, ContinuationToken token, int limit) {
+    public CompletableFuture<ResultPage<String>> listGroups(String nameSpace, ContinuationToken token, int limit) {
         String namespace = nameSpace == null ? "" : nameSpace;
         ByteBuf continuationToken;
         if (token == null || token.equals(ContinuationToken.EMPTY)) {
@@ -118,11 +116,11 @@ public class PravegaKVGroups implements Groups<Version> {
                 (ByteBuf t, Integer l) -> withCreateGroupsTableIfAbsent(
                         () -> tableStore.getKeysPaginated(GROUPS, t, l, NamespaceAndGroup::fromBytes));
         Predicate<NamespaceAndGroup> predicate = x -> x.getNamespace().equals(namespace);
-        return FuturesCollector.filteredWithTokenAndLimit(function, predicate, continuationToken, limit, executor)
-                               .thenApply(result -> {
+        return FuturesUtility.filteredWithTokenAndLimit(function, predicate, continuationToken, limit, executor)
+                             .thenApply(result -> {
                                              List<String> groups = result.getValue().stream().map(NamespaceAndGroup::getGroupId).collect(Collectors.toList());
                                              ContinuationToken continuationTok = ContinuationToken.create(Base64.getEncoder().encodeToString(result.getKey().array()));
-                                             return new ListWithToken<>(groups, continuationTok);
+                                             return new ResultPage<>(groups, continuationTok);
                                          });
     }
 

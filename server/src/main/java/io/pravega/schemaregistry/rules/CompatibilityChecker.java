@@ -18,29 +18,29 @@ import java.util.List;
  */
 public interface CompatibilityChecker {
     /**
-     * Checks if toValidate can be used to read data written using all schemas in toValidateAgainst.
+     * Checks if readUsing can be used to read data written using all schemas in writtenUsing.
      * 
-     * @param toValidate Reader schema.     
-     * @param toValidateAgainst Writer schema. 
-     * @return True if toValidate can be used to read data written using toValidate, false otherwise. 
+     * @param readUsing Schema used while reading the data.     
+     * @param writtenUsing Schema used for writing the data. 
+     * @return True if readUsing can be used to read data written using writtenUsing, false otherwise. 
      */
-    boolean canRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst);
+    boolean canRead(SchemaInfo readUsing, List<SchemaInfo> writtenUsing);
 
     /**
-     * Checks if all schemas in toValidateAgainst can be used to read data written using toValidate.
+     * Checks if all schemas in readUsing can be used to read data written using writtenUsing.
      *
-     * @param toValidate writer schema. 
-     * @param toValidateAgainst reader schemas.
-     * @return True if any of toValidateAgainst can be used to read data written using toValidate, false otherwise. 
+     * @param writtenUsing Schema used for writing the data. 
+     * @param readUsing Schema used while reading the data.
+     * @return True if any of readUsing can be used to read data written using writtenUsing, false otherwise. 
      */
-    boolean canBeRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst);
+    boolean canBeRead(SchemaInfo writtenUsing, List<SchemaInfo> readUsing);
 
     /**
-     * Checks if both toValidate and toValidateAgainst can be used to read data written with either. 
+     * Checks if both schema and schemaList can be used to read data written with either. 
      *
-     * @param toValidate Schema to check. 
-     * @param toValidateAgainst All toValidateAgainst to check against.
-     * @return True if toValidate can read and be readby all schemas in toValidateAgainst, false otherwise.  
+     * @param schema Schema to check. 
+     * @param schemaList All schemas to check against.
+     * @return True if schema can read and be readby all schemas in the schemas, false otherwise.  
      */
-    boolean canMutuallyRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst);
+    boolean canMutuallyRead(SchemaInfo schema, List<SchemaInfo> schemaList);
 }

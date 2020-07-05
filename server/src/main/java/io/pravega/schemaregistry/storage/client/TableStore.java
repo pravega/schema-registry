@@ -48,6 +48,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -378,7 +379,7 @@ public class TableStore {
                           });
     }
     
-    @SneakyThrows
+    @SneakyThrows(ExecutionException.class)
     private String getToken(String tableName) {
         return tokenCache.get(tableName, () ->  tokenSupplier.apply(tableName));
     }

@@ -131,7 +131,7 @@ project('common') {
         title = "Common Libraries"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         options.addBooleanOption("Xdoclint:none", true)
     }
 }
@@ -140,14 +140,14 @@ project('auth') {
     dependencies {
         compile project(':common')
         compile group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion
-        compile group: 'io.pravega', name: 'pravega-keycloak-client', version: '0.7.0'
+        compile group: 'io.pravega', name: 'pravega-keycloak-client', version: pravegaKeyCloakVersion
     }
 
     javadoc {
         title = "Auth Libraries"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         options.addBooleanOption("Xdoclint:none", true)
     }
 }
@@ -168,7 +168,7 @@ project('client') {
         title = "Registry Client"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
@@ -195,7 +195,7 @@ project('contract') {
         title = "Registry Contract"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
@@ -260,7 +260,7 @@ project('server') {
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
-        compile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
+        testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
         }
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -273,7 +273,7 @@ project('server') {
         title = "Registry Server"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }

@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.storage;
 
-import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -39,7 +39,7 @@ public interface SchemaStore {
      * @param limit number of elements to retrieve.
      * @return Completablefuture that holds List with continuation token 
      */
-    CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit);
+    CompletableFuture<ResultPage<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit);
 
     /**
      * Create a new group within the namespace. It implicitly creates the namespace if it isnt already created.

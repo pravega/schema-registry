@@ -20,7 +20,6 @@ import io.pravega.controller.store.host.HostControllerStore;
 import io.pravega.controller.store.host.HostStoreException;
 import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.SneakyThrows;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Map;
@@ -67,7 +66,6 @@ class HostStoreImpl implements HostControllerStore {
         throw new NotImplementedException("Host store");
     }
 
-    @SneakyThrows
     @Override
     public Host getHostForTableSegment(String tableName) {
         try {

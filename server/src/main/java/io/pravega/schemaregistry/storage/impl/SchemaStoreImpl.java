@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl;
 
-import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -39,10 +39,10 @@ public class SchemaStoreImpl<T> implements SchemaStore {
         this.groups = groups;
         this.schemas = schemas;
     }
-    
+
     // region schema store
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit) {
+    public CompletableFuture<ResultPage<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit) {
         return groups.listGroups(namespace, token, limit);
     }
 

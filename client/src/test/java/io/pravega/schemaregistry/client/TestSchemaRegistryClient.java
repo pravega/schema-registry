@@ -70,9 +70,9 @@ public class TestSchemaRegistryClient {
         reset(response);
         
         // list groups
-        doReturn(response).when(proxy).listGroups(null, 100, null);
+        doReturn(response).when(proxy).listGroups(null, null, 100);
         Response response2 = mock(Response.class);
-        doReturn(response2).when(proxy).listGroups("token", 100, null);
+        doReturn(response2).when(proxy).listGroups(null, "token", 100);
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         doReturn(Response.Status.OK.getStatusCode()).when(response2).getStatus();
         GroupProperties mygroup = new GroupProperties().properties(Collections.emptyMap())
@@ -111,9 +111,9 @@ public class TestSchemaRegistryClient {
         String groupId = "mygroup";
         ListGroupsResponse groupList = new ListGroupsResponse().groups(Collections.singletonMap(groupId, mygroup)).continuationToken("token");
         ListGroupsResponse groupList2 = new ListGroupsResponse().groups(Collections.emptyMap()).continuationToken("token");
-        doReturn(response).when(proxy).listGroups(null, 100, null);
+        doReturn(response).when(proxy).listGroups(null, null, 100);
         Response response2 = mock(Response.class);
-        doReturn(response2).when(proxy).listGroups("token", 100, null);
+        doReturn(response2).when(proxy).listGroups(null, "token", 100);
         doReturn(Response.Status.OK.getStatusCode()).when(response2).getStatus();
 
         doReturn(groupList).when(response).readEntity(eq(ListGroupsResponse.class));
@@ -136,7 +136,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).deleteGroup(anyString(), any());
+        doReturn(response).when(proxy).deleteGroup(any(), anyString());
         doReturn(Response.Status.NO_CONTENT.getStatusCode()).when(response).getStatus();
         
         client.removeGroup("mygroup");
@@ -152,7 +152,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getGroupProperties(anyString(), any());
+        doReturn(response).when(proxy).getGroupProperties(any(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         GroupProperties mygroup
@@ -181,7 +181,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).updateCompatibility(anyString(), any(), any());
+        doReturn(response).when(proxy).updateCompatibility(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         Compatibility compatibility = Compatibility.backward();
@@ -207,7 +207,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemas(anyString(), any(), any());
+        doReturn(response).when(proxy).getSchemas(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
@@ -238,7 +238,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).addSchema(anyString(), any(), any());
+        doReturn(response).when(proxy).addSchema(any(), anyString(), any());
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
@@ -275,7 +275,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemaForId(anyString(), anyInt(), any());
+        doReturn(response).when(proxy).getSchemaForId(any(), anyString(), anyInt());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat serializationFormat = ModelHelper.encode(SerializationFormat.custom("custom"));
@@ -304,7 +304,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getEncodingInfo(anyString(), anyInt(), any());
+        doReturn(response).when(proxy).getEncodingInfo(any(), anyString(), anyInt());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
@@ -335,7 +335,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getEncodingId(anyString(), any(), any());
+        doReturn(response).when(proxy).getEncodingId(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         String codecType = "gzip";
@@ -364,7 +364,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemas(anyString(), any(), any());
+        doReturn(response).when(proxy).getSchemas(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
@@ -412,7 +412,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getGroupHistory(anyString(), any());
+        doReturn(response).when(proxy).getGroupHistory(any(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
@@ -448,7 +448,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemaVersion(anyString(), any(), any());
+        doReturn(response).when(proxy).getSchemaVersion(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
@@ -475,7 +475,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getSchemaVersions(anyString(), any(), any());
+        doReturn(response).when(proxy).getSchemaVersions(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
@@ -512,7 +512,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).validate(anyString(), any(), any());
+        doReturn(response).when(proxy).validate(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
@@ -538,7 +538,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).canRead(anyString(), any(), any());
+        doReturn(response).when(proxy).canRead(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
@@ -564,7 +564,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).getCodecTypesList(anyString(), any());
+        doReturn(response).when(proxy).getCodecTypesList(any(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         String codecType = "gzip";
@@ -592,7 +592,7 @@ public class TestSchemaRegistryClient {
         ApiV1.GroupsApi proxy = mock(ApiV1.GroupsApi.class);
         SchemaRegistryClientImpl client = new SchemaRegistryClientImpl(proxy);
         Response response = mock(Response.class);
-        doReturn(response).when(proxy).addCodecType(anyString(), any(), any());
+        doReturn(response).when(proxy).addCodecType(any(), anyString(), any());
 
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
         String codecType = "gzip";

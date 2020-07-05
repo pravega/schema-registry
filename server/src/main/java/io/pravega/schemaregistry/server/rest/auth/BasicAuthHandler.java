@@ -109,7 +109,7 @@ public class BasicAuthHandler implements AuthHandler {
 
     @Override
     public void initialize(ServerConfig serverConfig) {
-        loadPasswordFile(((ServiceConfig) serverConfig).getUserPasswordFile());
+        loadPasswordFile(((ServiceConfig) serverConfig).getUserPasswordFilePath());
     }
 
     private static String[] parseToken(String token) {

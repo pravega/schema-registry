@@ -32,12 +32,12 @@ public class GroupsValue {
     private final String id;
     private final State state;
     
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     public byte[] toBytes() {
         return SERIALIZER.serialize(this).getCopy();
     }
     
-    @SneakyThrows
+    @SneakyThrows(IOException.class)
     public static GroupsValue fromBytes(byte[] bytes) {
         return SERIALIZER.deserialize(bytes);
     }

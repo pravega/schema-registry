@@ -22,54 +22,59 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 /**
- * BackwardAndForward checker for Avro schemas. 
+ * Compatibility checker for Avro schemas. 
  */
 public class AvroCompatibilityChecker implements CompatibilityChecker {
     private static final SchemaValidator CAN_READ = new SchemaValidatorBuilder().canReadStrategy().validateAll();
     private static final SchemaValidator CAN_BE_READ = new SchemaValidatorBuilder().canBeReadStrategy().validateAll();
     private static final SchemaValidator MUTUAL_READ = new SchemaValidatorBuilder().mutualReadStrategy().validateAll();
 
-    public boolean canRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
-        Preconditions.checkArgument(toValidate.getSerializationFormat().equals(SerializationFormat.Avro));
-        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSerializationFormat().equals(SerializationFormat.Avro)));
-        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData().array(), Charsets.UTF_8));
-        List<Schema> writers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
-                                                .collect(Collectors.toList());
+    public boolean canRead(SchemaInfo readUsing, List<SchemaInfo> writtenUsing) {
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parseSchema(parser, readUsing);
+        List<Schema> writtenUsingSchemas = parseSchemas(parser, writtenUsing);
         try {
-            CAN_READ.validate(schema, writers);
+            CAN_READ.validate(schema, writtenUsingSchemas);
+        } catch (SchemaValidationException e) {
+            return false;
+        }
+        return true;
+    }
+    
+    public boolean canBeRead(SchemaInfo writtenUsing, List<SchemaInfo> readUsing) {
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parseSchema(parser, writtenUsing);
+        List<Schema> readUsingSchemas = parseSchemas(parser, readUsing);
+        try {
+            CAN_BE_READ.validate(schema, readUsingSchemas);
         } catch (SchemaValidationException e) {
             return false;
         }
         return true;
     }
 
-    public boolean canBeRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
-        Preconditions.checkArgument(toValidate.getSerializationFormat().equals(SerializationFormat.Avro));
-        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(x -> x.getSerializationFormat().equals(SerializationFormat.Avro)));
-
-        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData().array(), Charsets.UTF_8));
-        List<Schema> readers = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
-                                                .collect(Collectors.toList());
-        try {
-            CAN_BE_READ.validate(schema, readers);
-        } catch (SchemaValidationException e) {
-            return false;
-        }
-        return true;
-    }
-
-    public boolean canMutuallyRead(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) {
-        Preconditions.checkArgument(toValidate.getSerializationFormat().equals(SerializationFormat.Avro));
-        Preconditions.checkArgument(toValidateAgainst.stream().allMatch(s -> s.getSerializationFormat().equals(SerializationFormat.Avro)));
-
-        Schema schema = new Schema.Parser().parse(new String(toValidate.getSchemaData().array(), Charsets.UTF_8));
-        List<Schema> schemas = toValidateAgainst.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
-                                                .collect(Collectors.toList());
+    public boolean canMutuallyRead(SchemaInfo toValidate, List<SchemaInfo> schemaList) {
+        Schema.Parser parser = new Schema.Parser();
+        Schema schema = parseSchema(parser, toValidate);
+        List<Schema> schemas = parseSchemas(parser, schemaList);
         try {
             MUTUAL_READ.validate(schema, schemas);
         } catch (SchemaValidationException e) {
             return false;
         }
         return true;
+    }
+
+    private Schema parseSchema(Schema.Parser parser, SchemaInfo schema) {
+        Preconditions.checkArgument(schema != null && schema.getSerializationFormat().equals(SerializationFormat.Avro),
+                "Schema should be avro.");
+        return parser.parse(new String(schema.getSchemaData().array(), Charsets.UTF_8));
+    }
+
+    private List<Schema> parseSchemas(Schema.Parser parser, List<SchemaInfo> schemaList) {
+        Preconditions.checkArgument(schemaList != null && schemaList.stream().allMatch(x -> x.getSerializationFormat().equals(SerializationFormat.Avro)),
+                "All schemas to compare against should be avro.");
+        return schemaList.stream().map(x -> parser.parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
+                                .collect(Collectors.toList());
     }
 }

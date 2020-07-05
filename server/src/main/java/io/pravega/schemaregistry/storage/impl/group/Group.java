@@ -15,6 +15,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.protobuf.DescriptorProtos;
+import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
@@ -34,7 +35,6 @@ import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
@@ -57,7 +57,28 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaTypeValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.ValidationRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.VersionDeletedRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingIdRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingInfoRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.GroupPropertiesRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypesListValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestEncodingIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaFingerprintKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.GroupPropertyKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.IndexTypeVersionToIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaVersionList;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypesKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.ValidationPolicyKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestEncodingIdValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdValue;
 
 /**
  * Class that implements all storage logic for a group.
@@ -626,7 +647,6 @@ public class Group<V> {
         }, executor).thenApply(v -> found.get());
     }
 
-    @SneakyThrows
     private String getSchemaString(SchemaInfo schemaInfo) {
         String schemaString;
         switch (schemaInfo.getSerializationFormat()) {
@@ -635,9 +655,15 @@ public class Group<V> {
                 schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                 break;
             case Protobuf:
-                DescriptorProtos.FileDescriptorSet descriptor = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
-                JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
-                schemaString = printer.print(descriptor);
+                try {
+                    DescriptorProtos.FileDescriptorSet descriptor = DescriptorProtos.FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
+                    JsonFormat.Printer printer = JsonFormat.printer().preservingProtoFieldNames().usingTypeRegistry(JsonFormat.TypeRegistry.newBuilder().build());
+
+                    schemaString = printer.print(descriptor);
+                } catch (InvalidProtocolBufferException e) {
+                    log.warn("unable to convert protobuf schema to json string", e);
+                    throw new IllegalArgumentException(e);
+                }
                 break;
             default:
                 schemaString = "";

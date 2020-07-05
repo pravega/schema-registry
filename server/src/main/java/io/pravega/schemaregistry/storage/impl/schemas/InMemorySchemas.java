@@ -26,7 +26,13 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.*;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaFingerprintKey;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.Key;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaGroupsKey;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaGroupsList;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaRecord;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaIdKey;
+import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaIdList;
 
 /**
  * In memory groups implementation. 

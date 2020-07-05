@@ -14,6 +14,7 @@ import io.pravega.auth.ServerConfig;
 import io.pravega.common.Exceptions;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.ToString;
 
 /**
  * REST server config.
@@ -24,29 +25,34 @@ public class ServiceConfig implements ServerConfig {
     private final String host;
     private final int port;
     private final boolean tlsEnabled;
-    private final String tlsCertFile;
-    private final String tlsTrustStore;
-    private final String tlsKeyFilePath;
-    private final String tlsKeyPasswordFilePath;
+    @ToString.Exclude
+    private final String tlsCertFilePath;
+    @ToString.Exclude
+    private final String tlsTrustStoreFilePath;
+    @ToString.Exclude
+    private final String serverKeyStoreFilePath;
+    @ToString.Exclude
+    private final String tlsKeyStorePasswordFilePath;
     private final boolean authEnabled;
-    private final String userPasswordFile;
+    @ToString.Exclude
+    private final String userPasswordFilePath;
 
-    private ServiceConfig(String host, int port, boolean tlsEnabled, String tlsCertFile, String tlsTrustStore,
-                          String tlsKeyFilePath, String tlsKeyPasswordFilePath, boolean authEnabled, String userPasswordFile) {
+    private ServiceConfig(String host, int port, boolean tlsEnabled, String tlsCertFilePath, String tlsTrustStoreFilePath,
+                          String serverKeyStoreFilePath, String tlsKeyStorePasswordFilePath, boolean authEnabled, String userPasswordFilePath) {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
-        Exceptions.checkArgument(!tlsEnabled || (!Strings.isNullOrEmpty(tlsCertFile) &&
-                        !Strings.isNullOrEmpty(tlsKeyFilePath) && !Strings.isNullOrEmpty(tlsTrustStore)), "keyFilePath", 
+        Exceptions.checkArgument(!tlsEnabled || (!Strings.isNullOrEmpty(tlsCertFilePath) &&
+                        !Strings.isNullOrEmpty(serverKeyStoreFilePath) && !Strings.isNullOrEmpty(tlsTrustStoreFilePath)), "keyFilePath", 
                 "If tls is enabled then key file path and key file password path should be non empty");
         this.host = host;
         this.port = port;
         this.tlsEnabled = tlsEnabled;
-        this.tlsCertFile = tlsCertFile;
-        this.tlsKeyFilePath = tlsKeyFilePath;
-        this.tlsKeyPasswordFilePath = tlsKeyPasswordFilePath;
-        this.tlsTrustStore = tlsTrustStore;
+        this.tlsCertFilePath = tlsCertFilePath;
+        this.serverKeyStoreFilePath = serverKeyStoreFilePath;
+        this.tlsKeyStorePasswordFilePath = tlsKeyStorePasswordFilePath;
+        this.tlsTrustStoreFilePath = tlsTrustStoreFilePath;
         this.authEnabled = authEnabled;
-        this.userPasswordFile = userPasswordFile;
+        this.userPasswordFilePath = userPasswordFilePath;
     }
 
     public static final class ServiceConfigBuilder {
@@ -54,17 +60,5 @@ public class ServiceConfig implements ServerConfig {
         private int port = 9092;
         private boolean tlsEnabled = false;
         private boolean authEnabled = false;
-    }
-    
-    @Override
-    public String toString() {
-        // Note: We don't use Lombok @ToString to automatically generate an implementation of this method,
-        // in order to avoid returning a string containing sensitive security configuration.
-
-        return new StringBuilder(String.format("%s(", getClass().getSimpleName()))
-                .append(String.format("host: %s, ", host))
-                .append(String.format("port: %d, ", port))
-                .append(String.format("authEnabled: %b, ", authEnabled))
-                .toString();
     }
 }

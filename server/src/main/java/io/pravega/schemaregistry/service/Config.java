@@ -20,7 +20,6 @@ import java.util.Arrays;
 import java.util.Properties;
 
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
@@ -66,14 +65,14 @@ public final class Config {
 
     //region Property Definitions
     private static final String NULL_VALUE = "{null}";
-    private static final Property<String> PROPERTY_REST_IP = Property.named("service.restIp", "0.0.0.0");
-    private static final Property<Integer> PROPERTY_REST_PORT = Property.named("service.restPort", 9092);
+    private static final Property<String> PROPERTY_REST_IP = Property.named("service.rest.published.host.nameOrIp", "0.0.0.0");
+    private static final Property<Integer> PROPERTY_REST_PORT = Property.named("service.rest.listener.Port", 9092);
     
     private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.controller.url", "tcp://localhost:9090");
     private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.storeType", "Pravega");
     private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPoolSize", 50);
 
-    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("auth.tls.enabled", false);
+    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enabled", false);
     private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("security.tls.server.certificate.location", "");
     private static final Property<String> PROPERTY_TLS_TRUST_STORE = Property.named("security.tls.trustStore.location", "");
     private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("security.tls.server.privateKey.location", "");
@@ -83,7 +82,7 @@ public final class Config {
     private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("security.pwdAuthHandler.accountsDb.location", "");
     private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resourceQualifier", "");
 
-    private static final String COMPONENT_CODE = "schema-registry";
+    private static final String COMPONENT_CODE = "schemaRegistry";
 
     //endregion
 
@@ -129,7 +128,6 @@ public final class Config {
         return properties;
     }
 
-    @SneakyThrows(IOException.class)
     private static Properties loadFromFile() {
         Properties result = new Properties();
 
@@ -148,6 +146,9 @@ public final class Config {
         if (file != null) {
             try (FileReader reader = new FileReader(file)) {
                 result.load(reader);
+            } catch (IOException e) {
+                log.error("Unable to read config file.", e);
+                throw new RuntimeException("Unable to read Config file");
             }
             log.info("Loaded {} config properties from {}.", result.size(), file);
         }
@@ -197,12 +198,12 @@ public final class Config {
                             .host(Config.SERVICE_HOST)
                                    .port(Config.SERVICE_PORT)
                                    .authEnabled(Config.AUTH_ENABLED)
-                                   .userPasswordFile(Config.USER_PASSWORD_FILE)
+                                   .userPasswordFilePath(Config.USER_PASSWORD_FILE)
                                    .tlsEnabled(Config.TLS_ENABLED)
-                                   .tlsCertFile(Config.TLS_CERT_FILE)
-                                   .tlsKeyFilePath(Config.TLS_KEY_FILE)
-                                   .tlsKeyFilePath(Config.TLS_KEY_PASSWORD_FILE)
-                                   .tlsTrustStore(Config.TLS_TRUST_STORE)
+                                   .tlsCertFilePath(Config.TLS_CERT_FILE)
+                                   .serverKeyStoreFilePath(Config.TLS_KEY_FILE)
+                                   .serverKeyStoreFilePath(Config.TLS_KEY_PASSWORD_FILE)
+                                   .tlsTrustStoreFilePath(Config.TLS_TRUST_STORE)
                                    .build();
     }
 

@@ -26,7 +26,7 @@ import java.util.function.BiFunction;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-public class FuturesCollectorTest {
+public class FuturesUtilityTest {
 
     private ScheduledExecutorService executor;
     @Before
@@ -49,12 +49,12 @@ public class FuturesCollectorTest {
             return CompletableFuture.completedFuture(new AbstractMap.SimpleEntry<>(Math.min(x + y, list.size() + 1), list.subList(x, Math.min(x + y, list.size()))));
         };
 
-        Map.Entry<Integer, List<Integer>> result = FuturesCollector.filteredWithTokenAndLimit(fn, x -> x != 0, 0, 10, executor).join();
+        Map.Entry<Integer, List<Integer>> result = FuturesUtility.filteredWithTokenAndLimit(fn, x -> x != 0, 0, 10, executor).join();
         assertEquals(result.getValue().size(), 10);
         assertTrue(result.getValue().stream().noneMatch(x -> x == 0));
         assertEquals(result.getKey().intValue(), list.indexOf(11));
 
-        result = FuturesCollector.filteredWithTokenAndLimit(fn, x -> x != 0, result.getKey(), 10, executor).join();
+        result = FuturesUtility.filteredWithTokenAndLimit(fn, x -> x != 0, result.getKey(), 10, executor).join();
         assertEquals(result.getValue().size(), 3);
         assertTrue(result.getValue().stream().noneMatch(x -> x == 0));
         assertEquals(result.getKey().intValue(), list.size() + 1);

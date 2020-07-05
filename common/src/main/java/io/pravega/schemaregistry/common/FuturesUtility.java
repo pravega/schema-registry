@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
 /**
  * A collector utility that has methods to collect records by invoking the supplied future.  
  */
-public class FuturesCollector {
+public class FuturesUtility {
     /**
      * This method invokes the supplied retrieveFunction with continuation token and limit. 
      * The `filter` predicate is then applied on the received list of response. 
