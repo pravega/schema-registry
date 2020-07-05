@@ -235,6 +235,14 @@ project('serializers') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
+
+    jar {
+        manifest {}
+
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
 }
 
 project('server') {
