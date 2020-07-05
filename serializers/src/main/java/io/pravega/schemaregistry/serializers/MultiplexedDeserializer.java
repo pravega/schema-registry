@@ -18,6 +18,12 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Map;
 
+/**
+ * Deserializer which multiplexes for multiple object types. Based on the supplied object, it invokes the 
+ * deserializer for that object type.
+ * 
+ * @param <T> Type of object.
+ */
 class MultiplexedDeserializer<T> extends AbstractDeserializer<T> {
     private final Map<String, AbstractDeserializer<T>> deserializers;
 

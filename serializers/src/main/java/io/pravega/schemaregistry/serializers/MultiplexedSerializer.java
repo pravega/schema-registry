@@ -14,6 +14,11 @@ import io.pravega.client.stream.Serializer;
 import java.nio.ByteBuffer;
 import java.util.Map;
 
+/**
+ * Serializer to multiplex serialization of multiple types of events with same serialization format. 
+ * 
+ * @param <T> Type of object. 
+ */
 class MultiplexedSerializer<T> implements Serializer<T> {
     private final Map<Class<? extends T>, AbstractSerializer<T>> serializers;
 

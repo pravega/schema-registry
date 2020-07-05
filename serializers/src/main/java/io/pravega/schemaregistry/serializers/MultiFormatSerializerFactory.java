@@ -39,7 +39,7 @@ import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
  * for multiple formats. 
  */
 @Slf4j
-public class MultiFormatSerializerFactory {
+class MultiFormatSerializerFactory {
     // region multi format 
     static Serializer<WithSchema<Object>> serializer(SerializerConfig config) {
         return serializerInternal(config, Collections.emptyMap());
