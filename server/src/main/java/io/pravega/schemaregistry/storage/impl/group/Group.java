@@ -57,7 +57,28 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaTypeValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.ValidationRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.VersionDeletedRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingIdRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingInfoRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.GroupPropertiesRecord;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypesListValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestEncodingIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaFingerprintKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.GroupPropertyKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.IndexTypeVersionToIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaVersionList;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypesKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.ValidationPolicyKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestEncodingIdValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdValue;
 
 /**
  * Class that implements all storage logic for a group.

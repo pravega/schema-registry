@@ -34,7 +34,12 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
-import static io.pravega.schemaregistry.server.rest.resources.AuthResources.*;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.DEFAULT_NAMESPACE;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.NAMESPACE_GROUP_FORMAT;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.DOMAIN;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.NAMESPACE_FORMAT;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.NAMESPACE_GROUP_CODEC_FORMAT;
+import static io.pravega.schemaregistry.server.rest.resources.AuthResources.NAMESPACE_GROUP_SCHEMA_FORMAT;
 
 @Slf4j
 abstract class AbstractResource {
@@ -67,9 +72,9 @@ abstract class AbstractResource {
         return headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
     }
 
-    CompletableFuture<Response> withCompletion(String request, AuthHandler.Permissions permissions,
-                                               String resource, AsyncResponse response,
-                                               Supplier<CompletableFuture<Response>> future) {
+    CompletableFuture<Response> withAuthenticateAndAuthorize(String request, AuthHandler.Permissions permissions,
+                                                             String resource, AsyncResponse response,
+                                                             Supplier<CompletableFuture<Response>> future) {
         try {
             authenticateAuthorize(getAuthorizationHeader(), resource, permissions);
             return future.get();
@@ -90,7 +95,8 @@ abstract class AbstractResource {
             throws AuthException {
         if (config.isAuthEnabled()) {
             String credentials = parseCredentials(authHeader);
-            if (!authManager.authenticateAndAuthorize(resource, credentials, permission)) {
+            AuthHandlerManager.Context context = authManager.getContext(credentials);
+            if (!context.authenticateAndAuthorize(resource, permission)) {
                 throw new AuthorizationException(
                         String.format("Failed to authorize for resource [%s]", resource),
                         Response.Status.FORBIDDEN.getStatusCode());

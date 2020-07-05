@@ -9,7 +9,8 @@
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
-import io.pravega.schemaregistry.MapWithToken;
+import com.google.common.collect.Lists;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -77,7 +78,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         doAnswer(x -> {
             Map<String, GroupProperties> map = new HashMap<>();
             map.put("group1", group1);
-            return CompletableFuture.completedFuture(new MapWithToken<>(map, null));
+            return CompletableFuture.completedFuture(new ResultPage<>(Lists.newArrayList(map.entrySet()), null));
         }).when(service).listGroups(any(), any(), anyInt());
 
         Future<Response> future = target(GROUPS).queryParam("limit", 100).request().async().get();

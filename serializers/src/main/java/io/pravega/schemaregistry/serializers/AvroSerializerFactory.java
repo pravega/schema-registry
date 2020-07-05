@@ -20,7 +20,8 @@ import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.*;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForSerializer;
 
 /**
  * Internal Factory class for Avro serializers and deserializers. 

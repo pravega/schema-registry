@@ -18,14 +18,14 @@ import javax.ws.rs.ext.ContextResolver;
 /**
  * Class to define custom json parser for the Jersey web application.
  */
-public class CustomObjectMapperProvider implements ContextResolver<ObjectMapper> {
+public class CustomJsonParser implements ContextResolver<ObjectMapper> {
 
     final ObjectMapper defaultObjectMapper;
 
     /**
      * Creates an instance of the JSON parser.
      */
-    public CustomObjectMapperProvider() {
+    public CustomJsonParser() {
         defaultObjectMapper = createDefaultMapper();
     }
 

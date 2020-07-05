@@ -20,7 +20,7 @@ import com.google.protobuf.DescriptorProtos;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
-import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.BackwardAndForward;
@@ -55,7 +55,12 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.contract.data.BackwardAndForward.*;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTransitive;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTransitive;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardPolicy;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardPolicy;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTill;
+import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTill;
 
 /**
  * Schema registry service backend.
@@ -89,8 +94,8 @@ public class SchemaRegistryService {
      * @param limit             max number of groups to return.
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
-    public CompletableFuture<MapWithToken<String, GroupProperties>> listGroups(String namespace, ContinuationToken continuationToken, int limit) {
-        log.info("List groups called");
+    public CompletableFuture<ResultPage<Map.Entry<String, GroupProperties>>> listGroups(String namespace, ContinuationToken continuationToken, int limit) {
+        log.debug("List groups called");
         return FuturesUtility.filteredWithTokenAndLimit(
                 (ContinuationToken c, Integer l) -> store.listGroups(namespace, c, l)
                                                          .thenCompose(reply -> {
@@ -103,11 +108,11 @@ public class SchemaRegistryService {
                                                          }),
                 x -> x.getValue().get() != null, continuationToken, limit, executor)
                              .thenApply(groupsList -> {
-                                   log.info("Returning groups {}", groupsList);
-                                   Map<String, GroupProperties> collect = groupsList.getValue().stream().collect(
-                                           Collectors.toMap(AbstractMap.SimpleEntry::getKey, x -> x.getValue().get()));
-                                   return new MapWithToken<>(
-                                           collect, groupsList.getKey());
+                                   log.debug("Returning groups {}", groupsList);
+                                   List<Map.Entry<String, GroupProperties>> collect = groupsList
+                                           .getValue().stream().filter(x -> x.getValue().get() != null)
+                                           .map(x -> new AbstractMap.SimpleEntry<>(x.getKey(), x.getValue().get())).collect(Collectors.toList());
+                                   return new ResultPage<>(collect, groupsList.getKey());
                                });
     }
 
@@ -123,15 +128,15 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> createGroup(String namespace, String group, GroupProperties groupProperties) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(groupProperties != null);
-        Preconditions.checkArgument(validateRules(groupProperties.getSerializationFormat(), groupProperties.getCompatibility()));
-        log.info("create group called for {} with group properties {}", group, groupProperties);
+        Preconditions.checkArgument(isValidCompatibilityForFormat(groupProperties.getSerializationFormat(), groupProperties.getCompatibility()));
+        log.debug("create group called for {} with group properties {}", group, groupProperties);
         return store.createGroup(namespace, group, groupProperties)
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             if (r) {
-                                log.info("Group {} created successfully.", group);
+                                log.debug("Group {} created successfully.", group);
                             } else {
-                                log.info("Group {} exists.", group);
+                                log.debug("Group {} already exists.", group);
                             }
                         } else {
                             log.warn("create group {} request failed with error", group, e);
@@ -153,11 +158,11 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<GroupProperties> getGroupProperties(String namespace, String group) {
         Preconditions.checkArgument(group != null);
-        log.info("getGroupProperties called for group {}.", group);
+        log.debug("getGroupProperties called for group {}.", group);
         return store.getGroupProperties(namespace, group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {} properties.", group);
+                            log.debug("Group {} properties.", group);
                         } else {
                             log.warn("getGroupProperties for group {} request failed with error", group, e);
                         }
@@ -166,19 +171,19 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Update group's schema compatibility policy. If previous rules are sent, a conditional update is performed.
+     * Update group's schema compatibility policy. If previous compatibility are sent, a conditional update is performed.
      *
      * @param namespace       namespace for which the request is scoped to.
      * @param group           Name of group.
      * @param compatibility New compatibility for the group.
-     * @param previousCompatibility   Previous rules compatibility for the group. If null, unconditional update is performed.
+     * @param previousCompatibility   Previous compatibility for the group. If null, unconditional update is performed.
      * @return CompletableFuture which is completed when compatibility policy update completes.
      */
     public CompletableFuture<Void> updateCompatibility(String namespace, String group, Compatibility compatibility,
                                                        @Nullable Compatibility previousCompatibility) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(compatibility != null);
-        log.info("updateCompatibility called for group {}. New compatibility {}", group, compatibility);
+        log.debug("updateCompatibility called for group {}. New compatibility {}", group, compatibility);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(pos -> {
                                              return store.getGroupProperties(namespace, group)
@@ -196,7 +201,7 @@ public class SchemaRegistryService {
                                          })
                                          .whenComplete((r, e) -> {
                                              if (e == null) {
-                                                 log.info("Group {} updateCompatibility successful.", group);
+                                                 log.debug("Group {} updateCompatibility successful.", group);
                                              } else {
                                                  log.warn("getGroupProperties for group {} request failed with error", group, e);
                                              }
@@ -214,13 +219,13 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<List<SchemaWithVersion>> getSchemas(String namespace, String group, @Nullable String schemaType) {
         Preconditions.checkArgument(group != null);
-        log.info("getSchemas called for group {}. New compatibility {}", group);
+        log.debug("getSchemas called for group {}. New compatibility {}", group);
 
         if (schemaType == null) {
             return store.getLatestSchemas(namespace, group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {} getSchemas {}.", group, r);
+                                log.debug("Group {} getSchemas {}.", group, r);
                             } else {
                                 log.warn("getSchemas for group {} request failed with error", group, e);
                             }
@@ -246,11 +251,11 @@ public class SchemaRegistryService {
     public CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
-        log.info("addSchema called for group {}. schema {}", schemaInfo.getType());
+        log.debug("addSchema called for group {}. schema {}", schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         // 1. get group policy
         // 2. get checker for serialization format.
-        // validate schema against group policy + rules on schema
+        // validate schema against group compatibility policy on schema
         // 3. conditionally update the schema
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(etag ->
@@ -275,7 +280,7 @@ public class SchemaRegistryService {
                                                       })), executor)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, schema {} added successfully.", group, schema.getType());
+                            log.debug("Group {}, schema {} added successfully.", group, schema.getType());
                         } else {
                             log.warn("Group {}, schema {} add failed with error", group, e);
                         }
@@ -291,12 +296,12 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
     public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, int schemaId) {
-        log.info("Group {}, get schema for version {} .", group, schemaId);
+        log.debug("Group {}, get schema for version {} .", group, schemaId);
 
         return store.getSchema(namespace, group, schemaId)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return schema for verison {}.", group, schemaId);
+                            log.debug("Group {}, return schema for verison {}.", group, schemaId);
                         } else {
                             log.warn("Group {}, get schema version {} failed with error", group, schemaId, e);
                         }
@@ -313,12 +318,12 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
     public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, String schemaType, int version) {
-        log.info("Group {}, get schema for version {}/{}.", group, schemaType, version);
+        log.debug("Group {}, get schema for version {}/{}.", group, schemaType, version);
 
         return store.getSchema(namespace, group, schemaType, version)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return schema for verison {}/{}.", group, schemaType, version);
+                            log.debug("Group {}, return schema for verison {}/{}.", group, schemaType, version);
                         } else {
                             log.warn("Group {}, get schema version {}/{} failed with error", group, schemaType, version, e);
                         }
@@ -334,13 +339,13 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
     public CompletableFuture<Void> deleteSchema(String namespace, String group, int schemaId) {
-        log.info("Group {}, delete schema for version {} .", group, schemaId);
+        log.debug("Group {}, delete schema for version {} .", group, schemaId);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(etag ->
                                                  store.deleteSchema(namespace, group, schemaId, etag)
                                                       .whenComplete((r, e) -> {
                                                           if (e == null) {
-                                                              log.info("Group {}, schema for verison {} deleted.", group, schemaId);
+                                                              log.debug("Group {}, schema for verison {} deleted.", group, schemaId);
                                                           } else {
                                                               log.warn("Group {}, get schema version {} failed with error", group, schemaId, e);
                                                           }
@@ -357,13 +362,13 @@ public class SchemaRegistryService {
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
     public CompletableFuture<Void> deleteSchema(String namespace, String group, String schemaType, int version) {
-        log.info("Group {}, delete schema for version {}/{}.", group, schemaType, version);
+        log.debug("Group {}, delete schema for version {}/{}.", group, schemaType, version);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(etag ->
                                                  store.deleteSchema(namespace, group, schemaType, version, etag)
                                                       .whenComplete((r, e) -> {
                                                           if (e == null) {
-                                                              log.info("Group {}, schema for verison {}/{} deleted.", group, schemaType, version);
+                                                              log.debug("Group {}, schema for verison {}/{} deleted.", group, schemaType, version);
                                                           } else {
                                                               log.warn("Group {}, get schema version {}/{} failed with error", group, schemaType, version, e);
                                                           }
@@ -383,12 +388,12 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(encodingId != null);
 
-        log.info("Group {}, getEncodingInfo {} .", group, encodingId);
+        log.debug("Group {}, getEncodingInfo {} .", group, encodingId);
 
         return store.getEncodingInfo(namespace, group, encodingId)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, return getEncodingInfo {} {}.", group, r.getVersionInfo(), r.getCodecType());
+                            log.debug("Group {}, return getEncodingInfo {} {}.", group, r.getVersionInfo(), r.getCodecType());
                         } else {
                             log.warn("Group {}, get getEncodingInfo for id {} failed with error", group, encodingId, e);
                         }
@@ -408,7 +413,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(version != null);
         Preconditions.checkArgument(codecType != null);
-        log.info("Group {}, getEncodingId for {} {}.", group, version, codecType);
+        log.debug("Group {}, getEncodingId for {} {}.", group, version, codecType);
 
         return RETRY.runAsync(() -> {
             return store.getEncodingId(namespace, group, version, codecType)
@@ -422,7 +427,7 @@ public class SchemaRegistryService {
         }, executor)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, getEncodingId for {} {}. returning {}.", group, version, codecType, r);
+                            log.debug("Group {}, getEncodingId for {} {}. returning {}.", group, version, codecType, r);
                         } else {
                             log.warn("Group {}, getEncodingId for {} {} failed with error", group, version, codecType, e);
                         }
@@ -442,13 +447,13 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String namespace, String group, @Nullable String type) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getGroupHistory for {}.", group, type);
+        log.debug("Group {}, getGroupHistory for {}.", group, type);
 
         if (type != null) {
             return store.getGroupHistoryForType(namespace, group, type)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, object type = {}, history size = {}.", group, type, r.size());
+                                log.debug("Group {}, object type = {}, history size = {}.", group, type, r.size());
                             } else {
                                 log.warn("Group {}, object type = {}, getGroupHistory failed with error", group, type, e);
                             }
@@ -457,7 +462,7 @@ public class SchemaRegistryService {
             return store.getGroupHistory(namespace, group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
-                                log.info("Group {}, history size = {}.", group, r.size());
+                                log.debug("Group {}, history size = {}.", group, r.size());
                             } else {
                                 log.warn("Group {}, getGroupHistory failed with error", group, e);
                             }
@@ -478,13 +483,13 @@ public class SchemaRegistryService {
     public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
-        log.info("Group {}, getSchemaVersion for {}.", group, schemaInfo.getType());
+        log.debug("Group {}, getSchemaVersion for {}.", group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
         return store.getSchemaVersion(namespace, group, schema)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, version = {}.", group, r);
+                            log.debug("Group {}, version = {}.", group, r);
                         } else {
                             log.warn("Group {}, getSchemaVersion failed with error", group, e);
                         }
@@ -507,7 +512,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schemaInfo, Compatibility compatibility) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
-        log.info("Group {}, validateSchema for {}.", group, schemaInfo.getType());
+        log.debug("Group {}, validateSchema for {}.", group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
         return store.getGroupProperties(namespace, group)
@@ -520,7 +525,7 @@ public class SchemaRegistryService {
                     })
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, validateSchema response = {}.", group, r);
+                            log.debug("Group {}, validateSchema response = {}.", group, r);
                         } else {
                             log.warn("Group {}, validateSchema failed with error", group, e);
                         }
@@ -538,7 +543,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> canRead(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
-        log.info("Group {}, canRead for {}.", group, schemaInfo.getType());
+        log.debug("Group {}, canRead for {}.", group, schemaInfo.getType());
 
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         return store.getGroupProperties(namespace, group)
@@ -546,7 +551,7 @@ public class SchemaRegistryService {
                             .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)))
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, canRead response = {}.", group, r);
+                            log.debug("Group {}, canRead response = {}.", group, r);
                         } else {
                             log.warn("Group {}, canRead failed with error", group, e);
                         }
@@ -562,12 +567,12 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<Void> deleteGroup(String namespace, String group) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, deleteGroup.", group);
+        log.debug("Group {}, deleteGroup.", group);
 
         return store.deleteGroup(namespace, group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, group deleted", group);
+                            log.debug("Group {}, group deleted", group);
                         } else {
                             log.warn("Group {}, group delete failed with error", group, e);
                         }
@@ -583,12 +588,12 @@ public class SchemaRegistryService {
      */
     public CompletableFuture<List<String>> getCodecTypes(String namespace, String group) {
         Preconditions.checkArgument(group != null);
-        log.info("Group {}, getCodecTypes.", group);
+        log.debug("Group {}, getCodecTypes.", group);
 
         return store.getCodecTypes(namespace, group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, codecTypes = {}", group, r);
+                            log.debug("Group {}, codecTypes = {}", group, r);
                         } else {
                             log.warn("Group {}, getcodecTypes failed with error", group, e);
                         }
@@ -608,12 +613,12 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(codecType != null);
 
-        log.info("Group {}, addCodecType {}.", group, codecType);
+        log.debug("Group {}, addCodecType {}.", group, codecType);
 
         return store.addCodecType(namespace, group, codecType)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.info("Group {}, addCodecType {} successful", group, codecType);
+                            log.debug("Group {}, addCodecType {} successful", group, codecType);
                         } else {
                             log.warn("Group {}, addCodecType {} failed with error", group, codecType, e);
                         }
@@ -621,15 +626,18 @@ public class SchemaRegistryService {
 
     }
 
-    private boolean validateRules(SerializationFormat serializationFormat, Compatibility newRules) {
+    private boolean isValidCompatibilityForFormat(SerializationFormat serializationFormat, Compatibility compatibility) {
         switch (serializationFormat) {
             case Avro:
                 return true;
             case Protobuf:
+                // Only Allow Any or Deny All are allowed values. 
             case Json:
+                // Only Allow Any or Deny All are allowed values. 
             case Custom:
+                // Only Allow Any or Deny All are allowed values. 
             case Any:
-                return newRules.getType().equals(Compatibility.Type.AllowAny) || newRules.getType().equals(Compatibility.Type.DenyAll);
+                return compatibility.getType().equals(Compatibility.Type.AllowAny) || compatibility.getType().equals(Compatibility.Type.DenyAll);
             default:
                 throw new IllegalArgumentException("Unknown serialization format");
         }
@@ -843,7 +851,7 @@ public class SchemaRegistryService {
                     break;
             }
         } catch (Exception e) {
-            log.info("unable to parse schema {}", e.getMessage());
+            log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
         }

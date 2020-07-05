@@ -18,7 +18,8 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.*;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForSerializer;
 
 /**
  * Internal Factory class for json serializers and deserializers. 

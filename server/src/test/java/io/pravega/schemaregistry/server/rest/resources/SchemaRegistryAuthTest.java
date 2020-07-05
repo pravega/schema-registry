@@ -11,8 +11,9 @@ package io.pravega.schemaregistry.server.rest.resources;
 
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
+import com.google.common.collect.Lists;
 import io.pravega.controller.server.rpc.auth.StrongPasswordProcessor;
-import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -37,6 +38,7 @@ import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -76,7 +78,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
 
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
-        ServiceConfig config = ServiceConfig.builder().authEnabled(true).userPasswordFile(authFile.getAbsolutePath()).build();
+        ServiceConfig config = ServiceConfig.builder().authEnabled(true).userPasswordFilePath(authFile.getAbsolutePath()).build();
         resourceObjs.add(new GroupResourceImpl(service, config, executor));
         resourceObjs.add(new SchemaResourceImpl(service, config, executor));
 
@@ -96,7 +98,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                 Compatibility.backward(),
                 false);
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new MapWithToken<>(new HashMap<>(), ContinuationToken.fromString("token")));
+            return CompletableFuture.completedFuture(new ResultPage<>(Collections.emptyList(), ContinuationToken.fromString("token")));
         }).when(service).listGroups(any(), any(), anyInt());
 
         doAnswer(x -> {
@@ -104,7 +106,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
             for (int i = 0; i < 4; i++) {
                 map.put("group" + i, group1);
             }
-            return CompletableFuture.completedFuture(new MapWithToken<>(map, ContinuationToken.fromString("token")));
+            return CompletableFuture.completedFuture(new ResultPage<>(Lists.newArrayList(map.entrySet()), ContinuationToken.fromString("token")));
         }).when(service).listGroups(any(), any(), eq(10));
 
         Future<Response> future = target("v1/groups").queryParam("limit", 10)
@@ -143,9 +145,9 @@ public class SchemaRegistryAuthTest extends JerseyTest {
             map2.put("group" + i, group1);
         }
 
-        doAnswer(x -> CompletableFuture.completedFuture(new MapWithToken<>(map1, ContinuationToken.fromString("token"))))
+        doAnswer(x -> CompletableFuture.completedFuture(new ResultPage<>(Lists.newArrayList(map1.entrySet()), ContinuationToken.fromString("token"))))
                 .when(service).listGroups(any(), any(), eq(10));
-        doAnswer(x -> CompletableFuture.completedFuture(new MapWithToken<>(map2, ContinuationToken.fromString("token"))))
+        doAnswer(x -> CompletableFuture.completedFuture(new ResultPage<>(Lists.newArrayList(map2.entrySet()), ContinuationToken.fromString("token"))))
                 .when(service).listGroups(any(), any(), eq(8));
 
         future = target("v1/groups").queryParam("limit", 10)

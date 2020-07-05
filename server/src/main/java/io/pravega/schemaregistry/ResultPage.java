@@ -12,10 +12,15 @@ package io.pravega.schemaregistry;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import lombok.Data;
 
-import java.util.Map;
+import java.util.List;
 
+/**
+ * Page result object that contains a list of entries and a continuation token.
+ * 
+ * @param <T> Type of result.
+ */
 @Data
-public class MapWithToken<K, V> {
-    private final Map<K, V> map;
+public class ResultPage<T> {
+    private final List<T> list;
     private final ContinuationToken token;
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
+ * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,8 +57,7 @@ public class RestServer extends AbstractIdleService {
         this.resourceConfig = ResourceConfig.forApplication(application);
         this.resourceConfig.property(ServerProperties.BV_SEND_ERROR_IN_RESPONSE, true);
 
-        // Register the custom JSON parser.
-        this.resourceConfig.register(new CustomObjectMapperProvider());
+        this.resourceConfig.register(new CustomJsonParser());
     }
 
     /**
@@ -71,14 +70,13 @@ public class RestServer extends AbstractIdleService {
             log.info("Starting REST server listening on port: {}", this.restServerConfig.getPort());
             if (restServerConfig.isTlsEnabled()) {
                 SSLContextConfigurator contextConfigurator = new SSLContextConfigurator();
-                contextConfigurator.setKeyStoreFile(restServerConfig.getTlsKeyFilePath());
-                contextConfigurator.setKeyStorePass(JKSHelper.loadPasswordFrom(restServerConfig.getTlsKeyPasswordFilePath()));
+                contextConfigurator.setKeyStoreFile(restServerConfig.getServerKeyStoreFilePath());
+                contextConfigurator.setKeyStorePass(JKSHelper.loadPasswordFrom(restServerConfig.getTlsKeyStorePasswordFilePath()));
                 httpServer = GrizzlyHttpServerFactory.createHttpServer(baseUri, resourceConfig, true,
                         new SSLEngineConfigurator(contextConfigurator, false, false, false));
             } else {
                 httpServer = GrizzlyHttpServerFactory.createHttpServer(baseUri, resourceConfig, true);
             }
-
         } finally {
             LoggerHelpers.traceLeave(log, this.objectId, "startUp", traceId);
         }

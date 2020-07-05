@@ -9,7 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.groups;
 
-import io.pravega.schemaregistry.ListWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.impl.group.Group;
@@ -61,7 +61,7 @@ public class InMemoryGroups implements Groups<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<ListWithToken<String>> listGroups(String namespace, ContinuationToken token, int limit) {
+    public CompletableFuture<ResultPage<String>> listGroups(String namespace, ContinuationToken token, int limit) {
         // TODO: pagination -- return only limit number of records!!
         String nameSpace = namespace == null ? "" : namespace;
         ContinuationToken next = ContinuationToken.fromString(Integer.toString(groups.size()));
@@ -70,10 +70,10 @@ public class InMemoryGroups implements Groups<Integer> {
                                                     .filter(x -> x.getNamespace().equals(nameSpace))
                                                     .map(NamespaceAndGroup::getGroupId)
                                                     .collect(Collectors.toList());
-            ListWithToken<String> namespaceAndGroupListWithToken = new ListWithToken<>(namespaceAndGroups, next);
-            return CompletableFuture.completedFuture(namespaceAndGroupListWithToken);
+            ResultPage<String> namespaceAndGroupResultPage = new ResultPage<>(namespaceAndGroups, next);
+            return CompletableFuture.completedFuture(namespaceAndGroupResultPage);
         } else {
-            return CompletableFuture.completedFuture(new ListWithToken<>(Collections.emptyList(), next));
+            return CompletableFuture.completedFuture(new ResultPage<>(Collections.emptyList(), next));
         }
     }
 

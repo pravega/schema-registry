@@ -11,8 +11,7 @@ package io.pravega.schemaregistry.service;
 
 import com.google.common.collect.Lists;
 import io.pravega.common.concurrent.Futures;
-import io.pravega.schemaregistry.ListWithToken;
-import io.pravega.schemaregistry.MapWithToken;
+import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -23,6 +22,7 @@ import org.junit.Before;
 import org.junit.Test;
 
 import java.util.ArrayList;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -53,7 +53,7 @@ public class SchemaRegistryServiceTest {
 
         ArrayList<String> groups = Lists.newArrayList("grp1", "grp2");
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new ListWithToken<>(groups, null));
+            return CompletableFuture.completedFuture(new ResultPage<>(groups, null));
         }).when(store).listGroups(any(), any(), anyInt());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new GroupProperties(SerializationFormat.Avro, 
@@ -64,7 +64,7 @@ public class SchemaRegistryServiceTest {
             return Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group prop not found"));
         }).when(store).getGroupProperties(any(), eq("grp2"));
 
-        MapWithToken<String, GroupProperties> result = service.listGroups(null, null, 100).join();
-        assertEquals(result.getMap().size(), 1);
+        ResultPage<Map.Entry<String, GroupProperties>> result = service.listGroups(null, null, 100).join();
+        assertEquals(result.getList().size(), 1);
     }
 }

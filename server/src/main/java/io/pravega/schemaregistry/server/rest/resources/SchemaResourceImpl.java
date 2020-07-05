@@ -41,7 +41,7 @@ public class SchemaResourceImpl extends AbstractResource implements ApiV1.Schema
 
     @Override
     public void getSchemaReferences(SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) {
-        withCompletion("getSchemaReferences", READ, getNamespaceResource(namespace), asyncResponse,
+        withAuthenticateAndAuthorize("getSchemaReferences", READ, getNamespaceResource(namespace), asyncResponse,
                 () -> getRegistryService().getSchemaReferences(namespace, ModelHelper.decode(schemaInfo))
                                           .thenApply(map -> {
                                               AddedTo addedTo = new AddedTo()

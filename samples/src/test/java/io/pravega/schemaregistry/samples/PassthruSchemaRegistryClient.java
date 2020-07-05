@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.samples;
 
-import io.pravega.schemaregistry.MapWithToken;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
@@ -23,6 +22,7 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
+import lombok.val;
 
 import javax.annotation.Nullable;
 import java.util.AbstractMap;
@@ -61,8 +61,8 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     public Iterator<Map.Entry<String, GroupProperties>> listGroups() {
         Function<ContinuationToken, Map.Entry<ContinuationToken, Collection<Map.Entry<String, GroupProperties>>>> function =
                 token -> {
-                    MapWithToken<String, GroupProperties> result = service.listGroups(namespace, token, 100).join();
-                    return new AbstractMap.SimpleEntry<>(result.getToken(), result.getMap().entrySet());
+                    val result = service.listGroups(namespace, token, 100).join();
+                    return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
                 };
         return new ContinuationTokenIterator<>(function, null);
     }
