@@ -30,9 +30,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     private static final SchemaValidator MUTUAL_READ = new SchemaValidatorBuilder().mutualReadStrategy().validateAll();
 
     public boolean canRead(SchemaInfo readUsing, List<SchemaInfo> writtenUsing) {
-        Schema.Parser parser = new Schema.Parser();
-        Schema schema = parseSchema(parser, readUsing);
-        List<Schema> writtenUsingSchemas = parseSchemas(parser, writtenUsing);
+        Schema schema = parseSchema(readUsing);
+        List<Schema> writtenUsingSchemas = parseSchemas(writtenUsing);
         try {
             CAN_READ.validate(schema, writtenUsingSchemas);
         } catch (SchemaValidationException e) {
@@ -42,9 +41,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     }
     
     public boolean canBeRead(SchemaInfo writtenUsing, List<SchemaInfo> readUsing) {
-        Schema.Parser parser = new Schema.Parser();
-        Schema schema = parseSchema(parser, writtenUsing);
-        List<Schema> readUsingSchemas = parseSchemas(parser, readUsing);
+        Schema schema = parseSchema(writtenUsing);
+        List<Schema> readUsingSchemas = parseSchemas(readUsing);
         try {
             CAN_BE_READ.validate(schema, readUsingSchemas);
         } catch (SchemaValidationException e) {
@@ -54,9 +52,8 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
     }
 
     public boolean canMutuallyRead(SchemaInfo toValidate, List<SchemaInfo> schemaList) {
-        Schema.Parser parser = new Schema.Parser();
-        Schema schema = parseSchema(parser, toValidate);
-        List<Schema> schemas = parseSchemas(parser, schemaList);
+        Schema schema = parseSchema(toValidate);
+        List<Schema> schemas = parseSchemas(schemaList);
         try {
             MUTUAL_READ.validate(schema, schemas);
         } catch (SchemaValidationException e) {
@@ -65,16 +62,17 @@ public class AvroCompatibilityChecker implements CompatibilityChecker {
         return true;
     }
 
-    private Schema parseSchema(Schema.Parser parser, SchemaInfo schema) {
+    private Schema parseSchema(SchemaInfo schema) {
         Preconditions.checkArgument(schema != null && schema.getSerializationFormat().equals(SerializationFormat.Avro),
                 "Schema should be avro.");
+        Schema.Parser parser = new Schema.Parser();
         return parser.parse(new String(schema.getSchemaData().array(), Charsets.UTF_8));
     }
 
-    private List<Schema> parseSchemas(Schema.Parser parser, List<SchemaInfo> schemaList) {
+    private List<Schema> parseSchemas(List<SchemaInfo> schemaList) {
         Preconditions.checkArgument(schemaList != null && schemaList.stream().allMatch(x -> x.getSerializationFormat().equals(SerializationFormat.Avro)),
                 "All schemas to compare against should be avro.");
-        return schemaList.stream().map(x -> parser.parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
+        return schemaList.stream().map(x -> new Schema.Parser().parse(new String(x.getSchemaData().array(), Charsets.UTF_8)))
                                 .collect(Collectors.toList());
     }
 }
