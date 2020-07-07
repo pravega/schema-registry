@@ -261,15 +261,10 @@ public class SchemaRegistryService {
                                          .thenCompose(etag ->
                                                  store.getGroupProperties(namespace, group)
                                                       .thenCompose(prop -> {
-                                                          if (!prop.getSerializationFormat().equals(SerializationFormat.Any) &&
-                                                                  !schema.getSerializationFormat().equals(prop.getSerializationFormat())) {
-                                                              throw new SerializationFormatMismatchException(schema.getSerializationFormat().name());
-                                                          }
                                                           return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, schema),
                                                                   e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                                                                   () -> { // Schema doesnt exist. Validate and add it
-                                                                      return getSchemasForValidation(namespace, group, schema, prop)
-                                                                              .thenApply(schemas -> checkCompatibility(schema, prop, schemas))
+                                                                      return validateSchema(namespace, group, schema, prop.getCompatibility())
                                                                               .thenCompose(valid -> {
                                                                                   if (!valid) {
                                                                                       throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
@@ -517,6 +512,11 @@ public class SchemaRegistryService {
 
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
+                        if (!prop.getSerializationFormat().equals(SerializationFormat.Any) &&
+                                !schema.getSerializationFormat().equals(prop.getSerializationFormat())) {
+                            throw new SerializationFormatMismatchException(schema.getSerializationFormat().name());
+                        }
+
                         GroupProperties toApply = new GroupProperties(prop.getSerializationFormat(), 
                                 compatibility == null ? prop.getCompatibility() : compatibility,
                                 prop.isAllowMultipleTypes(), prop.getProperties());
