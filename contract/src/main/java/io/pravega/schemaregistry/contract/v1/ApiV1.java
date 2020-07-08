@@ -12,7 +12,8 @@ package io.pravega.schemaregistry.contract.v1;
 import com.google.common.annotations.Beta;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypes;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -65,7 +66,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
         Response addCodecType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                              @ApiParam(value = "The codec type", required = true) String codecType);
+                              @ApiParam(value = "The codec type", required = true) CodecType codecType);
 
         @POST
         @Path("/{groupName}/schemas")
@@ -113,9 +114,9 @@ public class ApiV1 {
         @GET
         @Path("/{groupName}/codecTypes")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecTypes for the group.", response = CodecTypesList.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecTypes for the group.", response = CodecTypes.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found CodecTypes", response = CodecTypesList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Found CodecTypes", response = CodecTypes.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching codecTypes registered", response = Void.class)})
         Response getCodecTypesList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName);
@@ -295,7 +296,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while registering codectype to a Group", response = Void.class)})
         void addCodecType(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                          @ApiParam(value = "Add codec type", required = true) String codecType, @Suspended AsyncResponse asyncResponse);
+                          @ApiParam(value = "Add codec type", required = true) CodecType codecType, @Suspended AsyncResponse asyncResponse);
 
         @POST
         @Path("/{groupName}/schemas")
@@ -347,9 +348,9 @@ public class ApiV1 {
         @GET
         @Path("/{groupName}/codecTypes")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecTypes for the group.", response = CodecTypesList.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Get codecTypes for the group.", response = CodecTypes.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Found CodecTypes", response = CodecTypesList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Found CodecTypes", response = CodecTypes.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group or encoding id with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching codecTypes registered", response = Void.class)})
         void getCodecTypesList(@ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,

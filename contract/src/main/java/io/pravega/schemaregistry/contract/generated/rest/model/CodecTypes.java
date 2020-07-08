@@ -16,6 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -27,18 +28,18 @@ import javax.validation.constraints.*;
  */
 @ApiModel(description = "Response object for listCodecTypes.")
 
-public class CodecTypesList   {
+public class CodecTypes   {
   @JsonProperty("codecTypes")
-  private List<String> codecTypes = null;
+  private List<CodecType> codecTypes = null;
 
-  public CodecTypesList codecTypes(List<String> codecTypes) {
+  public CodecTypes codecTypes(List<CodecType> codecTypes) {
     this.codecTypes = codecTypes;
     return this;
   }
 
-  public CodecTypesList addCodecTypesItem(String codecTypesItem) {
+  public CodecTypes addCodecTypesItem(CodecType codecTypesItem) {
     if (this.codecTypes == null) {
-      this.codecTypes = new ArrayList<String>();
+      this.codecTypes = new ArrayList<CodecType>();
     }
     this.codecTypes.add(codecTypesItem);
     return this;
@@ -50,11 +51,11 @@ public class CodecTypesList   {
    **/
   @JsonProperty("codecTypes")
   @ApiModelProperty(value = "List of codecTypes.")
-  public List<String> getCodecTypes() {
+  public List<CodecType> getCodecTypes() {
     return codecTypes;
   }
 
-  public void setCodecTypes(List<String> codecTypes) {
+  public void setCodecTypes(List<CodecType> codecTypes) {
     this.codecTypes = codecTypes;
   }
 
@@ -67,8 +68,8 @@ public class CodecTypesList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CodecTypesList codecTypesList = (CodecTypesList) o;
-    return Objects.equals(this.codecTypes, codecTypesList.codecTypes);
+    CodecTypes codecTypes = (CodecTypes) o;
+    return Objects.equals(this.codecTypes, codecTypes.codecTypes);
   }
 
   @Override
@@ -80,7 +81,7 @@ public class CodecTypesList   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CodecTypesList {\n");
+    sb.append("class CodecTypes {\n");
     
     sb.append("    codecTypes: ").append(toIndentedString(codecTypes)).append("\n");
     sb.append("}");
