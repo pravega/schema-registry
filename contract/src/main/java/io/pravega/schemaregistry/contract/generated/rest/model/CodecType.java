@@ -69,11 +69,11 @@ public class CodecType   {
   }
 
   /**
-   * User defined key value strings.
+   * User defined key value strings. Maximum size for the map, combined length of all keys and values should be less than or equal to 1 mb.
    * @return properties
    **/
   @JsonProperty("properties")
-  @ApiModelProperty(value = "User defined key value strings.")
+  @ApiModelProperty(value = "User defined key value strings. Maximum size for the map, combined length of all keys and values should be less than or equal to 1 mb.")
   public Map<String, String> getProperties() {
     return properties;
   }

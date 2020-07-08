@@ -339,25 +339,25 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).getEncodingId(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        String codecType = "gzip";
+        CodecType codecType = new CodecType("gzip");
         VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         io.pravega.schemaregistry.contract.generated.rest.model.EncodingId encodingId = ModelHelper.encode(new EncodingId(5));
         doReturn(encodingId).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class);
-        EncodingId encodingId1 = client.getEncodingId("mygroup", versionInfo, codecType);
+        EncodingId encodingId1 = client.getEncodingId("mygroup", versionInfo, codecType.getName());
         assertEquals(encodingId.getEncodingId().intValue(), encodingId1.getId());
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEncodingId("mygroup", versionInfo, codecType), e -> e instanceof ResourceNotFoundException);
+                () -> client.getEncodingId("mygroup", versionInfo, codecType.getName()), e -> e instanceof ResourceNotFoundException);
         // StringNotFound Exception
         doReturn(Response.Status.PRECONDITION_FAILED.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEncodingId("mygroup", versionInfo, codecType), e -> e instanceof CodecTypeNotRegisteredException);
+                () -> client.getEncodingId("mygroup", versionInfo, codecType.getName()), e -> e instanceof CodecTypeNotRegisteredException);
         // Runtime Exception
         doReturn(Response.Status.CONFLICT.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> client.getEncodingId("mygroup", versionInfo, codecType), e -> e instanceof InternalServerError);
+                () -> client.getEncodingId("mygroup", versionInfo, codecType.getName()), e -> e instanceof InternalServerError);
     }
 
     @Test

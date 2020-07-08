@@ -728,12 +728,12 @@ definitions:
         type: string
         format: binary
       properties:
-        description: User defined key value strings.    
+        description: User defined key value strings. Maximum size for the map, combined length of all keys and values should be less than or equal to 1 mb. 
         type: object
         additionalProperties:
           type: string
           minLength: 0
-          maxLength: 40
+          maxLength: 1048576
     required:
       - type
       - serializationFormat
@@ -938,12 +938,12 @@ definitions:
         type: string
         description: codecType name. 
       properties:
-        description: User defined key value strings.    
+        description: User defined key value strings. Maximum size for the map, combined length of all keys and values should be less than or equal to 1 mb. 
         type: object
         additionalProperties:
           type: string
           minLength: 0
-          maxLength: 200
+          maxLength: 1048576
     required:
       - name    
   CodecTypesList:
