@@ -17,6 +17,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.BackwardAndForwar
 import io.pravega.schemaregistry.contract.generated.rest.model.BackwardPolicy;
 import io.pravega.schemaregistry.contract.generated.rest.model.BackwardTill;
 import io.pravega.schemaregistry.contract.generated.rest.model.BackwardTransitive;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.Compatibility;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -197,7 +198,14 @@ public class ModelHelper {
         Preconditions.checkArgument(encodingInfo.getSchemaInfo() != null, "SchemaInfo cannot be null");
         Preconditions.checkArgument(encodingInfo.getCodecType() != null, "CodecType cannot be null");
         return new io.pravega.schemaregistry.contract.data.EncodingInfo(decode(encodingInfo.getVersionInfo()),
-                decode(encodingInfo.getSchemaInfo()), encodingInfo.getCodecType());
+                decode(encodingInfo.getSchemaInfo()), decode(encodingInfo.getCodecType()));
+    }
+
+    public static io.pravega.schemaregistry.contract.data.CodecType decode(CodecType codecType) {
+        Preconditions.checkArgument(codecType != null, "CodecType cannot be null");
+        Preconditions.checkArgument(codecType.getName() != null, "CodecType.name cannot be null");
+        return codecType.getProperties() == null ? new io.pravega.schemaregistry.contract.data.CodecType(codecType.getName()) :
+                new io.pravega.schemaregistry.contract.data.CodecType(codecType.getName(), ImmutableMap.copyOf(codecType.getProperties()));
     }
 
     public static io.pravega.schemaregistry.contract.data.SchemaWithVersion decode(SchemaWithVersion schemaWithVersion) {
@@ -336,9 +344,14 @@ public class ModelHelper {
     }
 
     public static EncodingInfo encode(io.pravega.schemaregistry.contract.data.EncodingInfo encodingInfo) {
-        return new EncodingInfo().codecType(encodingInfo.getCodecType())
+        return new EncodingInfo().codecType(encode(encodingInfo.getCodecType()))
                                  .versionInfo(encode(encodingInfo.getVersionInfo()))
                                  .schemaInfo(encode(encodingInfo.getSchemaInfo()));
+    }
+
+    public static CodecType encode(io.pravega.schemaregistry.contract.data.CodecType codecType) {
+        return new CodecType().name(codecType.getName())
+                              .properties(codecType.getProperties());
     }
 
     // endregion
