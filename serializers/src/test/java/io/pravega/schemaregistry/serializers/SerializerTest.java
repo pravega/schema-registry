@@ -79,15 +79,15 @@ public class SerializerTest {
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
-        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
-        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
+        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         AvroSchema<Object> of = AvroSchema.of(SchemaDefinitions.ENUM);
         VersionInfo versionInfo3 = new VersionInfo(of.getSchema().getFullName(), 0, 2);
         doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(of.getSchemaInfo()));
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
-        doAnswer(x -> new EncodingInfo(versionInfo3, of.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
+        doAnswer(x -> new EncodingInfo(versionInfo3, of.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
 
         Serializer<Object> serializerStr = SerializerFactory.avroSerializer(config, of);
         GenericData.EnumSymbol enumSymbol = new GenericData.EnumSymbol(of.getSchema(), "a");
@@ -160,7 +160,7 @@ public class SerializerTest {
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
-        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<TestClass> serializer = SerializerFactory.avroSerializer(config, schema1);
@@ -189,8 +189,8 @@ public class SerializerTest {
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
-        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
-        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
+        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<ProtobufTest.Message2> serializer = SerializerFactory.protobufSerializer(config, schema1);
@@ -253,8 +253,8 @@ public class SerializerTest {
         doAnswer(x -> versionInfo2).when(client).getVersionForSchema(anyString(), eq(schema2.getSchemaInfo()));
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
-        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
-        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
+        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<DerivedUser1> serializer = SerializerFactory.jsonSerializer(config, schema1);
@@ -282,7 +282,7 @@ public class SerializerTest {
         VersionInfo versionInfo3 = new VersionInfo("myData", 0, 2);
         doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(myData.getSchemaInfo()));
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
-        doAnswer(x -> new EncodingInfo(versionInfo3, myData.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
+        doAnswer(x -> new EncodingInfo(versionInfo3, myData.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
 
         Serializer<Object> serializer2 = SerializerFactory.jsonSerializer(config, myData);
         Map<String, String> jsonObject = new HashMap<>();
@@ -297,7 +297,7 @@ public class SerializerTest {
         VersionInfo versionInfo4 = new VersionInfo("myData", 0, 3);
         doAnswer(x -> versionInfo4).when(client).getVersionForSchema(anyString(), eq(strSchema.getSchemaInfo()));
         doAnswer(x -> new EncodingId(3)).when(client).getEncodingId(anyString(), eq(versionInfo4), any());
-        doAnswer(x -> new EncodingInfo(versionInfo4, strSchema.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(3)));
+        doAnswer(x -> new EncodingInfo(versionInfo4, strSchema.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(3)));
 
         Serializer<Object> serializer3 = SerializerFactory.jsonSerializer(config, strSchema);
         Serializer<Object> deserializer3 = SerializerFactory.jsonDeserializer(config, strSchema);
@@ -367,9 +367,9 @@ public class SerializerTest {
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo1), any());
         doAnswer(x -> new EncodingId(1)).when(client).getEncodingId(anyString(), eq(versionInfo2), any());
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
-        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
-        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
-        doAnswer(x -> new EncodingInfo(versionInfo3, schema3.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
+        doAnswer(x -> new EncodingInfo(versionInfo1, schema1.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> new EncodingInfo(versionInfo2, schema2.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(1)));
+        doAnswer(x -> new EncodingInfo(versionInfo3, schema3.getSchemaInfo(), Codecs.None.getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         Serializer<Test1> avroSerializer = SerializerFactory.avroSerializer(config, schema1);

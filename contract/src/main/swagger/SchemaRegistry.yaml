@@ -530,6 +530,7 @@ paths:
                   $ref: "#/definitions/VersionInfo"
               codecType:
                   type: string
+                  description: name of Codec Type
             required:
               - versionInfo
               - codecType
@@ -619,7 +620,7 @@ paths:
           description: The codecType
           required: true
           schema:
-              type: string
+            $ref: "#/definitions/CodecType"
       responses:
         201:
           description: Successfully added codecType to group
@@ -800,7 +801,7 @@ definitions:
           $ref: "#/definitions/VersionInfo"        
       codecType:
           description: Codec type.
-          type: string
+          $ref: "#/definitions/CodecType"        
     required:
       - schemaInfo
       - versionInfo
@@ -929,6 +930,22 @@ definitions:
     required:
       - name
       - versionInfo
+  CodecType:
+    type: object
+    description: Codec Type. 
+    properties:
+      name:
+        type: string
+        description: codecType name. 
+      properties:
+        description: User defined key value strings.    
+        type: object
+        additionalProperties:
+          type: string
+          minLength: 0
+          maxLength: 200
+    required:
+      - name    
   CodecTypesList:
     type: object
     description: Response object for listCodecTypes.
@@ -937,7 +954,7 @@ definitions:
         type: array
         description: List of codecTypes.
         items:
-          type: string
+          $ref: "#/definitions/CodecType"
   Valid:
     type: object
     description: Response object for validateSchema api.
@@ -952,7 +969,7 @@ definitions:
     description: Response object for canRead api.
     properties:
       compatible:
-        description: Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy. 
+        description: Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group's configured compatibility policy. 
         type: boolean
     required:
       - compatible    

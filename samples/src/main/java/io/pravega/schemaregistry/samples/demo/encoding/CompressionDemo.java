@@ -30,15 +30,15 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.serializers.Codecs;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.schemas.AvroSchema;
+import io.pravega.schemaregistry.serializers.Codecs;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
-import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -52,6 +52,7 @@ import java.util.Base64;
 import java.util.List;
 import java.util.Random;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 /**
  * A sample class to demonstrate different kind of compression encodings that can be used with Pravega serializers.
@@ -68,16 +69,15 @@ public class CompressionDemo {
             .type(Schema.create(Schema.Type.STRING))
             .noDefault()
             .endRecord();
-    private static final String MYCOMPRESSION = "mycompression";
+    private static final CodecType MYCOMPRESSION = new CodecType("mycompression");
     private static final Codec MY_CODEC = new Codec() {
         @Override
-        public String getCodecType() {
+        public CodecType getCodecType() {
             return MYCOMPRESSION;
         }
 
-        @SneakyThrows
         @Override
-        public ByteBuffer encode(ByteBuffer data) {
+        public ByteBuffer encode(ByteBuffer data) throws IOException {
             // left rotate by 1 byte
             byte[] array = new byte[data.remaining()];
             data.get(array);
@@ -91,9 +91,8 @@ public class CompressionDemo {
             return ByteBuffer.wrap(array);
         }
 
-        @SneakyThrows
         @Override
-        public ByteBuffer decode(ByteBuffer data) {
+        public ByteBuffer decode(ByteBuffer data) throws IOException {
             byte[] array = new byte[data.remaining()];
             data.get(array);
 
@@ -225,8 +224,8 @@ public class CompressionDemo {
     }
 
     private void printAllCodecTypes() {
-        List<String> list = client.getCodecTypes(groupId);
-        System.out.println(list);
+        List<CodecType> list = client.getCodecTypes(groupId);
+        System.out.println(list.stream().map(CodecType::getName).collect(Collectors.toList()));
     }
     
     private void writeGzip(String input) {

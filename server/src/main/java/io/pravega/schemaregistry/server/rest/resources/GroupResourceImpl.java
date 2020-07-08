@@ -18,6 +18,7 @@ import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
@@ -658,7 +659,8 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         withAuthenticateAndAuthorize("getCodecTypesList", READ, resource, asyncResponse,
                 () -> getRegistryService().getCodecTypes(namespace, group)
                                      .thenApply(list -> {
-                                         CodecTypesList codecsList = new CodecTypesList().codecTypes(list);
+                                         CodecTypesList codecsList = new CodecTypesList()
+                                                 .codecTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                                          log.info("group {} {}, codecTypes {} ", namespace, group, codecsList);
                                          return Response.status(Status.OK).entity(codecsList).build();
                                      })
@@ -678,13 +680,13 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void addCodecType(String namespace, String group, String codecType, AsyncResponse asyncResponse) {
+    public void addCodecType(String namespace, String group, CodecType codecType, AsyncResponse asyncResponse) {
         log.info("addCodecType called for group {} {} codecType {}", namespace, group, codecType);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupCodecResource(group) :
                 getGroupCodecResource(group, namespace);
 
         withAuthenticateAndAuthorize("addCodecType", READ, resource, asyncResponse,
-                () -> getRegistryService().addCodecType(namespace, group, codecType)
+                () -> getRegistryService().addCodecType(namespace, group, ModelHelper.decode(codecType))
                                      .thenApply(v -> {
                                          log.info("codecType {} added to group {} {}", codecType, namespace, group);
                                          return Response.status(Status.CREATED).build();

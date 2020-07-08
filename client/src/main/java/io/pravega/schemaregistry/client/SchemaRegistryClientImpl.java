@@ -14,6 +14,7 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -423,13 +424,13 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public List<String> getCodecTypes(String groupId) {
+    public List<CodecType> getCodecTypes(String groupId) {
         return withRetry(() -> {
             Response response = groupProxy.getCodecTypesList(namespace, groupId);
             CodecTypesList list = response.readEntity(CodecTypesList.class);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
-                    return list.getCodecTypes();
+                    return list.getCodecTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
                 default:
@@ -440,9 +441,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     }
 
     @Override
-    public void addCodecType(String groupId, String codecType) {
+    public void addCodecType(String groupId, CodecType codecType) {
         withRetry(() -> {
-            Response response = groupProxy.addCodecType(namespace, groupId, codecType);
+            Response response = groupProxy.addCodecType(namespace, groupId, ModelHelper.encode(codecType));
 
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case CREATED:

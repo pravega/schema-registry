@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.contract.v1;
 import com.google.common.annotations.Beta;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
@@ -66,7 +67,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while creating a Group", response = Void.class)})
         Response addCodecType(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace, 
                               @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                              @ApiParam(value = "The codec type", required = true) String codecType);
+                              @ApiParam(value = "The codec type", required = true) CodecType codecType);
 
         @POST
         @Path("/{groupName}/schemas")
@@ -316,7 +317,7 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while registering codectype to a Group", response = Void.class)})
         void addCodecType(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                           @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                          @ApiParam(value = "Add codec type", required = true) String codecType,
+                          @ApiParam(value = "The codec type", required = true) CodecType codecType,
                           @Suspended AsyncResponse asyncResponse);
 
         @POST

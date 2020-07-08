@@ -30,6 +30,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.Test1;
@@ -125,9 +126,9 @@ public class EncryptionDemo {
     }
 
     private void startReader() {
-        List<String> list = client.getCodecTypes(groupId);
+        List<CodecType> list = client.getCodecTypes(groupId);
         assert 1 == list.size();
-        assert list.stream().anyMatch(x -> x.equals(myEncryption));
+        assert list.stream().anyMatch(x -> x.getName().equals(myEncryption));
         Codec myCodec = getMyCodec(encryptionkey);
 
         // region new reader with additional codec
@@ -167,10 +168,10 @@ public class EncryptionDemo {
     private Codec getMyCodec(String encryptionkey) {
         return new Codec() {
             private final byte[] key = encryptionkey.getBytes(Charsets.UTF_8);
-
+            private final CodecType codecType = new CodecType(myEncryption);
             @Override
-            public String getCodecType() {
-                return myEncryption;
+            public CodecType getCodecType() {
+                return codecType;
             }
 
             @SneakyThrows

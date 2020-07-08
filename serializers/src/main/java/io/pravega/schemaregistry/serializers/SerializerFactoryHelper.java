@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -52,7 +53,7 @@ class SerializerFactoryHelper {
 
     private static void failOnCodecMismatch(SchemaRegistryClient client, SerializerConfig config) {
         if (config.isFailOnCodecMismatch()) {
-            List<String> codecTypesInGroup = client.getCodecTypes(config.getGroupId());
+            List<CodecType> codecTypesInGroup = client.getCodecTypes(config.getGroupId());
             if (!config.getDecoder().getCodecTypes().containsAll(codecTypesInGroup)) {
                 log.warn("Not all CodecTypes are supported by reader. Required codecTypes = {}", codecTypesInGroup);
                 throw new RuntimeException(String.format("Need all codecTypes in %s", codecTypesInGroup.toString()));

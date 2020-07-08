@@ -39,6 +39,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -380,10 +381,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String bigString = generateBigString(1);
         writer3.writeEvent(new Test1(bigString, 1)).join();
 
-        List<String> list = client.getCodecTypes(groupId);
+        List<CodecType> list = client.getCodecTypes(groupId);
         assertEquals(2, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getMimeType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodecType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodecType())));
         // endregion
         
         // region writer with codec snappy
@@ -402,9 +403,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         list = client.getCodecTypes(groupId);
         assertEquals(3, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getMimeType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getMimeType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodecType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodecType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodecType())));
         // endregion
         
         // region reader
@@ -429,10 +430,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // endregion
 
         // region writer with custom codec
-        String mycodec = "mycodec";
+        CodecType mycodec = new CodecType("mycodec");
         Codec myCodec = new Codec() {
             @Override
-            public String getCodecType() {
+            public CodecType getCodecType() {
                 return mycodec;
             }
 
@@ -464,9 +465,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         list = client.getCodecTypes(groupId);
         assertEquals(4, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getMimeType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getMimeType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getMimeType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodecType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodecType())));
+        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodecType())));
         assertTrue(list.stream().anyMatch(x -> x.equals(mycodec)));
         reader.close();
 

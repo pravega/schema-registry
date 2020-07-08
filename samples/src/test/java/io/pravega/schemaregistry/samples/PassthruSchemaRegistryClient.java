@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.samples;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -150,12 +151,12 @@ public class PassthruSchemaRegistryClient implements SchemaRegistryClient {
     }
 
     @Override
-    public List<String> getCodecTypes(String group) {
+    public List<CodecType> getCodecTypes(String group) {
         return service.getCodecTypes(namespace, group).join();
     }
 
     @Override
-    public void addCodecType(String group, String codecType) {
+    public void addCodecType(String group, CodecType codecType) {
         service.addCodecType(namespace, group, codecType).join();
     }
 }
