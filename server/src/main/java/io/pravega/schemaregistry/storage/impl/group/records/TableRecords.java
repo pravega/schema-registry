@@ -45,6 +45,7 @@ public interface TableRecords {
                     .put(GroupPropertyKey.class, GroupPropertiesRecord.SERIALIZER)
                     .put(ValidationPolicyKey.class, ValidationRecord.SERIALIZER)
                     .put(Etag.class, Etag.SERIALIZER)
+                    .put(CodecTypeKey.class, CodecTypeValue.SERIALIZER)
                     .put(CodecTypesKey.class, CodecTypesListValue.SERIALIZER)
                     .put(LatestSchemasKey.class, LatestSchemasValue.SERIALIZER)
                     .put(EncodingIdRecord.class, EncodingInfoRecord.SERIALIZER)
@@ -592,6 +593,88 @@ public interface TableRecords {
                 ImmutableList.Builder<String> builder = ImmutableList.<String>builder();
                 source.readCollection(DataInput::readUTF, builder);
                 b.codecTypes(builder.build());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class CodecTypeKey implements TableKey {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final String codecTypeName;
+        
+        private static class CodecTypeKeyBuilder implements ObjectBuilder<CodecTypeKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypeKey, CodecTypeKey.CodecTypeKeyBuilder> {
+            @Override
+            protected CodecTypeKey.CodecTypeKeyBuilder newBuilder() {
+                return CodecTypeKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(CodecTypeKey e, RevisionDataOutput target) throws IOException {
+                target.writeUTF(e.getCodecTypeName());
+            }
+
+            private void read00(RevisionDataInput source, CodecTypeKey.CodecTypeKeyBuilder b) throws IOException {
+                b.codecTypeName(source.readUTF());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class CodecTypeValue implements TableValue {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final ImmutableMap<String, String> protperties;
+
+        @SneakyThrows(IOException.class)
+        @Override
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class CodecTypeValueBuilder implements ObjectBuilder<CodecTypeValue> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypeValue, CodecTypeValue.CodecTypeValueBuilder> {
+            @Override
+            protected CodecTypeValue.CodecTypeValueBuilder newBuilder() {
+                return CodecTypeValue.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(CodecTypeValue e, RevisionDataOutput target) throws IOException {
+                target.writeMap(e.protperties, DataOutput::writeUTF, DataOutput::writeUTF);
+            }
+
+            private void read00(RevisionDataInput source, CodecTypeValue.CodecTypeValueBuilder b) throws IOException {
+                ImmutableMap.Builder<String, String> builder = ImmutableMap.builder();
+                source.readMap(DataInput::readUTF, DataInput::readUTF, builder);
+                b.protperties(builder.build());
             }
         }
     }

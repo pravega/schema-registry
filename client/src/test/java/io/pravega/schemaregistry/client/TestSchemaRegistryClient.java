@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.client;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -311,7 +312,7 @@ public class TestSchemaRegistryClient {
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
-        String codecType = "gzip";
+        CodecType codecType = new CodecType("gzip");
         EncodingInfo encodingInfo = new EncodingInfo(versionInfo, schemaInfo, codecType);
         EncodingId encodingId = new EncodingId(5);
         doReturn(ModelHelper.encode(encodingInfo)).when(response).readEntity(
@@ -567,16 +568,16 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).getCodecTypesList(any(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        String codecType = "gzip";
-        String codecType1 = "snappy";
+        CodecType codecType = new CodecType("gzip");
+        CodecType codecType1 = new CodecType("snappy");
         CodecTypesList codecTypesList = new CodecTypesList();
-        codecTypesList.addCodecTypesItem(codecType);
-        codecTypesList.addCodecTypesItem(codecType1);
+        codecTypesList.addCodecTypesItem(ModelHelper.encode(codecType));
+        codecTypesList.addCodecTypesItem(ModelHelper.encode(codecType1));
         doReturn(codecTypesList).when(response).readEntity(CodecTypesList.class);
-        List<String> codecTypesList1 = client.getCodecTypes("mygroup");
+        List<CodecType> codecTypesList1 = client.getCodecTypes("mygroup");
         assertEquals(2, codecTypesList1.size());
-        assertEquals("gzip", codecTypesList1.get(0));
-        assertEquals("snappy", codecTypesList1.get(1));
+        assertEquals("gzip", codecTypesList1.get(0).getName());
+        assertEquals("snappy", codecTypesList1.get(1).getName());
         //NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -595,7 +596,7 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).addCodecType(any(), anyString(), any());
 
         doReturn(Response.Status.CREATED.getStatusCode()).when(response).getStatus();
-        String codecType = "gzip";
+        CodecType codecType = new CodecType("gzip");
         client.addCodecType("mygroup", codecType);
         assertEquals(Response.Status.CREATED.getStatusCode(), response.getStatus());
         //NotFound Exception

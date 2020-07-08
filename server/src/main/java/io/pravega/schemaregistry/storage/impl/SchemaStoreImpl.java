@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.storage.impl;
 
 import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -156,12 +157,12 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<String>> getCodecTypes(String namespace, String groupId) {
+    public CompletableFuture<List<CodecType>> getCodecTypes(String namespace, String groupId) {
         return getGroup(namespace, groupId).thenCompose(Group::getCodecTypes);
     }
 
     @Override
-    public CompletableFuture<Void> addCodecType(String namespace, String groupId, String codecType) {
+    public CompletableFuture<Void> addCodecType(String namespace, String groupId, CodecType codecType) {
         return getGroup(namespace, groupId).thenCompose(grp -> grp.addCodecType(codecType));
     }
 

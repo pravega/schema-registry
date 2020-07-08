@@ -24,6 +24,7 @@ import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.BackwardAndForward;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -586,7 +587,7 @@ public class SchemaRegistryService {
      * @param group     Name of group.
      * @return CompletableFuture that holds list of compressions used for encoding in the group.
      */
-    public CompletableFuture<List<String>> getCodecTypes(String namespace, String group) {
+    public CompletableFuture<List<CodecType>> getCodecTypes(String namespace, String group) {
         Preconditions.checkArgument(group != null);
         log.debug("Group {} {}, getCodecTypes.", namespace, group);
 
@@ -609,7 +610,7 @@ public class SchemaRegistryService {
      * @param codecType codec type to add.
      * @return CompletableFuture which when completed successfully will indicate successful addition of codecType to group.
      */
-    public CompletableFuture<Void> addCodecType(String namespace, String group, String codecType) {
+    public CompletableFuture<Void> addCodecType(String namespace, String group, CodecType codecType) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(codecType != null);
 

@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.client;
 
 import com.google.common.annotations.Beta;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
@@ -302,7 +303,7 @@ public interface SchemaRegistryClient {
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    List<String> getCodecTypes(String groupId) throws ResourceNotFoundException, UnauthorizedException;
+    List<CodecType> getCodecTypes(String groupId) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Add new codec type to be used in encoding in the group. Adding a new codectype is backward incompatible. 
@@ -313,7 +314,7 @@ public interface SchemaRegistryClient {
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
      */
-    void addCodecType(String groupId, String codecType) throws ResourceNotFoundException, UnauthorizedException;
+    void addCodecType(String groupId, CodecType codecType) throws ResourceNotFoundException, UnauthorizedException;
 
     /**
      * Gets complete schema evolution history of the group with schemas, versions, compatibility policy and  

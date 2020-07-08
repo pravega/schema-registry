@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.storage;
 
 import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -291,7 +292,7 @@ public interface SchemaStore {
      * @param group group 
      * @return CompletableFuture that holds list of codec types.  
      */
-    CompletableFuture<List<String>> getCodecTypes(String namespace, String group);
+    CompletableFuture<List<CodecType>> getCodecTypes(String namespace, String group);
 
     /**
      * Add a new codectype to the group. This api is idempotent. 
@@ -301,7 +302,7 @@ public interface SchemaStore {
      * @param codecType codectype to add
      * @return CompletableFuture that is completed successfully if the codec is added.  
      */
-    CompletableFuture<Void> addCodecType(String namespace, String group, String codecType);
+    CompletableFuture<Void> addCodecType(String namespace, String group, CodecType codecType);
 
     /**
      * Gets the schema evolution history of the group with respect to schema additions. the history of the group is ordered by
