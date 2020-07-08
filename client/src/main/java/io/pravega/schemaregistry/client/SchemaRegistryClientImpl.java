@@ -24,7 +24,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypes;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.GetEncodingIdRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
@@ -427,7 +427,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public List<CodecType> getCodecTypes(String groupId) {
         return withRetry(() -> {
             Response response = groupProxy.getCodecTypesList(namespace, groupId);
-            CodecTypesList list = response.readEntity(CodecTypesList.class);
+            CodecTypes list = response.readEntity(CodecTypes.class);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
                     return list.getCodecTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());

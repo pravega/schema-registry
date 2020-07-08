@@ -19,7 +19,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
-import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypesList;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecTypes;
 import io.pravega.schemaregistry.contract.generated.rest.model.CreateGroupRequest;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingId;
 import io.pravega.schemaregistry.contract.generated.rest.model.EncodingInfo;
@@ -659,7 +659,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         withAuthenticateAndAuthorize("getCodecTypesList", READ, resource, asyncResponse,
                 () -> getRegistryService().getCodecTypes(namespace, group)
                                      .thenApply(list -> {
-                                         CodecTypesList codecsList = new CodecTypesList()
+                                         CodecTypes codecsList = new CodecTypes()
                                                  .codecTypes(list.stream().map(ModelHelper::encode).collect(Collectors.toList()));
                                          log.info("group {} {}, codecTypes {} ", namespace, group, codecsList);
                                          return Response.status(Status.OK).entity(codecsList).build();
