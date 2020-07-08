@@ -310,7 +310,7 @@ public class SerializerTest {
         s = serializer3.serialize(string);
         Object jsonNode = generic3.deserialize(s);
         assertTrue(((WithSchema) jsonNode).getObject() instanceof TextNode);
-        assertEquals(((TextNode)((WithSchema) jsonNode).getObject()).textValue(), string);
+        assertEquals(((TextNode) ((WithSchema) jsonNode).getObject()).textValue(), string);
         // multi type
         DerivedUser2 user2 = new DerivedUser2("user", new Address("street", "city"), 2, "user2");
 
