@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.samples.demo.serializationformats;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.google.protobuf.DescriptorProtos;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
 import io.pravega.client.admin.ReaderGroupManager;
@@ -28,7 +27,6 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.schemaregistry.GroupIdGenerator;
-import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -44,13 +42,11 @@ import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.shared.NameUtils;
 import lombok.SneakyThrows;
 
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Scanner;
 
 /**
@@ -251,11 +247,7 @@ public class AllFormatInSingleStreamDemo {
 
     @SneakyThrows
     private EventStreamWriter<ProtobufTest.Message1> createProtobufWriter(String groupId) {
-        Path path = Paths.get("samples/resources/proto/protobufTest.pb");
-        byte[] schemaBytes = Files.readAllBytes(path);
-        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
-
-        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)

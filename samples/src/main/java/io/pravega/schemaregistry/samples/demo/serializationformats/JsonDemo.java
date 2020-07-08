@@ -114,7 +114,7 @@ public class JsonDemo {
                                                                 .groupId(groupId)
                                                                 .registerSchema(true)
                                                                 .registryClient(client)
-                                                                .tagWithEncodingId(encodeHeaders)
+                                                                .writeEncodingHeader(encodeHeaders)
                                                                 .build();
             // region writer
             Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);

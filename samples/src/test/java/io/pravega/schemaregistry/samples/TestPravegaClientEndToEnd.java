@@ -803,11 +803,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(), false, ImmutableMap.of()));
 
-        Path path = Paths.get("resources/proto/protobufTest.pb");
-        byte[] schemaBytes = Files.readAllBytes(path);
-        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
-
-        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -816,7 +812,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     false)
                                                             .registerSchema(true)
                                                             .registryClient(client)
-                                                            .tagWithEncodingId(encodeHeaders)
+                                                            .writeEncodingHeader(encodeHeaders)
                                                             .build();
         // region writer
         Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
@@ -863,6 +859,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String rg3 = "rg3" + encodeHeaders;
         readerGroupManager.createReaderGroup(rg3,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        Path path = Paths.get("resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
         ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
         genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
@@ -911,13 +911,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(), true));
 
-        Path path = Paths.get("resources/proto/protobufTest.pb");
-        byte[] schemaBytes = Files.readAllBytes(path);
-        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
-
-        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class, descriptorSet);
-        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class, descriptorSet);
+        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class);
+        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class);
+        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
@@ -1045,7 +1041,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     false)
                                                             .registerSchema(true)
                                                             .registryClient(client)
-                                                            .tagWithEncodingId(encodeHeaders)
+                                                            .writeEncodingHeader(encodeHeaders)
                                                             .build();
         // region writer
         Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
@@ -1227,11 +1223,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // endregion
 
         // region proto
-        Path path = Paths.get("resources/proto/protobufTest.pb");
-        byte[] schemaBytes = Files.readAllBytes(path);
-        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
-
-        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class, descriptorSet);
+        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
         Serializer<ProtobufTest.Message1> serializer2 = SerializerFactory.protobufSerializer(serializerConfig, schema);
 
         EventStreamWriter<ProtobufTest.Message1> protoWriter = clientFactory

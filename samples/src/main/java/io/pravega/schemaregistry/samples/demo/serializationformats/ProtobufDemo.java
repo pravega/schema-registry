@@ -100,17 +100,13 @@ public class ProtobufDemo {
             client.addGroup(groupId, new GroupProperties(serializationFormat,
                     Compatibility.allowAny(), false, ImmutableMap.of()));
 
-            Path path = Paths.get("samples/resources/proto/protobufTest.pb");
-            byte[] schemaBytes = Files.readAllBytes(path);
-            DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
-
-            ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class, descriptorSet);
+            ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
                                                                 .registerSchema(true)
                                                                 .registryClient(client)
-                                                                .tagWithEncodingId(encodeHeaders)
+                                                                .writeEncodingHeader(encodeHeaders)
                                                                 .build();
             // region writer
             Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
@@ -155,6 +151,10 @@ public class ProtobufDemo {
                     readerGroupManager.createReaderGroup(rg3,
                             ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
+                    Path path = Paths.get("samples/resources/proto/protobufTest.pb");
+                    byte[] schemaBytes = Files.readAllBytes(path);
+                    DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+
                     ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
                     genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
 
@@ -183,13 +183,9 @@ public class ProtobufDemo {
                     Compatibility.allowAny(),
                     true));
 
-            Path path = Paths.get("samples/resources/proto/protobufTest.pb");
-            byte[] schemaBytes = Files.readAllBytes(path);
-            DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
-
-            ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class, descriptorSet);
-            ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class, descriptorSet);
-            ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class, descriptorSet);
+            ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class);
+            ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class);
+            ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class);
 
             SerializerConfig serializerConfig = SerializerConfig.builder()
                                                                 .groupId(groupId)
