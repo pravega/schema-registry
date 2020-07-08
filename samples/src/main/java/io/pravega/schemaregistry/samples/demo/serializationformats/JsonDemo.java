@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.samples.demo.serializationformats;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
@@ -113,6 +114,7 @@ public class JsonDemo {
                                                                 .groupId(groupId)
                                                                 .registerSchema(true)
                                                                 .registryClient(client)
+                                                                .tagWithEncodingId(encodeHeaders)
                                                                 .build();
             // region writer
             Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
@@ -143,13 +145,13 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
-                EventStreamReader<WithSchema<Object>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<WithSchema<JsonNode>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<WithSchema<Object>> event2 = reader2.readNextEvent(1000);
+                EventRead<WithSchema<JsonNode>> event2 = reader2.readNextEvent(1000);
                 assert event2.getEvent() != null;
-                WithSchema<Object> obj = event2.getEvent();
+                WithSchema<JsonNode> obj = event2.getEvent();
 
                 JsonSchema jsonSchema = obj.getJsonSchema();
                 if (encodeHeaders) {
@@ -221,11 +223,11 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
 
-                EventStreamReader<WithSchema<Object>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<WithSchema<JsonNode>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<WithSchema<Object>> genEvent = reader2.readNextEvent(1000);
+                EventRead<WithSchema<JsonNode>> genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;
                 genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;
@@ -240,12 +242,12 @@ public class JsonDemo {
                 // add only one schema
                 map2.put(DerivedUser1.class, schema1);
 
-                Serializer<Either<User, WithSchema<Object>>> eitherDeserializer =
+                Serializer<Either<User, WithSchema<JsonNode>>> eitherDeserializer =
                         SerializerFactory.jsonTypedOrGenericDeserializer(serializerConfig, map2);
 
-                EventStreamReader<Either<User, WithSchema<Object>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Either<User, WithSchema<JsonNode>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Either<User, WithSchema<Object>>> e1 = reader3.readNextEvent(1000);
+                EventRead<Either<User, WithSchema<JsonNode>>> e1 = reader3.readNextEvent(1000);
                 assert e1.getEvent() != null;
                 assert e1.getEvent().isRight();
                 
@@ -257,4 +259,3 @@ public class JsonDemo {
         }
     }
 }
-

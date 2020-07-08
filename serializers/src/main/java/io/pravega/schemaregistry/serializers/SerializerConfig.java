@@ -75,10 +75,23 @@ public class SerializerConfig {
     private final boolean failOnCodecMismatch;
 
     /**
-     * Flag to tell the serializer if the group should be created automatically.
+     * Flag to tell the serializer/deserializer if the group should be created automatically.
      * It is recommended to register keep this flag as false in production systems and create groups and add schemas
      */
     private final boolean createGroup;
+
+    /**
+     * Flag to tell the serializer/deserializer if the encoding id should be added as a header with each event.
+     * By default this is set to true. If users choose to not add the header, they should do so in all their writer and 
+     * reader applications for the given stream. 
+     *
+     * Adding the event header is a requirement for following cases: 
+     * If {@link SerializationFormat#Avro} is chosen for a group, the event header cannot be false.
+     * If streams can have multiple types of events, this cannot be false.
+     * If streams can multiple formats of events, this cannot be false.
+     */
+    private final boolean tagWithEncodingId;
+
     /**
      * Group properties to use for creating the group if createGroup is set to true.
      */
@@ -86,7 +99,8 @@ public class SerializerConfig {
 
     private SerializerConfig(String groupId, Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient,
                              boolean registerSchema, boolean registerCodec, Codec codec, Decoder decoder, boolean failOnCodecMismatch,
-                             boolean createGroup, GroupProperties groupProperties) {
+                             boolean createGroup, boolean tagWithEncodingId, GroupProperties groupProperties) {
+        this.tagWithEncodingId = tagWithEncodingId;
         Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId), "Group id needs to be supplied");
         Preconditions.checkArgument(registryConfigOrClient != null, "Either registry client or config needs to be supplied");
         this.groupId = groupId;
@@ -109,6 +123,7 @@ public class SerializerConfig {
         private boolean registerCodec = false;
         private boolean createGroup = false;
         private boolean failOnCodecMismatch = true;
+        private boolean tagWithEncodingId = true;
         private Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient = null;
 
         private GroupProperties groupProperties = GroupProperties.builder().build();

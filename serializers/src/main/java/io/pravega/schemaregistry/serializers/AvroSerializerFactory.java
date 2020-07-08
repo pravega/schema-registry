@@ -28,36 +28,41 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
  */
 @Slf4j
 class AvroSerializerFactory {
-    static <T> Serializer<T> serializer(SerializerConfig config, AvroSchema<T> schemaData) {
+    static <T> Serializer<T> serializer(SerializerConfig config, AvroSchema<T> schema) {
         Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(schemaData);
+        Preconditions.checkNotNull(schema);
+        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         String groupId = config.getGroupId();
-        return new AvroSerializer<>(groupId, schemaRegistryClient, schemaData, config.getCodec(), config.isRegisterSchema());
+        return new AvroSerializer<>(groupId, schemaRegistryClient, schema, config.getCodec(), config.isRegisterSchema());
     }
 
-    static <T> Serializer<T> deserializer(SerializerConfig config, AvroSchema<T> schemaData) {
+    static <T> Serializer<T> deserializer(SerializerConfig config, AvroSchema<T> schema) {
         Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(schemaData);
+        Preconditions.checkNotNull(schema);
+        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
         String groupId = config.getGroupId();
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AvroDeserlizer<>(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
+        return new AvroDeserlizer<>(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache);
     }
 
-    static Serializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schemaData) {
+    static Serializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AvroGenericDeserlizer(groupId, schemaRegistryClient, schemaData, config.getDecoder(), encodingCache);
+        return new AvroGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache);
     }
 
     static <T> Serializer<T> multiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
+        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
 
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
@@ -72,6 +77,7 @@ class AvroSerializerFactory {
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
+        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
 
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
@@ -89,6 +95,7 @@ class AvroSerializerFactory {
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
+        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
 
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);

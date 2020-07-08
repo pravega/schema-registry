@@ -24,8 +24,6 @@ import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 @Slf4j
 abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
@@ -37,22 +35,23 @@ abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
     // This can be null. If no schema is supplied, it means the intent is to deserialize into writer schema. 
     // If headers are not encoded, then this will be the latest schema from the registry
     private final SchemaInfo schemaInfo;
-    private final AtomicBoolean encodeHeader;
+    private final boolean encodeHeader;
     private final SerializerConfig.Decoder decoder;
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
-    
+
     protected AbstractDeserializer(String groupId,
                                    SchemaRegistryClient client,
                                    @Nullable Schema<T> schema,
                                    boolean skipHeaders,
                                    SerializerConfig.Decoder decoder,
-                                   EncodingCache encodingCache) {
+                                   EncodingCache encodingCache,
+                                   boolean encodeHeader) {
         this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
         this.schemaInfo = schema == null ? null : schema.getSchemaInfo();
-        this.encodeHeader = new AtomicBoolean();
+        this.encodeHeader = encodeHeader;
         this.skipHeaders = skipHeaders;
         this.decoder = decoder;
             
@@ -63,18 +62,13 @@ abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
     private void initialize() {
         GroupProperties groupProperties = client.getGroupProperties(groupId);
 
-        Map<String, String> properties = groupProperties.getProperties();
-        boolean toEncodeHeader = !properties.containsKey(SerializerFactory.ENCODE) ||
-                Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
-        this.encodeHeader.set(toEncodeHeader);
-
         if (schemaInfo != null) {
             log.info("Validate caller supplied schema.");
             if (!client.canReadUsing(groupId, schemaInfo)) {
                 throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.getType());
             }
         } else {
-            if (!this.encodeHeader.get()) {
+            if (!this.encodeHeader) {
                 log.warn("No reader schema is supplied and stream does not have encoding headers.");
             }
         }
@@ -84,7 +78,7 @@ abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
     @Override
     public T deserialize(ByteBuffer data) {
         int start = data.arrayOffset() + data.position();
-        if (this.encodeHeader.get()) {
+        if (this.encodeHeader) {
             SchemaInfo writerSchema = null;
             ByteBuffer decoded;
             if (skipHeaders) {
@@ -119,6 +113,6 @@ abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
     protected abstract T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) throws IOException;
     
     boolean isEncodeHeader() {
-        return encodeHeader.get();
+        return encodeHeader;
     }
 }

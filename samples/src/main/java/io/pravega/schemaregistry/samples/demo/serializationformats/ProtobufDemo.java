@@ -98,8 +98,7 @@ public class ProtobufDemo {
 
             SerializationFormat serializationFormat = SerializationFormat.Protobuf;
             client.addGroup(groupId, new GroupProperties(serializationFormat,
-                    Compatibility.allowAny(),
-                    false, ImmutableMap.of(SerializerFactory.ENCODE, Boolean.toString(encodeHeaders))));
+                    Compatibility.allowAny(), false, ImmutableMap.of()));
 
             Path path = Paths.get("samples/resources/proto/protobufTest.pb");
             byte[] schemaBytes = Files.readAllBytes(path);
@@ -111,6 +110,7 @@ public class ProtobufDemo {
                                                                 .groupId(groupId)
                                                                 .registerSchema(true)
                                                                 .registryClient(client)
+                                                                .tagWithEncodingId(encodeHeaders)
                                                                 .build();
             // region writer
             Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);

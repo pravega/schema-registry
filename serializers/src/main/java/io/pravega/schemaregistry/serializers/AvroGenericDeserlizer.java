@@ -28,7 +28,7 @@ class AvroGenericDeserlizer extends AbstractDeserializer<Object> {
 
     AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<Object> schema,
                           SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
-        super(groupId, client, schema, false, decoder, encodingCache);
+        super(groupId, client, schema, false, decoder, encodingCache, true);
         this.knownSchemas = new ConcurrentHashMap<>();
     }
 

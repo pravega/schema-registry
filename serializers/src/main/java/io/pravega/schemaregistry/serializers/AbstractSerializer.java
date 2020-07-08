@@ -13,7 +13,6 @@ import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.EncodingId;
-import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.schemas.Schema;
@@ -24,8 +23,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
-import java.util.Map;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 abstract class AbstractSerializer<T> extends FailingSerializer<T> {
@@ -35,17 +32,18 @@ abstract class AbstractSerializer<T> extends FailingSerializer<T> {
     
     private final SchemaInfo schemaInfo;
     private final AtomicReference<EncodingId> encodingId;
-    private final AtomicBoolean encodeHeader;
+    private final boolean encodeHeader;
     private final SchemaRegistryClient client;
     @Getter
     private final Codec codec;
     private final boolean registerSchema;
-
+    
     protected AbstractSerializer(String groupId,
                                  SchemaRegistryClient client,
                                  Schema<T> schema,
                                  Codec codec,
-                                 boolean registerSchema) {
+                                 boolean registerSchema, 
+                                 boolean encodeHeader) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(codec);
@@ -57,17 +55,11 @@ abstract class AbstractSerializer<T> extends FailingSerializer<T> {
         this.registerSchema = registerSchema;
         this.encodingId = new AtomicReference<>();
         this.codec = codec;
-        this.encodeHeader = new AtomicBoolean();
+        this.encodeHeader = encodeHeader;
         initialize();
     }
     
     private void initialize() {
-        GroupProperties groupProperties = client.getGroupProperties(groupId);
-
-        Map<String, String> properties = groupProperties.getProperties();
-        boolean toEncodeHeader = !properties.containsKey(SerializerFactory.ENCODE) ||
-                Boolean.parseBoolean(properties.get(SerializerFactory.ENCODE));
-        encodeHeader.set(toEncodeHeader);
         VersionInfo version;
         if (registerSchema) {
             // register schema
@@ -76,7 +68,7 @@ abstract class AbstractSerializer<T> extends FailingSerializer<T> {
             // get already registered schema version. If schema is not registered, this will throw an exception. 
             version = client.getVersionForSchema(groupId, schemaInfo);
         }
-        if (toEncodeHeader) {
+        if (encodeHeader) {
             encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType()));
         }
     }
@@ -98,7 +90,7 @@ abstract class AbstractSerializer<T> extends FailingSerializer<T> {
         byte[] serialized = dataStream.toByteArray();
         
         ByteBuffer byteBuffer;
-        if (this.encodeHeader.get()) {
+        if (this.encodeHeader) {
             Preconditions.checkNotNull(schemaInfo);
             ByteBuffer encoded = codec.encode(ByteBuffer.wrap(serialized));
             int bufferSize = 5 + encoded.remaining();
