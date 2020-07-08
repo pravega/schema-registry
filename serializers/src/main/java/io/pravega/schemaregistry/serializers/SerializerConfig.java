@@ -74,13 +74,11 @@ public class SerializerConfig {
      * Tells the deserializer that if supplied decoder codecTypes do not match group codecTypes then fail and exit upfront.
      */
     private final boolean failOnCodecMismatch;
-
     /**
      * Flag to tell the serializer/deserializer if the group should be created automatically.
      * It is recommended to register keep this flag as false in production systems and create groups and add schemas
      */
     private final boolean createGroup;
-
     /**
      * Flag to tell the serializer/deserializer if the encoding id should be added as a header with each event.
      * By default this is set to true. If users choose to not add the header, they should do so in all their writer and 
@@ -91,8 +89,7 @@ public class SerializerConfig {
      * If streams can have multiple types of events, this cannot be false.
      * If streams can multiple formats of events, this cannot be false.
      */
-    private final boolean tagWithEncodingId;
-
+    private final boolean writeEncodingHeader;
     /**
      * Group properties to use for creating the group if createGroup is set to true.
      */
@@ -100,8 +97,7 @@ public class SerializerConfig {
 
     private SerializerConfig(String groupId, Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient,
                              boolean registerSchema, boolean registerCodec, Codec codec, Decoder decoder, boolean failOnCodecMismatch,
-                             boolean createGroup, boolean tagWithEncodingId, GroupProperties groupProperties) {
-        this.tagWithEncodingId = tagWithEncodingId;
+                             boolean createGroup, boolean writeEncodingHeader, boolean validateObject, GroupProperties groupProperties) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId), "Group id needs to be supplied");
         Preconditions.checkArgument(registryConfigOrClient != null, "Either registry client or config needs to be supplied");
         this.groupId = groupId;
@@ -112,6 +108,7 @@ public class SerializerConfig {
         this.decoder = decoder;
         this.failOnCodecMismatch = failOnCodecMismatch;
         this.createGroup = createGroup;
+        this.writeEncodingHeader = writeEncodingHeader;
         this.groupProperties = groupProperties;
     }
 
@@ -124,7 +121,7 @@ public class SerializerConfig {
         private boolean registerCodec = false;
         private boolean createGroup = false;
         private boolean failOnCodecMismatch = true;
-        private boolean tagWithEncodingId = true;
+        private boolean writeEncodingHeader = true;
         private Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient = null;
 
         private GroupProperties groupProperties = GroupProperties.builder().build();
