@@ -97,7 +97,7 @@ public class SerializerConfig {
 
     private SerializerConfig(String groupId, Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient,
                              boolean registerSchema, boolean registerCodec, Codec codec, Decoder decoder, boolean failOnCodecMismatch,
-                             boolean createGroup, boolean writeEncodingHeader, boolean validateObject, GroupProperties groupProperties) {
+                             boolean createGroup, boolean writeEncodingHeader, GroupProperties groupProperties) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId), "Group id needs to be supplied");
         Preconditions.checkArgument(registryConfigOrClient != null, "Either registry client or config needs to be supplied");
         this.groupId = groupId;
