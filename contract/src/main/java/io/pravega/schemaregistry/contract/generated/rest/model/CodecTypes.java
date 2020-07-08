@@ -28,16 +28,16 @@ import javax.validation.constraints.*;
  */
 @ApiModel(description = "Response object for listCodecTypes.")
 
-public class CodecTypesList   {
+public class CodecTypes   {
   @JsonProperty("codecTypes")
   private List<CodecType> codecTypes = null;
 
-  public CodecTypesList codecTypes(List<CodecType> codecTypes) {
+  public CodecTypes codecTypes(List<CodecType> codecTypes) {
     this.codecTypes = codecTypes;
     return this;
   }
 
-  public CodecTypesList addCodecTypesItem(CodecType codecTypesItem) {
+  public CodecTypes addCodecTypesItem(CodecType codecTypesItem) {
     if (this.codecTypes == null) {
       this.codecTypes = new ArrayList<CodecType>();
     }
@@ -68,8 +68,8 @@ public class CodecTypesList   {
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    CodecTypesList codecTypesList = (CodecTypesList) o;
-    return Objects.equals(this.codecTypes, codecTypesList.codecTypes);
+    CodecTypes codecTypes = (CodecTypes) o;
+    return Objects.equals(this.codecTypes, codecTypes.codecTypes);
   }
 
   @Override
@@ -81,7 +81,7 @@ public class CodecTypesList   {
   @Override
   public String toString() {
     StringBuilder sb = new StringBuilder();
-    sb.append("class CodecTypesList {\n");
+    sb.append("class CodecTypes {\n");
     
     sb.append("    codecTypes: ").append(toIndentedString(codecTypes)).append("\n");
     sb.append("}");
