@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import lombok.Getter;
 import org.xerial.snappy.Snappy;
 
@@ -24,24 +25,26 @@ import java.util.zip.GZIPOutputStream;
  * Utility class for creating codecs for none, snappy or gzip. 
  */
 public enum Codecs {
-    None(Constants.NOOP, Constants.NONE),
-    GzipCompressor(Constants.GZIP_CODEC, Constants.APPLICATION_X_GZIP), 
-    SnappyCompressor(Constants.SNAPPY_CODEC, Constants.APPLICATION_X_SNAPPY_FRAMED);
+    None(Constants.NOOP, Constants.NOOP.getCodecType()),
+    GzipCompressor(Constants.GZIP_CODEC, Constants.GZIP_CODEC.getCodecType()), 
+    SnappyCompressor(Constants.SNAPPY_CODEC, Constants.SNAPPY_CODEC.getCodecType());
 
     @Getter
     private final Codec codec;
     @Getter
-    private final String mimeType;
+    private final CodecType codecType;
     
-    Codecs(Codec codec, String mimeType) {
+    Codecs(Codec codec, CodecType codecType) {
         this.codec = codec;  
-        this.mimeType = mimeType;
+        this.codecType = codecType;
     }
 
     private static class Noop implements Codec {
+        private static final CodecType CODEC_TYPE_NONE = new CodecType(Constants.NONE);
+
         @Override
-        public String getCodecType() {
-            return Constants.NONE;
+        public CodecType getCodecType() {
+            return CODEC_TYPE_NONE;
         }
 
         @Override
@@ -56,9 +59,10 @@ public enum Codecs {
     }
 
     private static class GZipCodec implements Codec {
+        private static final CodecType CODEC_TYPE_GZIP = new CodecType(Constants.APPLICATION_X_GZIP);
         @Override
-        public String getCodecType() {
-            return Constants.APPLICATION_X_GZIP;
+        public CodecType getCodecType() {
+            return CODEC_TYPE_GZIP;
         }
         
         @Override
@@ -90,9 +94,10 @@ public enum Codecs {
     }
 
     private static class SnappyCodec implements Codec {
+        private static final CodecType CODEC_TYPE_SNAPPY = new CodecType(Constants.APPLICATION_X_SNAPPY_FRAMED);
         @Override
-        public String getCodecType() {
-            return Constants.APPLICATION_X_SNAPPY_FRAMED;
+        public CodecType getCodecType() {
+            return CODEC_TYPE_SNAPPY;
         }
         
         @Override

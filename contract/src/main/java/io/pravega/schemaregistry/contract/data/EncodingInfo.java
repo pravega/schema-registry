@@ -29,5 +29,5 @@ public class EncodingInfo {
     /**
      * Codec type which is used in encoding the data. 
      */
-    private final String codecType;
+    private final CodecType codecType;
 }

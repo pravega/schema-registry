@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.codec;
 
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 
 import java.io.IOException;
@@ -19,13 +20,14 @@ import java.nio.ByteBuffer;
  */
 public interface Codec {
     /**
-     * String name identifying the Codec Type. This should be same as the codecType that is registered for the group 
-     * in schema registry service. The serializers will use this codec to encode the data and deserializers will find
+     * Codec Type object that contains a string name identifying the Codec Type. 
+     * This name should be same as the codecType that is registered for the group in schema registry service. 
+     * The serializers will use this codec to encode the data and deserializers will find
      * the decoder for the encoded data from {@link EncodingInfo#codecType}
      * 
      * @return Name of the codec. 
      */
-    String getCodecType();
+    CodecType getCodecType();
 
     /**
      * Implementation should encode the remaining bytes in the buffer and return a new ByteBuffer that includes

@@ -15,6 +15,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
@@ -135,7 +136,7 @@ public class SerializerConfig {
          * @param decoder   decoder function to use for decoding the data.
          * @return Builder.
          */
-        public SerializerConfigBuilder addDecoder(String codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+        public SerializerConfigBuilder addDecoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             this.decoder = new Decoder(codecType, decoder);
             return this;
         }
@@ -208,9 +209,9 @@ public class SerializerConfig {
     }
 
     static class Decoder {
-        private static final BiFunction<String, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
+        private static final BiFunction<CodecType, ByteBuffer, ByteBuffer> DEFAULT = (x, y) -> {
             try {
-                switch (x) {
+                switch (x.getName()) {
                     case Codecs.Constants.NONE:
                         return Codecs.None.getCodec().decode(y);
                     case Codecs.Constants.APPLICATION_X_GZIP:
@@ -226,10 +227,10 @@ public class SerializerConfig {
         };
 
         @Getter(AccessLevel.PACKAGE)
-        private final Set<String> codecTypes;
-        private final BiFunction<String, ByteBuffer, ByteBuffer> decoder;
+        private final Set<CodecType> codecTypes;
+        private final BiFunction<CodecType, ByteBuffer, ByteBuffer> decoder;
 
-        private Decoder(String codecType, Function<ByteBuffer, ByteBuffer> decoder) {
+        private Decoder(CodecType codecType, Function<ByteBuffer, ByteBuffer> decoder) {
             this.decoder = (x, y) -> {
                 if (x.equals(codecType)) {
                     return decoder.apply(y);
@@ -238,21 +239,21 @@ public class SerializerConfig {
                 }
             };
             codecTypes = new HashSet<>();
-            this.codecTypes.add(Codecs.Constants.NONE);
-            this.codecTypes.add(Codecs.Constants.APPLICATION_X_GZIP);
-            this.codecTypes.add(Codecs.Constants.APPLICATION_X_SNAPPY_FRAMED);
+            this.codecTypes.add(Codecs.None.getCodecType());
+            this.codecTypes.add(Codecs.GzipCompressor.getCodecType());
+            this.codecTypes.add(Codecs.SnappyCompressor.getCodecType());
             this.codecTypes.add(codecType);
         }
 
         private Decoder() {
             this.decoder = DEFAULT;
             codecTypes = new HashSet<>();
-            this.codecTypes.add(Codecs.Constants.NONE);
-            this.codecTypes.add(Codecs.Constants.APPLICATION_X_GZIP);
-            this.codecTypes.add(Codecs.Constants.APPLICATION_X_SNAPPY_FRAMED);
+            this.codecTypes.add(Codecs.None.getCodecType());
+            this.codecTypes.add(Codecs.GzipCompressor.getCodecType());
+            this.codecTypes.add(Codecs.SnappyCompressor.getCodecType());
         }
 
-        ByteBuffer decode(String codecType, ByteBuffer bytes) {
+        ByteBuffer decode(CodecType codecType, ByteBuffer bytes) {
             return decoder.apply(codecType, bytes);
         }
     }

@@ -16,6 +16,7 @@ package io.pravega.schemaregistry.contract.generated.rest.model;
 import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonCreator;
+import io.pravega.schemaregistry.contract.generated.rest.model.CodecType;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
 import java.util.ArrayList;
@@ -29,16 +30,16 @@ import javax.validation.constraints.*;
 
 public class CodecTypesList   {
   @JsonProperty("codecTypes")
-  private List<String> codecTypes = null;
+  private List<CodecType> codecTypes = null;
 
-  public CodecTypesList codecTypes(List<String> codecTypes) {
+  public CodecTypesList codecTypes(List<CodecType> codecTypes) {
     this.codecTypes = codecTypes;
     return this;
   }
 
-  public CodecTypesList addCodecTypesItem(String codecTypesItem) {
+  public CodecTypesList addCodecTypesItem(CodecType codecTypesItem) {
     if (this.codecTypes == null) {
-      this.codecTypes = new ArrayList<String>();
+      this.codecTypes = new ArrayList<CodecType>();
     }
     this.codecTypes.add(codecTypesItem);
     return this;
@@ -50,11 +51,11 @@ public class CodecTypesList   {
    **/
   @JsonProperty("codecTypes")
   @ApiModelProperty(value = "List of codecTypes.")
-  public List<String> getCodecTypes() {
+  public List<CodecType> getCodecTypes() {
     return codecTypes;
   }
 
-  public void setCodecTypes(List<String> codecTypes) {
+  public void setCodecTypes(List<CodecType> codecTypes) {
     this.codecTypes = codecTypes;
   }
 

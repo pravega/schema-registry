@@ -69,7 +69,7 @@ abstract class AbstractSerializer<T> extends FailingSerializer<T> {
             version = client.getVersionForSchema(groupId, schemaInfo);
         }
         if (encodeHeader) {
-            encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType()));
+            encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType().getName()));
         }
     }
     
