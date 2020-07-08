@@ -35,7 +35,7 @@ class CustomSerializerFactory {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         return new AbstractSerializer<T>(groupId, schemaRegistryClient,
-                schema, config.getCodec(), config.isRegisterSchema(), config.isTagWithEncodingId()) {
+                schema, config.getCodec(), config.isRegisterSchema(), config.isWriteEncodingHeader()) {
             @Override
             protected void serialize(T var, SchemaInfo schema, OutputStream outputStream) {
                 serializer.serialize(var, schema, outputStream);
@@ -54,7 +54,7 @@ class CustomSerializerFactory {
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         return new AbstractDeserializer<T>(groupId, schemaRegistryClient, schema, false,
-                config.getDecoder(), encodingCache, config.isTagWithEncodingId()) {
+                config.getDecoder(), encodingCache, config.isWriteEncodingHeader()) {
             @Override
             protected T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                 return deserializer.deserialize(inputStream, writerSchema, readerSchema);

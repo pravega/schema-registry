@@ -38,7 +38,7 @@ class ProtobufSerializerFactory {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         return new ProtobufSerializer<>(groupId, schemaRegistryClient, schema, config.getCodec(),
-                config.isRegisterSchema(), config.isTagWithEncodingId());
+                config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
     static <T extends GeneratedMessageV3> Serializer<T> deserializer(SerializerConfig config,
@@ -52,12 +52,12 @@ class ProtobufSerializerFactory {
 
         // schema can be null in which case deserialization will happen into dynamic message
         return new ProtobufDeserlizer<>(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache,
-                config.isTagWithEncodingId());
+                config.isWriteEncodingHeader());
     }
 
     static Serializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
         Preconditions.checkNotNull(config);
-        Preconditions.checkArgument(schema != null || config.isTagWithEncodingId(), 
+        Preconditions.checkArgument(schema != null || config.isWriteEncodingHeader(), 
                 "Either read schema should be supplied or events should be tagged with encoding ids.");
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -65,21 +65,21 @@ class ProtobufSerializerFactory {
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         return new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache,
-                config.isTagWithEncodingId());
+                config.isWriteEncodingHeader());
     }
 
     static <T extends GeneratedMessageV3> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
-        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
+        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         
         Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
                         x -> new ProtobufSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
-                                config.isRegisterSchema(), config.isTagWithEncodingId())));
+                                config.isRegisterSchema(), config.isWriteEncodingHeader())));
         return new MultiplexedSerializer<>(serializerMap);
     }
 
@@ -87,7 +87,7 @@ class ProtobufSerializerFactory {
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
-        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
+        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -96,7 +96,7 @@ class ProtobufSerializerFactory {
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache,
-                                config.isTagWithEncodingId())));
+                                config.isWriteEncodingHeader())));
         return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(), encodingCache);
     }
 
@@ -104,7 +104,7 @@ class ProtobufSerializerFactory {
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
-        Preconditions.checkArgument(config.isTagWithEncodingId(), "Events should be tagged with encoding ids.");
+        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -113,9 +113,9 @@ class ProtobufSerializerFactory {
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache, 
-                                config.isTagWithEncodingId())));
+                                config.isWriteEncodingHeader())));
         ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null,
-                config.getDecoder(), encodingCache, config.isTagWithEncodingId());
+                config.getDecoder(), encodingCache, config.isWriteEncodingHeader());
         return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer,
                 config.getDecoder(), encodingCache);
     }

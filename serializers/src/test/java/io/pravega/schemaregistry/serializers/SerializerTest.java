@@ -408,7 +408,7 @@ public class SerializerTest {
     public void testNoEncodingProto() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId")
-                                                  .tagWithEncodingId(false).build();
+                                                  .writeEncodingHeader(false).build();
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
@@ -449,7 +449,7 @@ public class SerializerTest {
     public void testNoEncodingJson() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId")
-                .tagWithEncodingId(false).build();
+                                                  .writeEncodingHeader(false).build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
