@@ -29,7 +29,7 @@ class AvroSerializer<T> extends AbstractSerializer<T> {
     private final AvroSchema<T> avroSchema;
     AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
                    Codec codec, boolean registerSchema) {
-        super(groupId, client, schema, codec, registerSchema);
+        super(groupId, client, schema, codec, registerSchema, true);
         this.avroSchema = schema;
     }
 

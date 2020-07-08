@@ -11,20 +11,20 @@ package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
-class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<Object>> {
+class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<JsonNode>> {
     private final ObjectMapper objectMapper;
 
     JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
-                            SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
-        super(groupId, client, null, false, decoder, encodingCache);
+                            SerializerConfig.Decoder decoder, EncodingCache encodingCache, boolean encodeHeader) {
+        super(groupId, client, null, false, decoder, encodingCache, encodeHeader);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
@@ -32,8 +32,8 @@ class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<Object>> {
     }
     
     @Override
-    protected WithSchema<Object> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
-        Object obj = objectMapper.readValue(inputStream, Object.class);
-        return new WithSchema<>(writerSchemaInfo, obj, (x, y) -> (Map) y);
+    protected WithSchema<JsonNode> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
+        JsonNode obj = objectMapper.readTree(inputStream);
+        return new WithSchema<>(writerSchemaInfo, obj, (x, y) -> (JsonNode) y);
     }
 }

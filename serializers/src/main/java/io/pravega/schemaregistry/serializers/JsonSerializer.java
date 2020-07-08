@@ -23,8 +23,8 @@ import java.io.OutputStream;
 class JsonSerializer<T> extends AbstractSerializer<T> {
     private final ObjectMapper objectMapper;
     JsonSerializer(String groupId, SchemaRegistryClient client, JSONSchema<T> schema,
-                   Codec codec, boolean registerSchema) {
-        super(groupId, client, schema, codec, registerSchema);
+                   Codec codec, boolean registerSchema, boolean encodeHeader) {
+        super(groupId, client, schema, codec, registerSchema, encodeHeader);
         objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);

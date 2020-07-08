@@ -10,6 +10,11 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.jsonFormatVisitors.JsonFormatTypes;
+import com.fasterxml.jackson.databind.node.TextNode;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
@@ -239,7 +244,7 @@ public class SerializerTest {
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
         JSONSchema<DerivedUser2> schema2 = JSONSchema.of(DerivedUser2.class);
-
+        
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
@@ -261,10 +266,10 @@ public class SerializerTest {
         assertEquals(deserialized, user1);
 
         serialized = serializer.serialize(user1);
-        Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
-        WithSchema<Object> generic = genericDeserializer.deserialize(serialized);
+        Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        WithSchema<JsonNode> generic = genericDeserializer.deserialize(serialized);
         assertEquals(((JSONSchema) generic.getSchema()).getSchema(), schema1.getSchema());
-        assertEquals(((Map) generic.getObject()).size(), 4);
+        assertEquals(((JsonNode) generic.getObject()).size(), 4);
 
         serialized = serializer.serialize(user1);
         Serializer<String> stringDeserializer = SerializerFactory.jsonStringDeserializer(config);
@@ -285,12 +290,33 @@ public class SerializerTest {
         
         ByteBuffer s = serializer2.serialize(jsonObject);
         str = stringDeserializer.deserialize(s);
+        
+        String stringSchema = new ObjectMapper().writeValueAsString(JsonSchema.minimalForFormat(JsonFormatTypes.STRING));
+
+        JSONSchema<Object> strSchema = JSONSchema.of("string", stringSchema);
+        VersionInfo versionInfo4 = new VersionInfo("myData", 0, 3);
+        doAnswer(x -> versionInfo4).when(client).getVersionForSchema(anyString(), eq(strSchema.getSchemaInfo()));
+        doAnswer(x -> new EncodingId(3)).when(client).getEncodingId(anyString(), eq(versionInfo4), any());
+        doAnswer(x -> new EncodingInfo(versionInfo4, strSchema.getSchemaInfo(), Codecs.None.getMimeType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(3)));
+
+        Serializer<Object> serializer3 = SerializerFactory.jsonSerializer(config, strSchema);
+        Serializer<Object> deserializer3 = SerializerFactory.jsonDeserializer(config, strSchema);
+        Serializer<WithSchema<JsonNode>> generic3 = SerializerFactory.jsonGenericDeserializer(config);
+        String string = "a";
+        s = serializer3.serialize(string);
+        Object x = deserializer3.deserialize(s);
+        assertTrue(x instanceof String);
+        assertEquals(x, string);
+        s = serializer3.serialize(string);
+        Object jsonNode = generic3.deserialize(s);
+        assertTrue(((WithSchema) jsonNode).getObject() instanceof TextNode);
+        assertEquals(((TextNode) ((WithSchema) jsonNode).getObject()).textValue(), string);
         // multi type
         DerivedUser2 user2 = new DerivedUser2("user", new Address("street", "city"), 2, "user2");
 
         JSONSchema<Object> schema1Base = JSONSchema.ofBaseType(DerivedUser1.class, Object.class);
         JSONSchema<Object> schema2Base = JSONSchema.ofBaseType(DerivedUser2.class, Object.class);
-        Map<Class<? extends Object>, JSONSchema<Object>> map = new HashMap<>();
+        Map<Class<?>, JSONSchema<Object>> map = new HashMap<>();
         map.put(DerivedUser1.class, schema1Base);
         map.put(DerivedUser2.class, schema2Base);
         Serializer<Object> multiSerializer = SerializerFactory.jsonMultiTypeSerializer(config, map);
@@ -303,11 +329,11 @@ public class SerializerTest {
         deserialized2 = multiDeserializer.deserialize(serialized);
         assertEquals(deserialized2, user2);
 
-        Map<Class<? extends Object>, JSONSchema<Object>> map2 = new HashMap<>();
+        Map<Class<?>, JSONSchema<Object>> map2 = new HashMap<>();
         map2.put(DerivedUser1.class, schema1Base);
-        Serializer<Either<Object, WithSchema<Object>>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
+        Serializer<Either<Object, WithSchema<JsonNode>>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
         serialized = multiSerializer.serialize(user1);
-        Either<Object, WithSchema<Object>> fallback = fallbackDeserializer.deserialize(serialized);
+        Either<Object, WithSchema<JsonNode>> fallback = fallbackDeserializer.deserialize(serialized);
         assertTrue(fallback.isLeft());
         assertEquals(fallback.getLeft(), user1);
 
@@ -381,7 +407,8 @@ public class SerializerTest {
     @Test
     public void testNoEncodingProto() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
-        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId")
+                                                  .tagWithEncodingId(false).build();
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
@@ -389,7 +416,7 @@ public class SerializerTest {
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any)
-                                     .properties(ImmutableMap.of(SerializerFactory.ENCODE, Boolean.toString(false))).build())
+                                     .properties(ImmutableMap.of()).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchemaVersion(anyString(), any());
@@ -421,12 +448,13 @@ public class SerializerTest {
     @Test
     public void testNoEncodingJson() throws IOException {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
-        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId")
+                .tagWithEncodingId(false).build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
         VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any)
-                .properties(ImmutableMap.of(SerializerFactory.ENCODE, Boolean.toString(false))).build())
+                .properties(ImmutableMap.of()).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
         doAnswer(x -> new SchemaWithVersion(schema1.getSchemaInfo(), versionInfo1)).when(client).getLatestSchemaVersion(anyString(), any());
@@ -444,9 +472,9 @@ public class SerializerTest {
         
         serialized = serializer.serialize(user1);
 
-        Serializer<WithSchema<Object>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
 
-        WithSchema<Object> generic = genericDeserializer.deserialize(serialized);
+        WithSchema<JsonNode> generic = genericDeserializer.deserialize(serialized);
         assertNotNull(generic.getObject());
         assertNull(generic.getSchema());
     }

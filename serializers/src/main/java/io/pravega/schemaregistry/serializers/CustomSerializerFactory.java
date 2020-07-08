@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -28,10 +29,13 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
 @Slf4j
 class CustomSerializerFactory {
     static <T> Serializer<T> serializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(schema);
+        Preconditions.checkNotNull(serializer);
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         return new AbstractSerializer<T>(groupId, schemaRegistryClient,
-                schema, config.getCodec(), config.isRegisterSchema()) {
+                schema, config.getCodec(), config.isRegisterSchema(), config.isTagWithEncodingId()) {
             @Override
             protected void serialize(T var, SchemaInfo schema, OutputStream outputStream) {
                 serializer.serialize(var, schema, outputStream);
@@ -41,6 +45,8 @@ class CustomSerializerFactory {
 
     static <T> Serializer<T> deserializer(SerializerConfig config, @Nullable Schema<T> schema,
                                           CustomDeserializer<T> deserializer) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(deserializer);
 
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
@@ -48,7 +54,7 @@ class CustomSerializerFactory {
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         return new AbstractDeserializer<T>(groupId, schemaRegistryClient, schema, false,
-                config.getDecoder(), encodingCache) {
+                config.getDecoder(), encodingCache, config.isTagWithEncodingId()) {
             @Override
             protected T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                 return deserializer.deserialize(inputStream, writerSchema, readerSchema);

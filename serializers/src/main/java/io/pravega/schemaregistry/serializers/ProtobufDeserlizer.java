@@ -22,8 +22,8 @@ public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractDe
     private final ProtobufSchema<T> protobufSchema;
     ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
                        ProtobufSchema<T> schema, SerializerConfig.Decoder decoder,
-                       EncodingCache encodingCache) {
-        super(groupId, client, schema, true, decoder, encodingCache);
+                       EncodingCache encodingCache, boolean encodeHeader) {
+        super(groupId, client, schema, true, decoder, encodingCache, encodeHeader);
         Preconditions.checkNotNull(schema);
         this.protobufSchema = schema;
     }
