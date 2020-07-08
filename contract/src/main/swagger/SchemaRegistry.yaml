@@ -538,7 +538,7 @@ paths:
         200:
           description: Found CodecTypes
           schema:
-            $ref: "#/definitions/CodecTypesList"
+            $ref: "#/definitions/CodecTypes"
         404:
           description: Group or encoding id with given name not found
         500:
@@ -877,7 +877,7 @@ definitions:
           maxLength: 1048576
     required:
       - name    
-  CodecTypesList:
+  CodecTypes:
     type: object
     description: Response object for listCodecTypes.
     properties:
