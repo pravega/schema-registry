@@ -67,7 +67,7 @@ public class AllFormatInSingleStreamDemo {
         this.client = client;
         this.scope = scope;
         this.stream = stream;
-        this.outputStream = stream + "_out";
+        this.outputStream = stream + "out";
         initialize(groupId);
     }
 
@@ -91,7 +91,7 @@ public class AllFormatInSingleStreamDemo {
         String scope = "scope" + System.currentTimeMillis();
         String stream = "stream";
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
-        String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream + "_out");
+        String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream + "out");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClient schemaRegistryClient = SchemaRegistryClientFactory.createRegistryClient(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build());
