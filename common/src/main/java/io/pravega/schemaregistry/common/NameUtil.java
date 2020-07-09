@@ -24,8 +24,7 @@ public class NameUtil {
      */
     public static String extractName(String qualifiedName) {
         Preconditions.checkNotNull(qualifiedName, "Name cannot be null");
-        int nameStart = qualifiedName.lastIndexOf(".");
-        return qualifiedName.substring(nameStart + 1);
+        return extractNameAndQualifier(qualifiedName)[0];
     }
 
     /**
