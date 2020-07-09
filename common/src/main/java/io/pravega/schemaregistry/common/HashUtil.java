@@ -9,21 +9,14 @@
  */
 package io.pravega.schemaregistry.common;
 
+import lombok.SneakyThrows;
+
 import java.math.BigInteger;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 public class HashUtil {
     private static final String SHA_256 = "SHA-256";
-    private static final MessageDigest MD;
-
-    static {
-        try {
-            MD = MessageDigest.getInstance(SHA_256);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
-    }
 
     /**
      * Computes a 256 bit hash of supplied bytes using sha-256 hash function.
@@ -31,7 +24,11 @@ public class HashUtil {
      * @param bytes bytes to compute hash of. 
      * @return a 256 bit hash of the given bytes.
      */
+    @SneakyThrows(NoSuchAlgorithmException.class)
     public static BigInteger getFingerprint(byte[] bytes) {
-        return new BigInteger(MD.digest(bytes));
+        MessageDigest md;
+        md = MessageDigest.getInstance(SHA_256);
+
+        return new BigInteger(md.digest(bytes));
     }
 }
