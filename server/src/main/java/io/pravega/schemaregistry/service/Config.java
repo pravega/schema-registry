@@ -45,19 +45,24 @@ public final class Config {
 
     public static final String SERVICE_HOST;
     public static final int SERVICE_PORT;
-    public static final String PRAVEGA_CONTROLLER_URI;
     public static final int THREAD_POOL_SIZE;
     public static final String STORE_TYPE;
 
+    public static final String PRAVEGA_CONTROLLER_URI;
+    public static final String PRAVEGA_CREDENTIALS_AUTH_METHOD;
+    public static final String PRAVEGA_CREDENTIALS_AUTH_TOKEN;
+    public static final String PRAVEGA_TLS_TRUST_STORE;
+    public static final boolean PRAVEGA_TLS_VALIDATE_HOSTNAME;
+    
     public static final boolean TLS_ENABLED;
     public static final String TLS_KEY_FILE;
     public static final String TLS_KEY_PASSWORD_FILE;
     public static final String TLS_CERT_FILE;
-    public static final String TLS_TRUST_STORE;
 
     public static final boolean AUTH_ENABLED;
     public static final String AUTH_RESOURCE_QUALIFIER;
     public static final String USER_PASSWORD_FILE;
+    public static final boolean DISABLE_BASIC_AUTHENTICATION;
 
     public static final ServiceConfig SERVICE_CONFIG;
 
@@ -66,21 +71,26 @@ public final class Config {
     //region Property Definitions
     private static final String NULL_VALUE = "{null}";
     private static final Property<String> PROPERTY_REST_IP = Property.named("service.rest.published.host.nameOrIp", "0.0.0.0");
-    private static final Property<Integer> PROPERTY_REST_PORT = Property.named("service.rest.listener.Port", 9092);
-    
-    private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.controller.url", "tcp://localhost:9090");
-    private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.storeType", "Pravega");
-    private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPoolSize", 50);
+    private static final Property<Integer> PROPERTY_REST_PORT = Property.named("service.rest.listener.port", 9092);
+
+    private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.store.type.name", "Pravega");
+    private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.store.pravega.controller.connect.uri", "tcp://localhost:9090");
+    private static final Property<String> PROPERTY_PRAVEGA_CREDENTIALS_AUTH_METHOD = Property.named("service.store.pravega.credentials.security.auth.method", "");
+    private static final Property<String> PROPERTY_PRAVEGA_CREDENTIALS_AUTH_TOKEN = Property.named("service.store.pravega.credentials.security.auth.token", "");
+    private static final Property<String> PROPERTY_PRAVEGA_TLS_TRUST_STORE = Property.named("service.store.pravega.security.tls.trustStore.location", "");
+    private static final Property<Boolean> PROPERTY_PRAVEGA_TLS_VALIDATE_HOSTNAME = Property.named("service.store.pravega.security.tls.validate.hostName", true);
+
+    private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPool.size", 50);
 
     private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enabled", false);
     private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("security.tls.server.certificate.location", "");
-    private static final Property<String> PROPERTY_TLS_TRUST_STORE = Property.named("security.tls.trustStore.location", "");
     private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("security.tls.server.privateKey.location", "");
     private static final Property<String> PROPERTY_TLS_KEY_PASSWORD_FILE = Property.named("security.tls.server.privateKey.pwd.location", "");
 
     private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("security.auth.enable", false);
     private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("security.pwdAuthHandler.accountsDb.location", "");
-    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resourceQualifier", "");
+    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resource.qualifier", "");
+    private static final Property<Boolean> PROPERTY_DISABLE_BASIC_AUTHENTICATION = Property.named("security.auth.method.basic.disable", false);
 
     private static final String COMPONENT_CODE = "schemaRegistry";
 
@@ -96,6 +106,10 @@ public final class Config {
         SERVICE_PORT = p.getInt(PROPERTY_REST_PORT);
 
         PRAVEGA_CONTROLLER_URI = p.get(PROPERTY_PRAVEGA_CONTROLLER_URL);
+        PRAVEGA_CREDENTIALS_AUTH_METHOD = p.get(PROPERTY_PRAVEGA_CREDENTIALS_AUTH_METHOD);
+        PRAVEGA_CREDENTIALS_AUTH_TOKEN = p.get(PROPERTY_PRAVEGA_CREDENTIALS_AUTH_TOKEN);
+        PRAVEGA_TLS_TRUST_STORE = p.get(PROPERTY_PRAVEGA_TLS_TRUST_STORE);
+        PRAVEGA_TLS_VALIDATE_HOSTNAME = p.getBoolean(PROPERTY_PRAVEGA_TLS_VALIDATE_HOSTNAME);
 
         THREAD_POOL_SIZE = p.getInt(PROPERTY_THREAD_POOL_SIZE);
         STORE_TYPE = p.get(PROPERTY_STORE_TYPE);
@@ -104,9 +118,9 @@ public final class Config {
         TLS_KEY_FILE = p.get(PROPERTY_TLS_KEY_FILE);
         TLS_KEY_PASSWORD_FILE = p.get(PROPERTY_TLS_KEY_PASSWORD_FILE);
         TLS_CERT_FILE = p.get(PROPERTY_TLS_CERT_FILE);
-        TLS_TRUST_STORE = p.get(PROPERTY_TLS_TRUST_STORE);
 
         AUTH_ENABLED = p.getBoolean(PROPERTY_AUTH_ENABLED);
+        DISABLE_BASIC_AUTHENTICATION = p.getBoolean(PROPERTY_DISABLE_BASIC_AUTHENTICATION);
         AUTH_RESOURCE_QUALIFIER = p.get(PROPERTY_AUTH_RESOURCE_QUALIFIER);
         USER_PASSWORD_FILE = p.get(PROPERTY_AUTH_PASSWORD_FILE);
 
@@ -203,7 +217,6 @@ public final class Config {
                                    .tlsCertFilePath(Config.TLS_CERT_FILE)
                                    .serverKeyStoreFilePath(Config.TLS_KEY_FILE)
                                    .serverKeyStoreFilePath(Config.TLS_KEY_PASSWORD_FILE)
-                                   .tlsTrustStoreFilePath(Config.TLS_TRUST_STORE)
                                    .build();
     }
 

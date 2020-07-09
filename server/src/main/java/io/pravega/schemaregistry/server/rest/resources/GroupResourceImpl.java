@@ -76,7 +76,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     @Override
     public void listGroups(String namespace, String continuationToken, Integer limit, 
                            AsyncResponse asyncResponse) {
-        log.info("List Groups called");
+        log.info("List Groups called for namespace {} with limit {} and continuation token {}", namespace, limit, continuationToken);
         int toFetch = limit == null ? DEFAULT_LIST_GROUPS_LIMIT : limit;
         ListGroupsResponse groupsList = new ListGroupsResponse();
 

@@ -34,8 +34,14 @@ client:
   method: ""
   token: ""
 
-controllerUri: tcp://localhost:9090
 storeType: Pravega
+controllerUri: tcp://localhost:9090
+pravega:
+  ## following values should be configured if TLS is required for 
+  ## talking to pravega and we want to perform server auth certificate 
+  ## validation 
+  tlsTrustStore: 
+  validateHostName: true
 
 authentication:
   enabled: false
@@ -43,7 +49,8 @@ authentication:
   ## authentication is enabled
   passwordAuthSecret:
   userPasswordFile:
-  tokenSigningKey:
+  authorizationResourceQualifier: "" 
+  disableBasicAuthentication: false
 
 tls:
   enabled: false

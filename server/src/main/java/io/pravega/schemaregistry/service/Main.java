@@ -9,7 +9,10 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.google.common.base.Strings;
 import io.pravega.client.ClientConfig;
+import io.pravega.client.stream.impl.Credentials;
+import io.pravega.common.concurrent.ExecutorServiceHelpers;
 import io.pravega.schemaregistry.server.rest.RestServer;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.SchemaStore;
@@ -27,9 +30,12 @@ import java.util.function.BiConsumer;
 @Slf4j
 public class Main {
     public static void main(String[] args) {
-        ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(Config.PRAVEGA_CONTROLLER_URI)).build();
-
         ScheduledExecutorService executor = Executors.newScheduledThreadPool(Config.THREAD_POOL_SIZE);
+        ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(Config.PRAVEGA_CONTROLLER_URI))
+                                                .trustStore(Config.PRAVEGA_TLS_TRUST_STORE)
+                                                .validateHostName(Config.PRAVEGA_TLS_VALIDATE_HOSTNAME)
+                                                .credentials(getCredentials())
+                                                .build();
 
         SchemaStore schemaStore;
         ServiceConfig serviceConfig = Config.SERVICE_CONFIG;
@@ -49,12 +55,30 @@ public class Main {
         restServer.startAsync();
         log.info("Awaiting start of REST server");
         Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            onShutdown(restServer);
+            onShutdown(restServer, executor);
         }));
 
         restServer.awaitRunning();
         restServer.awaitTerminated();
         System.exit(0);
+    }
+
+    private static Credentials getCredentials() {
+        if (!Strings.isNullOrEmpty(Config.PRAVEGA_CREDENTIALS_AUTH_METHOD)) {
+            return new Credentials() {
+                @Override
+                public String getAuthenticationType() {
+                    return Config.PRAVEGA_CREDENTIALS_AUTH_METHOD;
+                }
+
+                @Override
+                public String getAuthenticationToken() {
+                    return Config.PRAVEGA_CREDENTIALS_AUTH_TOKEN;
+                }
+            };
+        } else {
+            return null;
+        }
     }
 
     private static void setUncaughtExceptionHandler(BiConsumer<Thread, Throwable> exceptionConsumer) {
@@ -65,7 +89,7 @@ public class Main {
         log.error("Thread {} with stackTrace {} failed with uncaught exception", t.getName(), t.getStackTrace(), e);
     }
 
-    private static void onShutdown(RestServer restServer) {
+    private static void onShutdown(RestServer restServer, ScheduledExecutorService executor) {
         MemoryMXBean memoryMXBean = ManagementFactory.getMemoryMXBean();
         memoryMXBean.setVerbose(true);
         log.info("Shutdown hook memory usage dump: Heap memory usage: {}, non heap memory usage {}", memoryMXBean.getHeapMemoryUsage(),
@@ -78,5 +102,7 @@ public class Main {
             Thread.getAllStackTraces().forEach((key, value) ->
                     log.info("Shutdown Hook Thread dump: Thread {} stackTrace: {} ", key.getName(), value));
         }
+
+        ExecutorServiceHelpers.shutdown(executor);
     }
 }

@@ -18,6 +18,10 @@ metadata:
 data:
   "CONTROLLER_URL": "{{ .Values.controllerUri }}"
   "STORE_TYPE": "{{ .Values.storeType }}"
+  {{- if .Values.pravega.tlsTrustStore }}
+  "CONTROLLER_TLS_TRUST_STORE": "{{ .Values.pravega.tlsTrustStore }}"
+  {{- end }}
+  "CONTROLLER_TLS_VALIDATE_HOSTNAME": "{{ .Values.pravega.validateHostName }}"
   "AUTHORIZATION_ENABLED": "{{ .Values.authentication.enabled }}"
   "TLS_ENABLED": "{{ .Values.tls.enabled }}"
   "pravega_client_auth_loadDynamic": "{{ .Values.client.loadDynamic }}"
@@ -25,11 +29,13 @@ data:
   "pravega_client_auth_token": "{{ .Values.client.token }}"
   {{- if .Values.authentication.enabled }}
   "USER_PASSWORD_FILE": "/etc/auth-passwd-volume/{{ .Values.authentication.userPasswordFile }}"
-  "TOKEN_SIGNING_KEY": "{{ .Values.authentication.tokenSigningKey }}"
+  "DISABLE_BASIC_AUTH": "{{ .Values.authentication.disableBasicAuthentication }}"
+  {{- end }}
+  {{- if .Values.authentication.authorizationResourceQualifier }}
+  "AUTHORIZATION_RESOURCE_QUALIFIER": "{{ .Values.authentication.authorizationResourceQualifier }}"
   {{- end }}
   {{- if .Values.tls.enabled }}
   "TLS_CERT_FILE": "/etc/secret-volume/{{ .Values.tls.certFile }}"
-  "TLS_TRUST_STORE": "{{ .Values.tls.trustStore }}"
   "TLS_KEY_FILE": "/etc/secret-volume/{{ .Values.tls.keyFile }}"
   "TLS_KEY_PASSWORD_FILE": "/etc/secret-volume/{{ .Values.tls.keyPasswordFile }}"
   {{- end }}

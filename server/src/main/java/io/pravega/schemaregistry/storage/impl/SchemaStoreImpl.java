@@ -131,7 +131,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     
     @Override
     public CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
-        return schemas.addNewSchema(schemaInfo, namespace, groupId)
+        return schemas.addSchema(schemaInfo, namespace, groupId)
                 .thenCompose(v -> getGroup(namespace, groupId).thenCompose(grp -> grp.addSchema(schemaInfo, prop, etag)));
     }
 

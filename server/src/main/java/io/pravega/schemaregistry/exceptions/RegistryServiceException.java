@@ -10,10 +10,10 @@
 package io.pravega.schemaregistry.exceptions;
 
 /**
- * Exception thrown when a codec type is not registered for the group. 
+ * Base class for all Registry Service Exceptions. 
  */
-public class CodecTypeNotRegisteredException extends RegistryServiceException {
-    public CodecTypeNotRegisteredException(String message) {
+public abstract class RegistryServiceException extends RuntimeException {
+    public RegistryServiceException(String message) {
         super(message);
     }
 }

@@ -54,12 +54,12 @@ public class FuturesUtility {
         Preconditions.checkNotNull(retrieveFunction, "Retrieve function cannot be null");
         Preconditions.checkNotNull(filter, "filter cannot be null");
         Preconditions.checkNotNull(executorService, "executor cannot be null");
-        AtomicBoolean loop = new AtomicBoolean(true);
+        AtomicBoolean canContinue = new AtomicBoolean(true);
         AtomicInteger limitRemaining = new AtomicInteger(limit);
         AtomicReference<C> token = new AtomicReference<>(continuationToken);
         List<T> list = new LinkedList<>();
 
-        return Futures.loop(loop::get,
+        return Futures.loop(canContinue::get,
                 () -> retrieveFunction.apply(token.get(), limitRemaining.get())
                                      .thenAccept(result -> {
                                          List<T> filtered = result.getValue().stream()
@@ -67,7 +67,7 @@ public class FuturesUtility {
                                                                   .collect(Collectors.toList());
                                          int filteredOut = result.getValue().size() - filtered.size();
                                          list.addAll(filtered);
-                                         loop.set(filteredOut > 0 && result.getValue().size() == limitRemaining.get());
+                                         canContinue.set(filteredOut > 0 && result.getValue().size() == limitRemaining.get());
                                          limitRemaining.set(limit - list.size());
                                          token.set(result.getKey());
                                      }), executorService)
