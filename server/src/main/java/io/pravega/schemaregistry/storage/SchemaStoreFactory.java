@@ -14,9 +14,9 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
-import io.pravega.schemaregistry.storage.impl.groups.PravegaKVGroups;
+import io.pravega.schemaregistry.storage.impl.groups.PravegaKeyValueGroups;
 import io.pravega.schemaregistry.storage.impl.schemas.InMemorySchemas;
-import io.pravega.schemaregistry.storage.impl.schemas.PravegaKVSchemas;
+import io.pravega.schemaregistry.storage.impl.schemas.PravegaKeyValueSchemas;
 
 import java.util.concurrent.ScheduledExecutorService;
 
@@ -30,6 +30,6 @@ public class SchemaStoreFactory {
     
     public static SchemaStore createPravegaStore(ServiceConfig serviceConfig, ClientConfig clientConfig, ScheduledExecutorService executor) {
         TableStore tableStore = new TableStore(clientConfig, serviceConfig, executor);
-        return new SchemaStoreImpl<>(new PravegaKVGroups(tableStore, executor), new PravegaKVSchemas(tableStore));
+        return new SchemaStoreImpl<>(new PravegaKeyValueGroups(tableStore, executor), new PravegaKeyValueSchemas(tableStore));
     }
 }

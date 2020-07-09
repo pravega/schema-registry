@@ -26,8 +26,7 @@ public class HashUtil {
      */
     @SneakyThrows(NoSuchAlgorithmException.class)
     public static BigInteger getFingerprint(byte[] bytes) {
-        MessageDigest md;
-        md = MessageDigest.getInstance(SHA_256);
+        MessageDigest md = MessageDigest.getInstance(SHA_256);
 
         return new BigInteger(md.digest(bytes));
     }

@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.exceptions;
 /**
  * Exception thrown when a serialization format is different from the group property's serialization format. 
  */
-public class SerializationFormatMismatchException extends RuntimeException {
+public class SerializationFormatMismatchException extends RegistryServiceException {
     public SerializationFormatMismatchException(String message) {
         super(message);
     }

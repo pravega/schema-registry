@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.exceptions;
 /**
  * Exception thrown when server isnt able to find the requested resource. 
  */
-public class ResourceNotFoundException extends RuntimeException {
+public class ResourceNotFoundException extends RegistryServiceException {
     public ResourceNotFoundException(String message) {
         super(message);
     }

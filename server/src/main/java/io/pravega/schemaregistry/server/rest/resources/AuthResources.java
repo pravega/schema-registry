@@ -13,7 +13,7 @@ import com.google.common.base.Strings;
 import io.pravega.schemaregistry.service.Config;
 
 class AuthResources {
-    static final String DOMAIN = Strings.isNullOrEmpty(Config.AUTH_RESOURCE_QUALIFIER) ? "" : Config.AUTH_RESOURCE_QUALIFIER + "/";
+    static final String DOMAIN = Strings.isNullOrEmpty(Config.AUTH_RESOURCE_QUALIFIER) ? "" : "_" + Config.AUTH_RESOURCE_QUALIFIER + "/";
     static final String DEFAULT_NAMESPACE = "";
     static final String NAMESPACE_FORMAT = DOMAIN + "%s";
     static final String NAMESPACE_GROUP_FORMAT = NAMESPACE_FORMAT + "/%s";

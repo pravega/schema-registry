@@ -40,18 +40,18 @@ import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.Schem
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.KeySerializer;
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.fromBytes;
 
-public class PravegaKVSchemas implements Schemas<Version> {
+public class PravegaKeyValueSchemas implements Schemas<Version> {
     private static final String SCHEMAS = TableStore.SCHEMA_REGISTRY_SCOPE + "/schemas/0";
     private static final KeySerializer KEY_SERIALIZER = new KeySerializer();
 
     private final TableStore tableStore;
 
-    public PravegaKVSchemas(TableStore tableStore) {
+    public PravegaKeyValueSchemas(TableStore tableStore) {
         this.tableStore = tableStore;
     }
 
     @Override
-    public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
+    public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
         String namespace = nameSpace == null ? "" : nameSpace;
         // 1. check if schema exists -- get fingerprint -- get all schemas in the fingerprint list.. 
         // 2. if it doesnt exist, generate a new id and add it to id and fingerprint list and add schema id entry atomically. 

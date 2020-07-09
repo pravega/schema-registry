@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.exceptions;
 /**
  * Exception thrown when a schema fails the compatibility checks for the group's compatibility policy. 
  */
-public class IncompatibleSchemaException extends RuntimeException {
+public class IncompatibleSchemaException extends RegistryServiceException {
     public IncompatibleSchemaException(String message) {
         super(message);
     }

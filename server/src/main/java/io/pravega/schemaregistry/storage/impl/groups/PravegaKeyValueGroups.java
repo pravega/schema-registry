@@ -37,13 +37,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-public class PravegaKVGroups implements Groups<Version> {
+public class PravegaKeyValueGroups implements Groups<Version> {
     public static final String GROUPS = TableStore.SCHEMA_REGISTRY_SCOPE + "/groups/0";
 
     private final TableStore tableStore;
     private final ScheduledExecutorService executor;
 
-    public PravegaKVGroups(TableStore tableStore, ScheduledExecutorService executor) {
+    public PravegaKeyValueGroups(TableStore tableStore, ScheduledExecutorService executor) {
         this.tableStore = tableStore;
         this.executor = executor;
     }

@@ -43,7 +43,7 @@ public class InMemorySchemas implements Schemas<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<Void> addNewSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
+    public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
         String namespace = nameSpace == null ? "" : nameSpace;
         BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);

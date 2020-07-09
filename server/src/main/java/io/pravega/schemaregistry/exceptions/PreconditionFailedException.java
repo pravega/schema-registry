@@ -12,7 +12,7 @@ package io.pravega.schemaregistry.exceptions;
 /**
  * Exception thrown when conditional updates to an entity are attempted and condition fails. 
  */
-public class PreconditionFailedException extends RuntimeException {
+public class PreconditionFailedException extends RegistryServiceException {
     public PreconditionFailedException(String message) {
         super(message);
     }
