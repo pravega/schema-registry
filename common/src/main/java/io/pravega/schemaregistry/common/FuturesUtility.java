@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.common;
 
+import com.google.common.base.Preconditions;
 import io.pravega.common.concurrent.Futures;
 
 import java.util.AbstractMap;
@@ -50,6 +51,9 @@ public class FuturesUtility {
     public static <T, C> CompletableFuture<Map.Entry<C, List<T>>> filteredWithTokenAndLimit(
             BiFunction<C, Integer, CompletableFuture<Map.Entry<C, List<T>>>> retrieveFunction,
             Predicate<T> filter, C continuationToken, int limit, Executor executorService) {
+        Preconditions.checkNotNull(retrieveFunction, "Retrieve function cannot be null");
+        Preconditions.checkNotNull(filter, "filter cannot be null");
+        Preconditions.checkNotNull(executorService, "executor cannot be null");
         AtomicBoolean loop = new AtomicBoolean(true);
         AtomicInteger limitRemaining = new AtomicInteger(limit);
         AtomicReference<C> token = new AtomicReference<>(continuationToken);
