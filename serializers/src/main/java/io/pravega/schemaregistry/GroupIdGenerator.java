@@ -24,7 +24,7 @@ public class GroupIdGenerator {
         switch (scheme) {
             case QualifiedStreamName:
                 Preconditions.checkNotNull(args);
-                Preconditions.checkArgument(args.length == 2);
+                Preconditions.checkArgument(args.length == 2, "Both scope and stream name should be supplied.");
                 return NameUtils.getScopedStreamName(args[0], args[1]);
             default:
                 throw new IllegalArgumentException("Unknown Group id generation schema.");

@@ -17,6 +17,7 @@ import com.google.protobuf.Message;
 import com.google.protobuf.Parser;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import lombok.AccessLevel;
 import lombok.Data;
 import lombok.Getter;
 
@@ -154,25 +155,20 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
 
             return new ProtobufSchema<>(fileDescriptorSet, schemaInfo);
         } catch (InvalidProtocolBufferException ex) {
-            throw new IllegalArgumentException(ex);
+            throw new IllegalArgumentException("Unable to get protobuf schema from schemainfo", ex);
         }
     }
 
     private static class Extractor<T extends GeneratedMessageV3> {
+        @Getter(AccessLevel.PRIVATE)
         private Class<T> tClass;
+        @Getter(AccessLevel.PRIVATE)
         private T defaultInstance;
-        private Parser<T> tParser;
+        @Getter(AccessLevel.PRIVATE)
+        private Parser<T> parser;
 
         Extractor(Class<T> tClass) {
             this.tClass = tClass;
-        }
-
-        T getDefaultInstance() {
-            return defaultInstance;
-        }
-
-        Parser<T> getParser() {
-            return tParser;
         }
 
         String getFullName() {
@@ -191,7 +187,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
             } catch (IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
                 throw new IllegalArgumentException(e);
             }
-            tParser = (Parser<T>) defaultInstance.getParserForType();
+            parser = (Parser<T>) defaultInstance.getParserForType();
             return this;
         }
     }

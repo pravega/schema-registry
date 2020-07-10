@@ -23,7 +23,7 @@ public interface Codec {
      * Codec Type object that contains a string name identifying the Codec Type. 
      * This name should be same as the codecType that is registered for the group in schema registry service. 
      * The serializers will use this codec to encode the data and deserializers will find
-     * the decoder for the encoded data from {@link EncodingInfo#codecType}
+     * the decoder for the encoded data from {@link EncodingInfo#getCodecType()}
      * 
      * @return Name of the codec. 
      */

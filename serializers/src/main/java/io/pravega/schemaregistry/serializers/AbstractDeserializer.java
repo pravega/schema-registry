@@ -9,13 +9,13 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.Schema;
 import lombok.SneakyThrows;
-import lombok.Synchronized;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -45,6 +45,9 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                                    SerializerConfig.Decoder decoder,
                                    EncodingCache encodingCache,
                                    boolean encodeHeader) {
+        Preconditions.checkNotNull(groupId);
+        Preconditions.checkNotNull(client);
+        Preconditions.checkNotNull(encodingCache);
         this.groupId = groupId;
         this.client = client;
         this.encodingCache = encodingCache;
@@ -56,7 +59,6 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
         initialize();
     }
 
-    @Synchronized
     private void initialize() {
         if (schemaInfo != null) {
             log.info("Validate caller supplied schema.");

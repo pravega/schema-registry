@@ -9,12 +9,13 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
 import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import lombok.Getter;
+import org.apache.commons.io.IOUtils;
 import org.xerial.snappy.Snappy;
 
-import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -67,29 +68,18 @@ public enum Codecs {
         
         @Override
         public ByteBuffer encode(ByteBuffer data) throws IOException {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream(data.remaining());
-            GZIPOutputStream gzipOS = new GZIPOutputStream(bos);
-            gzipOS.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
-            gzipOS.close();
-            byte[] compressed = bos.toByteArray();
-            return ByteBuffer.wrap(compressed);
+            try (ByteArrayOutputStream bos = new ByteArrayOutputStream(data.remaining())) {
+                GZIPOutputStream gzipOS = new GZIPOutputStream(bos);
+                gzipOS.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
+                gzipOS.close();
+                return ByteBuffer.wrap(bos.toByteArray());
+            }
         }
 
         @Override
         public ByteBuffer decode(ByteBuffer data) throws IOException {
-            byte[] array = new byte[data.remaining()];
-            data.get(array);
-
-            ByteArrayInputStream bis = new ByteArrayInputStream(array);
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            GZIPInputStream gzipIS = new GZIPInputStream(bis);
-            byte[] buffer = new byte[1024];
-            int len;
-            while ((len = gzipIS.read(buffer)) != -1) {
-                bos.write(buffer, 0, len);
-            }
-            byte[] uncompressed = bos.toByteArray();
-            return ByteBuffer.wrap(uncompressed);
+            ByteBufferBackedInputStream bis = new ByteBufferBackedInputStream(data);
+            return ByteBuffer.wrap(IOUtils.toByteArray(new GZIPInputStream(bis)));
         }
     }
 
