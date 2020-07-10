@@ -40,7 +40,7 @@ public interface SchemaStore {
      * @param limit number of elements to retrieve.
      * @return Completablefuture that holds List with continuation token 
      */
-    CompletableFuture<ResultPage<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit);
+    CompletableFuture<ResultPage<String, ContinuationToken>> listGroups(String namespace, @Nullable ContinuationToken token, int limit);
 
     /**
      * Create a new group within the namespace. It implicitly creates the namespace if it isnt already created.
@@ -108,7 +108,7 @@ public interface SchemaStore {
      * @param group group
      * @return Completablefuture that holds List of latest schemas with versions for all types in the group. 
      */
-    CompletableFuture<List<SchemaWithVersion>> getLatestSchemas(String namespace, String group);
+    CompletableFuture<List<SchemaWithVersion>> listLatestSchemas(String namespace, String group);
 
     /**
      * Gets all schemas for all types in the group. The implementation for this API should fetch all schemas 
@@ -292,7 +292,7 @@ public interface SchemaStore {
      * @param group group 
      * @return CompletableFuture that holds list of codec types.  
      */
-    CompletableFuture<List<CodecType>> getCodecTypes(String namespace, String group);
+    CompletableFuture<List<CodecType>> listCodecTypes(String namespace, String group);
 
     /**
      * Add a new codectype to the group. This api is idempotent. 

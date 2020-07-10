@@ -16,9 +16,9 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.client.Version;
+import io.pravega.schemaregistry.storage.client.VersionedRecord;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -99,9 +99,9 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
     }
 
     private CompletionStage<String> addNewSchemaRecord(SchemaInfo schemaInfo, SchemaFingerprintKey fingerprintKey,
-                                                       Version.VersionedRecord<SchemaIdList> fingerprintEntry) {
+                                                       VersionedRecord<SchemaIdList> fingerprintEntry) {
         String id;
-        Map<byte[], Map.Entry<byte[], Version>> entries = new HashMap<>();
+        Map<byte[], VersionedRecord<byte[]>> entries = new HashMap<>();
         Version fingerprintKeyVersion = fingerprintEntry == null ? null : fingerprintEntry.getVersion();
         List<String> schemaIdList = fingerprintEntry == null ? new ArrayList<>() :
                 new ArrayList<>(fingerprintEntry.getRecord().getSchemaIds());
@@ -111,16 +111,16 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
         // 1. fingerprint 
         schemaIdList.add(id);
         entries.put(KEY_SERIALIZER.toBytes(fingerprintKey),
-                new AbstractMap.SimpleEntry<>(new SchemaIdList(schemaIdList).toBytes(), fingerprintKeyVersion));
+                new VersionedRecord<>(new SchemaIdList(schemaIdList).toBytes(), fingerprintKeyVersion));
         // 2. add schemaId record
         SchemaIdKey key = new SchemaIdKey(id);
         entries.put(KEY_SERIALIZER.toBytes(key),
-                new AbstractMap.SimpleEntry<>(new SchemaRecord(schemaInfo).toBytes(), null));
+                new VersionedRecord<>(new SchemaRecord(schemaInfo).toBytes(), null));
         return tableStore.updateEntries(SCHEMAS, entries)
                          .thenApply(v -> id);
     }
 
-    private CompletableFuture<String> findSchemaId(SchemaInfo schemaInfo, Version.VersionedRecord<SchemaIdList> fingerprintEntry) {
+    private CompletableFuture<String> findSchemaId(SchemaInfo schemaInfo, VersionedRecord<SchemaIdList> fingerprintEntry) {
         CompletableFuture<String> future;
         if (fingerprintEntry != null) {
             // findSchema
@@ -128,7 +128,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                     .getRecord().getSchemaIds().stream()
                     .collect(Collectors.toMap(x -> x, x -> {
                         SchemaIdKey schemaIdKey = new SchemaIdKey(x);
-                        Version.VersionedRecord<SchemaRecord> cachedValue = tableStore.getCachedRecord(SCHEMAS, schemaIdKey, SchemaRecord.class);
+                        VersionedRecord<SchemaRecord> cachedValue = tableStore.getCachedRecord(SCHEMAS, schemaIdKey, SchemaRecord.class);
                         if (cachedValue != null) {
                             return CompletableFuture.completedFuture(cachedValue);
                         } else {

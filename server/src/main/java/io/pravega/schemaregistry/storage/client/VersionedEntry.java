@@ -9,13 +9,10 @@
  */
 package io.pravega.schemaregistry.storage.client;
 
-import io.pravega.client.tables.impl.KeyVersion;
 import lombok.Data;
 
 @Data
-public class Version {
-    public static final Version NON_EXISTENT = new Version(KeyVersion.NOT_EXISTS.getSegmentVersion());
-    public static final Version NO_VERSION = new Version(KeyVersion.NO_VERSION.getSegmentVersion());
-    
-    private final long version;
+public class VersionedEntry<K, T> {
+    private final K key;
+    private final VersionedRecord<T> value;
 }

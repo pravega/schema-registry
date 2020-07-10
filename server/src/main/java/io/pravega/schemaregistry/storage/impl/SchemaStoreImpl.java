@@ -43,7 +43,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
 
     // region schema store
     @Override
-    public CompletableFuture<ResultPage<String>> listGroups(String namespace, @Nullable ContinuationToken token, int limit) {
+    public CompletableFuture<ResultPage<String, ContinuationToken>> listGroups(String namespace, @Nullable ContinuationToken token, int limit) {
         return groups.listGroups(namespace, token, limit);
     }
 
@@ -74,7 +74,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<SchemaWithVersion>> getLatestSchemas(String namespace, String groupId) {
+    public CompletableFuture<List<SchemaWithVersion>> listLatestSchemas(String namespace, String groupId) {
         return getGroup(namespace, groupId).thenCompose(Group::getLatestSchemas);
     }
 
@@ -157,7 +157,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<List<CodecType>> getCodecTypes(String namespace, String groupId) {
+    public CompletableFuture<List<CodecType>> listCodecTypes(String namespace, String groupId) {
         return getGroup(namespace, groupId).thenCompose(Group::getCodecTypes);
     }
 

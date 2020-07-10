@@ -66,7 +66,7 @@ public interface Groups<T> {
      * @param limit number of groups to return. 
      * @return List of groups with continuation token. 
      */
-    CompletableFuture<ResultPage<String>> listGroups(String namespace, ContinuationToken token, int limit);
+    CompletableFuture<ResultPage<String, ContinuationToken>> listGroups(String namespace, ContinuationToken token, int limit);
 
     /**
      * Deletes a group. This api is idempotent and invoking it multiple times is safe. A group can only be deleted

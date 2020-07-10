@@ -20,7 +20,6 @@ import io.pravega.controller.store.host.HostControllerStore;
 import io.pravega.controller.store.host.HostStoreException;
 import lombok.AccessLevel;
 import lombok.Getter;
-import org.apache.commons.lang3.NotImplementedException;
 
 import java.util.Map;
 import java.util.Set;
@@ -48,22 +47,22 @@ class HostStoreImpl implements HostControllerStore {
 
     @Override
     public Map<Host, Set<Integer>> getHostContainersMap() {
-        throw new NotImplementedException("Host store");
+        throw new UnsupportedOperationException("Host store");
     }
 
     @Override
     public void updateHostContainersMap(Map<Host, Set<Integer>> newMapping) {
-        throw new NotImplementedException("Host store");
+        throw new UnsupportedOperationException("Host store");
     }
 
     @Override
     public int getContainerCount() {
-        throw new NotImplementedException("Host store");
+        throw new UnsupportedOperationException("Host store");
     }
 
     @Override
     public Host getHostForSegment(String scope, String stream, long segmentId) {
-        throw new NotImplementedException("Host store");
+        throw new UnsupportedOperationException("Host store");
     }
 
     @Override

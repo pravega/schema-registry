@@ -44,16 +44,17 @@ public class InMemoryGroupTable implements GroupTable<Integer> {
 
     @Override
     @Synchronized
-    public CompletableFuture<List<Entry>> getAllEntries() {
+    public CompletableFuture<List<Entry<Integer>>> getAllEntries() {
         return CompletableFuture.completedFuture(
-                table.entrySet().stream().map(x -> new Entry(x.getKey(), x.getValue().getValue())).collect(Collectors.toList()));
+                table.entrySet().stream().map(x -> new Entry<>(x.getKey(), x.getValue().getValue(), x.getValue().getVersion())).collect(Collectors.toList()));
     }
 
     @Override
     @Synchronized
-    public CompletableFuture<List<Entry>> getAllEntries(Predicate<TableKey> filterKeys) {
+    public CompletableFuture<List<Entry<Integer>>> getAllEntries(Predicate<TableKey> filterKeys) {
         return CompletableFuture.completedFuture(table.entrySet().stream().filter(x -> filterKeys.test(x.getKey()))
-                                                      .map(x -> new Entry(x.getKey(), x.getValue().getValue())).collect(Collectors.toList()));
+                                                      .map(x -> new Entry<>(x.getKey(), x.getValue().getValue(), x.getValue().getVersion()))
+                                                      .collect(Collectors.toList()));
     }
 
     @Override
@@ -78,19 +79,18 @@ public class InMemoryGroupTable implements GroupTable<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<Void> updateEntries(List<Map.Entry<TableKey,
-            Value<TableValue, Integer>>> updates) {
+    public CompletableFuture<Void> updateEntries(List<Entry<Integer>> updates) {
         CompletableFuture<Void> ret = new CompletableFuture<>();
 
         boolean isValid = updates.stream().allMatch(update -> {
             TableKey key = update.getKey();
-            Integer version = update.getValue().getVersion();
+            Integer version = update.getVersion();
             Value<TableValue, Integer> val = table.get(key);
             return version == null || (val != null && version.equals(val.getVersion()));
         });
 
         if (isValid) {
-            updates.forEach(update -> updateEntry(update.getKey(), update.getValue().getValue(), update.getValue().getVersion()));
+            updates.forEach(update -> updateEntry(update.getKey(), update.getValue(), update.getVersion()));
             ret.complete(null);
         } else {
             ret.completeExceptionally(StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, "key"));

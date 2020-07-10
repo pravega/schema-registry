@@ -15,6 +15,7 @@ import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import org.junit.After;
@@ -64,7 +65,7 @@ public class SchemaRegistryServiceTest {
             return Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group prop not found"));
         }).when(store).getGroupProperties(any(), eq("grp2"));
 
-        ResultPage<Map.Entry<String, GroupProperties>> result = service.listGroups(null, null, 100).join();
+        ResultPage<Map.Entry<String, GroupProperties>, ContinuationToken> result = service.listGroups(null, null, 100).join();
         assertEquals(result.getList().size(), 1);
     }
 }

@@ -17,9 +17,9 @@ import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.client.Version;
+import io.pravega.schemaregistry.storage.client.VersionedRecord;
 import io.pravega.schemaregistry.storage.impl.group.records.TableKeySerializer;
 
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -80,18 +80,18 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     }
 
     @Override
-    public CompletableFuture<List<Entry>> getAllEntries() {
+    public CompletableFuture<List<Entry<Version>>> getAllEntries() {
         return getAllEntries(x -> true);
     }
 
     @Override
-    public CompletableFuture<List<Entry>> getAllEntries(Predicate<TableKey> filterKeys) {
+    public CompletableFuture<List<Entry<Version>>> getAllEntries(Predicate<TableKey> filterKeys) {
         return tablesStore.getAllEntries(tableName, x -> x, x -> x)
                           .thenApply(entries -> entries.stream().map(
                                   x -> {
                                       TableKey tableKey = KEY_SERIALIZER.fromBytes(x.getKey());
                                       TableValue tableValue = fromBytes(tableKey.getClass(), x.getValue().getRecord(), TableValue.class);
-                                      return new Entry(tableKey, tableValue);
+                                      return new Entry<>(tableKey, tableValue, x.getValue().getVersion());
                                   }).filter(x -> filterKeys.test(x.getKey())).collect(Collectors.toList()));
     }
 
@@ -107,11 +107,11 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     }
 
     @Override
-    public CompletableFuture<Void> updateEntries(List<Map.Entry<TableKey, Value<TableValue, Version>>> entries) {
-        Map<byte[], Map.Entry<byte[], Version>> batch =
+    public CompletableFuture<Void> updateEntries(List<Entry<Version>> entries) {
+        Map<byte[], VersionedRecord<byte[]>> batch =
                 entries.stream().collect(Collectors.toMap(x -> KEY_SERIALIZER.toBytes(x.getKey()), x -> {
-                    Value<TableValue, Version> valueWithVersion = x.getValue();
-                    return new AbstractMap.SimpleEntry<>(valueWithVersion.getValue().toBytes(), valueWithVersion.getVersion());
+                    TableValue value = x.getValue();
+                    return new VersionedRecord<>(value.toBytes(), x.getVersion());
                 }));
         return Futures.toVoid(tablesStore.updateEntries(tableName, batch));
     }
@@ -125,7 +125,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     @Override
     public <T extends TableValue> CompletableFuture<Value<T, Version>> getEntryWithVersion(TableKey key, Class<T> tClass) {
         if (IMMUTABLE_RECORDS.contains(key.getClass())) {
-            Version.VersionedRecord<T> cachedValue = tablesStore.getCachedRecord(tableName, key, tClass);
+            VersionedRecord<T> cachedValue = tablesStore.getCachedRecord(tableName, key, tClass);
             if (cachedValue != null) {
                 return CompletableFuture.completedFuture(new Value<>(cachedValue.getRecord(), cachedValue.getVersion()));
             }
@@ -135,7 +135,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
                            .thenApply(entry -> {
                                T typedRecord = getTypedRecord(entry.getRecord());
                                if (IMMUTABLE_RECORDS.contains(key.getClass())) {
-                                   tablesStore.cacheRecord(tableName, key, new Version.VersionedRecord<>(typedRecord, entry.getVersion()));
+                                   tablesStore.cacheRecord(tableName, key, new VersionedRecord<>(typedRecord, entry.getVersion()));
                                }
                                return new Value<>(typedRecord, entry.getVersion());
                            }),
@@ -159,7 +159,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
             result.add(null);
             TableKey key = keys.get(i);
             if (IMMUTABLE_RECORDS.contains(key.getClass())) {
-                Version.VersionedRecord<T> record = tablesStore.getCachedRecord(tableName, key, tClass);
+                VersionedRecord<T> record = tablesStore.getCachedRecord(tableName, key, tClass);
                 if (record != null) {
                     result.set(i, new Value<>(record.getRecord(), record.getVersion()));
                 } 
@@ -175,12 +175,12 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
                               for (int i = 0; i < nonCachedKeys.size(); i++) {
                                   TableKey key = nonCachedKeys.get(i);
                                   int index = nonCachedKeysIndex.get(key);
-                                  Version.VersionedRecord<byte[]> versionedRecord = values.get(i);
+                                  VersionedRecord<byte[]> versionedRecord = values.get(i);
                                   if (!versionedRecord.getVersion().equals(Version.NON_EXISTENT)) {
                                       T value = fromBytes(key.getClass(), versionedRecord.getRecord(), tClass);
                                       Version version = versionedRecord.getVersion();
                                       if (IMMUTABLE_RECORDS.contains(key.getClass())) {
-                                          tablesStore.cacheRecord(tableName, key, new Version.VersionedRecord<>(value, versionedRecord.getVersion()));
+                                          tablesStore.cacheRecord(tableName, key, new VersionedRecord<>(value, versionedRecord.getVersion()));
                                       }
 
                                       result.set(index, new Value<>(value, version));
