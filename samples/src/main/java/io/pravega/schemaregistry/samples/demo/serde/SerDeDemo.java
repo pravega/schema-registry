@@ -63,7 +63,7 @@ public class SerDeDemo {
     private SerDeDemo(String controllerURI, String registryUri, String scope, String stream, String filePath) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(registryUri)).build();
-        client = SchemaRegistryClientFactory.createRegistryClient(config);
+        client = SchemaRegistryClientFactory.withDefaultNamespace(config);
         this.scope = scope;
         this.stream = stream;
         this.groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);

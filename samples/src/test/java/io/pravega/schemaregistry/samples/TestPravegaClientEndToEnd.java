@@ -171,7 +171,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         restServer = new RestServer(service, serviceConfig);
         restServer.startAsync();
         restServer.awaitRunning();
-        client =  SchemaRegistryClientFactory.createRegistryClient(
+        client =  SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
         random = new Random();
     }

@@ -25,8 +25,8 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 
-abstract class AbstractSerializer<T> extends FailingSerializer<T> {
-    private static final byte PROTOCOL = 0x0;
+abstract class AbstractSerializer<T> extends BaseSerializer<T> {
+    private static final byte PROTOCOL = 0x1;
 
     private final String groupId;
     

@@ -128,7 +128,7 @@ public abstract class TestEndToEnd {
     
     @Test
     public void testEndToEnd() {
-        SchemaRegistryClient client = SchemaRegistryClientFactory.createRegistryClient(
+        SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
 
         String group = "group";

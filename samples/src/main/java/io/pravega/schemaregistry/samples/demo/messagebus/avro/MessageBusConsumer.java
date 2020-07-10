@@ -58,7 +58,7 @@ public class MessageBusConsumer {
     private MessageBusConsumer(String controllerURI, String registryUri, String scope, String stream) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerURI)).build();
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri((URI.create(registryUri))).build();
-        client = SchemaRegistryClientFactory.createRegistryClient(config);
+        client = SchemaRegistryClientFactory.withDefaultNamespace(config);
         this.scope = scope;
         this.stream = stream;
         String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);

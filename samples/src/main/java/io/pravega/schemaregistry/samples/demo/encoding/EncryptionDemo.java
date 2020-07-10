@@ -72,7 +72,7 @@ public class EncryptionDemo {
     private EncryptionDemo(String encryptionkey) {
         clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build();
-        client = SchemaRegistryClientFactory.createRegistryClient(config);
+        client = SchemaRegistryClientFactory.withDefaultNamespace(config);
         id = Long.toString(System.currentTimeMillis());
         scope = "scope" + id;
         stream = "avroEncryption";

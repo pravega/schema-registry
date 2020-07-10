@@ -24,6 +24,7 @@ import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
+import lombok.NonNull;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -41,12 +42,24 @@ public class SerializerConfig {
     /**
      * Name of the group.
      */
+    @NonNull
     private final String groupId;
+    /**
+     * Namespace for the group.
+     */
+    private final String namespace;
     /**
      * Either the registry client or the {@link SchemaRegistryClientConfig} that can be used for creating a new registry client.
      * Exactly one of the two option has to be supplied.
      */
-    private final Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient;
+    @Getter(AccessLevel.NONE)
+    private final SchemaRegistryClientConfig registryConfig;
+    /**
+     * Either the registry client or the {@link SchemaRegistryClientConfig} that can be used for creating a new registry client.
+     * Exactly one of the two option has to be supplied.
+     */
+    @Getter(AccessLevel.NONE)
+    private final SchemaRegistryClient registryClient;
     /**
      * Flag to tell the serializer if the schema should be automatically registered before using it in {@link io.pravega.client.stream.EventStreamWriter}.
      * It is recommended to register keep this flag as false in production systems and manage schema evolution explicitly and
@@ -78,7 +91,8 @@ public class SerializerConfig {
      * Flag to tell the serializer/deserializer if the group should be created automatically.
      * It is recommended to register keep this flag as false in production systems and create groups and add schemas
      */
-    private final boolean createGroup;
+    @Getter(AccessLevel.NONE)
+    private final GroupProperties createGroup;
     /**
      * Flag to tell the serializer/deserializer if the encoding id should be added as a header with each event.
      * By default this is set to true. If users choose to not add the header, they should do so in all their writer and 
@@ -90,18 +104,16 @@ public class SerializerConfig {
      * If streams can multiple formats of events, this cannot be false.
      */
     private final boolean writeEncodingHeader;
-    /**
-     * Group properties to use for creating the group if createGroup is set to true.
-     */
-    private final GroupProperties groupProperties;
 
-    private SerializerConfig(String groupId, Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient,
+    private SerializerConfig(String groupId, String namespace, SchemaRegistryClientConfig config, SchemaRegistryClient client,
                              boolean registerSchema, boolean registerCodec, Codec codec, Decoder decoder, boolean failOnCodecMismatch,
-                             boolean createGroup, boolean writeEncodingHeader, GroupProperties groupProperties) {
+                             GroupProperties createGroup, boolean writeEncodingHeader) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId), "Group id needs to be supplied");
-        Preconditions.checkArgument(registryConfigOrClient != null, "Either registry client or config needs to be supplied");
+        Preconditions.checkArgument(client != null || config != null, "Either registry client or config needs to be supplied");
         this.groupId = groupId;
-        this.registryConfigOrClient = registryConfigOrClient;
+        this.namespace = namespace;
+        this.registryClient = client;
+        this.registryConfig = config;
         this.registerSchema = registerSchema;
         this.registerCodec = registerCodec;
         this.codec = codec;
@@ -109,7 +121,22 @@ public class SerializerConfig {
         this.failOnCodecMismatch = failOnCodecMismatch;
         this.createGroup = createGroup;
         this.writeEncodingHeader = writeEncodingHeader;
-        this.groupProperties = groupProperties;
+    }
+
+    Either<SchemaRegistryClientConfig, SchemaRegistryClient> getRegistryConfigOrClient() {
+        if (registryClient == null) {
+            return Either.left(registryConfig);
+        } else {
+            return Either.right(registryClient);
+        }
+    }
+    
+    public boolean isCreateGroup() {
+        return createGroup != null;
+    }
+
+    GroupProperties getGroupProperties() {
+        return createGroup;
     }
 
     public static final class SerializerConfigBuilder {
@@ -119,13 +146,12 @@ public class SerializerConfig {
 
         private boolean registerSchema = false;
         private boolean registerCodec = false;
-        private boolean createGroup = false;
         private boolean failOnCodecMismatch = true;
         private boolean writeEncodingHeader = true;
-        private Either<SchemaRegistryClientConfig, SchemaRegistryClient> registryConfigOrClient = null;
-
-        private GroupProperties groupProperties = GroupProperties.builder().build();
-
+        private SchemaRegistryClientConfig registryConfig = null;
+        private SchemaRegistryClient registryClient = null;
+        private String namespace = null;
+        
         /**
          * Add codec type to corresponding decoder function which will be used to decode data encoded using encoding type codecType.
          *
@@ -173,36 +199,39 @@ public class SerializerConfig {
          * @return Builder
          */
         public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, Compatibility policy, boolean allowMultipleTypes) {
-            this.createGroup = true;
-            this.groupProperties = new GroupProperties(serializationFormat, policy, allowMultipleTypes);
+            this.createGroup = new GroupProperties(serializationFormat, policy, allowMultipleTypes);
             return this;
         }
 
         /**
-         * Schema Registry client. Either this or config should be supplied. Whichever is supplied later overrides
-         * the other.
+         * Schema Registry client. Either of client or config should be supplied. 
          *
          * @param client Schema Registry client
          * @return Builder
          */
         public SerializerConfigBuilder registryClient(SchemaRegistryClient client) {
             Preconditions.checkArgument(client != null);
-            this.registryConfigOrClient = Either.right(client);
+            Preconditions.checkState(registryConfig == null, "Cannot specify both client and config");
+            this.registryClient = client;
             return this;
         }
 
         /**
-         * Schema Registry client config. Either this or client should be supplied. Whichever is supplied later overrides
-         * the other.
+         * Schema Registry client config which is used to initialize the schema registry client. 
+         * Either config or client should be supplied. 
          *
          * @param config Schema Registry client configuration.
          * @return Builder
          */
         public SerializerConfigBuilder registryConfig(SchemaRegistryClientConfig config) {
             Preconditions.checkArgument(config != null);
-            this.registryConfigOrClient = Either.left(config);
+            Preconditions.checkState(registryClient == null, "Cannot specify both client and config");
+            this.registryConfig = config;
             return this;
         }
+        
+        // writeEncoding header vs codec vs decoder
+        // if codec is supplied
     }
 
     static class Decoder {

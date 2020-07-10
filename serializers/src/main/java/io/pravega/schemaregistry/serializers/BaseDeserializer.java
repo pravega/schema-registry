@@ -13,14 +13,9 @@ import io.pravega.client.stream.Serializer;
 
 import java.nio.ByteBuffer;
 
-class FailingSerializer<T> implements Serializer<T> {
+abstract class BaseDeserializer<T> implements Serializer<T> {
     @Override
-    public ByteBuffer serialize(T value) {
-        throw new IllegalStateException();
-    }
-
-    @Override
-    public T deserialize(ByteBuffer serializedValue) {
+    public final ByteBuffer serialize(T value) {
         throw new IllegalStateException();
     }
 }

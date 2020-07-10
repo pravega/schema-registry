@@ -99,7 +99,7 @@ public class SQLApp {
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create(controllerUri)).build();
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create(registryUri)).build();
-        SchemaRegistryClient client = SchemaRegistryClientFactory.createRegistryClient(config);
+        SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(config);
 
         while (true) {
             System.out.println("sql> ");

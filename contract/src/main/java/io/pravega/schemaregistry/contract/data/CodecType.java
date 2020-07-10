@@ -21,6 +21,8 @@ import lombok.Data;
 @Data
 @Builder
 public class CodecType {
+    public static final CodecType NONE = new CodecType("");
+
     /**
      * Name that identifies the codec type. Users could typically use the mime type name for the encoding.   
      */

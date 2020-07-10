@@ -74,16 +74,17 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
     private final String namespace;
-
-    SchemaRegistryClientImpl(SchemaRegistryClientConfig config) {
-        Client client = ClientBuilder.newClient(new ClientConfig());
+    private final Client client;
+    
+    SchemaRegistryClientImpl(SchemaRegistryClientConfig config, String namespace) {
+        client = ClientBuilder.newClient(new ClientConfig());
         if (config.isAuthEnabled()) {
             client.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
                         AuthHelper.getAuthorizationHeader(config.getAuthMethod(), config.getAuthToken()));
             });
         }
-        this.namespace = config.getNamespace();
+        this.namespace = namespace;
         this.groupProxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(config.getSchemaRegistryUri()));
         this.schemaProxy = WebResourceFactory.newResource(ApiV1.SchemasApi.class, client.target(config.getSchemaRegistryUri()));
     }
@@ -98,6 +99,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         this.groupProxy = groupProxy;
         this.schemaProxy = schemaProxy;
         this.namespace = null;
+        this.client = null;
     }
 
     @Override
@@ -474,6 +476,13 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 throw new UnauthorizedException("User not authorized.");
             default:
                 throw new InternalServerError(errorMessage);
+        }
+    }
+
+    @Override
+    public void close() throws Exception {
+        if (client != null) {
+            client.close();
         }
     }
 }

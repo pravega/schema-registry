@@ -94,7 +94,7 @@ public class AllFormatInSingleStreamDemo {
         String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream + "out");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
-        SchemaRegistryClient schemaRegistryClient = SchemaRegistryClientFactory.createRegistryClient(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build());
+        SchemaRegistryClient schemaRegistryClient = SchemaRegistryClientFactory.withDefaultNamespace(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build());
         AllFormatInSingleStreamDemo demo = new AllFormatInSingleStreamDemo(clientConfig, schemaRegistryClient, scope, stream, groupId);
 
         EventStreamWriter<Type1> avro = demo.createAvroWriter(groupId);

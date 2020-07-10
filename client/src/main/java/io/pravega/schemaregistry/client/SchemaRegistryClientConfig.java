@@ -24,14 +24,12 @@ public class SchemaRegistryClientConfig {
      * URI for connecting with registry client.
      */
     private final URI schemaRegistryUri;
-    private final String namespace;
     private final boolean authEnabled;
     private final String authMethod;
     private final String authToken;
 
-    private SchemaRegistryClientConfig(URI schemaRegistryUri, String namespace, boolean authEnabled, String authMethod, String authToken) {
+    private SchemaRegistryClientConfig(URI schemaRegistryUri, boolean authEnabled, String authMethod, String authToken) {
         this.schemaRegistryUri = schemaRegistryUri;
-        this.namespace = namespace;
         this.authEnabled = authEnabled;
         this.authMethod = authMethod;
         this.authToken = authToken;
@@ -39,6 +37,5 @@ public class SchemaRegistryClientConfig {
 
     public static final class SchemaRegistryClientConfigBuilder {
         private boolean authEnabled = false;
-        private String namespace = null;
     }
 }
