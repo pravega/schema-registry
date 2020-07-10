@@ -58,6 +58,21 @@ public class TestSchemas {
 
     @Test
     public void testProtobufSchema() throws IOException {
+        ProtobufSchema<ProtobufTest.Message1> sm1 = ProtobufSchema.of(ProtobufTest.Message1.class);
+        assertNotNull(sm1.getParser());
+        assertNotNull(sm1.getDescriptorProto());
+        assertEquals(sm1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
+
+        ProtobufSchema<GeneratedMessageV3> bm1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class);
+        assertNotNull(bm1.getParser());
+        assertNotNull(bm1.getDescriptorProto());
+        assertEquals(bm1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
+
+        ProtobufSchema<GeneratedMessageV3> bm2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class);
+        assertNotNull(bm2.getParser());
+        assertNotNull(bm2.getDescriptorProto());
+        assertEquals(bm2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
+
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
         byte[] schemaBytes = Files.readAllBytes(path);
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);

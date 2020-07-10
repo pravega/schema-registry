@@ -34,7 +34,7 @@ import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
 
 @Slf4j
 public class SerializerFactory {
-    public static final String PRAVEGA_EVENT_HEADER = "pravegaEventHeader";
+    public static final String PRAVEGA_EVENT_HEADER = "PravegaEventHeader";
 
     // region avro
     /**

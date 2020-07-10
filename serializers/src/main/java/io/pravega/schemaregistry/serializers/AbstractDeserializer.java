@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.serializers;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
-import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.Schema;
 import lombok.SneakyThrows;
@@ -26,8 +25,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 @Slf4j
-abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
-    private static final byte PROTOCOL = 0x0;
+abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
     private static final int HEADER_SIZE = 1 + Integer.BYTES;
 
     private final String groupId;
@@ -60,8 +58,6 @@ abstract class AbstractDeserializer<T> extends FailingSerializer<T> {
 
     @Synchronized
     private void initialize() {
-        GroupProperties groupProperties = client.getGroupProperties(groupId);
-
         if (schemaInfo != null) {
             log.info("Validate caller supplied schema.");
             if (!client.canReadUsing(groupId, schemaInfo)) {
