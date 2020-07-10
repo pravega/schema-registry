@@ -60,7 +60,7 @@ import java.util.Map;
  * 1. Deserialize into protobuf generated java class (schema on read).
  * 2. Deserialize into {@link DynamicMessage} using user supplied schema (schema on read). 
  * 3. Deserialize into {@link DynamicMessage} while retrieving writer schema. 
- * 4. Multiplexed Deserializer that deserializes data into one of java objects based on {@link SchemaInfo#type}.
+ * 4. Multiplexed Deserializer that deserializes data into one of java objects based on {@link SchemaInfo#getType}.
  */
 @Slf4j
 public class ProtobufDemo {

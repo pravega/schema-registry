@@ -14,6 +14,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
 import com.google.common.base.Charsets;
+import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -46,11 +48,8 @@ public class JSONSchema<T> implements Schema<T> {
     }
 
     private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> base, Class<? extends T> derived) {
-        String type = name != null ? name : schema.getId();
-        // Add empty name if the name is not supplied and cannot be extracted from the json schema id. 
-        type = type != null ? type : "";
         this.schemaString = schemaString;
-        this.schemaInfo = new SchemaInfo(type, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
+        this.schemaInfo = new SchemaInfo(name, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
         this.base = base;
         this.tClass = derived;
         this.schema = schema;
@@ -73,6 +72,7 @@ public class JSONSchema<T> implements Schema<T> {
      * @return {@link JSONSchema} with generic type T that extracts and captures the json schema. 
      */
     public static <T> JSONSchema<T> of(Class<T> tClass) {
+        Preconditions.checkNotNull(tClass);
         try {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
             JsonSchema schema = schemaGen.generateSchema(tClass);
@@ -80,23 +80,45 @@ public class JSONSchema<T> implements Schema<T> {
 
             return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Unable to get json schema from the class", e);
         }
     }
 
     /**
      * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
+     * This method can be used to pass Json schema string which can be used to represent primitive data types. 
      *
-     * @param type type of object identified by {@link SchemaInfo#type}.
+     * @param type type of object identified by {@link SchemaInfo#getType()}.
+     * @param schema Schema to use. 
+     * @return Returns an JSONSchema with {@link Object} type. 
+     */
+    public static JSONSchema<Object> of(String type, JsonSchema schema) {
+        Preconditions.checkNotNull(type);
+        Preconditions.checkNotNull(schema);
+        try {
+            String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
+
+            return new JSONSchema<>(schema, type, schemaString, Object.class);
+        } catch (JsonProcessingException e) {
+            throw new IllegalArgumentException("Unable to get json schema string from the JsonSchema object", e);
+        }
+    }
+
+    /**
+     * Method to create a typed JSONSchema of type {@link Object} from the given schema string. 
+     *
+     * @param type type of object identified by {@link SchemaInfo#getType()}.
      * @param schemaString Schema string to use. 
      * @return Returns an JSONSchema with {@link Object} type. 
      */
     public static JSONSchema<Object> of(String type, String schemaString) {
+        Preconditions.checkNotNull(type, "Type cannot be null.");
+        Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaString), "Schema String cannot be null or empty.");
         try {
             JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
             return new JSONSchema<>(schema, type, schemaString, Object.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Unable to parse schema string", e);
         }
     }
 
@@ -111,6 +133,8 @@ public class JSONSchema<T> implements Schema<T> {
      * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
      */
     public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
+        Preconditions.checkNotNull(tDerived);
+        Preconditions.checkNotNull(tBase);
         try {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
             JsonSchema schema = schemaGen.generateSchema(tDerived);
@@ -118,7 +142,7 @@ public class JSONSchema<T> implements Schema<T> {
 
             return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Unable to get json schema from the class", e);
         }
     }
 
@@ -129,13 +153,14 @@ public class JSONSchema<T> implements Schema<T> {
      * @return Returns an JSONSchema with {@link Object} type. 
      */
     public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
+        Preconditions.checkNotNull(schemaInfo);
         try {
             String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
 
             JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
             return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
         } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException(e);
+            throw new IllegalArgumentException("Unable to get json schema from schema info", e);
         }
     }
 

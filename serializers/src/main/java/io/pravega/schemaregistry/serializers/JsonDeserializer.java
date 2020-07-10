@@ -21,13 +21,13 @@ import java.io.InputStream;
 
 import static com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
 
-class JsonDeserlizer<T> extends AbstractDeserializer<T> {
+class JsonDeserializer<T> extends AbstractDeserializer<T> {
     private final JSONSchema<T> jsonSchema;
     private final ObjectMapper objectMapper;
 
-    JsonDeserlizer(String groupId, SchemaRegistryClient client,
-                   JSONSchema<T> schema,
-                   SerializerConfig.Decoder decoder, EncodingCache encodingCache, boolean encodeHeader) {
+    JsonDeserializer(String groupId, SchemaRegistryClient client,
+                     JSONSchema<T> schema,
+                     SerializerConfig.Decoder decoder, EncodingCache encodingCache, boolean encodeHeader) {
         super(groupId, client, schema, true, decoder, encodingCache, encodeHeader);
         Preconditions.checkNotNull(schema);
         this.jsonSchema = schema;
