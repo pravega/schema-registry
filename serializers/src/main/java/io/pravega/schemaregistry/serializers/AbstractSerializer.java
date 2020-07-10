@@ -90,12 +90,12 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
         
         ByteBuffer byteBuffer;
         if (this.encodeHeader) {
-            ByteBuffer wrap = ByteBuffer.wrap(serialized, HEADER_LENGTH, serialized.length - HEADER_LENGTH);
-            ByteBuffer encoded = codec.encode(wrap);
             if (codec.equals(Codecs.None.getCodec())) {
                 // If no encoding is performed. we can directly use the original serialized byte array.
                 byteBuffer = ByteBuffer.wrap(serialized);
             } else {
+                ByteBuffer wrap = ByteBuffer.wrap(serialized, HEADER_LENGTH, serialized.length - HEADER_LENGTH);
+                ByteBuffer encoded = codec.encode(wrap);
                 int bufferSize = HEADER_LENGTH + encoded.remaining();
                 byteBuffer = ByteBuffer.allocate(bufferSize);
                 // copy the header from serialized array into encoded output array
@@ -104,7 +104,7 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
                 byteBuffer.rewind();
             }
         } else {
-            byteBuffer = ByteBuffer.wrap(dataStream.toByteArray());
+            byteBuffer = ByteBuffer.wrap(serialized);
         }
         
         return byteBuffer;
