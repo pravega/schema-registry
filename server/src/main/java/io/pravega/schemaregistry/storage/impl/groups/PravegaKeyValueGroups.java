@@ -26,6 +26,7 @@ import io.pravega.schemaregistry.storage.impl.group.PravegaKVGroupTable;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.Data;
 
+import java.util.AbstractMap;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -103,7 +104,7 @@ public class PravegaKeyValueGroups implements Groups<Version> {
     }
 
     @Override
-    public CompletableFuture<ResultPage<String>> listGroups(String nameSpace, ContinuationToken token, int limit) {
+    public CompletableFuture<ResultPage<String, ContinuationToken>> listGroups(String nameSpace, ContinuationToken token, int limit) {
         String namespace = nameSpace == null ? "" : nameSpace;
         ByteBuf continuationToken;
         if (token == null || token.equals(ContinuationToken.EMPTY)) {
@@ -114,7 +115,8 @@ public class PravegaKeyValueGroups implements Groups<Version> {
         }
         BiFunction<ByteBuf, Integer, CompletableFuture<Map.Entry<ByteBuf, List<NamespaceAndGroup>>>> function = 
                 (ByteBuf t, Integer l) -> withCreateGroupsTableIfAbsent(
-                        () -> tableStore.getKeysPaginated(GROUPS, t, l, NamespaceAndGroup::fromBytes));
+                        () -> tableStore.getKeysPaginated(GROUPS, t, l, NamespaceAndGroup::fromBytes)
+                                        .thenApply(page -> new AbstractMap.SimpleEntry<>(page.getToken(), page.getList())));
         Predicate<NamespaceAndGroup> predicate = x -> x.getNamespace().equals(namespace);
         return FuturesUtility.filteredWithTokenAndLimit(function, predicate, continuationToken, limit, executor)
                              .thenApply(result -> {

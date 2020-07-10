@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry;
 
-import io.pravega.schemaregistry.storage.ContinuationToken;
 import lombok.Data;
 
 import java.util.List;
@@ -20,7 +19,7 @@ import java.util.List;
  * @param <T> Type of result.
  */
 @Data
-public class ResultPage<T> {
+public class ResultPage<T, C> {
     private final List<T> list;
-    private final ContinuationToken token;
+    private final C token;
 }

@@ -39,7 +39,6 @@ import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -58,7 +57,10 @@ import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
+import static io.pravega.schemaregistry.storage.impl.group.GroupTable.Value;
+import static io.pravega.schemaregistry.storage.impl.group.GroupTable.Entry;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypeKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypeValue;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasValue;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasKey;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdKey;
@@ -111,14 +113,14 @@ public class Group<V> {
 
     public CompletableFuture<Boolean> create(SerializationFormat serializationFormat, ImmutableMap<String, String> properties,
                                           boolean allowMultipleTypes, Compatibility compatibility) {
-        List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
-        entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, null)));
+        List<Entry<V>> entries = new ArrayList<>();
+        entries.add(new Entry<>(ETAG, ETAG, null));
 
         GroupPropertiesRecord groupProp = new GroupPropertiesRecord(serializationFormat, allowMultipleTypes, properties);
-        entries.add(new AbstractMap.SimpleEntry<>(GROUP_PROPERTY_KEY, new GroupTable.Value<>(groupProp, null)));
+        entries.add(new Entry<>(GROUP_PROPERTY_KEY, groupProp, null));
 
         ValidationRecord validationRecord = new ValidationRecord(compatibility);
-        entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(validationRecord, null)));
+        entries.add(new Entry<>(VALIDATION_POLICY_KEY, validationRecord, null));
 
         return Futures.exceptionallyComposeExpecting(groupTable.updateEntries(entries).thenApply(x -> true), 
                       e -> Exceptions.unwrap(e) instanceof StoreExceptions.WriteConflictException, 
@@ -200,7 +202,7 @@ public class Group<V> {
                                                   .thenApply(entries -> {
                                                       List<SchemaRecord> schemaRecords = new ArrayList<>();
 
-                                                      for (GroupTable.Value<TableValue, V> entry : entries) {
+                                                      for (Value<TableValue, V> entry : entries) {
                                                           if (entry.getValue() instanceof SchemaRecord) {
                                                               schemaRecords.add((SchemaRecord) entry.getValue());
                                                           }
@@ -245,10 +247,9 @@ public class Group<V> {
 
                     if (versionDeletedRecordValue == null) {
                         assert !types.getDeletedIds().contains(id);
-                        List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> toUpdate = new ArrayList<>();
-                        toUpdate.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
-                        toUpdate.add(new AbstractMap.SimpleEntry<>(versionDeletedRecord,
-                                new GroupTable.Value<>(versionDeletedRecord, null)));
+                        List<Entry<V>> toUpdate = new ArrayList<>();
+                        toUpdate.add(new Entry<>(ETAG, ETAG, groupTable.fromEtag(etag)));
+                        toUpdate.add(new Entry<>(versionDeletedRecord, versionDeletedRecord, null));
                         // update latest version if the deleted version was the latest.
                         V typesVersion = entries.get(2).getVersion();
                         // if we are deleting the latest schema for the type, we need to update the latest too. 
@@ -296,9 +297,8 @@ public class Group<V> {
                         }
                         return newValueFuture.thenCompose(n -> {
                             newTypes.put(type, n);
-                            GroupTable.Value<TableValue, V> schemaTypesListValueVValue = new GroupTable.Value<>(
-                                    new LatestSchemasValue(newTypes.build(), types.getNextId(), deletedIds), typesVersion);
-                            toUpdate.add(new AbstractMap.SimpleEntry<>(LATEST_SCHEMAS_KEY, schemaTypesListValueVValue));
+                            toUpdate.add(new Entry<>(LATEST_SCHEMAS_KEY, 
+                                    new LatestSchemasValue(newTypes.build(), types.getNextId(), deletedIds), typesVersion));
                             return groupTable.updateEntries(toUpdate);
                                 });
                     } else {
@@ -458,10 +458,10 @@ public class Group<V> {
                                                .thenCompose(rec -> addCodecType(codecType, etag, rec))), executor);
     }
 
-    private CompletionStage<Void> addCodecType(CodecType codecType, Etag etag, GroupTable.Value<CodecTypesListValue, V> rec) {
+    private CompletionStage<Void> addCodecType(CodecType codecType, Etag etag, Value<CodecTypesListValue, V> rec) {
         if (rec.getValue() == null || !rec.getValue().getCodecTypes().contains(codecType.getName())) {
-            List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
-            entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+            List<Entry<V>> entries = new ArrayList<>();
+            entries.add(new Entry<>(ETAG, ETAG, groupTable.fromEtag(etag)));
             V version = rec.getVersion();
             ImmutableList.Builder<String> codecTypesBuilder = new ImmutableList.Builder<>();
             if (rec.getValue() == null) {
@@ -471,9 +471,8 @@ public class Group<V> {
                 codecTypesBuilder.add(codecType.getName());
             }
             CodecTypesListValue updated = new CodecTypesListValue(codecTypesBuilder.build());
-            entries.add(new AbstractMap.SimpleEntry<>(CODECS_TYPE_KEY, new GroupTable.Value<>(updated, version)));
-            entries.add(new AbstractMap.SimpleEntry<>(new CodecTypeKey(codecType.getName()), 
-                    new GroupTable.Value<>(new CodecTypeValue(codecType.getProperties()), null)));
+            entries.add(new Entry<>(CODECS_TYPE_KEY, updated, version));
+            entries.add(new Entry<>(new CodecTypeKey(codecType.getName()), new CodecTypeValue(codecType.getProperties()), null));
 
             return groupTable.updateEntries(entries);
         } else {
@@ -538,16 +537,16 @@ public class Group<V> {
             }
             VersionInfo next = new VersionInfo(schemaInfo.getType(), nextVersion, nextOrdinal);
 
-            List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new LinkedList<>();
+            List<Entry<V>> entries = new LinkedList<>();
             // 0. etag
-            entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+            entries.add(new Entry<>(ETAG, ETAG, groupTable.fromEtag(etag)));
             // 1. Schema id to schema record
             // 1.1 index for version to id
-            entries.add(new AbstractMap.SimpleEntry<>(new IndexTypeVersionToIdKey(next.getType(), next.getVersion()),
-                    new GroupTable.Value<>(new SchemaIdValue(next.getId()), null)));
-            entries.add(new AbstractMap.SimpleEntry<>(new SchemaIdKey(next.getId()),
-                    new GroupTable.Value<>(new SchemaRecord(schemaInfo, next.getId(), next.getVersion(), prop.getCompatibility(), 
-                            System.currentTimeMillis()), null)));
+            entries.add(new Entry<>(new IndexTypeVersionToIdKey(next.getType(), next.getVersion()),
+                    new SchemaIdValue(next.getId()), null));
+            entries.add(new Entry<>(new SchemaIdKey(next.getId()),
+                    new SchemaRecord(schemaInfo, next.getId(), next.getVersion(), prop.getCompatibility(), 
+                            System.currentTimeMillis()), null));
 
             // 2. Schema fingerprint key
             ImmutableList.Builder<VersionInfo> versionsBuilder = new ImmutableList.Builder<>();
@@ -556,8 +555,8 @@ public class Group<V> {
             }
             versionsBuilder.add(next);
             ImmutableList<VersionInfo> versions = versionsBuilder.build();
-            entries.add(new AbstractMap.SimpleEntry<>(schemaFingerprintKey,
-                    new GroupTable.Value<>(new SchemaVersionList(versions), schemaIndexVersion)));
+            entries.add(new Entry<>(schemaFingerprintKey,
+                    new SchemaVersionList(versions), schemaIndexVersion));
 
             // 3. add to latest schemas which updates the latest and next versions for the schema type
             // and next id for overall group
@@ -573,8 +572,8 @@ public class Group<V> {
                     nextVersion + 1, deletedVersions);
             builder.put(schemaInfo.getType(), newValue);
             
-            entries.add(new AbstractMap.SimpleEntry<>(LATEST_SCHEMAS_KEY,
-                    new GroupTable.Value<>(new LatestSchemasValue(builder.build(), nextOrdinal + 1, deletedSet), schemaTypesVersion)));
+            entries.add(new Entry<>(LATEST_SCHEMAS_KEY,
+                    new LatestSchemasValue(builder.build(), nextOrdinal + 1, deletedSet), schemaTypesVersion));
 
             return groupTable.updateEntries(entries).thenApply(v -> next);
         });
@@ -586,11 +585,11 @@ public class Group<V> {
                              if (entry.getValue().getCompatibility().equals(policy)) {
                                  return CompletableFuture.completedFuture(null);
                              } else {
-                                 List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new ArrayList<>();
-                                 entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+                                 List<Entry<V>> entries = new ArrayList<>();
+                                 entries.add(new Entry<>(ETAG, ETAG, groupTable.fromEtag(etag)));
 
                                  ValidationRecord updated = new ValidationRecord(policy);
-                                 entries.add(new AbstractMap.SimpleEntry<>(VALIDATION_POLICY_KEY, new GroupTable.Value<>(updated, entry.getVersion())));
+                                 entries.add(new Entry<>(VALIDATION_POLICY_KEY, updated, entry.getVersion()));
 
                                  return groupTable.updateEntries(entries);
                              }
@@ -624,18 +623,17 @@ public class Group<V> {
                                     new EncodingId(current.getValue().getEncodingId().getId() + 1);
                             V encodingIdVersion = current.getVersion();
 
-                            List<Map.Entry<TableKey, GroupTable.Value<TableValue, V>>> entries = new LinkedList<>();
+                            List<Entry<V>> entries = new LinkedList<>();
 
-                            entries.add(new AbstractMap.SimpleEntry<>(ETAG, new GroupTable.Value<>(ETAG, groupTable.fromEtag(etag))));
+                            entries.add(new Entry<>(ETAG, ETAG, groupTable.fromEtag(etag)));
 
                             EncodingIdRecord idIndex = new EncodingIdRecord(nextEncodingId);
                             EncodingInfoRecord infoIndex = new EncodingInfoRecord(versionInfo, codecType);
                             // add new entries for encoding id and info
-                            entries.add(new AbstractMap.SimpleEntry<>(idIndex, new GroupTable.Value<>(infoIndex, null)));
-                            entries.add(new AbstractMap.SimpleEntry<>(infoIndex, new GroupTable.Value<>(idIndex, null)));
+                            entries.add(new Entry<>(idIndex, infoIndex, null));
+                            entries.add(new Entry<>(infoIndex, idIndex, null));
                             // update
-                            entries.add(new AbstractMap.SimpleEntry<>(LATEST_ENCODING_ID_KEY,
-                                    new GroupTable.Value<>(new LatestEncodingIdValue(nextEncodingId), encodingIdVersion)));
+                            entries.add(new Entry<>(LATEST_ENCODING_ID_KEY, new LatestEncodingIdValue(nextEncodingId), encodingIdVersion));
                             return groupTable.updateEntries(entries)
                                              .thenApply(v -> nextEncodingId);
                         });

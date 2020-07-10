@@ -61,7 +61,7 @@ public class InMemoryGroups implements Groups<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<ResultPage<String>> listGroups(String namespace, ContinuationToken token, int limit) {
+    public CompletableFuture<ResultPage<String, ContinuationToken>> listGroups(String namespace, ContinuationToken token, int limit) {
         // TODO: pagination -- return only limit number of records!!
         String nameSpace = namespace == null ? "" : namespace;
         ContinuationToken next = ContinuationToken.fromString(Integer.toString(groups.size()));
@@ -70,7 +70,7 @@ public class InMemoryGroups implements Groups<Integer> {
                                                     .filter(x -> x.getNamespace().equals(nameSpace))
                                                     .map(NamespaceAndGroup::getGroupId)
                                                     .collect(Collectors.toList());
-            ResultPage<String> namespaceAndGroupResultPage = new ResultPage<>(namespaceAndGroups, next);
+            ResultPage<String, ContinuationToken> namespaceAndGroupResultPage = new ResultPage<>(namespaceAndGroups, next);
             return CompletableFuture.completedFuture(namespaceAndGroupResultPage);
         } else {
             return CompletableFuture.completedFuture(new ResultPage<>(Collections.emptyList(), next));

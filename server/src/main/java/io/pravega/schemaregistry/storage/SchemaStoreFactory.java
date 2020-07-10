@@ -30,6 +30,8 @@ public class SchemaStoreFactory {
     
     public static SchemaStore createPravegaStore(ServiceConfig serviceConfig, ClientConfig clientConfig, ScheduledExecutorService executor) {
         TableStore tableStore = new TableStore(clientConfig, serviceConfig, executor);
+        tableStore.startAsync();
+        tableStore.awaitRunning();
         return new SchemaStoreImpl<>(new PravegaKeyValueGroups(tableStore, executor), new PravegaKeyValueSchemas(tableStore));
     }
 }

@@ -10,52 +10,53 @@
 package io.pravega.schemaregistry.storage.impl.group;
 
 import io.pravega.schemaregistry.storage.Etag;
-import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import lombok.Data;
 
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
+
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
 
 /**
  * Table for storing group metadata. 
  * @param <V> Version Type
  */
 public interface GroupTable<V> {
-    CompletableFuture<Void> addEntry(TableRecords.TableKey key, TableRecords.TableValue value);
+    CompletableFuture<Void> addEntry(TableKey key, TableValue value);
 
-    CompletableFuture<Void> updateEntry(TableRecords.TableKey key, TableRecords.TableValue value, V version);
+    CompletableFuture<Void> updateEntry(TableKey key, TableValue value, V version);
 
-    CompletableFuture<Void> updateEntries(List<Map.Entry<TableRecords.TableKey, Value<TableRecords.TableValue, V>>> entries);
+    CompletableFuture<Void> updateEntries(List<Entry<V>> entries);
 
-    <T extends TableRecords.TableValue> CompletableFuture<T> getEntry(TableRecords.TableKey key, Class<T> tClass);
+    <T extends TableValue> CompletableFuture<T> getEntry(TableKey key, Class<T> tClass);
 
-    <T extends TableRecords.TableValue> CompletableFuture<Value<T, V>> getEntryWithVersion(TableRecords.TableKey key, Class<T> tClass);
+    <T extends TableValue> CompletableFuture<Value<T, V>> getEntryWithVersion(TableKey key, Class<T> tClass);
 
-    <T extends TableRecords.TableValue> CompletableFuture<List<T>> getEntries(List<? extends TableRecords.TableKey> keys, Class<T> tClass);
+    <T extends TableValue> CompletableFuture<List<T>> getEntries(List<? extends TableKey> keys, Class<T> tClass);
     
-    <T extends TableRecords.TableValue> CompletableFuture<List<Value<T, V>>> getEntriesWithVersion(List<? extends TableRecords.TableKey> keys, Class<T> tClass);
+    <T extends TableValue> CompletableFuture<List<Value<T, V>>> getEntriesWithVersion(List<? extends TableKey> keys, Class<T> tClass);
 
-    CompletableFuture<List<TableRecords.TableKey>> getAllKeys();
+    CompletableFuture<List<TableKey>> getAllKeys();
 
-    CompletableFuture<List<Entry>> getAllEntries();
+    CompletableFuture<List<Entry<V>>> getAllEntries();
 
-    CompletableFuture<List<Entry>> getAllEntries(Predicate<TableRecords.TableKey> filterKeys);
+    CompletableFuture<List<Entry<V>>> getAllEntries(Predicate<TableKey> filterKeys);
 
     Etag toEtag(V version);
 
     V fromEtag(Etag etag);
 
     @Data
-    class Value<T extends TableRecords.TableValue, V> {
+    class Value<T extends TableValue, V> {
         private final T value;
         private final V version;
     }
 
     @Data
-    class Entry {
-        private final TableRecords.TableKey key;
-        private final TableRecords.TableValue value;
+    class Entry<V> {
+        private final TableKey key;
+        private final TableValue value;
+        private final V version;
     }
 }

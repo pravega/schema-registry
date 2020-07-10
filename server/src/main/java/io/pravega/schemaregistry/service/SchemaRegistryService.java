@@ -53,7 +53,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 
 import static io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTransitive;
@@ -95,24 +94,27 @@ public class SchemaRegistryService {
      * @param limit             max number of groups to return.
      * @return CompletableFuture which holds map of groups names and group properties upon completion.
      */
-    public CompletableFuture<ResultPage<Map.Entry<String, GroupProperties>>> listGroups(String namespace, ContinuationToken continuationToken, int limit) {
+    public CompletableFuture<ResultPage<Map.Entry<String, GroupProperties>, ContinuationToken>> listGroups(String namespace, ContinuationToken continuationToken, int limit) {
         log.debug("List groups called");
         return FuturesUtility.filteredWithTokenAndLimit(
-                (ContinuationToken c, Integer l) -> store.listGroups(namespace, c, l)
-                                                         .thenCompose(reply -> {
-                                                             List<String> list = reply.getList();
-                                                             return Futures.allOfWithResults(list.stream().map(x -> Futures.exceptionallyExpecting(store.getGroupProperties(namespace, x).thenApply(AtomicReference::new),
-                                                                     e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
-                                                                     new AtomicReference<>((GroupProperties) null)).thenApply(prop -> new AbstractMap.SimpleEntry<>(x, prop)))
-                                                                                                 .collect(Collectors.toList()))
-                                                                           .thenApply(result -> new AbstractMap.SimpleEntry<>(reply.getToken(), result));
-                                                         }),
-                x -> x.getValue().get() != null, continuationToken, limit, executor)
+                (ContinuationToken c, Integer l) ->
+                        store.listGroups(namespace, c, l)
+                             .thenCompose(reply -> {
+                                 List<String> list = reply.getList();
+                                 return Futures.allOfWithResults(list.stream().map(x -> 
+                                         Futures.exceptionallyExpecting(store.getGroupProperties(namespace, x),
+                                         e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                         null)
+                                                .thenApply(prop -> new AbstractMap.SimpleEntry<>(x, prop)))
+                                                                     .collect(Collectors.toList()))
+                                               .thenApply(result -> new AbstractMap.SimpleEntry<>(reply.getToken(), result));
+                             }),
+                x -> x.getValue() != null, continuationToken, limit, executor)
                              .thenApply(groupsList -> {
                                    log.debug("Returning groups {}", namespace, groupsList);
                                    List<Map.Entry<String, GroupProperties>> collect = groupsList
-                                           .getValue().stream().filter(x -> x.getValue().get() != null)
-                                           .map(x -> new AbstractMap.SimpleEntry<>(x.getKey(), x.getValue().get())).collect(Collectors.toList());
+                                           .getValue().stream().filter(x -> x.getValue() != null)
+                                           .map(x -> new AbstractMap.SimpleEntry<>(x.getKey(), x.getValue())).collect(Collectors.toList());
                                    return new ResultPage<>(collect, groupsList.getKey());
                                });
     }
@@ -223,7 +225,7 @@ public class SchemaRegistryService {
         log.debug("getSchemas called for group {} {}. New compatibility {}", namespace, group);
 
         if (schemaType == null) {
-            return store.getLatestSchemas(namespace, group)
+            return store.listLatestSchemas(namespace, group)
                         .whenComplete((r, e) -> {
                             if (e == null) {
                                 log.debug("Group {} {} getSchemas {}.", namespace, group, r);
@@ -591,7 +593,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         log.debug("Group {} {}, getCodecTypes.", namespace, group);
 
-        return store.getCodecTypes(namespace, group)
+        return store.listCodecTypes(namespace, group)
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.debug("Group {} {}, codecTypes = {}", namespace, group, r);
@@ -651,7 +653,7 @@ public class SchemaRegistryService {
                 return CompletableFuture.completedFuture(Collections.emptyList());
             case DenyAll:
                 // Deny all is applicable as long as there is at least one schema in the group. 
-                return store.getLatestSchemas(namespace, group);
+                return store.listLatestSchemas(namespace, group);
             case Backward:
             case Forward:
             case BackwardTransitive:
