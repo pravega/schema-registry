@@ -28,6 +28,6 @@ public class HashUtil {
     public static BigInteger getFingerprint(byte[] bytes) {
         MessageDigest md = MessageDigest.getInstance(SHA_256);
 
-        return new BigInteger(md.digest(bytes));
+        return new BigInteger(1, md.digest(bytes));
     }
 }
