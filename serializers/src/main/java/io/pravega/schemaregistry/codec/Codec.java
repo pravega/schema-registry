@@ -12,40 +12,19 @@ package io.pravega.schemaregistry.codec;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 
-import java.io.IOException;
-import java.nio.ByteBuffer;
-
 /**
- * Codec interface that defines methods to encode and decoder data for a given codec type.
+ * Codec interface extends {@link Encoder} and {@link Decoder} interfaces that defines methods to encode and decode
+ * data. Encoder interface takes a codec type and encoding function. Decoder interface defines a decoding function. 
  */
-public interface Codec {
+public interface Codec extends Encoder, Decoder {
     /**
-     * Codec Type object that contains a string name identifying the Codec Type. 
-     * This name should be same as the codecType that is registered for the group in schema registry service. 
-     * The serializers will use this codec to encode the data and deserializers will find
-     * the decoder for the encoded data from {@link EncodingInfo#getCodecType()}
+     * Name identifying the Codec Type. 
+     * This name should be same as the {@link CodecType#getName()} that is registered for the group in schema registry 
+     * service. 
+     * The deserializers will find the decoder for the encoded data from {@link EncodingInfo#getCodecType()} by matching 
+     * the name.
      * 
      * @return Name of the codec. 
      */
-    CodecType getCodecType();
-
-    /**
-     * Implementation should encode the remaining bytes in the buffer and return a new ByteBuffer that includes
-     * the encoded data at its current position. 
-     * 
-     * @param data ByteBuffer to encode. 
-     * @return encoded ByteBuffer with position set to the start of encoded data. 
-     * @throws IOException IOException can be thrown while reading from or writing to byte buffers.
-     */
-    ByteBuffer encode(ByteBuffer data) throws IOException;
-
-    /**
-     * Implementation should decode the remaining bytes in the buffer and return a new ByteBuffer that includes
-     * the decoded data at its current position. 
-     *
-     * @param data encoded ByteBuffer to decode. 
-     * @return decoded ByteBuffer with position set to the start of decoded data. 
-     * @throws IOException can be thrown while reading from or writing to byte buffers.
-     */
-    ByteBuffer decode(ByteBuffer data) throws IOException;
+    String getName();
 }

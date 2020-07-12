@@ -25,7 +25,6 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -65,7 +64,7 @@ public class MessageBusConsumerProto {
         client = SchemaRegistryClientFactory.withDefaultNamespace(config);
         this.scope = scope;
         this.stream = stream;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
         initialize();
         this.reader = createReader(groupId);
     }

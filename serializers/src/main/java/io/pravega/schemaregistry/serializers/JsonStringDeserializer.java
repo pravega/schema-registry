@@ -22,8 +22,8 @@ class JsonStringDeserializer extends AbstractDeserializer<String> {
     private final ObjectMapper objectMapper;
 
     JsonStringDeserializer(String groupId, SchemaRegistryClient client,
-                           SerializerConfig.Decoder decoder, EncodingCache encodingCache, boolean encodeHeader) {
-        super(groupId, client, null, false, decoder, encodingCache, encodeHeader);
+                           SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
+        super(groupId, client, null, false, decoders, encodingCache, encodeHeader);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);

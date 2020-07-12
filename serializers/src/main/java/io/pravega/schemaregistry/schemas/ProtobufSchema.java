@@ -127,7 +127,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
     /**
      * Method to generate protobuf schema from the supplied protobuf generated class. It creates the {@link FileDescriptorSet}
      * from the generated class.
-     * This method is same as {@link #of(Class, FileDescriptorSet)} except that it returns a Protobuf schema
+     * This method is same as {@link #of(Class)} except that it returns a Protobuf schema
      * typed {@link GeneratedMessageV3}.
      * It is useful in multiplexed deserializer to pass all objects to deserialize into as base {@link GeneratedMessageV3} objects. 
      *
@@ -176,6 +176,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
         }
 
         FileDescriptorSet getFileDescriptorSet() {
+            // TODO: verify that the file proto has descriptors for all message types
             return FileDescriptorSet
                     .newBuilder().addFile(defaultInstance.getDescriptorForType().getFile().toProto()).build();
         }

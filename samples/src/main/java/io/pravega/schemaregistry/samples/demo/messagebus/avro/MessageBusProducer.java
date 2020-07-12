@@ -18,7 +18,6 @@ import io.pravega.client.stream.EventWriterConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.Type1;
@@ -27,6 +26,7 @@ import io.pravega.schemaregistry.samples.generated.Type3;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.shared.NameUtils;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
@@ -55,7 +55,7 @@ public class MessageBusProducer {
         this.config = SchemaRegistryClientConfig.builder().schemaRegistryUri((URI.create(registryUri))).build();
         this.scope = scope;
         this.stream = stream;
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
         initialize(groupId);
         this.writer = createWriter(groupId);
     }

@@ -25,7 +25,6 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -44,10 +43,10 @@ import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
-import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Map;
 import java.util.Scanner;
 
 /**
@@ -76,7 +75,7 @@ public class EncryptionDemo {
         id = Long.toString(System.currentTimeMillis());
         scope = "scope" + id;
         stream = "avroEncryption";
-        groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        groupId = NameUtils.getScopedStreamName(scope, stream);
         myEncryption = "myEncryption";
         clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         this.encryptionkey = encryptionkey;
@@ -112,7 +111,7 @@ public class EncryptionDemo {
                                                                     Compatibility.backward(), true)
                                                             .registerSchema(true)
                                                             .registerCodec(true)
-                                                            .codec(myCodec)
+                                                            .encoder(myCodec)
                                                             .registryClient(client)
                                                             .build();
 
@@ -135,13 +134,7 @@ public class EncryptionDemo {
         // add new decoder for custom serialization
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .addDecoder(myCodec.getCodecType(), x -> {
-                                                                 try {
-                                                                     return myCodec.decode(x);
-                                                                 } catch (IOException e) {
-                                                                     throw new RuntimeException(e);
-                                                                 }
-                                                             })
+                                                             .decoder(myCodec.getCodecType().getName(), myCodec)
                                                              .registryClient(client)
                                                              .build();
 
@@ -169,6 +162,12 @@ public class EncryptionDemo {
         return new Codec() {
             private final byte[] key = encryptionkey.getBytes(Charsets.UTF_8);
             private final CodecType codecType = new CodecType(myEncryption);
+
+            @Override
+            public String getName() {
+                return codecType.getName();
+            }
+
             @Override
             public CodecType getCodecType() {
                 return codecType;
@@ -192,7 +191,7 @@ public class EncryptionDemo {
 
             @SneakyThrows
             @Override
-            public ByteBuffer decode(ByteBuffer data) {
+            public ByteBuffer decode(ByteBuffer data, Map<String, String> properties) {
                 byte[] array = new byte[data.remaining()];
                 data.get(array);
 

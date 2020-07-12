@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.protobuf.Message;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.Encoder;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 
@@ -20,8 +20,8 @@ import java.io.OutputStream;
 
 class ProtobufSerializer<T extends Message> extends AbstractSerializer<T> {
     ProtobufSerializer(String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
-                       Codec codec, boolean registerSchema, boolean encodeHeader) {
-        super(groupId, client, schema, codec, registerSchema, encodeHeader);
+                       Encoder encoder, boolean registerSchema, boolean encodeHeader) {
+        super(groupId, client, schema, encoder, registerSchema, encodeHeader);
     }
 
     @Override

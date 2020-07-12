@@ -16,7 +16,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
-import io.pravega.schemaregistry.serializers.Codecs;
+import io.pravega.schemaregistry.codec.Codecs;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -197,16 +197,16 @@ public abstract class TestEndToEnd {
         assertEquals(myTest2History.size(), 1);
 
         // delete schemainfo2
-        EncodingId encodingId = client.getEncodingId(group, version2, Codecs.None.getCodecType().getName());
+        EncodingId encodingId = client.getEncodingId(group, version2, Codecs.None.getCodec().getName());
         assertEquals(encodingId.getId(), 0);
         client.deleteSchemaVersion(group, version2);
         SchemaInfo schema = client.getSchemaForVersion(group, version2);
         assertEquals(schema, schemaInfo2);
         AssertExtensions.assertThrows("", () -> client.getVersionForSchema(group, schemaInfo2),
                 e -> Exceptions.unwrap(e) instanceof RegistryExceptions.ResourceNotFoundException);
-        encodingId = client.getEncodingId(group, version2, Codecs.None.getCodecType().getName());
+        encodingId = client.getEncodingId(group, version2, Codecs.None.getCodec().getName());
         assertEquals(encodingId.getId(), 0);
-        AssertExtensions.assertThrows("", () -> client.getEncodingId(group, version2, Codecs.GzipCompressor.getCodecType().getName()),
+        AssertExtensions.assertThrows("", () -> client.getEncodingId(group, version2, Codecs.GzipCompressor.getCodec().getName()),
                 e -> Exceptions.unwrap(e) instanceof RegistryExceptions.ResourceNotFoundException);
 
         groupEvolutionHistory = client.getGroupHistory(group);

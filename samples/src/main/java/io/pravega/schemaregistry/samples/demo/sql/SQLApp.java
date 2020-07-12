@@ -22,7 +22,6 @@ import io.pravega.client.stream.EventStreamReader;
 import io.pravega.client.stream.ReaderConfig;
 import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.Serializer;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -154,7 +153,7 @@ public class SQLApp {
     }
 
     private void createTable(String scope, String stream, String tableName) {
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
         GroupProperties properties = client.getGroupProperties(groupId);
         
         SchemaWithVersion latestSchema = client.getLatestSchemaVersion(groupId, null);
@@ -275,7 +274,7 @@ public class SQLApp {
 
     private List<GenericRecord> printColumns(String scope, String stream, TableSchema tableSchema, Predicate<GenericRecord> predicate) {
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
 
         String rg = "rg" + scope + stream + System.currentTimeMillis();
         readerGroupManager.createReaderGroup(rg,

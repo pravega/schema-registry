@@ -26,7 +26,6 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -82,7 +81,7 @@ public class AllFormatInSingleStreamDemo {
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(),
                 true));
-        client.addGroup(GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, outputStream), new GroupProperties(serializationFormat,
+        client.addGroup(NameUtils.getScopedStreamName(scope, stream), new GroupProperties(serializationFormat,
                 Compatibility.allowAny(),
                 true));
     }
@@ -90,8 +89,8 @@ public class AllFormatInSingleStreamDemo {
     public static void main(String[] args) throws JsonProcessingException {
         String scope = "scope" + System.currentTimeMillis();
         String stream = "stream";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
-        String groupIdOut = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream + "out");
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
+        String groupIdOut = NameUtils.getScopedStreamName(scope, stream + "out");
 
         ClientConfig clientConfig = ClientConfig.builder().controllerURI(URI.create("tcp://localhost:9090")).build();
         SchemaRegistryClient schemaRegistryClient = SchemaRegistryClientFactory.withDefaultNamespace(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:9092")).build());

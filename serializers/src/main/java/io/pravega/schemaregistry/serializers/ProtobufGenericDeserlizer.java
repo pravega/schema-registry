@@ -29,7 +29,7 @@ public class ProtobufGenericDeserlizer extends AbstractDeserializer<DynamicMessa
     private final ConcurrentHashMap<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
     ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
-                              SerializerConfig.Decoder decoder, EncodingCache encodingCache, boolean encodeHeader) {
+                              SerializerConfig.Decoders decoder, EncodingCache encodingCache, boolean encodeHeader) {
         super(groupId, client, schema, false, decoder, encodingCache, encodeHeader);
         Preconditions.checkArgument(isEncodeHeader() || schema != null);
         knownSchemas = new ConcurrentHashMap<>();

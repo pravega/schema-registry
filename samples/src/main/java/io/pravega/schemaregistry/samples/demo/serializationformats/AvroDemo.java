@@ -26,7 +26,6 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -126,7 +125,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avroevolution";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -251,7 +250,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avroreflect";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -315,7 +314,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avrogenerated";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);
@@ -378,7 +377,7 @@ public class AvroDemo {
         // create stream
         String scope = "scope" + id;
         String stream = "avromultiplexed";
-        String groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        String groupId = NameUtils.getScopedStreamName(scope, stream);
 
         try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
             streamManager.createScope(scope);

@@ -27,8 +27,8 @@ class JsonDeserializer<T> extends AbstractDeserializer<T> {
 
     JsonDeserializer(String groupId, SchemaRegistryClient client,
                      JSONSchema<T> schema,
-                     SerializerConfig.Decoder decoder, EncodingCache encodingCache, boolean encodeHeader) {
-        super(groupId, client, schema, true, decoder, encodingCache, encodeHeader);
+                     SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
+        super(groupId, client, schema, true, decoders, encodingCache, encodeHeader);
         Preconditions.checkNotNull(schema);
         this.jsonSchema = schema;
         this.objectMapper = new ObjectMapper();

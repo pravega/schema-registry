@@ -25,7 +25,6 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -35,7 +34,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.serializers.Codecs;
+import io.pravega.schemaregistry.codec.Codecs;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
@@ -50,6 +49,7 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Scanner;
 import java.util.stream.Collectors;
@@ -72,6 +72,11 @@ public class CompressionDemo {
     private static final CodecType MYCOMPRESSION = new CodecType("mycompression");
     private static final Codec MY_CODEC = new Codec() {
         @Override
+        public String getName() {
+            return MYCOMPRESSION.getName();
+        }
+
+        @Override
         public CodecType getCodecType() {
             return MYCOMPRESSION;
         }
@@ -92,7 +97,7 @@ public class CompressionDemo {
         }
 
         @Override
-        public ByteBuffer decode(ByteBuffer data) throws IOException {
+        public ByteBuffer decode(ByteBuffer data, Map<String, String> properties) throws IOException {
             byte[] array = new byte[data.remaining()];
             data.get(array);
 
@@ -125,19 +130,13 @@ public class CompressionDemo {
         id = Long.toString(System.currentTimeMillis());
         scope = "scope" + id;
         stream = "avrocompression";
-        groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        groupId = NameUtils.getScopedStreamName(scope, stream);
         schema1 = AvroSchema.ofRecord(SCHEMA1);
         clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         initialize();
         SerializerConfig serializerConfig2 = SerializerConfig.builder()
                                                              .groupId(groupId)
-                                                             .addDecoder(MY_CODEC.getCodecType(), x -> {
-                                                                 try {
-                                                                     return MY_CODEC.decode(x);
-                                                                 } catch (IOException e) {
-                                                                     throw new RuntimeException(e);
-                                                                 }
-                                                             })
+                                                             .decoder(MY_CODEC.getName(), MY_CODEC)
                                                              .registryClient(client)
                                                              .build();
 
@@ -233,7 +232,7 @@ public class CompressionDemo {
                                                             .groupId(groupId)
                                                             .registerSchema(true)
                                                             .registerCodec(true)
-                                                            .codec(Codecs.GzipCompressor.getCodec())
+                                                            .encoder(Codecs.GzipCompressor.getCodec())
                                                             .registryClient(client)
                                                             .build();
 
@@ -251,7 +250,7 @@ public class CompressionDemo {
     private void writeSnappy(String input) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .codec(Codecs.SnappyCompressor.getCodec())
+                                                            .encoder(Codecs.SnappyCompressor.getCodec())
                                                             .registerSchema(true)
                                                             .registerCodec(true)
                                                             .registryClient(client)
@@ -271,7 +270,7 @@ public class CompressionDemo {
     private void writeCustom(String input) {
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .groupId(groupId)
-                                                            .codec(MY_CODEC)
+                                                            .encoder(MY_CODEC)
                                                             .registerSchema(true)
                                                             .registerCodec(true)
                                                             .registryClient(client)

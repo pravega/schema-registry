@@ -26,7 +26,6 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.schemaregistry.GroupIdGenerator;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -66,7 +65,7 @@ public class SerDeDemo {
         client = SchemaRegistryClientFactory.withDefaultNamespace(config);
         this.scope = scope;
         this.stream = stream;
-        this.groupId = GroupIdGenerator.getGroupId(GroupIdGenerator.Scheme.QualifiedStreamName, scope, stream);
+        this.groupId = NameUtils.getScopedStreamName(scope, stream);
         this.filePath = filePath;
         createScopeAndStream(scope, stream, groupId);
     }
