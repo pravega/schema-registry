@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.Encoder;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import org.apache.avro.Schema;
@@ -28,8 +28,8 @@ import java.io.OutputStream;
 class AvroSerializer<T> extends AbstractSerializer<T> {
     private final AvroSchema<T> avroSchema;
     AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
-                   Codec codec, boolean registerSchema) {
-        super(groupId, client, schema, codec, registerSchema, true);
+                   Encoder encoder, boolean registerSchema) {
+        super(groupId, client, schema, encoder, registerSchema, true);
         this.avroSchema = schema;
     }
 

@@ -34,7 +34,7 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
     // If headers are not encoded, then this will be the latest schema from the registry
     private final SchemaInfo schemaInfo;
     private final boolean encodeHeader;
-    private final SerializerConfig.Decoder decoder;
+    private final SerializerConfig.Decoders decoders;
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
 
@@ -42,7 +42,7 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                                    SchemaRegistryClient client,
                                    @Nullable Schema<T> schema,
                                    boolean skipHeaders,
-                                   SerializerConfig.Decoder decoder,
+                                   SerializerConfig.Decoders decoders,
                                    EncodingCache encodingCache,
                                    boolean encodeHeader) {
         Preconditions.checkNotNull(groupId);
@@ -54,7 +54,7 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
         this.schemaInfo = schema == null ? null : schema.getSchemaInfo();
         this.encodeHeader = encodeHeader;
         this.skipHeaders = skipHeaders;
-        this.decoder = decoder;
+        this.decoders = decoders;
             
         initialize();
     }
@@ -63,7 +63,7 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
         if (schemaInfo != null) {
             log.info("Validate caller supplied schema.");
             if (!client.canReadUsing(groupId, schemaInfo)) {
-                throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.getType());
+                throw new IllegalArgumentException("Cannot read using schema" + schemaInfo.getType() + " as it is considered incompatible with current policy.");
             }
         } else {
             if (!this.encodeHeader) {
@@ -75,6 +75,9 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
     @SneakyThrows(IOException.class)
     @Override
     public T deserialize(ByteBuffer data) {
+        if (!data.hasArray()) {
+            return null;
+        }
         int start = data.arrayOffset() + data.position();
         if (this.encodeHeader) {
             SchemaInfo writerSchema = null;
@@ -87,7 +90,7 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                 EncodingId encodingId = new EncodingId(data.getInt());
                 EncodingInfo encodingInfo = encodingCache.getGroupEncodingInfo(encodingId);
                 writerSchema = encodingInfo.getSchemaInfo();
-                decoded = decoder.decode(encodingInfo.getCodecType(), data);
+                decoded = decoders.decode(encodingInfo.getCodecType(), data);
             }
 
             ByteArrayInputStream bais = new ByteArrayInputStream(decoded.array(), 

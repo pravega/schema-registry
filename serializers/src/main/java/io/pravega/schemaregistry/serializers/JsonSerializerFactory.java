@@ -33,7 +33,7 @@ class JsonSerializerFactory {
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
-        return new JsonSerializer<>(groupId, schemaRegistryClient, schema, config.getCodec(),
+        return new JsonSerializer<>(groupId, schemaRegistryClient, schema, config.getEncoder(),
                 config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
@@ -46,7 +46,7 @@ class JsonSerializerFactory {
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         // schema can be null in which case deserialization will happen into dynamic message
-        return new JsonDeserializer<>(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache, 
+        return new JsonDeserializer<>(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache, 
                 config.isWriteEncodingHeader());
     }
 
@@ -58,7 +58,7 @@ class JsonSerializerFactory {
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoder(),
+        return new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoders(),
                 encodingCache, config.isWriteEncodingHeader());
     }
 
@@ -70,7 +70,7 @@ class JsonSerializerFactory {
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new JsonStringDeserializer(groupId, schemaRegistryClient, config.getDecoder(), encodingCache, config.isWriteEncodingHeader());
+        return new JsonStringDeserializer(groupId, schemaRegistryClient, config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
     }
 
     static <T> Serializer<T> multiTypeSerializer(
@@ -82,7 +82,7 @@ class JsonSerializerFactory {
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new JsonSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
+                        x -> new JsonSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getEncoder(),
                                 config.isRegisterSchema(), config.isWriteEncodingHeader())));
         return new MultiplexedSerializer<>(serializerMap);
     }
@@ -99,10 +99,10 @@ class JsonSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoder(),
+                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(),
                                 encodingCache, config.isWriteEncodingHeader())));
         return new MultiplexedDeserializer<>(groupId, schemaRegistryClient,
-                deserializerMap, config.getDecoder(), encodingCache);
+                deserializerMap, config.getDecoders(), encodingCache);
     }
 
     static <T> Serializer<Either<T, WithSchema<JsonNode>>> typedOrGenericDeserializer(
@@ -117,12 +117,12 @@ class JsonSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache, 
+                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache, 
                                 config.isWriteEncodingHeader())));
-        JsonGenericDeserializer genericDeserializer = new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoder(),
+        JsonGenericDeserializer genericDeserializer = new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoders(),
                 encodingCache, config.isWriteEncodingHeader());
 
         return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient,
-                deserializerMap, genericDeserializer, config.getDecoder(), encodingCache);
+                deserializerMap, genericDeserializer, config.getDecoders(), encodingCache);
     }
 }

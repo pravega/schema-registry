@@ -34,7 +34,7 @@ class AvroSerializerFactory {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         String groupId = config.getGroupId();
-        return new AvroSerializer<>(groupId, schemaRegistryClient, schema, config.getCodec(), config.isRegisterSchema());
+        return new AvroSerializer<>(groupId, schemaRegistryClient, schema, config.getEncoder(), config.isRegisterSchema());
     }
 
     static <T> Serializer<T> deserializer(SerializerConfig config, AvroSchema<T> schema) {
@@ -46,7 +46,7 @@ class AvroSerializerFactory {
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AvroDeserlizer<>(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache);
+        return new AvroDeserializer<>(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache);
     }
 
     static Serializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
@@ -56,7 +56,7 @@ class AvroSerializerFactory {
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AvroGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache);
+        return new AvroGenericDeserializer(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache);
     }
 
     static <T> Serializer<T> multiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
@@ -68,7 +68,7 @@ class AvroSerializerFactory {
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new AvroSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
+                        x -> new AvroSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getEncoder(),
                                 config.isRegisterSchema())));
         return new MultiplexedSerializer<>(serializerMap);
     }
@@ -86,8 +86,8 @@ class AvroSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new AvroDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
-        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(),
+                        x -> new AvroDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache)));
+        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoders(),
                 encodingCache);
     }
 
@@ -104,10 +104,10 @@ class AvroSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new AvroDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache)));
-        AbstractDeserializer<Object> genericDeserializer = new AvroGenericDeserlizer(groupId, schemaRegistryClient,
-                null, config.getDecoder(), encodingCache);
+                        x -> new AvroDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache)));
+        AbstractDeserializer<Object> genericDeserializer = new AvroGenericDeserializer(groupId, schemaRegistryClient,
+                null, config.getDecoders(), encodingCache);
         return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer,
-                config.getDecoder(), encodingCache);
+                config.getDecoders(), encodingCache);
     }
 }

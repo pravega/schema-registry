@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
+import io.pravega.schemaregistry.codec.Codecs;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;

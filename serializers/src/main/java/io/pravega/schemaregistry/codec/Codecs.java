@@ -7,10 +7,9 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.serializers;
+package io.pravega.schemaregistry.codec;
 
 import com.fasterxml.jackson.databind.util.ByteBufferBackedInputStream;
-import io.pravega.schemaregistry.codec.Codec;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import lombok.Getter;
 import org.apache.commons.io.IOUtils;
@@ -19,6 +18,7 @@ import org.xerial.snappy.Snappy;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.Map;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -26,22 +26,24 @@ import java.util.zip.GZIPOutputStream;
  * Utility class for creating codecs for none, snappy or gzip. 
  */
 public enum Codecs {
-    None(Constants.NOOP, Constants.NOOP.getCodecType()),
-    GzipCompressor(Constants.GZIP_CODEC, Constants.GZIP_CODEC.getCodecType()), 
-    SnappyCompressor(Constants.SNAPPY_CODEC, Constants.SNAPPY_CODEC.getCodecType());
+    None(Constants.NOOP),
+    GzipCompressor(Constants.GZIP_CODEC), 
+    SnappyCompressor(Constants.SNAPPY_CODEC);
 
     @Getter
     private final Codec codec;
-    @Getter
-    private final CodecType codecType;
     
-    Codecs(Codec codec, CodecType codecType) {
+    Codecs(Codec codec) {
         this.codec = codec;  
-        this.codecType = codecType;
     }
 
     private static class Noop implements Codec {
         private static final CodecType CODEC_TYPE_NONE = new CodecType(Constants.NONE);
+
+        @Override
+        public String getName() {
+            return CODEC_TYPE_NONE.getName();
+        }
 
         @Override
         public CodecType getCodecType() {
@@ -54,7 +56,7 @@ public enum Codecs {
         }
 
         @Override
-        public ByteBuffer decode(ByteBuffer data) {
+        public ByteBuffer decode(ByteBuffer data, Map<String, String> codecProperties) {
             return data;
         }
     }
@@ -62,10 +64,15 @@ public enum Codecs {
     private static class GZipCodec implements Codec {
         private static final CodecType CODEC_TYPE_GZIP = new CodecType(Constants.APPLICATION_X_GZIP);
         @Override
+        public String getName() {
+            return CODEC_TYPE_GZIP.getName();
+        }
+
+        @Override
         public CodecType getCodecType() {
             return CODEC_TYPE_GZIP;
         }
-        
+
         @Override
         public ByteBuffer encode(ByteBuffer data) throws IOException {
             try (ByteArrayOutputStream bos = new ByteArrayOutputStream(data.remaining())) {
@@ -77,7 +84,7 @@ public enum Codecs {
         }
 
         @Override
-        public ByteBuffer decode(ByteBuffer data) throws IOException {
+        public ByteBuffer decode(ByteBuffer data, Map<String, String> codecProperties) throws IOException {
             ByteBufferBackedInputStream bis = new ByteBufferBackedInputStream(data);
             return ByteBuffer.wrap(IOUtils.toByteArray(new GZIPInputStream(bis)));
         }
@@ -86,10 +93,15 @@ public enum Codecs {
     private static class SnappyCodec implements Codec {
         private static final CodecType CODEC_TYPE_SNAPPY = new CodecType(Constants.APPLICATION_X_SNAPPY_FRAMED);
         @Override
+        public String getName() {
+            return CODEC_TYPE_SNAPPY.getName();
+        }
+
+        @Override
         public CodecType getCodecType() {
             return CODEC_TYPE_SNAPPY;
         }
-        
+
         @Override
         public ByteBuffer encode(ByteBuffer data) throws IOException {
             int capacity = Snappy.maxCompressedLength(data.remaining());
@@ -102,7 +114,7 @@ public enum Codecs {
         }
         
         @Override
-        public ByteBuffer decode(ByteBuffer data) throws IOException {
+        public ByteBuffer decode(ByteBuffer data, Map<String, String> codecProperties) throws IOException {
             ByteBuffer decoded = ByteBuffer.allocate(Snappy.uncompressedLength(data.array(), data.arrayOffset() + data.position(),
                     data.remaining()));
             Snappy.uncompress(data.array(), data.arrayOffset() + data.position(), 

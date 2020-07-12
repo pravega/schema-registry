@@ -23,11 +23,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
-class AvroGenericDeserlizer extends AbstractDeserializer<Object> {
+class AvroGenericDeserializer extends AbstractDeserializer<Object> {
     private final ConcurrentHashMap<SchemaInfo, Schema> knownSchemas;
 
-    AvroGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<Object> schema,
-                          SerializerConfig.Decoder decoder, EncodingCache encodingCache) {
+    AvroGenericDeserializer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<Object> schema,
+                            SerializerConfig.Decoders decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache, true);
         this.knownSchemas = new ConcurrentHashMap<>();
     }

@@ -37,7 +37,7 @@ class ProtobufSerializerFactory {
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
-        return new ProtobufSerializer<>(groupId, schemaRegistryClient, schema, config.getCodec(),
+        return new ProtobufSerializer<>(groupId, schemaRegistryClient, schema, config.getEncoder(),
                 config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
@@ -51,7 +51,7 @@ class ProtobufSerializerFactory {
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
         // schema can be null in which case deserialization will happen into dynamic message
-        return new ProtobufDeserlizer<>(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache,
+        return new ProtobufDeserializer<>(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache,
                 config.isWriteEncodingHeader());
     }
 
@@ -64,7 +64,7 @@ class ProtobufSerializerFactory {
         String groupId = config.getGroupId();
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoder(), encodingCache,
+        return new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache,
                 config.isWriteEncodingHeader());
     }
 
@@ -78,7 +78,7 @@ class ProtobufSerializerFactory {
         
         Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new ProtobufSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getCodec(),
+                        x -> new ProtobufSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getEncoder(),
                                 config.isRegisterSchema(), config.isWriteEncodingHeader())));
         return new MultiplexedSerializer<>(serializerMap);
     }
@@ -95,9 +95,9 @@ class ProtobufSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache,
+                        x -> new ProtobufDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache,
                                 config.isWriteEncodingHeader())));
-        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoder(), encodingCache);
+        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoders(), encodingCache);
     }
 
     static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
@@ -112,11 +112,11 @@ class ProtobufSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new ProtobufDeserlizer<>(groupId, schemaRegistryClient, x, config.getDecoder(), encodingCache, 
+                        x -> new ProtobufDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache, 
                                 config.isWriteEncodingHeader())));
         ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null,
-                config.getDecoder(), encodingCache, config.isWriteEncodingHeader());
+                config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
         return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer,
-                config.getDecoder(), encodingCache);
+                config.getDecoders(), encodingCache);
     }
 }

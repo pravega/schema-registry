@@ -13,7 +13,7 @@ import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.Encoder;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 
@@ -23,8 +23,8 @@ import java.io.OutputStream;
 class JsonSerializer<T> extends AbstractSerializer<T> {
     private final ObjectMapper objectMapper;
     JsonSerializer(String groupId, SchemaRegistryClient client, JSONSchema<T> schema,
-                   Codec codec, boolean registerSchema, boolean encodeHeader) {
-        super(groupId, client, schema, codec, registerSchema, encodeHeader);
+                   Encoder encoder, boolean registerSchema, boolean encodeHeader) {
+        super(groupId, client, schema, encoder, registerSchema, encodeHeader);
         objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
         objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);

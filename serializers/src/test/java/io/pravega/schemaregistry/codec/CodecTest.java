@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.codec;
 
 import com.google.common.base.Charsets;
-import io.pravega.schemaregistry.serializers.Codecs;
+import com.google.common.collect.ImmutableMap;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,24 +26,24 @@ public class CodecTest {
     public void testCodec() throws IOException {
         byte[] testStringBytes = "this is a test string".getBytes(Charsets.UTF_8);
         Codec snappy = Codecs.SnappyCompressor.getCodec();
-        assertEquals(snappy.getCodecType(), Codecs.SnappyCompressor.getCodecType());
+        assertEquals(snappy.getCodecType(), Codecs.SnappyCompressor.getCodec().getCodecType());
         ByteBuffer encoded = snappy.encode(ByteBuffer.wrap(testStringBytes));
         assertFalse(Arrays.equals(encoded.array(), testStringBytes));
-        ByteBuffer decoded = snappy.decode(encoded);
+        ByteBuffer decoded = snappy.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
         
         Codec gzip = Codecs.GzipCompressor.getCodec();
-        assertEquals(gzip.getCodecType(), Codecs.GzipCompressor.getCodecType());
+        assertEquals(gzip.getCodecType(), Codecs.GzipCompressor.getCodec().getCodecType());
         encoded = gzip.encode(ByteBuffer.wrap(testStringBytes));
         assertFalse(Arrays.equals(encoded.array(), testStringBytes));
-        decoded = gzip.decode(encoded);
+        decoded = gzip.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
 
         Codec none = Codecs.None.getCodec();
-        assertEquals(none.getCodecType(), Codecs.None.getCodecType());
+        assertEquals(none.getCodecType(), Codecs.None.getCodec().getCodecType());
         encoded = none.encode(ByteBuffer.wrap(testStringBytes));
         assertTrue(Arrays.equals(encoded.array(), testStringBytes));
-        decoded = none.decode(encoded);
+        decoded = none.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
     }
 }

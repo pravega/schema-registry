@@ -18,11 +18,11 @@ import io.pravega.schemaregistry.schemas.ProtobufSchema;
 
 import java.io.InputStream;
 
-public class ProtobufDeserlizer<T extends GeneratedMessageV3> extends AbstractDeserializer<T> {
+public class ProtobufDeserializer<T extends GeneratedMessageV3> extends AbstractDeserializer<T> {
     private final ProtobufSchema<T> protobufSchema;
-    ProtobufDeserlizer(String groupId, SchemaRegistryClient client,
-                       ProtobufSchema<T> schema, SerializerConfig.Decoder decoder,
-                       EncodingCache encodingCache, boolean encodeHeader) {
+    ProtobufDeserializer(String groupId, SchemaRegistryClient client,
+                         ProtobufSchema<T> schema, SerializerConfig.Decoders decoder,
+                         EncodingCache encodingCache, boolean encodeHeader) {
         super(groupId, client, schema, true, decoder, encodingCache, encodeHeader);
         Preconditions.checkNotNull(schema);
         this.protobufSchema = schema;

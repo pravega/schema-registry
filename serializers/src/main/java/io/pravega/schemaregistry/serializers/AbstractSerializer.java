@@ -10,9 +10,11 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.google.common.base.Preconditions;
+import io.pravega.common.io.EnhancedByteArrayOutputStream;
 import io.pravega.common.util.BitConverter;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
-import io.pravega.schemaregistry.codec.Codec;
+import io.pravega.schemaregistry.codec.Codecs;
+import io.pravega.schemaregistry.codec.Encoder;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
@@ -20,7 +22,6 @@ import io.pravega.schemaregistry.schemas.Schema;
 import lombok.Getter;
 import lombok.SneakyThrows;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -37,18 +38,18 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
     private final boolean encodeHeader;
     private final SchemaRegistryClient client;
     @Getter
-    private final Codec codec;
+    private final Encoder encoder;
     private final boolean registerSchema;
     
     protected AbstractSerializer(String groupId,
                                  SchemaRegistryClient client,
                                  Schema<T> schema,
-                                 Codec codec,
+                                 Encoder encoder,
                                  boolean registerSchema, 
                                  boolean encodeHeader) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
-        Preconditions.checkNotNull(codec);
+        Preconditions.checkNotNull(encoder);
         Preconditions.checkNotNull(schema);
         
         this.groupId = groupId;
@@ -56,7 +57,7 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
         this.schemaInfo = schema.getSchemaInfo();
         this.registerSchema = registerSchema;
         this.encodingId = new AtomicReference<>();
-        this.codec = codec;
+        this.encoder = encoder;
         this.encodeHeader = encodeHeader;
         initialize();
     }
@@ -71,40 +72,35 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
             version = client.getVersionForSchema(groupId, schemaInfo);
         }
         if (encodeHeader) {
-            encodingId.set(client.getEncodingId(groupId, version, codec.getCodecType().getName()));
+            encodingId.set(client.getEncodingId(groupId, version, encoder.getCodecType().getName()));
         }
     }
     
     @SneakyThrows(IOException.class)
     @Override
     public ByteBuffer serialize(T obj) {
-        ByteArrayOutputStream dataStream = new ByteArrayOutputStream();
+        EnhancedByteArrayOutputStream dataStream = new EnhancedByteArrayOutputStream();
         if (this.encodeHeader) {
             dataStream.write(PROTOCOL);
             BitConverter.writeInt(dataStream, encodingId.get().getId());
         }
         
         serialize(obj, schemaInfo, dataStream);
-        dataStream.flush();
-        byte[] serialized = dataStream.toByteArray();
         
         ByteBuffer byteBuffer;
-        if (this.encodeHeader) {
-            if (codec.equals(Codecs.None.getCodec())) {
-                // If no encoding is performed. we can directly use the original serialized byte array.
-                byteBuffer = ByteBuffer.wrap(serialized);
-            } else {
-                ByteBuffer wrap = ByteBuffer.wrap(serialized, HEADER_LENGTH, serialized.length - HEADER_LENGTH);
-                ByteBuffer encoded = codec.encode(wrap);
-                int bufferSize = HEADER_LENGTH + encoded.remaining();
-                byteBuffer = ByteBuffer.allocate(bufferSize);
-                // copy the header from serialized array into encoded output array
-                byteBuffer.put(serialized, 0, HEADER_LENGTH);
-                byteBuffer.put(encoded);
-                byteBuffer.rewind();
-            }
+        byte[] serialized = dataStream.getData().array();
+        if (!encoder.equals(Codecs.None.getCodec())) {
+            ByteBuffer wrap = ByteBuffer.wrap(serialized, HEADER_LENGTH, 
+                    dataStream.getData().getLength() - HEADER_LENGTH);
+            ByteBuffer encoded = encoder.encode(wrap);
+            int bufferSize = HEADER_LENGTH + encoded.remaining();
+            byteBuffer = ByteBuffer.allocate(bufferSize);
+            // copy the header from serialized array into encoded output array
+            byteBuffer.put(serialized, 0, HEADER_LENGTH);
+            byteBuffer.put(encoded);
+            byteBuffer.rewind();
         } else {
-            byteBuffer = ByteBuffer.wrap(serialized);
+            byteBuffer = ByteBuffer.wrap(serialized, 0, dataStream.getData().getLength());
         }
         
         return byteBuffer;

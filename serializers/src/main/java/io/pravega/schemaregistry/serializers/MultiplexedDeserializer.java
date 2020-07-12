@@ -29,9 +29,9 @@ class MultiplexedDeserializer<T> extends AbstractDeserializer<T> {
 
     MultiplexedDeserializer(String groupId, SchemaRegistryClient client,
                             Map<String, AbstractDeserializer<T>> deserializers,
-                            SerializerConfig.Decoder decoder, 
+                            SerializerConfig.Decoders decoders, 
                             EncodingCache encodingCache) {
-        super(groupId, client, null, false, decoder, encodingCache, true);
+        super(groupId, client, null, false, decoders, encodingCache, true);
         this.deserializers = deserializers; 
     }
 
