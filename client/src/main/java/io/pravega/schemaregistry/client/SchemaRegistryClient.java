@@ -38,7 +38,7 @@ import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.Mal
  * The implementation of this interface should provide read-after-write-consistency guarantees for all the methods.
  */
 @Beta
-public interface SchemaRegistryClient {
+public interface SchemaRegistryClient extends AutoCloseable {
     /**
      * Adds a new group. A group refers to the name under which the schemas are registered. A group is identified by a 
      * unique id and has an associated set of group metadata {@link GroupProperties} and a list of codec types and a 

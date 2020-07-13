@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.codec;
 
 import io.pravega.schemaregistry.contract.data.CodecType;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
@@ -29,9 +30,9 @@ public interface Encoder {
      * Implementation should encode the remaining bytes in the buffer and return a new ByteBuffer that includes
      * the encoded data at its current position. 
      * 
-     * @param data ByteBuffer to encode. 
-     * @return encoded ByteBuffer with position set to the start of encoded data. 
+     * @param data ByteBuffer to encode.
+     * @param outputStream ByteArrayOutputStream where the encoded data should be written.
      * @throws IOException IOException can be thrown while reading from or writing to byte buffers.
      */
-    ByteBuffer encode(ByteBuffer data) throws IOException;
+    void encode(ByteBuffer data, ByteArrayOutputStream outputStream) throws IOException;
 }

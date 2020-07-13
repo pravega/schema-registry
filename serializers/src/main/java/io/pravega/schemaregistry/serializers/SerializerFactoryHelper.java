@@ -36,7 +36,7 @@ class SerializerFactoryHelper {
 
     private static SchemaRegistryClient getSchemaRegistryClient(SerializerConfig config) {
         return config.getRegistryConfigOrClient().isLeft() ?
-                SchemaRegistryClientFactory.createRegistryClient(config.getRegistryConfigOrClient().getLeft()) :
+                SchemaRegistryClientFactory.withNamespace(config.getNamespace(), config.getRegistryConfigOrClient().getLeft()) :
                 config.getRegistryConfigOrClient().getRight();
     }
 

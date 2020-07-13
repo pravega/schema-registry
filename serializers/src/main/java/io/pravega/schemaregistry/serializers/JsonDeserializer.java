@@ -33,8 +33,6 @@ class JsonDeserializer<T> extends AbstractDeserializer<T> {
         this.jsonSchema = schema;
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, Visibility.ANY);
-        objectMapper.setVisibility(PropertyAccessor.FIELD, Visibility.ANY);
-        objectMapper.setVisibility(PropertyAccessor.CREATOR, Visibility.ANY);
     }
 
     @Override

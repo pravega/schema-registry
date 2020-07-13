@@ -11,15 +11,14 @@ package io.pravega.schemaregistry.codec;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
+import io.pravega.common.io.EnhancedByteArrayOutputStream;
 import org.junit.Test;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class CodecTest {
     @Test
@@ -27,23 +26,32 @@ public class CodecTest {
         byte[] testStringBytes = "this is a test string".getBytes(Charsets.UTF_8);
         Codec snappy = Codecs.SnappyCompressor.getCodec();
         assertEquals(snappy.getCodecType(), Codecs.SnappyCompressor.getCodec().getCodecType());
-        ByteBuffer encoded = snappy.encode(ByteBuffer.wrap(testStringBytes));
-        assertFalse(Arrays.equals(encoded.array(), testStringBytes));
+        EnhancedByteArrayOutputStream byteArrayOutputStream = new EnhancedByteArrayOutputStream();
+        snappy.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
+        ByteBuffer encoded = ByteBuffer.wrap(byteArrayOutputStream.getData().array(), 0, byteArrayOutputStream.getData().getLength());
+        assertNotEquals(encoded.remaining(), testStringBytes.length);
         ByteBuffer decoded = snappy.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
-        
+
+        byteArrayOutputStream = new EnhancedByteArrayOutputStream();
         Codec gzip = Codecs.GzipCompressor.getCodec();
         assertEquals(gzip.getCodecType(), Codecs.GzipCompressor.getCodec().getCodecType());
-        encoded = gzip.encode(ByteBuffer.wrap(testStringBytes));
-        assertFalse(Arrays.equals(encoded.array(), testStringBytes));
+        gzip.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
+        encoded = ByteBuffer.wrap(byteArrayOutputStream.getData().array(), 0, byteArrayOutputStream.getData().getLength());
+        assertNotEquals(encoded.remaining(), testStringBytes.length);
         decoded = gzip.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
-
+        
+        byteArrayOutputStream = new EnhancedByteArrayOutputStream();
         Codec none = Codecs.None.getCodec();
         assertEquals(none.getCodecType(), Codecs.None.getCodec().getCodecType());
-        encoded = none.encode(ByteBuffer.wrap(testStringBytes));
-        assertTrue(Arrays.equals(encoded.array(), testStringBytes));
+        none.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
+        encoded = ByteBuffer.wrap(byteArrayOutputStream.getData().array(), 0, byteArrayOutputStream.getData().getLength());
+        assertEquals(encoded.remaining(), testStringBytes.length);
         decoded = none.decode(encoded, ImmutableMap.of());
-        assertTrue(Arrays.equals(decoded.array(), testStringBytes));
+        
+        byte[] decodedArray = new byte[decoded.remaining()];
+        decoded.get(decodedArray);
+        assertTrue(Arrays.equals(decodedArray, testStringBytes));
     }
 }

@@ -47,6 +47,10 @@ public class SerializerConfig {
     @NonNull
     private final String groupId;
     /**
+     * Namespace for the group.
+     */
+    private final String namespace;
+    /**
      * Either the registry client or the {@link SchemaRegistryClientConfig} that can be used for creating a new registry client.
      * Exactly one of the two option has to be supplied.
      */
@@ -105,12 +109,13 @@ public class SerializerConfig {
      */
     private final boolean writeEncodingHeader;
 
-    private SerializerConfig(String groupId, SchemaRegistryClientConfig config, SchemaRegistryClient client,
+    private SerializerConfig(String groupId, String namespace, SchemaRegistryClientConfig config, SchemaRegistryClient client,
                              boolean registerSchema, boolean registerCodec, Codec encoder, Decoders decoders, boolean failOnCodecMismatch,
                              GroupProperties createGroup, boolean writeEncodingHeader) {
         Preconditions.checkArgument(!Strings.isNullOrEmpty(groupId), "Group id needs to be supplied");
         Preconditions.checkArgument(client != null || config != null, "Either registry client or config needs to be supplied");
         this.groupId = groupId;
+        this.namespace = namespace;
         this.registryClient = client;
         this.registryConfig = config;
         this.registerSchema = registerSchema;
@@ -149,6 +154,7 @@ public class SerializerConfig {
         private boolean writeEncodingHeader = true;
         private SchemaRegistryClientConfig registryConfig = null;
         private SchemaRegistryClient registryClient = null;
+        private String namespace = null;
         
         /**
          * Add a decoder for decoding data encoded with the {@link Codec#getCodecType()}. 
