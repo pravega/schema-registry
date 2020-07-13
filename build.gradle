@@ -131,7 +131,23 @@ project('common') {
         title = "Common Libraries"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
+        options.addBooleanOption("Xdoclint:none", true)
+    }
+}
+
+project('auth') {
+    dependencies {
+        compile project(':common')
+        compile group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-keycloak-client', version: pravegaKeyCloakVersion
+    }
+
+    javadoc {
+        title = "Auth Libraries"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
         options.addBooleanOption("Xdoclint:none", true)
     }
 }
@@ -139,6 +155,7 @@ project('common') {
 project('client') {
     dependencies {
         compile project(':common')
+        compile project(':auth')
         compile project(':contract')
         compile group: 'org.glassfish.jersey.ext', name: 'jersey-proxy-client', version: jerseyVersion
         compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
@@ -151,7 +168,7 @@ project('client') {
         title = "Registry Client"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
@@ -178,7 +195,7 @@ project('contract') {
         title = "Registry Contract"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
@@ -214,13 +231,125 @@ project('serializers') {
         title = "Serializers"
         dependsOn delombok
         source = delombok.outputDir
-        failOnError = false
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+
+    jar {
+        manifest {}
+
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+}
+
+project('server') {
+    sourceSets {
+        main.resources.srcDirs += "$projectDir/src/conf"
+        test.resources.srcDirs += "$rootDir/resources"
+    }
+
+    apply plugin: 'application'
+    applicationName = "schema-registry"
+    mainClassName = "io.pravega.schemaregistry.service.Main"
+    applicationDefaultJvmArgs = ["-server", "-Xms128m", "-XX:+HeapDumpOnOutOfMemoryError",
+                                 "-Dconfig.file=PRAVEGA_APP_HOME/conf/schema-registry.config.properties",
+                                 "-Dlogback.configurationFile=PRAVEGA_APP_HOME/conf/logback.xml",
+                                 "-Dlog.dir=PRAVEGA_APP_HOME/logs",
+                                 "-Dlog.name=schemaregistry"]
+    startScripts {
+        classpath += files('$APP_HOME/pluginlib')
+        doLast {
+            def scriptFile = file getUnixScript()
+            scriptFile.text = scriptFile.text.replace('$APP_HOME/lib/pluginlib', '$APP_HOME/pluginlib/*')
+            def winScriptFile = file getWindowsScript()
+            winScriptFile.text = winScriptFile.text.replace('%APP_HOME%\\lib\\pluginlib', '%APP_HOME%\\pluginlib\\*')
+        }
+    }
+    applicationDistribution.from('src/conf') {
+        into "conf"
+        rename "application.conf", "schemaregistry.conf"
+    }
+
+    applicationDistribution.into('') {
+        def pluginDirBase = new File('/tmp/dummy-dir')
+        pluginDirBase.mkdirs()
+        def logDir = new File(pluginDirBase.absolutePath + '/pluginlib')
+        logDir.mkdirs()
+
+        from {pluginDirBase}
+    }
+
+    dependencies {
+        compile project(':common')
+        compile project(':auth')
+        compile project(':contract')
+        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-controller', version: pravegaVersion
+        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
+        compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
+        testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
+            exclude group: 'javax.ws.rs', module: 'jsr311-api'
+        }
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
+    }
+
+    javadoc {
+        title = "Registry Server"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
 }
 
 apply plugin: 'distribution'
+distributions {
+    main {
+        baseName = "schema-registry"
+        contents {
+            duplicatesStrategy = "exclude"
+            from ("dist/conf") {
+                into "conf"
+            }
+            from ("config") {
+                into "conf"
+            }
+            from (project(":server").installDist) {
+                exclude "logback.xml"
+            }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+    client {
+        baseName = "schema-registry-client"
+        contents {
+            from { project(":client").configurations.runtime }
+            from { project(":client").configurations.runtime.allArtifacts.files }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+    serializers {
+        baseName = "schema-registry-serializers"
+        contents {
+            from { project(":serializers").configurations.runtime }
+            from { project(":serializers").configurations.runtime.allArtifacts.files }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+}
 
 task sourceCopy(type: Copy) {
     from rootDir
@@ -237,6 +366,29 @@ task sourceTar(type: Tar) {
 
 task javadocs(type: Javadoc) {
     description = "Generate main pravega javadoc"
+
+    // Include names of any project that is to be included in the javadoc distribution
+    ext.projects = [':client']
+    options.links("http://docs.oracle.com/javase/10/docs/api/");
+    title = "Pravega API"
+    destinationDir = file("${buildDir}/javadocs")
+    source = files(projects.collect {
+        project(it).sourceSets.main.allJava
+    })
+    classpath = files(projects.collect {
+        project(it).sourceSets.main.output + project(it).sourceSets.main.compileClasspath
+    })
+    failOnError = true
+    exclude "**/impl/**"
+    options.addBooleanOption("Xdoclint:all,-reference", true)
+}
+
+task publishAllJars() {
+    dependsOn ':client:publish'
+    dependsOn ':common:publish'
+    dependsOn ':contract:publish'
+    dependsOn ':server:publish'
+    dependsOn ':serializers:publish'
 }
 
 task prepareRegistryImage(type: Copy) {

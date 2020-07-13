@@ -9,6 +9,8 @@
  */
 package io.pravega.schemaregistry.common;
 
+import com.google.common.base.Preconditions;
+
 public class NameUtil {
     /**
      * Extracts the name from the fully qualified type name. Name represents the last token after ".". 
@@ -21,8 +23,8 @@ public class NameUtil {
      * @return extracted name. 
      */
     public static String extractName(String qualifiedName) {
-        int nameStart = qualifiedName.lastIndexOf(".");
-        return qualifiedName.substring(nameStart + 1);
+        Preconditions.checkNotNull(qualifiedName, "Name cannot be null");
+        return extractNameAndQualifier(qualifiedName)[0];
     }
 
     /**
@@ -37,6 +39,7 @@ public class NameUtil {
      * @return an array containing name at index 0 and qualifier at index 1. 
      */
     public static String[] extractNameAndQualifier(String qualifiedName) {
+        Preconditions.checkNotNull(qualifiedName, "Name cannot be null");
         int nameStart = qualifiedName.lastIndexOf(".");
         String name = qualifiedName.substring(nameStart + 1);
         String pckg = nameStart < 0 ? "" : qualifiedName.substring(0, nameStart);
