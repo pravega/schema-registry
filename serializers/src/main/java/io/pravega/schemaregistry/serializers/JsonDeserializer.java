@@ -37,6 +37,6 @@ class JsonDeserializer<T> extends AbstractDeserializer<T> {
 
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
-        return objectMapper.readValue(inputStream, jsonSchema.getTClass());
+        return objectMapper.readValue(inputStream, jsonSchema.getDerived());
     }
 }

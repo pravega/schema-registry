@@ -18,6 +18,7 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.schemas.Schema;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -183,8 +184,19 @@ class MultiFormatSerializerFactory {
             SchemaRegistryClient schemaRegistryClient, String groupId, SchemaInfo schemaInfo) {
         if (customSerializers.containsKey(schemaInfo.getSerializationFormat())) {
             CustomSerializer<Object> serializer = customSerializers.get(schemaInfo.getSerializationFormat());
+            Schema<Object> schema = new Schema<Object>() {
+                @Override
+                public SchemaInfo getSchemaInfo() {
+                    return schemaInfo;
+                }
+
+                @Override
+                public Class<Object> getTClass() {
+                    return Object.class;
+                }
+            };
             return new AbstractSerializer<Object>(groupId, schemaRegistryClient,
-                    () -> schemaInfo, config.getEncoder(), config.isRegisterSchema(), config.isWriteEncodingHeader()) {
+                    schema, config.getEncoder(), config.isRegisterSchema(), config.isWriteEncodingHeader()) {
                 @Override
                 protected void serialize(Object var, SchemaInfo schema, OutputStream outputStream) {
                     serializer.serialize(var, schema, outputStream);

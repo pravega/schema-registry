@@ -53,7 +53,6 @@ public enum Codecs {
 
         @Override
         public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
-            bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
         }
 
         @Override
