@@ -17,6 +17,7 @@ import org.xerial.snappy.Snappy;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -51,8 +52,8 @@ public enum Codecs {
         }
 
         @Override
-        public ByteBuffer encode(ByteBuffer data) {
-            return data;
+        public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
+            bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
         }
 
         @Override
@@ -74,18 +75,15 @@ public enum Codecs {
         }
 
         @Override
-        public ByteBuffer encode(ByteBuffer data) throws IOException {
-            try (ByteArrayOutputStream bos = new ByteArrayOutputStream(data.remaining())) {
-                GZIPOutputStream gzipOS = new GZIPOutputStream(bos);
+        public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
+            try (GZIPOutputStream gzipOS = new GZIPOutputStream(bos)) {
                 gzipOS.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
-                gzipOS.close();
-                return ByteBuffer.wrap(bos.toByteArray());
             }
         }
 
         @Override
         public ByteBuffer decode(ByteBuffer data, Map<String, String> codecProperties) throws IOException {
-            ByteBufferBackedInputStream bis = new ByteBufferBackedInputStream(data);
+            InputStream bis = new ByteBufferBackedInputStream(data);
             return ByteBuffer.wrap(IOUtils.toByteArray(new GZIPInputStream(bis)));
         }
     }
@@ -103,14 +101,13 @@ public enum Codecs {
         }
 
         @Override
-        public ByteBuffer encode(ByteBuffer data) throws IOException {
+        public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
             int capacity = Snappy.maxCompressedLength(data.remaining());
-            ByteBuffer encoded = ByteBuffer.allocate(capacity);
+            byte[] encoded = new byte[capacity];
             
             int size = Snappy.compress(data.array(), data.arrayOffset() + data.position(),
-                    data.remaining(), encoded.array(), 0);
-            encoded.limit(size);
-            return encoded;
+                    data.remaining(), encoded, 0);
+            bos.write(encoded, 0, size);
         }
         
         @Override

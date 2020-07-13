@@ -86,6 +86,7 @@ import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.Timeout;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -443,8 +444,8 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
             @SneakyThrows
             @Override
-            public ByteBuffer encode(ByteBuffer data) {
-                return data;
+            public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
+                bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
             }
 
             @SneakyThrows

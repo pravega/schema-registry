@@ -51,7 +51,8 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(encoder);
         Preconditions.checkNotNull(schema);
-        
+        Preconditions.checkArgument(encodeHeader || encoder.equals(Codecs.None.getCodec()), 
+                "Cannot use encoder if encoder header is false.");
         this.groupId = groupId;
         this.client = client;
         this.schemaInfo = schema.getSchemaInfo();
@@ -79,30 +80,26 @@ abstract class AbstractSerializer<T> extends BaseSerializer<T> {
     @SneakyThrows(IOException.class)
     @Override
     public ByteBuffer serialize(T obj) {
-        EnhancedByteArrayOutputStream dataStream = new EnhancedByteArrayOutputStream();
-        if (this.encodeHeader) {
-            dataStream.write(PROTOCOL);
-            BitConverter.writeInt(dataStream, encodingId.get().getId());
-        }
-        
-        serialize(obj, schemaInfo, dataStream);
-        
+        EnhancedByteArrayOutputStream outStream = new EnhancedByteArrayOutputStream();
         ByteBuffer byteBuffer;
-        byte[] serialized = dataStream.getData().array();
-        if (!encoder.equals(Codecs.None.getCodec())) {
-            ByteBuffer wrap = ByteBuffer.wrap(serialized, HEADER_LENGTH, 
-                    dataStream.getData().getLength() - HEADER_LENGTH);
-            ByteBuffer encoded = encoder.encode(wrap);
-            int bufferSize = HEADER_LENGTH + encoded.remaining();
-            byteBuffer = ByteBuffer.allocate(bufferSize);
-            // copy the header from serialized array into encoded output array
-            byteBuffer.put(serialized, 0, HEADER_LENGTH);
-            byteBuffer.put(encoded);
-            byteBuffer.rewind();
-        } else {
-            byteBuffer = ByteBuffer.wrap(serialized, 0, dataStream.getData().getLength());
+        if (this.encodeHeader) {
+            outStream.write(PROTOCOL);
+            BitConverter.writeInt(outStream, encodingId.get().getId());
         }
-        
+
+        if (!this.encodeHeader || this.encoder.equals(Codecs.None.getCodec())) {
+            // write serialized data to the output stream
+            serialize(obj, schemaInfo, outStream);
+        } else {
+            // encode header is true and encoder is supplied, encode the data
+            EnhancedByteArrayOutputStream serializedStream = new EnhancedByteArrayOutputStream();
+
+            serialize(obj, schemaInfo, serializedStream);
+            encoder.encode(ByteBuffer.wrap(serializedStream.getData().array()), outStream);
+        }
+
+        byteBuffer = ByteBuffer.wrap(outStream.getData().array(), 0, outStream.getData().getLength());
+
         return byteBuffer;
     }
 

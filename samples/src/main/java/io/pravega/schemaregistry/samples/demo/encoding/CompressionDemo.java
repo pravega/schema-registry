@@ -44,6 +44,7 @@ import org.apache.avro.SchemaBuilder;
 import org.apache.avro.generic.GenericRecord;
 import org.apache.avro.generic.GenericRecordBuilder;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.URI;
 import java.nio.ByteBuffer;
@@ -82,7 +83,7 @@ public class CompressionDemo {
         }
 
         @Override
-        public ByteBuffer encode(ByteBuffer data) throws IOException {
+        public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
             // left rotate by 1 byte
             byte[] array = new byte[data.remaining()];
             data.get(array);
@@ -93,7 +94,7 @@ public class CompressionDemo {
                 array[i] = array[i + 1];
             }
             array[array.length - 1] = temp;
-            return ByteBuffer.wrap(array);
+            bos.write(array, 0, array.length);
         }
 
         @Override

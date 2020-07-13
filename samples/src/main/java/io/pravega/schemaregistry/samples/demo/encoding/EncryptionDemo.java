@@ -43,6 +43,7 @@ import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.crypto.Cipher;
 import javax.crypto.spec.SecretKeySpec;
+import java.io.ByteArrayOutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
@@ -175,7 +176,7 @@ public class EncryptionDemo {
 
             @SneakyThrows
             @Override
-            public ByteBuffer encode(ByteBuffer data) {
+            public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
                 SecretKeySpec secretKey = new SecretKeySpec(key, ALGORITHM);
                 Cipher cipher = Cipher.getInstance(ALGORITHM);
                 cipher.init(Cipher.ENCRYPT_MODE, secretKey);
@@ -186,7 +187,7 @@ public class EncryptionDemo {
                 byte[] encrypted = cipher.doFinal(array);
 
                 System.out.println("encoded as = " + new String(encrypted, Charsets.UTF_8));
-                return ByteBuffer.wrap(encrypted);
+                bos.write(encrypted);
             }
 
             @SneakyThrows
