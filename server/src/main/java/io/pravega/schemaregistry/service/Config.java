@@ -73,16 +73,16 @@ public final class Config {
     private static final Property<String> PROPERTY_REST_IP = Property.named("service.rest.published.host.nameOrIp", "0.0.0.0");
     private static final Property<Integer> PROPERTY_REST_PORT = Property.named("service.rest.listener.port", 9092);
 
-    private static final Property<String> PROPERTY_STORE_TYPE = Property.named("service.store.type.name", "Pravega");
-    private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("service.store.pravega.controller.connect.uri", "tcp://localhost:9090");
-    private static final Property<String> PROPERTY_PRAVEGA_CREDENTIALS_AUTH_METHOD = Property.named("service.store.pravega.credentials.security.auth.method", "");
-    private static final Property<String> PROPERTY_PRAVEGA_CREDENTIALS_AUTH_TOKEN = Property.named("service.store.pravega.credentials.security.auth.token", "");
-    private static final Property<String> PROPERTY_PRAVEGA_TLS_TRUST_STORE = Property.named("service.store.pravega.security.tls.trustStore.location", "");
-    private static final Property<Boolean> PROPERTY_PRAVEGA_TLS_VALIDATE_HOSTNAME = Property.named("service.store.pravega.security.tls.validate.hostName", true);
+    private static final Property<String> PROPERTY_STORE_TYPE = Property.named("store.type.name", "Pravega");
+    private static final Property<String> PROPERTY_PRAVEGA_CONTROLLER_URL = Property.named("store.pravega.controller.connect.uri", "tcp://localhost:9090");
+    private static final Property<String> PROPERTY_PRAVEGA_CREDENTIALS_AUTH_METHOD = Property.named("store.pravega.controller.connect.auth.method", "");
+    private static final Property<String> PROPERTY_PRAVEGA_CREDENTIALS_AUTH_TOKEN = Property.named("store.pravega.controller.connect.auth.token", "");
+    private static final Property<String> PROPERTY_PRAVEGA_TLS_TRUST_STORE = Property.named("store.pravega.controller.connect.security.tls.trustStore.location", "");
+    private static final Property<Boolean> PROPERTY_PRAVEGA_TLS_VALIDATE_HOSTNAME = Property.named("store.pravega.controller.connect.security.tls.validateHostName.enable", true);
 
-    private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("service.threadPool.size", 50);
+    private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("threadPool.size", 50);
 
-    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enabled", false);
+    private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enable", false);
     private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("security.tls.server.certificate.location", "");
     private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("security.tls.server.privateKey.location", "");
     private static final Property<String> PROPERTY_TLS_KEY_PASSWORD_FILE = Property.named("security.tls.server.privateKey.pwd.location", "");
