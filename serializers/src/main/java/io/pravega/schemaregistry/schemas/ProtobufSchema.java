@@ -37,18 +37,22 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
     @Getter
     private final Parser<T> parser;
     @Getter
+    private final Class<T> tClass;
+    @Getter
     private final FileDescriptorSet descriptorProto;
 
     private final SchemaInfo schemaInfo;
 
-    private ProtobufSchema(String name, Parser<T> parser, FileDescriptorSet fileDescriptorSet) {
+    private ProtobufSchema(String name, Parser<T> parser, Class<T> tClass, FileDescriptorSet fileDescriptorSet) {
         this.parser = parser;
+        this.tClass = tClass;
         this.descriptorProto = fileDescriptorSet;
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
 
-    private ProtobufSchema(FileDescriptorSet fileDescriptorSet, SchemaInfo schemaInfo) {
+    private ProtobufSchema(FileDescriptorSet fileDescriptorSet, SchemaInfo schemaInfo, Class<T> tClass) {
         this.parser = null;
+        this.tClass = null;
         this.descriptorProto = fileDescriptorSet;
         this.schemaInfo = schemaInfo;
     }
@@ -74,7 +78,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
     public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass) {
         Extractor<T> extractor = new Extractor<>(tClass).invoke();
         
-        return new ProtobufSchema<T>(extractor.getFullName(), extractor.getParser(), 
+        return new ProtobufSchema<T>(extractor.getFullName(), extractor.getParser(), tClass,  
                 extractor.getFileDescriptorSet());
     }
     
@@ -88,7 +92,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
      */
     public static <T extends GeneratedMessageV3> ProtobufSchema<T> of(Class<T> tClass, FileDescriptorSet fileDescriptorSet) {
         Extractor<T> extractor = new Extractor<>(tClass).invoke();
-        return new ProtobufSchema<T>(extractor.getFullName(), extractor.getParser(), fileDescriptorSet);
+        return new ProtobufSchema<T>(extractor.getFullName(), extractor.getParser(), tClass, fileDescriptorSet);
     }
 
     /**
@@ -102,7 +106,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
      * @return {@link ProtobufSchema} with generic type {@link DynamicMessage} that captures protobuf schema.
      */
     public static ProtobufSchema<DynamicMessage> of(String name, FileDescriptorSet fileDescriptorSet) {
-        return new ProtobufSchema<>(name, null, fileDescriptorSet);
+        return new ProtobufSchema<>(name, null, DynamicMessage.class, fileDescriptorSet);
     }
 
     /**
@@ -121,7 +125,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
             Class<T> tClass, FileDescriptorSet fileDescriptorSet) {
         Extractor<T> extractor = new Extractor<>(tClass).invoke();
 
-        return new ProtobufSchema<>(extractor.getFullName(), (Parser<GeneratedMessageV3>) extractor.getParser(), fileDescriptorSet);
+        return new ProtobufSchema<>(extractor.getFullName(), (Parser<GeneratedMessageV3>) extractor.getParser(), GeneratedMessageV3.class, fileDescriptorSet);
     }
     
     /**
@@ -140,7 +144,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
         Extractor<T> extractor = new Extractor<>(tClass).invoke();
 
         return new ProtobufSchema<>(extractor.getFullName(),
-                (Parser<GeneratedMessageV3>) extractor.getParser(), extractor.getFileDescriptorSet());
+                (Parser<GeneratedMessageV3>) extractor.getParser(), GeneratedMessageV3.class, extractor.getFileDescriptorSet());
     }
 
     /**
@@ -153,7 +157,7 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
         try {
             FileDescriptorSet fileDescriptorSet = FileDescriptorSet.parseFrom(schemaInfo.getSchemaData());
 
-            return new ProtobufSchema<>(fileDescriptorSet, schemaInfo);
+            return new ProtobufSchema<>(fileDescriptorSet, schemaInfo, DynamicMessage.class);
         } catch (InvalidProtocolBufferException ex) {
             throw new IllegalArgumentException("Unable to get protobuf schema from schemainfo", ex);
         }
@@ -176,7 +180,6 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
         }
 
         FileDescriptorSet getFileDescriptorSet() {
-            // TODO: verify that the file proto has descriptors for all message types
             return FileDescriptorSet
                     .newBuilder().addFile(defaultInstance.getDescriptorForType().getFile().toProto()).build();
         }

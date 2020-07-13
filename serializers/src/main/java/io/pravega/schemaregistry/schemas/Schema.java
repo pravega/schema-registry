@@ -24,4 +24,11 @@ public interface Schema<T> {
      * @return Schema Info object derived from the schema object.
      */
     SchemaInfo getSchemaInfo();
+
+    /**
+     * Class for the Type of object.
+     * 
+     * @return Class of type T
+     */
+    Class<T> getTClass();
 }

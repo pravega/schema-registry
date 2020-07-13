@@ -27,5 +27,6 @@ class ProtobufSerializer<T extends Message> extends AbstractSerializer<T> {
     @Override
     protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) throws IOException {
         var.writeTo(outputStream);
+        outputStream.flush();
     }
 }

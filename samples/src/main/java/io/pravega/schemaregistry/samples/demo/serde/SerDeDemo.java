@@ -33,6 +33,7 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.schemas.Schema;
 import io.pravega.schemaregistry.serializers.CustomDeserializer;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
@@ -114,7 +115,17 @@ public class SerDeDemo {
                 ImmutableMap.copyOf(map));
         MySerializer mySerializer = new MySerializer();
 
-        Serializer<MyPojo> serializer = SerializerFactory.customSerializer(config, () -> schemaInfo, mySerializer);
+        Serializer<MyPojo> serializer = SerializerFactory.customSerializer(config, new Schema<MyPojo>() {
+            @Override
+            public SchemaInfo getSchemaInfo() {
+                return schemaInfo;
+            }
+
+            @Override
+            public Class<MyPojo> getTClass() {
+                return MyPojo.class;
+            }
+        }, mySerializer);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
         return clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -139,7 +150,18 @@ public class SerDeDemo {
         URL url = new URL(urlString);
 
         CustomDeserializer<Object> myDeserializer = SerdeLoader.getDeserializer(schema.getProperties().get(DESERIALIZER_CLASS_NAME), url);
-        Serializer<Object> deserializer = SerializerFactory.customDeserializer(serializerConfig, () -> schema, myDeserializer);
+        Schema<Object> schemaObj = new Schema<Object>() {
+            @Override
+            public SchemaInfo getSchemaInfo() {
+                return schema;
+            }
+
+            @Override
+            public Class<Object> getTClass() {
+                return Object.class;
+            }
+        };
+        Serializer<Object> deserializer = SerializerFactory.customDeserializer(serializerConfig, schemaObj, myDeserializer);
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 

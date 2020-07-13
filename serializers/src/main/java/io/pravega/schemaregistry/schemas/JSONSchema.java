@@ -36,30 +36,30 @@ public class JSONSchema<T> implements Schema<T> {
     private final String schemaString;
     private final Class<T> base;
     @Getter
-    private final Class<? extends T> tClass;
-
+    private final Class<? extends T> derived;
+    
     @Getter
     private final JsonSchema schema;
 
     private final SchemaInfo schemaInfo;
 
-    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> tClass) {
-        this(schema, name, schemaString, tClass, tClass);
+    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> derived) {
+        this(schema, name, schemaString, derived, derived);
     }
 
     private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> base, Class<? extends T> derived) {
         this.schemaString = schemaString;
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
         this.base = base;
-        this.tClass = derived;
+        this.derived = derived;
         this.schema = schema;
     }
 
-    private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> tClass) {
+    private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> derived) {
         this.schemaString = schemaString;
         this.schemaInfo = schemaInfo;
-        this.base = tClass;
-        this.tClass = tClass;
+        this.base = derived;
+        this.derived = derived;
         this.schema = schema;
     }
 
@@ -171,5 +171,10 @@ public class JSONSchema<T> implements Schema<T> {
     @Override
     public SchemaInfo getSchemaInfo() {
         return schemaInfo;
+    }
+
+    @Override
+    public Class<T> getTClass() {
+        return base;
     }
 }

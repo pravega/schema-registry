@@ -71,7 +71,17 @@ public class WithSchema<T> {
                 schema = JSONSchema.from(schemaInfo);
                 break;
             case Custom:
-                schema = () -> schemaInfo;
+                schema = new Schema<Object>() {
+                    @Override
+                    public SchemaInfo getSchemaInfo() {
+                        return schemaInfo;
+                    }
+
+                    @Override
+                    public Class<Object> getTClass() {
+                        return Object.class;
+                    }
+                };
                 break;
             default:
                 throw new IllegalArgumentException("Serialization format not supported");
