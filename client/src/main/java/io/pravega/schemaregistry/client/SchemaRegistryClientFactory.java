@@ -20,6 +20,6 @@ public class SchemaRegistryClientFactory {
      * @return SchemaRegistry client implementation
      */
     public static SchemaRegistryClient createRegistryClient(SchemaRegistryClientConfig config) {
-        return new SchemaRegistryClientImpl(config.getSchemaRegistryUri());
+        return new SchemaRegistryClientImpl(config);
     }
 }

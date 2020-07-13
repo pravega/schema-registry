@@ -35,11 +35,11 @@ public class CanRead   {
   }
 
   /**
-   * Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group&#39;s configured compatibility policy.
+   * Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group&#39;s configured compatibility policy.
    * @return compatible
    **/
   @JsonProperty("compatible")
-  @ApiModelProperty(required = true, value = "Whether given schema is compatible and can be used for reads. BackwardAndForward is checked against existing group schemas subject to group's configured compatibility policy.")
+  @ApiModelProperty(required = true, value = "Whether given schema is compatible and can be used for reads. Compatibility is checked against existing group schemas subject to group's configured compatibility policy.")
   @NotNull
   public Boolean isCompatible() {
     return compatible;
