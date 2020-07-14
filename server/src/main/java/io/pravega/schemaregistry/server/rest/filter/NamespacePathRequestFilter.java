@@ -50,35 +50,27 @@ public class NamespacePathRequestFilter implements ContainerRequestFilter {
 
     private void handleNamespacePath(UriBuilder uriBuilder, List<PathSegment> pathSegments) {
         StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append("/").append(pathSegments.get(0).getPath());
+        appendPath(pathSegments.get(0), pathBuilder);
+
         String namespace = pathSegments.get(2).getPath();
+        
         for (int i = 3; i < pathSegments.size(); i++) {
-            pathBuilder.append("/");
-            PathSegment pathSegment = pathSegments.get(i);
-            pathBuilder.append(pathSegment.getPath());
+            appendPath(pathSegments.get(i), pathBuilder);
         }
 
         uriBuilder.replacePath(pathBuilder.toString());
         uriBuilder.replaceQueryParam(NAMESPACE, namespace);
     }
 
+    private void appendPath(PathSegment pathSegment, StringBuilder pathBuilder) {
+        pathBuilder.append("/").append(pathSegment.getPath());
+        pathSegment.getMatrixParameters().forEach((x, y) -> pathBuilder.append(";").append(x).append("=").append(y));
+    }
+
     private void handlePathSegment(UriBuilder uriBuilder, List<PathSegment> pathSegments) {
         // replace the path segment for groups (at index 1) with
         MultivaluedMap<String, String> matrixParams = pathSegments.get(1).getMatrixParameters();
         String namespace = matrixParams.getFirst(NAMESPACE);
-        StringBuilder pathBuilder = new StringBuilder();
-        for (int i = 0; i < pathSegments.size(); i++) {
-            PathSegment pathSegment = pathSegments.get(i);
-            pathBuilder.append("/");
-            pathBuilder.append(pathSegment.getPath());
-            final int index = i;
-            pathSegment.getMatrixParameters().forEach((x, y) -> {
-                if (index != 1 || !x.equals(NAMESPACE)) {
-                    pathBuilder.append(";").append(x).append("=").append(y);
-                }
-            });
-        }
-        uriBuilder.replacePath(pathBuilder.toString());
         uriBuilder.replaceQueryParam(NAMESPACE, namespace);
     }
 }
