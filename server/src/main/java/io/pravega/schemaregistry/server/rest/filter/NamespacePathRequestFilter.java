@@ -21,10 +21,16 @@ import javax.ws.rs.ext.Provider;
 import java.util.List;
 
 /**
- * A request filter that convers namespace expressed as matrix parameter of path segment "groups"
+ * A request filter that converts namespace expressed either as a path param or as matrix parameter of path segment "groups"
  * into a query param. 
- * This allows users to express either "/v1/groups;namespace=ns" or "/v1/groups?namespace=ns". 
- * If both path segment and query param are specified, path segment takes precedence. 
+ * 
+ * This allows users to express either "/v1/namespace/ns/groups" or "/v1/groups;namespace=ns" or "/v1/groups?namespace=ns". 
+ * 
+ * Just as with query params, if more than one query param is specified with same name, the first one takes precedence. 
+ * Similarly, if more than one namespace value is provided, then the preference order is path param followed by path segment 
+ * followed by query param.
+ * So if someone hits the uri "/v1/namespace/ns1/groups;namespace=ns2?namespace=ns3". This will result in namespace being 
+ * set to ns1 for the request.  
  */
 @Provider
 @PreMatching
