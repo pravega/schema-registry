@@ -24,7 +24,7 @@ import java.util.List;
  * 
  * This allows users to express either "/v1/namespace/ns/groups" "/v1/groups?namespace=ns" and both are equivalent. 
  * 
- * If both path param and query param is used for namespace value is provided, then the path param overrides the query param. 
+ * If both path param and query param are used to supply values for namespace, then the path param overrides the query param. 
  * So if someone expresses the uri as "/v1/namespace/ns1/groups?namespace=ns2". This will result in namespace being 
  * set to ns1 for the request.  
  */
@@ -40,7 +40,7 @@ public class NamespacePathRequestFilter implements ContainerRequestFilter {
         // if path has namespace defined as path segment. convert it to query param. 
         UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
         List<PathSegment> pathSegments = uriInfo.getPathSegments();
-        if (pathSegments.size() > 2 && pathSegments.get(1).getPath().equals(NAMESPACE)) {
+        if (pathSegments.size() > 3 && pathSegments.get(1).getPath().equals(NAMESPACE)) {
             handleNamespacePath(uriBuilder, pathSegments);
         }
         containerRequest.setRequestUri(uriBuilder.build());
@@ -49,7 +49,7 @@ public class NamespacePathRequestFilter implements ContainerRequestFilter {
     private void handleNamespacePath(UriBuilder uriBuilder, List<PathSegment> pathSegments) {
         StringBuilder pathBuilder = new StringBuilder();
         appendPath(pathSegments.get(0), pathBuilder);
-
+        // pathsegments(1) is namspace and pathsegments(2) is name of the namespace. 
         String namespace = pathSegments.get(2).getPath();
         
         for (int i = 3; i < pathSegments.size(); i++) {
