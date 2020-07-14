@@ -52,7 +52,6 @@ import static org.mockito.Mockito.mock;
 public class SchemaRegistryResourceTest extends JerseyTest {
     private static final String GROUPS = "v1/groups";
     private static final String NAMESPACE_FORMAT = "v1/namespace/%s/groups";
-    private static final String GROUPS_PATH_SEGMENT_FORMAT = "v1/groups;namespace=%s";
     private SchemaRegistryService service;
     private ScheduledExecutorService executor;
 
@@ -92,12 +91,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         assertEquals(list.getGroups().size(), 1);
         
         future = target(String.format(NAMESPACE_FORMAT, "ns")).queryParam("limit", 100).request().async().get();
-        response = future.get();
-        assertEquals(response.getStatus(), 200);
-        list = response.readEntity(ListGroupsResponse.class);
-        assertEquals(list.getGroups().size(), 1);
-
-        future = target(String.format(GROUPS_PATH_SEGMENT_FORMAT, "namespace")).queryParam("limit", 100).request().async().get();
         response = future.get();
         assertEquals(response.getStatus(), 200);
         list = response.readEntity(ListGroupsResponse.class);
