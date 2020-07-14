@@ -21,10 +21,16 @@ import javax.ws.rs.ext.Provider;
 import java.util.List;
 
 /**
- * A request filter that convers namespace expressed as matrix parameter of path segment "groups"
+ * A request filter that converts namespace expressed either as a path param or as matrix parameter of path segment "groups"
  * into a query param. 
- * This allows users to express either "/v1/groups;namespace=ns" or "/v1/groups?namespace=ns". 
- * If both path segment and query param are specified, path segment takes precedence. 
+ * 
+ * This allows users to express either "/v1/namespace/ns/groups" or "/v1/groups;namespace=ns" or "/v1/groups?namespace=ns". 
+ * 
+ * Just as with query params, if more than one query param is specified with same name, the first one takes precedence. 
+ * Similarly, if more than one namespace value is provided, then the preference order is path param followed by path segment 
+ * followed by query param.
+ * So if someone hits the uri "/v1/namespace/ns1/groups;namespace=ns2?namespace=ns3". This will result in namespace being 
+ * set to ns1 for the request.  
  */
 @Provider
 @PreMatching
@@ -50,35 +56,27 @@ public class NamespacePathRequestFilter implements ContainerRequestFilter {
 
     private void handleNamespacePath(UriBuilder uriBuilder, List<PathSegment> pathSegments) {
         StringBuilder pathBuilder = new StringBuilder();
-        pathBuilder.append("/").append(pathSegments.get(0).getPath());
+        appendPath(pathSegments.get(0), pathBuilder);
+
         String namespace = pathSegments.get(2).getPath();
+        
         for (int i = 3; i < pathSegments.size(); i++) {
-            pathBuilder.append("/");
-            PathSegment pathSegment = pathSegments.get(i);
-            pathBuilder.append(pathSegment.getPath());
+            appendPath(pathSegments.get(i), pathBuilder);
         }
 
         uriBuilder.replacePath(pathBuilder.toString());
         uriBuilder.replaceQueryParam(NAMESPACE, namespace);
     }
 
+    private void appendPath(PathSegment pathSegment, StringBuilder pathBuilder) {
+        pathBuilder.append("/").append(pathSegment.getPath());
+        pathSegment.getMatrixParameters().forEach((x, y) -> pathBuilder.append(";").append(x).append("=").append(y));
+    }
+
     private void handlePathSegment(UriBuilder uriBuilder, List<PathSegment> pathSegments) {
         // replace the path segment for groups (at index 1) with
         MultivaluedMap<String, String> matrixParams = pathSegments.get(1).getMatrixParameters();
         String namespace = matrixParams.getFirst(NAMESPACE);
-        StringBuilder pathBuilder = new StringBuilder();
-        for (int i = 0; i < pathSegments.size(); i++) {
-            PathSegment pathSegment = pathSegments.get(i);
-            pathBuilder.append("/");
-            pathBuilder.append(pathSegment.getPath());
-            final int index = i;
-            pathSegment.getMatrixParameters().forEach((x, y) -> {
-                if (index != 1 || !x.equals(NAMESPACE)) {
-                    pathBuilder.append(";").append(x).append("=").append(y);
-                }
-            });
-        }
-        uriBuilder.replacePath(pathBuilder.toString());
         uriBuilder.replaceQueryParam(NAMESPACE, namespace);
     }
 }
