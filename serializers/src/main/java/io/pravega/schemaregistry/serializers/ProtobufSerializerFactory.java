@@ -64,7 +64,7 @@ class ProtobufSerializerFactory {
         String groupId = config.getGroupId();
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache,
+        return new ProtobufGenericDeserializer(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache,
                 config.isWriteEncodingHeader());
     }
 
@@ -114,7 +114,7 @@ class ProtobufSerializerFactory {
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
                         x -> new ProtobufDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache, 
                                 config.isWriteEncodingHeader())));
-        ProtobufGenericDeserlizer genericDeserializer = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null,
+        ProtobufGenericDeserializer genericDeserializer = new ProtobufGenericDeserializer(groupId, schemaRegistryClient, null,
                 config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
         return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer,
                 config.getDecoders(), encodingCache);

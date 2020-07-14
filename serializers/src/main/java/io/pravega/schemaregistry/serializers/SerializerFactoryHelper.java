@@ -28,7 +28,6 @@ class SerializerFactoryHelper {
 
     static SchemaRegistryClient initForDeserializer(SerializerConfig config) {
         SchemaRegistryClient schemaRegistryClient = getSchemaRegistryClient(config);
-
         createGroup(schemaRegistryClient, config);
         failOnCodecMismatch(schemaRegistryClient, config);
         return schemaRegistryClient;

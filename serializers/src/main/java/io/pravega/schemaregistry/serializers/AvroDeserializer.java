@@ -41,11 +41,14 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
     @Override
     protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema = knownSchemas.computeIfAbsent(writerSchemaInfo, x -> {
-            String schemaString = new String(x.getSchemaData().array(), Charsets.UTF_8);
-            return new Schema.Parser().parse(schemaString);
-
-        });
+        Schema writerSchema;
+        if (knownSchemas.containsKey(writerSchemaInfo)) {
+            writerSchema = knownSchemas.get(writerSchemaInfo);
+        } else {
+            String schemaString = new String(writerSchemaInfo.getSchemaData().array(), Charsets.UTF_8);
+            writerSchema = new Schema.Parser().parse(schemaString);
+            knownSchemas.put(writerSchemaInfo, writerSchema);
+        }
         Schema readerSchema = avroSchema.getSchema();
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         

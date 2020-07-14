@@ -32,7 +32,7 @@ import java.nio.file.Paths;
 import static io.pravega.schemaregistry.testobjs.SchemaDefinitions.JSON_SCHEMA_STRING;
 import static org.junit.Assert.*;
 
-public class TestSchemas {
+public class SchemasTest {
     @Test
     public void testAvroSchema() {
         AvroSchema<Object> schema = AvroSchema.of(SchemaDefinitions.SCHEMA1);

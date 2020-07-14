@@ -65,7 +65,7 @@ public class JSONSchema<T> implements Schema<T> {
 
     /**
      * Method to create a typed JSONSchema for the given class. It extracts the json schema from the class.
-     * For POJOs the schema is extracted using jacksons {@link JsonSchemaGenerator}. 
+     * For POJOs the schema is extracted using jackson's {@link JsonSchemaGenerator}. 
      *
      * @param tClass Class whose object's schema is used.
      * @param <T> Type of the Java class. 
