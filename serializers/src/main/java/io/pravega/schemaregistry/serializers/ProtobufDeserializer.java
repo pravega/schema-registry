@@ -16,6 +16,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 
+import java.io.IOException;
 import java.io.InputStream;
 
 public class ProtobufDeserializer<T extends GeneratedMessageV3> extends AbstractDeserializer<T> {
@@ -29,11 +30,11 @@ public class ProtobufDeserializer<T extends GeneratedMessageV3> extends Abstract
     }
 
     @Override
-    protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) {
+    protected T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         try {
             return protobufSchema.getParser().parseFrom(inputStream);
         } catch (InvalidProtocolBufferException e) {
-            throw new IllegalArgumentException("Invalid bytes", e);
+            throw new IOException("Invalid protobuffer serialized bytes", e);
         }
     }
 }
