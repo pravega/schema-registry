@@ -19,20 +19,19 @@ import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import lombok.Data;
 
-import java.time.Duration;
 import java.util.concurrent.ExecutionException;
 
 /**
  * Local cache for storing schemas that are retrieved from the registry service.  
  */
 public class EncodingCache {
-    private static final Duration EXPIRY_AFTER_ACCESS = Duration.ofMinutes(20);
+    private static final int MAXIMUM_SIZE = 1000;
     
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
     
     EncodingCache(String groupId, SchemaRegistryClient schemaRegistryClient) {
         encodingCache = CacheBuilder.newBuilder()
-                                    .expireAfterAccess(EXPIRY_AFTER_ACCESS)
+                                    .maximumSize(MAXIMUM_SIZE)
                                     .build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
             public EncodingInfo load(EncodingId key) {

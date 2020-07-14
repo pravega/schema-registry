@@ -25,11 +25,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class ProtobufGenericDeserlizer extends AbstractDeserializer<DynamicMessage> {
+public class ProtobufGenericDeserializer extends AbstractDeserializer<DynamicMessage> {
     private final ConcurrentHashMap<SchemaInfo, Descriptors.Descriptor> knownSchemas;
 
-    ProtobufGenericDeserlizer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
-                              SerializerConfig.Decoders decoder, EncodingCache encodingCache, boolean encodeHeader) {
+    ProtobufGenericDeserializer(String groupId, SchemaRegistryClient client, @Nullable ProtobufSchema<DynamicMessage> schema,
+                                SerializerConfig.Decoders decoder, EncodingCache encodingCache, boolean encodeHeader) {
         super(groupId, client, schema, false, decoder, encodingCache, encodeHeader);
         Preconditions.checkArgument(isEncodeHeader() || schema != null);
         knownSchemas = new ConcurrentHashMap<>();

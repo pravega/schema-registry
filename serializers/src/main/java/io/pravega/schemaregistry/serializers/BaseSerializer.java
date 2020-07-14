@@ -16,6 +16,6 @@ import java.nio.ByteBuffer;
 abstract class BaseSerializer<T> implements Serializer<T> {
     @Override
     public final T deserialize(ByteBuffer serializedValue) {
-        throw new IllegalStateException();
+        throw new UnsupportedOperationException();
     }
 }

@@ -101,7 +101,7 @@ class MultiFormatSerializerFactory {
 
         AbstractDeserializer json = new JsonGenericDeserializer(config.getGroupId(), schemaRegistryClient,
                 config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
-        AbstractDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoders(),
+        AbstractDeserializer protobuf = new ProtobufGenericDeserializer(groupId, schemaRegistryClient, null, config.getDecoders(),
                 encodingCache, config.isWriteEncodingHeader());
         AbstractDeserializer avro = new AvroGenericDeserializer(groupId, schemaRegistryClient, null, config.getDecoders(),
                 encodingCache);
@@ -133,7 +133,7 @@ class MultiFormatSerializerFactory {
 
         AbstractDeserializer json = new JsonGenericDeserializer(config.getGroupId(), schemaRegistryClient,
                 config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
-        AbstractDeserializer protobuf = new ProtobufGenericDeserlizer(groupId, schemaRegistryClient, null, config.getDecoders(),
+        AbstractDeserializer protobuf = new ProtobufGenericDeserializer(groupId, schemaRegistryClient, null, config.getDecoders(),
                 encodingCache, config.isWriteEncodingHeader());
         AbstractDeserializer avro = new AvroGenericDeserializer(groupId, schemaRegistryClient, null, config.getDecoders(),
                 encodingCache);
