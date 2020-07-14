@@ -19,6 +19,7 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.UriBuilder;
 
 import io.pravega.common.auth.JKSHelper;
+import io.pravega.schemaregistry.server.rest.filter.NamespacePathRequestFilter;
 import io.pravega.schemaregistry.server.rest.resources.GroupResourceImpl;
 import io.pravega.schemaregistry.server.rest.resources.PingImpl;
 import io.pravega.schemaregistry.server.rest.resources.SchemaResourceImpl;
@@ -49,6 +50,7 @@ public class RestServer extends AbstractIdleService {
         this.baseUri = UriBuilder.fromUri("http://" + restServerConfig.getHost()).port(restServerConfig.getPort()).build();
 
         final Set<Object> resourceObjs = new HashSet<>();
+        resourceObjs.add(new NamespacePathRequestFilter());
         resourceObjs.add(new PingImpl());
         resourceObjs.add(new GroupResourceImpl(registryService, restServerConfig, executor()));
         resourceObjs.add(new SchemaResourceImpl(registryService, restServerConfig, executor()));
