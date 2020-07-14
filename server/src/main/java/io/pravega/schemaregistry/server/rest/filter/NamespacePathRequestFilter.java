@@ -32,15 +32,18 @@ import java.util.List;
 @PreMatching
 public class NamespacePathRequestFilter implements ContainerRequestFilter {
     private static final String NAMESPACE = "namespace";
+    private static final String GROUPS = "groups";
 
     @Override
     public void filter(ContainerRequestContext containerRequest)
             throws WebApplicationException {
         UriInfo uriInfo = containerRequest.getUriInfo();
-        // if path has namespace defined as path segment. convert it to query param. 
         UriBuilder uriBuilder = uriInfo.getRequestUriBuilder();
         List<PathSegment> pathSegments = uriInfo.getPathSegments();
-        if (pathSegments.size() > 3 && pathSegments.get(1).getPath().equals(NAMESPACE)) {
+        // if path has namespace defined as path segment. convert it to query param. 
+        // namespace path param is converted to query param only when namespace name is followed by groups path segment.
+        if (pathSegments.size() > 3 && pathSegments.get(1).getPath().equals(NAMESPACE) 
+                && pathSegments.get(3).getPath().equals(GROUPS)) {
             handleNamespacePath(uriBuilder, pathSegments);
         }
         containerRequest.setRequestUri(uriBuilder.build());
