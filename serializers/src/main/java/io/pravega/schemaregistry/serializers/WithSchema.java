@@ -14,6 +14,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
+import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -201,5 +202,41 @@ public class WithSchema<T> {
             throw new IllegalArgumentException("Invalid deserialized object. Failed to convert to json string.", e);
         }
         return jsonString;
+    }
+
+    /**
+     * Create WithSchema object for avro. 
+     * 
+     * @param object Object.
+     * @param avroSchema Avro Schema for object.
+     * @param <T> Type of object. 
+     * @return A WithSchema object which has Avro Schema and the corresponding object.  
+     */
+    public static <T> WithSchema<T> avro(T object, AvroSchema<T> avroSchema) {
+        return new WithSchema<>(avroSchema.getSchemaInfo(), object, (x, y) -> object);
+    }
+
+    /**
+     * Create WithSchema object for protobuf. 
+     *
+     * @param object Object.
+     * @param protobufSchema Protobuf Schema for object.
+     * @param <T> Type of object. 
+     * @return A WithSchema object which has Protobuf Schema and the corresponding object.  
+     */
+    public static <T extends GeneratedMessageV3> WithSchema<T> proto(T object, ProtobufSchema<T> protobufSchema) {
+        return new WithSchema<>(protobufSchema.getSchemaInfo(), object, (x, y) -> object);
+    }
+
+    /**
+     * Create WithSchema object for json. 
+     *
+     * @param object Object.
+     * @param jsonSchema Json Schema for object.
+     * @param <T> Type of object. 
+     * @return A WithSchema object which has Json schema and the corresponding object.  
+     */
+    public static <T> WithSchema<T> json(T object, JSONSchema<T> jsonSchema) {
+        return new WithSchema<>(jsonSchema.getSchemaInfo(), object, (x, y) -> object);
     }
 }

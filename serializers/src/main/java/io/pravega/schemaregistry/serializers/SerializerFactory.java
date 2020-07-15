@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
@@ -29,6 +30,7 @@ import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.function.BiFunction;
 
+import static com.google.protobuf.DescriptorProtos.FileDescriptorSet;
 import static io.pravega.schemaregistry.serializers.WithSchema.JSON_TRANSFORM;
 import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
 
@@ -378,9 +380,10 @@ public class SerializerFactory {
     /**
      * A deserializer that can deserialize data where each event could be written with either of avro, protobuf or json 
      * serialization formats. It deserializes them into format specific generic objects. 
-     * An event serialized with avro is deserialized into {@link GenericRecord}.
-     * An event serialized with protobuf is deserialized into {@link DynamicMessage}.
-     * An event serialized with json is deserialized into {@link JsonNode}.
+     * An event serialized with avro is deserialized into {@link GenericRecord} or {@link Object} with schema as {@link org.apache.avro.Schema}.
+     * An event serialized with protobuf is deserialized into {@link DynamicMessage} with schema as {@link FileDescriptorSet}.
+     * An event serialized with json is deserialized into a {@link JsonNode} with schema as {@link JsonSchema}.
+     * The object and schema are wrapped in {@link WithSchema} object. 
      *
      * @param config serializer config
      * @return a deserializer that can deserialize events serialized as protobuf, json or avro into java objects.
@@ -394,7 +397,7 @@ public class SerializerFactory {
      * serialization formats.
      * An event serialized with avro is deserialized into {@link GenericRecord}.
      * An event serialized with protobuf is deserialized into {@link DynamicMessage}.
-     * An event serialized with json is deserialized into {@link JsonNode}.
+     * An event serialized with json is deserialized into {@link WithSchema} object of {@link JsonNode} and {@link JsonSchema}.
      *
      * @param config serializer config
      * @return a deserializer that can deserialize events serialized as protobuf, json or avro into java objects.
@@ -419,7 +422,7 @@ public class SerializerFactory {
      * Formats supported are protobuf, avro and json. 
      * An event serialized with avro is deserialized into {@link GenericRecord}.
      * An event serialized with protobuf is deserialized into {@link DynamicMessage}.
-     * An event serialized with json is deserialized into {@link JsonNode}.
+     * An event serialized with json is deserialized into {@link WithSchema} object of {@link JsonNode} and {@link JsonSchema}.
      *
      * This also takes a transform function which is applied on the deserialized object and should transform the object 
      * into the type T.  
