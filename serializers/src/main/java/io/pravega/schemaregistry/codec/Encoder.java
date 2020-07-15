@@ -30,6 +30,8 @@ public interface Encoder {
      * Implementation should encode the remaining bytes in the buffer and return a new ByteBuffer that includes
      * the encoded data at its current position. 
      * 
+     * The implementation can optionally call flush or close on outputstream with no consequence. 
+     * 
      * @param data ByteBuffer to encode.
      * @param outputStream ByteArrayOutputStream where the encoded data should be written.
      * @throws IOException IOException can be thrown while reading from or writing to byte buffers.

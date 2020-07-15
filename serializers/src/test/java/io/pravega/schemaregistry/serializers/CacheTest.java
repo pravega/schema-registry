@@ -23,6 +23,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ExecutionException;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.mock;
@@ -37,7 +38,26 @@ public class CacheTest {
                 new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
                 Codecs.SnappyCompressor.getCodec().getCodecType());
         doAnswer(x -> encodingInfo).when(client).getEncodingInfo(eq(groupId), eq(encodingId));
-        EncodingCache cache = new EncodingCache(groupId, client);
+        EncodingId encodingId2 = new EncodingId(1);
+        EncodingInfo encodingInfo2 = new EncodingInfo(new VersionInfo("name", 0, 1),
+                new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
+                Codecs.SnappyCompressor.getCodec().getCodecType());
+        doAnswer(x -> encodingInfo2).when(client).getEncodingInfo(eq(groupId), eq(encodingId2));
+        EncodingId encodingId3 = new EncodingId(2);
+        EncodingInfo encodingInfo3 = new EncodingInfo(new VersionInfo("name", 0, 2),
+                new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
+                Codecs.SnappyCompressor.getCodec().getCodecType());
+        doAnswer(x -> encodingInfo3).when(client).getEncodingInfo(eq(groupId), eq(encodingId3));
+        // create a cache with max size 2
+        EncodingCache cache = new EncodingCache(groupId, client, 2);
+        assertEquals(cache.getMapForCache().size(), 0);
         assertEquals(encodingInfo, cache.getGroupEncodingInfo(encodingId));
+        assertEquals(cache.getMapForCache().size(), 1);
+        assertEquals(encodingInfo2, cache.getGroupEncodingInfo(encodingId2));
+        assertEquals(cache.getMapForCache().size(), 2);
+        assertEquals(encodingInfo3, cache.getGroupEncodingInfo(encodingId3));
+        assertEquals(cache.getMapForCache().size(), 2);
+        assertTrue(cache.getMapForCache().containsKey(encodingId2));
+        assertTrue(cache.getMapForCache().containsKey(encodingId3));
     }
 }

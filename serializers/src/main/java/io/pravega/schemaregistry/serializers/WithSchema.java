@@ -188,7 +188,11 @@ public class WithSchema<T> {
                     jsonString = PRINTER.print((DynamicMessage) deserialize);
                     break;
                 case Json:
-                    jsonString = OBJECT_MAPPER.writeValueAsString(((WithSchema) deserialize).object);
+                    if (deserialize instanceof WithSchema) {
+                        jsonString = OBJECT_MAPPER.writeValueAsString(((WithSchema) deserialize).object);
+                    } else {
+                        jsonString = OBJECT_MAPPER.writeValueAsString(deserialize);
+                    }
                     break;
                 default:
                     jsonString = OBJECT_MAPPER.writeValueAsString(deserialize);

@@ -75,8 +75,10 @@ public enum Codecs {
 
         @Override
         public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
+            byte[] b = data.hasArray() ? data.array() : getBytes(data);
+            int offset = data.hasArray() ? data.arrayOffset() + data.position() : 0;
             try (GZIPOutputStream gzipOS = new GZIPOutputStream(bos)) {
-                gzipOS.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
+                gzipOS.write(b, offset, data.remaining());
             }
         }
 
@@ -85,6 +87,12 @@ public enum Codecs {
             InputStream bis = new ByteBufferBackedInputStream(data);
             return ByteBuffer.wrap(IOUtils.toByteArray(new GZIPInputStream(bis)));
         }
+    }
+
+    private static byte[] getBytes(ByteBuffer data) {
+        byte[] b = new byte[data.remaining()];
+        data.get(b);
+        return b;
     }
 
     private static class SnappyCodec implements Codec {
@@ -103,18 +111,20 @@ public enum Codecs {
         public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
             int capacity = Snappy.maxCompressedLength(data.remaining());
             byte[] encoded = new byte[capacity];
-            
-            int size = Snappy.compress(data.array(), data.arrayOffset() + data.position(),
-                    data.remaining(), encoded, 0);
+
+            byte[] b = data.hasArray() ? data.array() : getBytes(data);
+            int offset = data.hasArray() ? data.arrayOffset() + data.position() : 0;
+            int size = Snappy.compress(b, offset, data.remaining(), encoded, 0);
             bos.write(encoded, 0, size);
         }
         
         @Override
         public ByteBuffer decode(ByteBuffer data, Map<String, String> codecProperties) throws IOException {
-            ByteBuffer decoded = ByteBuffer.allocate(Snappy.uncompressedLength(data.array(), data.arrayOffset() + data.position(),
-                    data.remaining()));
-            Snappy.uncompress(data.array(), data.arrayOffset() + data.position(), 
-                    data.remaining(), decoded.array(), 0);
+            byte[] b = data.hasArray() ? data.array() : getBytes(data);
+            int offset = data.hasArray() ? data.arrayOffset() + data.position() : 0;
+
+            ByteBuffer decoded = ByteBuffer.allocate(Snappy.uncompressedLength(b, offset, data.remaining()));
+            Snappy.uncompress(b, offset, data.remaining(), decoded.array(), 0);
             return decoded;
         }
     }
