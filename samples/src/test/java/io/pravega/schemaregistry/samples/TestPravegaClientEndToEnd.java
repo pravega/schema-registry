@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.samples;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
@@ -1296,7 +1297,6 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
     @Test
     public void testWithSchema() {
-        // create pravega stream idrac
         String scope = "withSchema";
         String stream = "withSchema";
 
@@ -1315,28 +1315,27 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .build();
         
         // region write
-        Serializer serializer = SerializerFactory.jsonSerializer(serializerConfig, JSONSchema.of(TestClass.class));
+        Serializer<TestClass> serializer = SerializerFactory.jsonSerializer(serializerConfig, JSONSchema.of(TestClass.class));
 
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
-        EventStreamWriter streamWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        streamWriter.writeEvent(new TestClass()).join();
+        EventStreamWriter<TestClass> streamWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        streamWriter.writeEvent(new TestClass("a")).join();
         // endregion
         
         // region read
-        Serializer deserializer;
-        Function<EventRead, String> eventContentSupplier;
-        deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
-        eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
+        Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
+        Function<EventRead, String> eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
 
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
         readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        EventStreamReader reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
-        EventRead eventRead = reader.readNextEvent(1000L); // event will be read successfully
-        String eventContent = eventContentSupplier.apply(eventRead); // but will fail to get the json string
+        EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
+        EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L); 
+        String eventContent = eventContentSupplier.apply(eventRead); 
+        assertFalse(Strings.isNullOrEmpty(eventContent));
     }
 }
 
