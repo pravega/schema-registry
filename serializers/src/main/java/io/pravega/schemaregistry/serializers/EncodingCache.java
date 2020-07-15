@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
@@ -17,8 +18,8 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
-import lombok.Data;
 
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -28,10 +29,14 @@ public class EncodingCache {
     private static final int MAXIMUM_SIZE = 1000;
     
     private final LoadingCache<EncodingId, EncodingInfo> encodingCache;
-    
     EncodingCache(String groupId, SchemaRegistryClient schemaRegistryClient) {
+        this(groupId, schemaRegistryClient, MAXIMUM_SIZE);
+    }
+
+    @VisibleForTesting
+    EncodingCache(String groupId, SchemaRegistryClient schemaRegistryClient, int cacheSize) {
         encodingCache = CacheBuilder.newBuilder()
-                                    .maximumSize(MAXIMUM_SIZE)
+                                    .maximumSize(cacheSize)
                                     .build(new CacheLoader<EncodingId, EncodingInfo>() {
             @Override
             public EncodingInfo load(EncodingId key) {
@@ -52,9 +57,8 @@ public class EncodingCache {
         }
     }
     
-    @Data
-    private static class Key {
-        private final SchemaRegistryClient client;
-        private final String groupId;
+    @VisibleForTesting
+    ConcurrentMap<EncodingId, EncodingInfo> getMapForCache() {
+        return encodingCache.asMap();
     }
 }

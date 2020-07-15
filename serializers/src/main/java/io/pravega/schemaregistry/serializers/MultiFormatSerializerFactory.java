@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
 import io.pravega.client.stream.Serializer;
@@ -59,7 +60,7 @@ class MultiFormatSerializerFactory {
      * Formats supported are protobuf, avro and json. 
      * An event serialized with avro is deserialized into {@link GenericRecord}.
      * An event serialized with protobuf is deserialized into {@link DynamicMessage}.
-     * An event serialized with json is deserialized into {@link java.util.LinkedHashMap}.
+     * An event serialized with json is deserialized into WithSchema containing {@link JsonNode} and {@link JSONSchema}.
      * 
      * This also takes a transform function which is applied on the deserialized object and should transform the object 
      * into the type T.  

@@ -101,6 +101,7 @@ import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
 
 import static org.junit.Assert.*;
 
@@ -1291,6 +1292,51 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
     @NoArgsConstructor
     static class TestClass {
         private String test;
+    }
+
+    @Test
+    public void testWithSchema() {
+        // create pravega stream idrac
+        String scope = "withSchema";
+        String stream = "withSchema";
+
+        StreamManager streamManager = new StreamManagerImpl(clientConfig);
+        streamManager.createScope(scope);
+        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+
+        SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                            .namespace(scope)
+                                                            .groupId(stream)
+                                                            .createGroup(SerializationFormat.Json,
+                                                                    Compatibility.allowAny(),
+                                                                    false)
+                                                            .registerSchema(true)
+                                                            .registryConfig(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build())
+                                                            .build();
+        
+        // region write
+        Serializer serializer = SerializerFactory.jsonSerializer(serializerConfig, JSONSchema.of(TestClass.class));
+
+        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+
+        EventStreamWriter streamWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        streamWriter.writeEvent(new TestClass()).join();
+        // endregion
+        
+        // region read
+        Serializer deserializer;
+        Function<EventRead, String> eventContentSupplier;
+        deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
+        eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
+
+        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+        String rg = "rg" + stream;
+        readerGroupManager.createReaderGroup(rg,
+                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+        EventStreamReader reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
+        EventRead eventRead = reader.readNextEvent(1000L); // event will be read successfully
+        String eventContent = eventContentSupplier.apply(eventRead); // but will fail to get the json string
     }
 }
 

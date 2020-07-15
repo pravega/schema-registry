@@ -75,10 +75,7 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
     @SneakyThrows(IOException.class)
     @Override
     public T deserialize(ByteBuffer data) {
-        if (!data.hasArray()) {
-            return null;
-        }
-        int start = data.arrayOffset() + data.position();
+        int start = data.hasArray() ? data.arrayOffset() + data.position() : data.position();
         if (this.encodeHeader) {
             SchemaInfo writerSchema = null;
             ByteBuffer decoded;
@@ -103,9 +100,15 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                 return deserialize(bais, writerSchema, schemaInfo);
             }
         } else {
+            byte[] b;
+            if (data.hasArray()) {
+                b = data.array();
+            } else {
+                b = new byte[data.remaining()];
+                data.get(b);
+            }
             // pass reader schema for schema on read to the underlying implementation
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(data.array(), 
-                    data.arrayOffset() + data.position(), data.remaining());
+            ByteArrayInputStream inputStream = new ByteArrayInputStream(b, start, data.remaining());
 
             return deserialize(inputStream, null, schemaInfo);
         }
