@@ -1336,6 +1336,20 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L); 
         String eventContent = eventContentSupplier.apply(eventRead); 
         assertFalse(Strings.isNullOrEmpty(eventContent));
+        reader.close();
+        
+        streamWriter.writeEvent(new TestClass("a")).join();
+        Serializer<String> deserializer2 = SerializerFactory.deserializeAsJsonString(serializerConfig);
+        EventStreamReader<String> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
+        EventRead<String> eventRead2 = reader2.readNextEvent(1000L); 
+        assertFalse(Strings.isNullOrEmpty(eventRead2.getEvent()));
+        reader2.close();
+        
+        streamWriter.writeEvent(new TestClass("a")).join();
+        Serializer<String> deserializer3 = SerializerFactory.deserializeAsT(serializerConfig, (x, y) -> y.toString());
+        EventStreamReader<String> reader3 = clientFactory.createReader("r3", rg, deserializer3, ReaderConfig.builder().build());
+        EventRead<String> eventRead3 = reader3.readNextEvent(1000L); 
+        assertFalse(Strings.isNullOrEmpty(eventRead3.getEvent()));
     }
 }
 
