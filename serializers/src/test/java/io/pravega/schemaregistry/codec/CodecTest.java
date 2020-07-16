@@ -46,7 +46,6 @@ public class CodecTest {
         Codec none = Codecs.None.getCodec();
         assertEquals(none.getCodecType(), Codecs.None.getCodec().getCodecType());
         none.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
-        byteArrayOutputStream.write(testStringBytes);
         encoded = ByteBuffer.wrap(byteArrayOutputStream.getData().array(), 0, byteArrayOutputStream.getData().getLength());
         assertEquals(encoded.remaining(), testStringBytes.length);
         decoded = none.decode(encoded, ImmutableMap.of());
