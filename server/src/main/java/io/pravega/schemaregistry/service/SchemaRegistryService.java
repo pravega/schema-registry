@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -44,8 +45,12 @@ import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -843,8 +848,10 @@ public class SchemaRegistryService {
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-                    JsonSchema jsonSchema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonSchema).getBytes(Charsets.UTF_8));
+                    validateJsonSchema(schemaString);
+                    // normalize json schema string
+                    JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
+                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonNode).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
@@ -853,7 +860,7 @@ public class SchemaRegistryService {
                 default:
                     break;
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
@@ -862,6 +869,20 @@ public class SchemaRegistryService {
             throw new IllegalArgumentException(invalidityCause);
         }
         return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
+    }
+
+    private void validateJsonSchema(String schemaString) {
+        // 1. try draft 3
+        try {
+            // jackson JsonSchema only supports json draft 3. If the schema definition is not compatible with draft 3, 
+            // try parsing the schema with everit library which supports drafts 4 6 and 7. 
+            OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+        } catch (IOException e) {
+            JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+            // draft 4 to 7
+            SchemaLoader.builder().useDefaults(true).draftV7Support().schemaJson(rawSchema)
+                        .build().load().build();
+        }
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {
