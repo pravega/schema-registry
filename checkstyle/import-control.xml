@@ -44,5 +44,7 @@
     <allow pkg="io.jsonwebtoken" />
     <allow pkg="io.kubernetes" />
     <allow pkg="org.xerial.snappy" />
+    <allow pkg="org.json" />
+    <allow pkg="org.everit.json" />
 
 </import-control>

@@ -13,7 +13,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -22,7 +21,6 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ResultPage;
-import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.BackwardAndForward;
@@ -51,6 +49,7 @@ import org.json.JSONObject;
 import org.json.JSONTokener;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -76,10 +75,6 @@ public class SchemaRegistryService {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                        .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String DRAFT_04_SCHEMA = "http://json-schema.org/draft-04/schema#";
-    private static final String DRAFT_06_SCHEMA = "http://json-schema.org/draft-06/schema#";
-    private static final String DRAFT_07_SCHEMA = "http://json-schema.org/draft-07/schema#";
-    private static final String SCHEMA_NODE = "$schema";
 
     private static final VersionInfo EMPTY_VERSION = new VersionInfo("", -1, -1);
 
@@ -860,17 +855,10 @@ public class SchemaRegistryService {
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
-                    if (DRAFT_04_SCHEMA.equals(jsonNode.get(SCHEMA_NODE).asText()) ||
-                            DRAFT_06_SCHEMA.equals(jsonNode.get(SCHEMA_NODE).asText()) ||
-                            DRAFT_07_SCHEMA.equals(jsonNode.get(SCHEMA_NODE).asText())) {
-                        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-                        SchemaLoader.builder().useDefaults(true).draftV6Support().draftV7Support().schemaJson(rawSchema)
-                                                                           .build().load().build();
-                    } else {
-                        JsonSchema jsonSchema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-                        schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonSchema).getBytes(Charsets.UTF_8));
-                    }
-
+                    JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+                    SchemaLoader.builder().useDefaults(true).draftV6Support().draftV7Support().schemaJson(rawSchema)
+                                                                       .build().load().build();
+                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonNode).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
@@ -879,7 +867,7 @@ public class SchemaRegistryService {
                 default:
                     break;
             }
-        } catch (Exception e) {
+        } catch (IOException e) {
             log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
