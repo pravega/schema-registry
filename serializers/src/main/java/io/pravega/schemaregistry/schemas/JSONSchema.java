@@ -21,6 +21,9 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import org.apache.avro.specific.SpecificRecordBase;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.nio.ByteBuffer;
 
@@ -31,6 +34,10 @@ import java.nio.ByteBuffer;
  */
 public class JSONSchema<T> implements Schema<T> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String DRAFT_04_SCHEMA = "http://json-schema.org/draft-04/schema#";
+    private static final String DRAFT_06_SCHEMA = "http://json-schema.org/draft-06/schema#";
+    private static final String DRAFT_07_SCHEMA = "http://json-schema.org/draft-07/schema#";
+    private static final String SCHEMA_NODE = "$schema";
 
     @Getter
     private final String schemaString;
@@ -39,28 +46,28 @@ public class JSONSchema<T> implements Schema<T> {
     private final Class<? extends T> derived;
     
     @Getter
-    private final JsonSchema schema;
-
+    private final org.everit.json.schema.Schema schema;
+    
     private final SchemaInfo schemaInfo;
 
-    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> derived) {
-        this(schema, name, schemaString, derived, derived);
+    private JSONSchema(String name, String schemaString, Class<T> derived) {
+        this(name, schemaString, derived, derived);
     }
 
-    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> base, Class<? extends T> derived) {
+    private JSONSchema(String name, String schemaString, Class<T> base, Class<? extends T> derived) {
         this.schemaString = schemaString;
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
         this.base = base;
         this.derived = derived;
-        this.schema = schema;
+        this.schema = getSchemaObj(schemaString);
     }
 
-    private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> derived) {
+    private JSONSchema(SchemaInfo schemaInfo, String schemaString, Class<T> derived) {
         this.schemaString = schemaString;
         this.schemaInfo = schemaInfo;
         this.base = derived;
         this.derived = derived;
-        this.schema = schema;
+        this.schema = getSchemaObj(schemaString);
     }
 
     /**
@@ -77,8 +84,7 @@ public class JSONSchema<T> implements Schema<T> {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
             JsonSchema schema = schemaGen.generateSchema(tClass);
             String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
-
-            return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
+            return new JSONSchema<>(tClass.getName(), schemaString, tClass);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema from the class", e);
         }
@@ -98,7 +104,7 @@ public class JSONSchema<T> implements Schema<T> {
         try {
             String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
 
-            return new JSONSchema<>(schema, type, schemaString, Object.class);
+            return new JSONSchema<>(type, schemaString, Object.class);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema string from the JsonSchema object", e);
         }
@@ -114,12 +120,7 @@ public class JSONSchema<T> implements Schema<T> {
     public static JSONSchema<Object> of(String type, String schemaString) {
         Preconditions.checkNotNull(type, "Type cannot be null.");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaString), "Schema String cannot be null or empty.");
-        try {
-            JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-            return new JSONSchema<>(schema, type, schemaString, Object.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to parse schema string", e);
-        }
+        return new JSONSchema<>(type, schemaString, Object.class);
     }
 
     /**
@@ -137,10 +138,10 @@ public class JSONSchema<T> implements Schema<T> {
         Preconditions.checkNotNull(tBase);
         try {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
-            JsonSchema schema = schemaGen.generateSchema(tDerived);
-            String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
-
-            return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
+            JsonSchema jsonSchema = schemaGen.generateSchema(tDerived);
+            String schemaString = OBJECT_MAPPER.writeValueAsString(jsonSchema);
+            
+            return new JSONSchema<>(tDerived.getName(), schemaString, tBase, tDerived);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema from the class", e);
         }
@@ -154,14 +155,17 @@ public class JSONSchema<T> implements Schema<T> {
      */
     public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
         Preconditions.checkNotNull(schemaInfo);
-        try {
-            String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
+        String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
+        org.everit.json.schema.Schema schema = getSchemaObj(schemaString);
 
-            JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-            return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to get json schema from schema info", e);
-        }
+        return new JSONSchema<>(schemaInfo, schemaString, Object.class);
+    }
+
+    private static org.everit.json.schema.Schema getSchemaObj(String schemaString) {
+        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+        return SchemaLoader.builder().useDefaults(true)
+                           .draftV6Support().draftV7Support().schemaJson(rawSchema)
+                           .build().load().build();
     }
 
     private ByteBuffer getSchemaBytes() {
