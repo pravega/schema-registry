@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Serializer Config class that is passed to {@link RegistrySerializerFactory} for creating serializer. 
+ * Serializer Config class that is passed to {@link SerializerFactory} for creating serializer. 
  */
 @Data
 @Builder
