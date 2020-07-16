@@ -27,8 +27,6 @@ class JsonSerializer<T> extends AbstractSerializer<T> {
         super(groupId, client, schema, encoder, registerSchema, encodeHeader);
         objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
     }
 
     @Override

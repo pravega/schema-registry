@@ -36,7 +36,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * Serializer Config class that is passed to {@link SerializerFactory} for creating serializer. 
+ * Serializer Config class that is passed to {@link RegistrySerializerFactory} for creating serializer. 
  */
 @Data
 @Builder
@@ -89,6 +89,15 @@ public class SerializerConfig {
     private final Decoders decoders;
     /**
      * Tells the deserializer that if supplied decoder codecTypes do not match group codecTypes then fail and exit upfront.
+     * This is important when the writers have used a custom codec for which reader should be instantiated with a corresponding
+     * decoder otherwise it would fail to decode and read the data. 
+     * As an example, if writer applications had implemented a custom encryption encoder which encrypted the data after
+     * serializing it, then the data will include an encoding id that will be resolved to the schema and the codec type name 
+     * for the encryption codec. If the readers are not provided with a decoder for all data encoded with that codec type,
+     * it would fail to decode that data. This flag ensures that the readers check retrieve all the registered codec types
+     * with the registry service and fail if they are not instantiated with decoders for all the registered codec types.
+     * 
+     * The default value for this is true. 
      */
     private final boolean failOnCodecMismatch;
     /**
