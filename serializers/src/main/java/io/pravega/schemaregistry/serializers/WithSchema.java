@@ -127,7 +127,7 @@ public class WithSchema<T> {
      */
     @SuppressWarnings("unchecked")
     public DescriptorProtos.FileDescriptorSet getProtobufSchema() {
-        return ((ProtobufSchema<DynamicMessage>) schema).getDescriptorProto();
+        return ((ProtobufSchema<DynamicMessage>) schema).getFileDescriptorSet();
     }
 
     /**
@@ -143,11 +143,11 @@ public class WithSchema<T> {
      * Json Schema for the underlying deserialized object. This is available if {@link WithSchema#hasJsonSchema()} returns true.
      * This means underlying object was serialized as Json. 
      *
-     * @return Protobuf {@link JsonSchema} representing the schema for the object. 
+     * @return Json schema String representing the schema for the object. 
      */
     @SuppressWarnings("unchecked")
-    public JsonSchema getJsonSchema() {
-        return ((JSONSchema<Object>) schema).getSchema();
+    public String getJsonSchema() {
+        return ((JSONSchema<Object>) schema).getSchemaString();
     }
 
     /**

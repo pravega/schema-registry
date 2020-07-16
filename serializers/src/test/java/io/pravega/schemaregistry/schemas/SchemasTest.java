@@ -60,17 +60,17 @@ public class SchemasTest {
     public void testProtobufSchema() throws IOException {
         ProtobufSchema<ProtobufTest.Message1> sm1 = ProtobufSchema.of(ProtobufTest.Message1.class);
         assertNotNull(sm1.getParser());
-        assertNotNull(sm1.getDescriptorProto());
+        assertNotNull(sm1.getFileDescriptorSet());
         assertEquals(sm1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         ProtobufSchema<GeneratedMessageV3> bm1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class);
         assertNotNull(bm1.getParser());
-        assertNotNull(bm1.getDescriptorProto());
+        assertNotNull(bm1.getFileDescriptorSet());
         assertEquals(bm1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         ProtobufSchema<GeneratedMessageV3> bm2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class);
         assertNotNull(bm2.getParser());
-        assertNotNull(bm2.getDescriptorProto());
+        assertNotNull(bm2.getFileDescriptorSet());
         assertEquals(bm2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
@@ -79,22 +79,22 @@ public class SchemasTest {
 
         ProtobufSchema<DynamicMessage> schema = ProtobufSchema.of(ProtobufTest.Message1.class.getName(), descriptorSet);
         assertNull(schema.getParser());
-        assertNotNull(schema.getDescriptorProto());
+        assertNotNull(schema.getFileDescriptorSet());
         assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         ProtobufSchema<ProtobufTest.Message1> schema2 = ProtobufSchema.of(ProtobufTest.Message1.class, descriptorSet);
         assertNotNull(schema2.getParser());
-        assertNotNull(schema2.getDescriptorProto());
+        assertNotNull(schema2.getFileDescriptorSet());
         assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
 
         ProtobufSchema<GeneratedMessageV3> baseSchema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class, descriptorSet);
         assertNotNull(baseSchema1.getParser());
-        assertNotNull(baseSchema1.getDescriptorProto());
+        assertNotNull(baseSchema1.getFileDescriptorSet());
         assertEquals(baseSchema1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
         
         ProtobufSchema<GeneratedMessageV3> baseSchema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class, descriptorSet);
         assertNotNull(baseSchema2.getParser());
-        assertNotNull(baseSchema2.getDescriptorProto());
+        assertNotNull(baseSchema2.getFileDescriptorSet());
         assertEquals(baseSchema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Protobuf);
     }
 

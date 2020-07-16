@@ -46,7 +46,7 @@ public class ProtobufGenericDeserializer extends AbstractDeserializer<DynamicMes
     }
 
     private Descriptors.Descriptor parseSchema(SchemaInfo schemaToUse) {
-        DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getDescriptorProto();
+        DescriptorProtos.FileDescriptorSet descriptorSet = ProtobufSchema.from(schemaToUse).getFileDescriptorSet();
 
         int count = descriptorSet.getFileCount();
         String[] tokens = NameUtil.extractNameAndQualifier(schemaToUse.getType());

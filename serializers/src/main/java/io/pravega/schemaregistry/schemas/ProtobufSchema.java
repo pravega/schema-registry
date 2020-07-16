@@ -39,26 +39,26 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
     @Getter
     private final Class<T> tClass;
     @Getter
-    private final FileDescriptorSet descriptorProto;
+    private final FileDescriptorSet fileDescriptorSet;
 
     private final SchemaInfo schemaInfo;
 
     private ProtobufSchema(String name, Parser<T> parser, Class<T> tClass, FileDescriptorSet fileDescriptorSet) {
         this.parser = parser;
         this.tClass = tClass;
-        this.descriptorProto = fileDescriptorSet;
+        this.fileDescriptorSet = fileDescriptorSet;
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Protobuf, getSchemaBytes(), ImmutableMap.of());
     }
 
     private ProtobufSchema(FileDescriptorSet fileDescriptorSet, SchemaInfo schemaInfo, Class<T> tClass) {
         this.parser = null;
         this.tClass = null;
-        this.descriptorProto = fileDescriptorSet;
+        this.fileDescriptorSet = fileDescriptorSet;
         this.schemaInfo = schemaInfo;
     }
     
     private ByteBuffer getSchemaBytes() {
-        return ByteBuffer.wrap(descriptorProto.toByteArray());
+        return ByteBuffer.wrap(fileDescriptorSet.toByteArray());
     }
 
     @Override
