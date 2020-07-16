@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.samples;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableMap;
 import com.google.protobuf.DescriptorProtos;
@@ -1083,7 +1082,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         
         assertEquals(obj.hasJsonSchema(), encodeHeaders);
         if (encodeHeaders) {
-            JsonSchema jsonSchema = obj.getJsonSchema();
+            String jsonSchema = obj.getJsonSchema();
             assertNotNull(jsonSchema);
         } 
         reader2.close();

@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.samples.demo.serializationformats;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
@@ -152,7 +151,7 @@ public class JsonDemo {
                 assert event2.getEvent() != null;
                 WithSchema<JsonNode> obj = event2.getEvent();
 
-                JsonSchema jsonSchema = obj.getJsonSchema();
+                String jsonSchema = obj.getJsonSchema();
                 if (encodeHeaders) {
                     assert jsonSchema != null;
                 } else {

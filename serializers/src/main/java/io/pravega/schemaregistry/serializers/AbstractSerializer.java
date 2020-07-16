@@ -29,7 +29,6 @@ import java.util.concurrent.atomic.AtomicReference;
 
 abstract class AbstractSerializer<T> extends BaseSerializer<T> {
     private static final byte PROTOCOL = 0x1;
-    private static final int HEADER_LENGTH = Byte.BYTES + Integer.BYTES;
 
     private final String groupId;
     

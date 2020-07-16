@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -21,6 +22,7 @@ import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ResultPage;
+import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.BackwardAndForward;
@@ -44,6 +46,9 @@ import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
@@ -51,6 +56,7 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
@@ -70,6 +76,11 @@ public class SchemaRegistryService {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                        .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
+    private static final String DRAFT_04_SCHEMA = "http://json-schema.org/draft-04/schema#";
+    private static final String DRAFT_06_SCHEMA = "http://json-schema.org/draft-06/schema#";
+    private static final String DRAFT_07_SCHEMA = "http://json-schema.org/draft-07/schema#";
+    private static final String SCHEMA_NODE = "$schema";
+
     private static final VersionInfo EMPTY_VERSION = new VersionInfo("", -1, -1);
 
     static {
@@ -833,18 +844,33 @@ public class SchemaRegistryService {
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-
-                    isValid = schema.getFullName().equals(schemaInfo.getType());
-                    if (!isValid) {
-                        invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
+                    if (schema.isUnion()) {
+                        // get the schema for the type from the union
+                        Optional<Schema> s = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType())).findAny();
+                        isValid = s.isPresent();
+                        schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
                     } else {
+                        isValid = schema.getFullName().equals(schemaInfo.getType());
                         schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
                     }
+                    if (!isValid) {
+                        invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
+                    } 
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-                    JsonSchema jsonSchema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonSchema).getBytes(Charsets.UTF_8));
+                    JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
+                    if (DRAFT_04_SCHEMA.equals(jsonNode.get(SCHEMA_NODE).asText()) ||
+                            DRAFT_06_SCHEMA.equals(jsonNode.get(SCHEMA_NODE).asText()) ||
+                            DRAFT_07_SCHEMA.equals(jsonNode.get(SCHEMA_NODE).asText())) {
+                        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+                        SchemaLoader.builder().useDefaults(true).draftV6Support().draftV7Support().schemaJson(rawSchema)
+                                                                           .build().load().build();
+                    } else {
+                        JsonSchema jsonSchema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+                        schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonSchema).getBytes(Charsets.UTF_8));
+                    }
+
                     break;
                 case Any:
                     break;
