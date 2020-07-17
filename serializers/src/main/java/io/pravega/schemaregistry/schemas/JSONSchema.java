@@ -22,6 +22,10 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import org.apache.avro.specific.SpecificRecordBase;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.everit.json.schema.loader.SpecificationVersion;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import java.nio.ByteBuffer;
 
@@ -38,30 +42,30 @@ public class JSONSchema<T> implements Schema<T> {
     private final Class<T> base;
     @Getter
     private final Class<? extends T> derived;
-    
+
     @Getter
-    private final JsonSchema schema;
+    private final org.everit.json.schema.Schema schema;
 
     private final SchemaInfo schemaInfo;
 
-    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> derived) {
-        this(schema, name, schemaString, derived, derived);
+    private JSONSchema(String name, String schemaString, Class<T> derived) {
+        this(name, schemaString, derived, derived);
     }
 
-    private JSONSchema(JsonSchema schema, String name, String schemaString, Class<T> base, Class<? extends T> derived) {
+    private JSONSchema(String name, String schemaString, Class<T> base, Class<? extends T> derived) {
         this.schemaString = schemaString;
         this.schemaInfo = new SchemaInfo(name, SerializationFormat.Json, getSchemaBytes(), ImmutableMap.of());
         this.base = base;
         this.derived = derived;
-        this.schema = schema;
+        this.schema = getSchemaObj(schemaString);
     }
 
-    private JSONSchema(SchemaInfo schemaInfo, JsonSchema schema, String schemaString, Class<T> derived) {
+    private JSONSchema(SchemaInfo schemaInfo, String schemaString, Class<T> derived) {
         this.schemaString = schemaString;
         this.schemaInfo = schemaInfo;
         this.base = derived;
         this.derived = derived;
-        this.schema = schema;
+        this.schema = getSchemaObj(schemaString);
     }
 
     /**
@@ -78,8 +82,7 @@ public class JSONSchema<T> implements Schema<T> {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
             JsonSchema schema = schemaGen.generateSchema(tClass);
             String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
-
-            return new JSONSchema<>(schema, tClass.getName(), schemaString, tClass);
+            return new JSONSchema<>(tClass.getName(), schemaString, tClass);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema from the class", e);
         }
@@ -91,15 +94,17 @@ public class JSONSchema<T> implements Schema<T> {
      *
      * @param type type of object identified by {@link SchemaInfo#getType()}.
      * @param schema Schema to use. 
+     * @param tClass class for the type of object
+     * @param <T> Type of object
      * @return Returns an JSONSchema with {@link Object} type. 
      */
-    public static JSONSchema<Object> of(String type, JsonSchema schema) {
+    public static <T> JSONSchema<T> of(String type, JsonSchema schema, Class<T> tClass) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(schema);
         try {
             String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
 
-            return new JSONSchema<>(schema, type, schemaString, Object.class);
+            return new JSONSchema<>(type, schemaString, tClass);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema string from the JsonSchema object", e);
         }
@@ -117,12 +122,7 @@ public class JSONSchema<T> implements Schema<T> {
     public static <T> JSONSchema<T> of(String type, String schemaString, Class<T> tClass) {
         Preconditions.checkNotNull(type, "Type cannot be null.");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaString), "Schema String cannot be null or empty.");
-        try {
-            JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-            return new JSONSchema<>(schema, type, schemaString, tClass);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to parse schema string", e);
-        }
+        return new JSONSchema<>(type, schemaString, tClass);
     }
 
     /**
@@ -140,10 +140,10 @@ public class JSONSchema<T> implements Schema<T> {
         Preconditions.checkNotNull(tBase);
         try {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
-            JsonSchema schema = schemaGen.generateSchema(tDerived);
-            String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
+            JsonSchema jsonSchema = schemaGen.generateSchema(tDerived);
+            String schemaString = OBJECT_MAPPER.writeValueAsString(jsonSchema);
 
-            return new JSONSchema<>(schema, tDerived.getName(), schemaString, tBase, tDerived);
+            return new JSONSchema<>(tDerived.getName(), schemaString, tBase, tDerived);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema from the class", e);
         }
@@ -157,16 +157,26 @@ public class JSONSchema<T> implements Schema<T> {
      */
     public static JSONSchema<JsonNode> from(SchemaInfo schemaInfo) {
         Preconditions.checkNotNull(schemaInfo);
-        try {
-            String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
+        String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
 
-            JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-            return new JSONSchema<>(schemaInfo, schema, schemaString, JsonNode.class);
-        } catch (JsonProcessingException e) {
-            throw new IllegalArgumentException("Unable to get json schema from schema info", e);
-        }
+        return new JSONSchema<>(schemaInfo, schemaString, JsonNode.class);
     }
 
+    private static org.everit.json.schema.Schema getSchemaObj(String schemaString) {
+        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+        // It will check if the schema has "id" then it is definitely version 4.
+        // if $schema draft is specified, the schemaloader will automatically use the correct specification version
+        // however, $schema is not mandatory. So we will check with presence of id and if id is specified with draft 4
+        // specification, then we use draft 4, else we will use draft 7 as other keywords are added in draft 7.
+        if (rawSchema.has(SpecificationVersion.DRAFT_4.idKeyword())) {
+            return SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
+                        .build().load().build();
+        } else {
+            return SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).draftV7Support()
+                        .build().load().build();
+        }
+    }
+    
     private ByteBuffer getSchemaBytes() {
         return ByteBuffer.wrap(schemaString.getBytes(Charsets.UTF_8));
     }
