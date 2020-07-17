@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.storage;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.impl.SchemaStoreImpl;
 import io.pravega.schemaregistry.storage.impl.groups.InMemoryGroups;
@@ -28,8 +27,8 @@ public class SchemaStoreFactory {
         return new SchemaStoreImpl<>(new InMemoryGroups(executor), new InMemorySchemas());
     }
     
-    public static SchemaStore createPravegaStore(ServiceConfig serviceConfig, ClientConfig clientConfig, ScheduledExecutorService executor) {
-        TableStore tableStore = new TableStore(clientConfig, serviceConfig, executor);
+    public static SchemaStore createPravegaStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
+        TableStore tableStore = new TableStore(clientConfig, executor);
         tableStore.startAsync();
         tableStore.awaitRunning();
         return new SchemaStoreImpl<>(new PravegaKeyValueGroups(tableStore, executor), new PravegaKeyValueSchemas(tableStore));

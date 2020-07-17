@@ -9,12 +9,11 @@
  */
 package io.pravega.schemaregistry.samples;
 
-import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 
 public class TestInMemoryEndToEnd extends TestEndToEnd {
-    SchemaStore getStore(ServiceConfig config) {
+    SchemaStore getStore() {
         return SchemaStoreFactory.createInMemoryStore(executor);
     }
 }

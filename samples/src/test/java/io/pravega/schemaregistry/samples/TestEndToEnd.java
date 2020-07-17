@@ -110,7 +110,7 @@ public abstract class TestEndToEnd {
 
         port = TestUtils.getAvailableListenPort();
         ServiceConfig serviceConfig = ServiceConfig.builder().port(port).build();
-        SchemaStore store = getStore(serviceConfig);
+        SchemaStore store = getStore();
 
         SchemaRegistryService service = new SchemaRegistryService(store, executor);
 
@@ -228,6 +228,6 @@ public abstract class TestEndToEnd {
         client.removeGroup(group);
     }
 
-    abstract SchemaStore getStore(ServiceConfig serviceConfig);
+    abstract SchemaStore getStore();
 }
 
