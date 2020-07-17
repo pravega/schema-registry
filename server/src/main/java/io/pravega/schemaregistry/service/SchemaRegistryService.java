@@ -882,17 +882,22 @@ public class SchemaRegistryService {
             // try parsing the schema with everit library which supports drafts 4 6 and 7. 
             OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
         } catch (JsonProcessingException e) {
-            e.printStackTrace();
+            validateJsonSchema4Onward(schemaString);
         }
     }
 
+    /**
+     * This method checks if the schema is well formed according to draft v4 onward. 
+     * Changes between draft 4 and 6/7 https://json-schema.org/draft-06/json-schema-release-notes.html
+     * 
+     * @param schemaString Schema string to validate
+     */
     private void validateJsonSchema4Onward(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-        // we will check if the schema has "id" then it is definitely version 4.
+        // It will check if the schema has "id" then it is definitely version 4.
         // if $schema draft is specified, the schemaloader will automatically use the correct specification version
         // however, $schema is not mandatory. So we will check with presence of id and if id is specified with draft 4
         // specification, then we use draft 4, else we will use draft 7 as other keywords are added in draft 7.
-        // Changes between draft 4 and 6/7  https://json-schema.org/draft-06/json-schema-release-notes.html
         if (rawSchema.has(SpecificationVersion.DRAFT_4.idKeyword())) {
             SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
                         .build().load().build();
