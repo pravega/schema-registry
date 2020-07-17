@@ -54,6 +54,11 @@ The following table lists the configurable parameters of the schema registry cha
 | `image.pullPolicy` | Pull policy for schema registry image | `IfNotPresent` |
 | `service.type` | Schema registry service type | `LoadBalancer` |
 | `service.port` | Schema registry service port | `9092` |
+| `ingress.enabled` | Whether to expose as an ingress resource | `false` |
+| `ingress.path` | Path for the ingress | `/` |
+| `ingress.annotations` | Annotations for the ingress | `{}` |
+| `ingress.hosts` | List of hosts for the ingress | `[schema-registry.pravega.com]` |
+| `ingress.tls` | TLS configuration for the ingress | `[]` |
 | `controllerUri` | URL of the Pravega Controller service | `tcp://localhost:9090` |
 | `storeType` | Type of store to be used | `Pravega` |
 | `serviceAccount.create` | Whether to create a service account | `true` |
