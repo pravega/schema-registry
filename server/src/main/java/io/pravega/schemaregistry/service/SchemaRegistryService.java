@@ -839,6 +839,12 @@ public class SchemaRegistryService {
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
+                    
+                    if (schema.isUnion() && !schema.getFullName().equals(schemaInfo.getType())) {
+                        // check if the union has the schema definition for the type. Set it to type
+                        schema = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType()))
+                                       .findAny().orElse(schema);
+                    }
 
                     isValid = schema.getFullName().equals(schemaInfo.getType());
                     if (!isValid) {
