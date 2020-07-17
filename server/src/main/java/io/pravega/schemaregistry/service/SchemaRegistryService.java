@@ -47,6 +47,7 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.everit.json.schema.loader.SpecificationVersion;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -887,8 +888,12 @@ public class SchemaRegistryService {
 
     private void validateJsonSchema4Onward(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-        // draft 4 to 7
-        if (rawSchema.has("id")) {
+        // we will check if the schema has "id" then it is definitely version 4.
+        // if $schema draft is specified, the schemaloader will automatically use the correct specification version
+        // however, $schema is not mandatory. So we will check with presence of id and if id is specified with draft 4
+        // specification, then we use draft 4, else we will use draft 7 as other keywords are added in draft 7.
+        // Changes between draft 4 and 6/7  https://json-schema.org/draft-06/json-schema-release-notes.html
+        if (rawSchema.has(SpecificationVersion.DRAFT_4.idKeyword())) {
             SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
                         .build().load().build();
         } else {
