@@ -167,12 +167,13 @@ class MultiFormatSerializerFactory {
                 return new AvroSerializer<>(groupId, schemaRegistryClient,
                         AvroSchema.from(schemaInfo), config.getEncoder(), config.isRegisterSchema());
             case Protobuf:
-                ProtobufSerializer<?> m = new ProtobufSerializer<>(groupId, schemaRegistryClient,
+                ProtobufSerializer<?> pSerializer = new ProtobufSerializer<>(groupId, schemaRegistryClient,
                         ProtobufSchema.from(schemaInfo), config.getEncoder(), config.isRegisterSchema(), config.isWriteEncodingHeader());
-                return (AbstractSerializer<Object>) m;
+                return (AbstractSerializer<Object>) pSerializer;
             case Json:
-                return new JsonSerializer<>(groupId, schemaRegistryClient, JSONSchema.from(schemaInfo),
+                JsonSerializer<?> jsonSerializer = new JsonSerializer<>(groupId, schemaRegistryClient, JSONSchema.from(schemaInfo),
                         config.getEncoder(), config.isRegisterSchema(), config.isWriteEncodingHeader());
+                return (AbstractSerializer<Object>) jsonSerializer;
             case Custom:
                 return getCustomSerializer(config, customSerializers, schemaRegistryClient, groupId, schemaInfo);
             default:

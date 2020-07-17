@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.schemas;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -99,12 +98,12 @@ public class SchemasTest {
     }
 
     @Test
-    public void testJsonSchema() throws JsonProcessingException {
+    public void testJsonSchema() {
         JSONSchema<User> schema = JSONSchema.of(User.class);
         assertNotNull(schema.getSchema());
         assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
 
-        JSONSchema<Object> schema2 = JSONSchema.of("Person", JSON_SCHEMA_STRING);
+        JSONSchema<Object> schema2 = JSONSchema.of("Person", JSON_SCHEMA_STRING, Object.class);
         assertNotNull(schema2.getSchema());
         assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
         

@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.schemas;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
@@ -38,6 +39,7 @@ public class JSONSchema<T> implements Schema<T> {
     private static final String DRAFT_06_SCHEMA = "http://json-schema.org/draft-06/schema#";
     private static final String DRAFT_07_SCHEMA = "http://json-schema.org/draft-07/schema#";
     private static final String SCHEMA_NODE = "$schema";
+    private static final String ID_NODE = "$id";
 
     @Getter
     private final String schemaString;
@@ -111,16 +113,18 @@ public class JSONSchema<T> implements Schema<T> {
     }
 
     /**
-     * Method to create a typed JSONSchema of type {@link Object} from the given schema string. 
+     * Method to create a typed JSONSchema of type T from the given schema string. 
      *
      * @param type type of object identified by {@link SchemaInfo#getType()}.
      * @param schemaString Schema string to use. 
+     * @param tClass class for the type of object
+     * @param <T> Type of object
      * @return Returns an JSONSchema with {@link Object} type. 
      */
-    public static JSONSchema<Object> of(String type, String schemaString) {
+    public static <T> JSONSchema<T> of(String type, String schemaString, Class<T> tClass) {
         Preconditions.checkNotNull(type, "Type cannot be null.");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaString), "Schema String cannot be null or empty.");
-        return new JSONSchema<>(type, schemaString, Object.class);
+        return new JSONSchema<>(type, schemaString, tClass);
     }
 
     /**
@@ -148,24 +152,29 @@ public class JSONSchema<T> implements Schema<T> {
     }
 
     /**
-     * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
+     * Method to create a typed JSONSchema of type {@link JsonNode} from the given schema. 
      *
      * @param schemaInfo Schema info to translate into json schema. 
-     * @return Returns an JSONSchema with {@link Object} type. 
+     * @return Returns an JSONSchema with {@link JsonNode} type. 
      */
-    public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
+    public static JSONSchema<JsonNode> from(SchemaInfo schemaInfo) {
         Preconditions.checkNotNull(schemaInfo);
         String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-        org.everit.json.schema.Schema schema = getSchemaObj(schemaString);
 
-        return new JSONSchema<>(schemaInfo, schemaString, Object.class);
+        return new JSONSchema<>(schemaInfo, schemaString, JsonNode.class);
     }
 
     private static org.everit.json.schema.Schema getSchemaObj(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-        return SchemaLoader.builder().useDefaults(true)
-                           .draftV6Support().draftV7Support().schemaJson(rawSchema)
-                           .build().load().build();
+        if (rawSchema.has(ID_NODE)) {
+            return SchemaLoader.builder().useDefaults(true)
+                               .draftV7Support().schemaJson(rawSchema)
+                               .build().load().build();
+        } else {
+            return SchemaLoader.builder().useDefaults(true)
+                               .schemaJson(rawSchema)
+                               .build().load().build();
+        }
     }
 
     private ByteBuffer getSchemaBytes() {
