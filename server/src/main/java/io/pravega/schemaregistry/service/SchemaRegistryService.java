@@ -862,7 +862,7 @@ public class SchemaRegistryService {
                 default:
                     break;
             }
-        } catch (IOException e) {
+        } catch (Exception e) {
             log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
@@ -880,9 +880,18 @@ public class SchemaRegistryService {
             // try parsing the schema with everit library which supports drafts 4 6 and 7. 
             OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
         } catch (IOException e) {
-            JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-            // draft 4 to 7
-            SchemaLoader.builder().useDefaults(true).draftV7Support().schemaJson(rawSchema)
+            handleDraft4onward(schemaString);
+        }
+    }
+
+    private void handleDraft4onward(String schemaString) {
+        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+        // draft 4 to 7
+        if (rawSchema.has("id")) {
+            SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
+                        .build().load().build();
+        } else {
+            SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).draftV7Support()
                         .build().load().build();
         }
     }

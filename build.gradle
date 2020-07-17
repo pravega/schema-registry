@@ -85,7 +85,7 @@ allprojects {
             url "https://repository.apache.org/snapshots"
         }
         maven {
-            url 'https://jitpack.io'
+            url 'https://repository.mulesoft.org/nexus/content/repositories/public'
         }
     }
 
