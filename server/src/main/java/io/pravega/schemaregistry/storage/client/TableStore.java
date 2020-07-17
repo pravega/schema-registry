@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.client;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.AbstractService;
@@ -176,10 +177,11 @@ public class TableStore extends AbstractService {
     }
 
     public CompletableFuture<List<Version>> updateEntries(String tableName, Map<byte[], VersionedRecord<byte[]>> batch) {
+        Preconditions.checkNotNull(batch);
         List<TableSegmentEntry> entries = batch.entrySet().stream().map(x -> {
             return x.getValue().getVersion() == null ?
                     TableSegmentEntry.notExists(x.getKey(), x.getValue().getRecord()) :
-                    TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().getVersion());
+                    TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().toLong());
         }).collect(Collectors.toList());
         return withRetries(() -> {
             return segmentHelper.updateTableEntries(tableName, entries, getToken(tableName), RequestTag.NON_EXISTENT_ID)
