@@ -56,7 +56,8 @@ import static io.pravega.controller.server.WireCommandFailedException.Reason.Con
 import static io.pravega.controller.server.WireCommandFailedException.Reason.ConnectionFailed;
 
 /**
- * This is used to interact with pravega tables.
+ * Wrapper class over {@link SegmentHelper}. Its implementation abstracts the caller classes from the library
+ * used for interacting with pravega tables.
  */
 @Slf4j
 public class TableStore extends AbstractService {
@@ -120,14 +121,14 @@ public class TableStore extends AbstractService {
 
     @Override
     protected void doStop() {
-
+        
     }
 
     public CompletableFuture<Void> createScope() {
         return withRetries(() -> Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE)),
                 () -> "Failed to create scope. Retrying...", "");
     }
-
+    
     public CompletableFuture<Void> createTable(String tableName) {
         log.debug("create table called for table: {}", tableName);
 
