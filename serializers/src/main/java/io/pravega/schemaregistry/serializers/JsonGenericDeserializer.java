@@ -27,8 +27,6 @@ class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<JsonNode>>
         super(groupId, client, null, false, decoders, encodingCache, encodeHeader);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
-        objectMapper.setVisibility(PropertyAccessor.FIELD, JsonAutoDetect.Visibility.ANY);
-        objectMapper.setVisibility(PropertyAccessor.CREATOR, JsonAutoDetect.Visibility.ANY);
     }
     
     @Override

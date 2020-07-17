@@ -20,7 +20,6 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
-import io.pravega.schemaregistry.server.rest.filter.NamespacePathRequestFilter;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import org.glassfish.jersey.test.JerseyTest;
 import org.glassfish.jersey.test.TestProperties;
@@ -51,7 +50,6 @@ import static org.mockito.Mockito.mock;
 
 public class SchemaRegistryResourceTest extends JerseyTest {
     private static final String GROUPS = "v1/groups";
-    private static final String NAMESPACE_FORMAT = "v1/namespace/%s/groups";
     private SchemaRegistryService service;
     private ScheduledExecutorService executor;
 
@@ -61,7 +59,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         forceSet(TestProperties.CONTAINER_PORT, "0");
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
-        resourceObjs.add(new NamespacePathRequestFilter());
         resourceObjs.add(new GroupResourceImpl(service, ServiceConfig.builder().build(), executor));
         resourceObjs.add(new SchemaResourceImpl(service, ServiceConfig.builder().build(), executor));
 
@@ -88,12 +85,6 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         Response response = future.get();
         assertEquals(response.getStatus(), 200);
         ListGroupsResponse list = response.readEntity(ListGroupsResponse.class);
-        assertEquals(list.getGroups().size(), 1);
-        
-        future = target(String.format(NAMESPACE_FORMAT, "ns")).queryParam("limit", 100).request().async().get();
-        response = future.get();
-        assertEquals(response.getStatus(), 200);
-        list = response.readEntity(ListGroupsResponse.class);
         assertEquals(list.getGroups().size(), 1);
 
         // region create group

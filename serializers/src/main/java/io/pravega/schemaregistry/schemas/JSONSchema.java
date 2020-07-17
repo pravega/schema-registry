@@ -35,11 +35,6 @@ import java.nio.ByteBuffer;
  */
 public class JSONSchema<T> implements Schema<T> {
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final String DRAFT_04_SCHEMA = "http://json-schema.org/draft-04/schema#";
-    private static final String DRAFT_06_SCHEMA = "http://json-schema.org/draft-06/schema#";
-    private static final String DRAFT_07_SCHEMA = "http://json-schema.org/draft-07/schema#";
-    private static final String SCHEMA_NODE = "$schema";
-    private static final String ID_NODE = "$id";
 
     @Getter
     private final String schemaString;
@@ -166,14 +161,10 @@ public class JSONSchema<T> implements Schema<T> {
 
     private static org.everit.json.schema.Schema getSchemaObj(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-        if (rawSchema.has(ID_NODE)) {
-            return SchemaLoader.builder().useDefaults(true)
-                               .draftV7Support().schemaJson(rawSchema)
-                               .build().load().build();
+        if (rawSchema.has("id")) {
+            return SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).build().load().build();
         } else {
-            return SchemaLoader.builder().useDefaults(true)
-                               .schemaJson(rawSchema)
-                               .build().load().build();
+            return SchemaLoader.builder().useDefaults(true).draftV7Support().schemaJson(rawSchema).build().load().build();
         }
     }
 

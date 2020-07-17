@@ -13,6 +13,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
@@ -55,7 +56,6 @@ import java.util.AbstractMap;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
@@ -75,7 +75,6 @@ public class SchemaRegistryService {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                        .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-
     private static final VersionInfo EMPTY_VERSION = new VersionInfo("", -1, -1);
 
     static {
@@ -839,25 +838,28 @@ public class SchemaRegistryService {
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    if (schema.isUnion()) {
-                        // get the schema for the type from the union
-                        Optional<Schema> s = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType())).findAny();
-                        isValid = s.isPresent();
-                        schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
-                    } else {
-                        isValid = schema.getFullName().equals(schemaInfo.getType());
-                        schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
-                    }
+
+                    if (schema.isUnion() && !schema.getFullName().equals(schemaInfo.getType())) {
+                        // check if the union has the schema definition for the type. Set it to type
+                        schema = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType()))
+                                       .findAny().orElse(schema);
+                    } 
+                    
+                    isValid = schema.getFullName().equals(schemaInfo.getType());
+                    
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
-                    } 
+                    } else {
+                        schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
+                    }
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
+                    validateJsonSchema(schemaString);
+                    // normalize json schema string by parsing it into JsonNode and then serializing it with fields 
+                    // in alphabetical order. This ensures that identical schemas with different order of fields are 
+                    // treated to be equal. 
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
-                    JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-                    SchemaLoader.builder().useDefaults(true).draftV6Support().draftV7Support().schemaJson(rawSchema)
-                                                                       .build().load().build();
                     schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonNode).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
@@ -867,7 +869,7 @@ public class SchemaRegistryService {
                 default:
                     break;
             }
-        } catch (IOException e) {
+        } catch (IOException | RuntimeException e) {
             log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
@@ -876,6 +878,29 @@ public class SchemaRegistryService {
             throw new IllegalArgumentException(invalidityCause);
         }
         return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
+    }
+
+    private void validateJsonSchema(String schemaString) {
+        try {
+            // 1. try draft 3
+            // jackson JsonSchema only supports json draft 3. If the schema definition is not compatible with draft 3, 
+            // try parsing the schema with everit library which supports drafts 4 6 and 7. 
+            OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+        } catch (IOException e) {
+            handleDraft4onward(schemaString);
+        }
+    }
+
+    private void handleDraft4onward(String schemaString) {
+        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+        // draft 4 to 7
+        if (rawSchema.has("id")) {
+            SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
+                        .build().load().build();
+        } else {
+            SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).draftV7Support()
+                        .build().load().build();
+        }
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {

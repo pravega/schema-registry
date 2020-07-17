@@ -1082,8 +1082,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         
         assertEquals(obj.hasJsonSchema(), encodeHeaders);
         if (encodeHeaders) {
-            String jsonSchema = obj.getJsonSchema();
-            assertNotNull(jsonSchema);
+            assertNotNull(obj.getJsonSchema());
         } 
         reader2.close();
         readerGroupManager.close();

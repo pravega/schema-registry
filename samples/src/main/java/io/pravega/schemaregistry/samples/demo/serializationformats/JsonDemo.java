@@ -46,6 +46,7 @@ import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
+import org.everit.json.schema.Schema;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -151,7 +152,7 @@ public class JsonDemo {
                 assert event2.getEvent() != null;
                 WithSchema<JsonNode> obj = event2.getEvent();
 
-                String jsonSchema = obj.getJsonSchema();
+                Schema jsonSchema = obj.getJsonSchema();
                 if (encodeHeaders) {
                     assert jsonSchema != null;
                 } else {
