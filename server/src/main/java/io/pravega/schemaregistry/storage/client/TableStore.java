@@ -1,14 +1,15 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * 
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
+ * 
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.storage.client;
 
+import com.google.common.base.Preconditions;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.util.concurrent.AbstractService;
@@ -56,7 +57,8 @@ import static io.pravega.controller.server.WireCommandFailedException.Reason.Con
 import static io.pravega.controller.server.WireCommandFailedException.Reason.ConnectionFailed;
 
 /**
- * This is used to interact with pravega tables.
+ * Wrapper class over {@link SegmentHelper}. Its implementation abstracts the caller classes from the library
+ * used for interacting with pravega tables.
  */
 @Slf4j
 public class TableStore extends AbstractService {
@@ -120,14 +122,14 @@ public class TableStore extends AbstractService {
 
     @Override
     protected void doStop() {
-
+        
     }
 
     public CompletableFuture<Void> createScope() {
         return withRetries(() -> Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE)),
                 () -> "Failed to create scope. Retrying...", "");
     }
-
+    
     public CompletableFuture<Void> createTable(String tableName) {
         log.debug("create table called for table: {}", tableName);
 
@@ -175,10 +177,11 @@ public class TableStore extends AbstractService {
     }
 
     public CompletableFuture<List<Version>> updateEntries(String tableName, Map<byte[], VersionedRecord<byte[]>> batch) {
+        Preconditions.checkNotNull(batch);
         List<TableSegmentEntry> entries = batch.entrySet().stream().map(x -> {
             return x.getValue().getVersion() == null ?
                     TableSegmentEntry.notExists(x.getKey(), x.getValue().getRecord()) :
-                    TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().getVersion());
+                    TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().toLong());
         }).collect(Collectors.toList());
         return withRetries(() -> {
             return segmentHelper.updateTableEntries(tableName, entries, getToken(tableName), RequestTag.NON_EXISTENT_ID)
@@ -206,7 +209,7 @@ public class TableStore extends AbstractService {
         String message = "get entries for table: %s";
         withRetries(() -> segmentHelper.readTable(tableName, keys, getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format(message, tableName), tableName)
-                .thenApplyAsync(entriesFromStore -> {
+                .thenApply(entriesFromStore -> {
                     try {
                         List<VersionedRecord<byte[]>> entries = entriesFromStore.stream().map(y -> {
                             TableSegmentKeyVersion version = y.getKey().getVersion();
@@ -224,7 +227,7 @@ public class TableStore extends AbstractService {
                     } finally {
                         releaseEntries(entriesFromStore);
                     }
-                }, executor)
+                })
                 .whenComplete((r, e) -> {
                     if (e != null) {
                         result.completeExceptionally(e);
@@ -258,10 +261,10 @@ public class TableStore extends AbstractService {
         List<K> keys = new LinkedList<>();
         ContinuationTokenAsyncIterator<ByteBuf, K> iterator = new ContinuationTokenAsyncIterator<>(
                 token -> getKeysPaginated(tableName, token, 1000, fromBytesKey)
-                        .thenApplyAsync(result -> {
+                        .thenApply(result -> {
                             token.release();
                             return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
-                        }, executor),
+                        }),
                 IteratorStateImpl.EMPTY.getToken());
 
         return iterator.collectRemaining(keys::add)
@@ -269,15 +272,15 @@ public class TableStore extends AbstractService {
     }
 
     public <K, T> CompletableFuture<List<VersionedEntry<K, T>>> getAllEntries(String tableName,
-                                                                                          Function<byte[], K> fromBytesKey,
-                                                                                          Function<byte[], T> fromBytesValue) {
+                                                                              Function<byte[], K> fromBytesKey,
+                                                                              Function<byte[], T> fromBytesValue) {
         List<VersionedEntry<K, T>> entries = new LinkedList<>();
         ContinuationTokenAsyncIterator<ByteBuf, VersionedEntry<K, T>> iterator = new ContinuationTokenAsyncIterator<>(
                 token -> getEntriesPaginated(tableName, token, 1000, fromBytesKey, fromBytesValue)
-                        .thenApplyAsync(result -> {
+                        .thenApply(result -> {
                             token.release();
                             return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
-                        }, executor),
+                        }),
                 IteratorStateImpl.EMPTY.getToken());
 
         return iterator.collectRemaining(entries::add).thenApply(v -> entries);
@@ -314,7 +317,7 @@ public class TableStore extends AbstractService {
                         segmentHelper.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
                                 getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
-                .thenApplyAsync(result -> {
+                .thenApply(result -> {
                     try {
                         List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(getArray(x.getKey())))
                                               .collect(Collectors.toList());
@@ -324,7 +327,7 @@ public class TableStore extends AbstractService {
                     } finally {
                         releaseKeys(result.getItems());
                     }
-                }, executor);
+                });
     }
 
     private <K, T> CompletableFuture<ResultPage<VersionedEntry<K, T>, ByteBuf>> getEntriesPaginated(
@@ -334,7 +337,7 @@ public class TableStore extends AbstractService {
         return withRetries(() -> segmentHelper.readTableEntries(tableName, limit,
                 IteratorStateImpl.fromBytes(continuationToken), getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
-                .thenApplyAsync(result -> {
+                .thenApply(result -> {
                     try {
                         List<VersionedEntry<K, T>> items = result.getItems().stream().map(x -> {
                             T deserialized = fromBytesValue.apply(getArray(x.getValue()));
@@ -347,7 +350,7 @@ public class TableStore extends AbstractService {
                     } finally {
                         releaseEntries(result.getItems());
                     }
-                }, executor);
+                });
     }
 
     private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier,

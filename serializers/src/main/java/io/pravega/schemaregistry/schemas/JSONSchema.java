@@ -23,6 +23,7 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
 import org.apache.avro.specific.SpecificRecordBase;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.everit.json.schema.loader.SpecificationVersion;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -41,10 +42,10 @@ public class JSONSchema<T> implements Schema<T> {
     private final Class<T> base;
     @Getter
     private final Class<? extends T> derived;
-    
+
     @Getter
     private final org.everit.json.schema.Schema schema;
-    
+
     private final SchemaInfo schemaInfo;
 
     private JSONSchema(String name, String schemaString, Class<T> derived) {
@@ -93,15 +94,17 @@ public class JSONSchema<T> implements Schema<T> {
      *
      * @param type type of object identified by {@link SchemaInfo#getType()}.
      * @param schema Schema to use. 
+     * @param tClass class for the type of object
+     * @param <T> Type of object
      * @return Returns an JSONSchema with {@link Object} type. 
      */
-    public static JSONSchema<Object> of(String type, JsonSchema schema) {
+    public static <T> JSONSchema<T> of(String type, JsonSchema schema, Class<T> tClass) {
         Preconditions.checkNotNull(type);
         Preconditions.checkNotNull(schema);
         try {
             String schemaString = OBJECT_MAPPER.writeValueAsString(schema);
 
-            return new JSONSchema<>(type, schemaString, Object.class);
+            return new JSONSchema<>(type, schemaString, tClass);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema string from the JsonSchema object", e);
         }
@@ -139,7 +142,7 @@ public class JSONSchema<T> implements Schema<T> {
             JsonSchemaGenerator schemaGen = new JsonSchemaGenerator(OBJECT_MAPPER);
             JsonSchema jsonSchema = schemaGen.generateSchema(tDerived);
             String schemaString = OBJECT_MAPPER.writeValueAsString(jsonSchema);
-            
+
             return new JSONSchema<>(tDerived.getName(), schemaString, tBase, tDerived);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema from the class", e);
@@ -161,13 +164,19 @@ public class JSONSchema<T> implements Schema<T> {
 
     private static org.everit.json.schema.Schema getSchemaObj(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-        if (rawSchema.has("id")) {
-            return SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).build().load().build();
+        // It will check if the schema has "id" then it is definitely version 4.
+        // if $schema draft is specified, the schemaloader will automatically use the correct specification version
+        // however, $schema is not mandatory. So we will check with presence of id and if id is specified with draft 4
+        // specification, then we use draft 4, else we will use draft 7 as other keywords are added in draft 7.
+        if (rawSchema.has(SpecificationVersion.DRAFT_4.idKeyword())) {
+            return SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
+                        .build().load().build();
         } else {
-            return SchemaLoader.builder().useDefaults(true).draftV7Support().schemaJson(rawSchema).build().load().build();
+            return SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).draftV7Support()
+                        .build().load().build();
         }
     }
-
+    
     private ByteBuffer getSchemaBytes() {
         return ByteBuffer.wrap(schemaString.getBytes(Charsets.UTF_8));
     }

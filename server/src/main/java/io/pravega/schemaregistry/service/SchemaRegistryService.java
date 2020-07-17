@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -46,6 +47,7 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
+import org.everit.json.schema.loader.SpecificationVersion;
 import org.json.JSONObject;
 import org.json.JSONTokener;
 
@@ -839,14 +841,7 @@ public class SchemaRegistryService {
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
 
-                    if (schema.isUnion() && !schema.getFullName().equals(schemaInfo.getType())) {
-                        // check if the union has the schema definition for the type. Set it to type
-                        schema = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType()))
-                                       .findAny().orElse(schema);
-                    } 
-                    
                     isValid = schema.getFullName().equals(schemaInfo.getType());
-                    
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
                     } else {
@@ -886,15 +881,24 @@ public class SchemaRegistryService {
             // jackson JsonSchema only supports json draft 3. If the schema definition is not compatible with draft 3, 
             // try parsing the schema with everit library which supports drafts 4 6 and 7. 
             OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-        } catch (IOException e) {
-            handleDraft4onward(schemaString);
+        } catch (JsonProcessingException e) {
+            validateJsonSchema4Onward(schemaString);
         }
     }
 
-    private void handleDraft4onward(String schemaString) {
+    /**
+     * This method checks if the schema is well formed according to draft v4 onward. 
+     * Changes between draft 4 and 6/7 https://json-schema.org/draft-06/json-schema-release-notes.html
+     * 
+     * @param schemaString Schema string to validate
+     */
+    private void validateJsonSchema4Onward(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
-        // draft 4 to 7
-        if (rawSchema.has("id")) {
+        // It will check if the schema has "id" then it is definitely version 4.
+        // if $schema draft is specified, the schemaloader will automatically use the correct specification version
+        // however, $schema is not mandatory. So we will check with presence of id and if id is specified with draft 4
+        // specification, then we use draft 4, else we will use draft 7 as other keywords are added in draft 7.
+        if (rawSchema.has(SpecificationVersion.DRAFT_4.idKeyword())) {
             SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
                         .build().load().build();
         } else {
