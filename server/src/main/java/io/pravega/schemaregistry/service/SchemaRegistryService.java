@@ -9,6 +9,8 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
@@ -44,8 +46,13 @@ import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
+import org.everit.json.schema.loader.SchemaLoader;
+import org.everit.json.schema.loader.SpecificationVersion;
+import org.json.JSONObject;
+import org.json.JSONTokener;
 
 import javax.annotation.Nullable;
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -843,8 +850,12 @@ public class SchemaRegistryService {
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
-                    JsonSchema jsonSchema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonSchema).getBytes(Charsets.UTF_8));
+                    validateJsonSchema(schemaString);
+                    // normalize json schema string by parsing it into JsonNode and then serializing it with fields 
+                    // in alphabetical order. This ensures that identical schemas with different order of fields are 
+                    // treated to be equal. 
+                    JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
+                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonNode).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
@@ -853,7 +864,7 @@ public class SchemaRegistryService {
                 default:
                     break;
             }
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
@@ -862,6 +873,38 @@ public class SchemaRegistryService {
             throw new IllegalArgumentException(invalidityCause);
         }
         return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
+    }
+
+    private void validateJsonSchema(String schemaString) {
+        try {
+            // 1. try draft 3
+            // jackson JsonSchema only supports json draft 3. If the schema definition is not compatible with draft 3, 
+            // try parsing the schema with everit library which supports drafts 4 6 and 7. 
+            OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
+        } catch (JsonProcessingException e) {
+            validateJsonSchema4Onward(schemaString);
+        }
+    }
+
+    /**
+     * This method checks if the schema is well formed according to draft v4 onward. 
+     * Changes between draft 4 and 6/7 https://json-schema.org/draft-06/json-schema-release-notes.html
+     * 
+     * @param schemaString Schema string to validate
+     */
+    private void validateJsonSchema4Onward(String schemaString) {
+        JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
+        // It will check if the schema has "id" then it is definitely version 4.
+        // if $schema draft is specified, the schemaloader will automatically use the correct specification version
+        // however, $schema is not mandatory. So we will check with presence of id and if id is specified with draft 4
+        // specification, then we use draft 4, else we will use draft 7 as other keywords are added in draft 7.
+        if (rawSchema.has(SpecificationVersion.DRAFT_4.idKeyword())) {
+            SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema)
+                        .build().load().build();
+        } else {
+            SchemaLoader.builder().useDefaults(true).schemaJson(rawSchema).draftV7Support()
+                        .build().load().build();
+        }
     }
 
     private Boolean canReadChecker(SchemaInfo schema, GroupProperties prop, List<SchemaWithVersion> schemasWithVersion) {
