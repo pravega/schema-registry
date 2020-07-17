@@ -40,7 +40,7 @@ public class Main {
         SchemaStore schemaStore;
         ServiceConfig serviceConfig = Config.SERVICE_CONFIG;
         if (Config.STORE_TYPE.equals(StoreType.Pravega.name())) {
-            schemaStore = SchemaStoreFactory.createPravegaStore(serviceConfig, clientConfig, executor);
+            schemaStore = SchemaStoreFactory.createPravegaStore(clientConfig, executor);
         } else if (Config.STORE_TYPE.equals(StoreType.InMemory.name())) {
             schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
         } else {
