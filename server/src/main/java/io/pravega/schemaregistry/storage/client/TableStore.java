@@ -207,7 +207,7 @@ public class TableStore extends AbstractService {
         String message = "get entries for table: %s";
         withRetries(() -> segmentHelper.readTable(tableName, keys, getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format(message, tableName), tableName)
-                .thenApplyAsync(entriesFromStore -> {
+                .thenApply(entriesFromStore -> {
                     try {
                         List<VersionedRecord<byte[]>> entries = entriesFromStore.stream().map(y -> {
                             TableSegmentKeyVersion version = y.getKey().getVersion();
@@ -225,7 +225,7 @@ public class TableStore extends AbstractService {
                     } finally {
                         releaseEntries(entriesFromStore);
                     }
-                }, executor)
+                })
                 .whenComplete((r, e) -> {
                     if (e != null) {
                         result.completeExceptionally(e);
@@ -259,10 +259,10 @@ public class TableStore extends AbstractService {
         List<K> keys = new LinkedList<>();
         ContinuationTokenAsyncIterator<ByteBuf, K> iterator = new ContinuationTokenAsyncIterator<>(
                 token -> getKeysPaginated(tableName, token, 1000, fromBytesKey)
-                        .thenApplyAsync(result -> {
+                        .thenApply(result -> {
                             token.release();
                             return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
-                        }, executor),
+                        }),
                 IteratorStateImpl.EMPTY.getToken());
 
         return iterator.collectRemaining(keys::add)
@@ -270,15 +270,15 @@ public class TableStore extends AbstractService {
     }
 
     public <K, T> CompletableFuture<List<VersionedEntry<K, T>>> getAllEntries(String tableName,
-                                                                                          Function<byte[], K> fromBytesKey,
-                                                                                          Function<byte[], T> fromBytesValue) {
+                                                                              Function<byte[], K> fromBytesKey,
+                                                                              Function<byte[], T> fromBytesValue) {
         List<VersionedEntry<K, T>> entries = new LinkedList<>();
         ContinuationTokenAsyncIterator<ByteBuf, VersionedEntry<K, T>> iterator = new ContinuationTokenAsyncIterator<>(
                 token -> getEntriesPaginated(tableName, token, 1000, fromBytesKey, fromBytesValue)
-                        .thenApplyAsync(result -> {
+                        .thenApply(result -> {
                             token.release();
                             return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
-                        }, executor),
+                        }),
                 IteratorStateImpl.EMPTY.getToken());
 
         return iterator.collectRemaining(entries::add).thenApply(v -> entries);
@@ -315,7 +315,7 @@ public class TableStore extends AbstractService {
                         segmentHelper.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
                                 getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
-                .thenApplyAsync(result -> {
+                .thenApply(result -> {
                     try {
                         List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(getArray(x.getKey())))
                                               .collect(Collectors.toList());
@@ -325,7 +325,7 @@ public class TableStore extends AbstractService {
                     } finally {
                         releaseKeys(result.getItems());
                     }
-                }, executor);
+                });
     }
 
     private <K, T> CompletableFuture<ResultPage<VersionedEntry<K, T>, ByteBuf>> getEntriesPaginated(
@@ -335,7 +335,7 @@ public class TableStore extends AbstractService {
         return withRetries(() -> segmentHelper.readTableEntries(tableName, limit,
                 IteratorStateImpl.fromBytes(continuationToken), getToken(tableName), RequestTag.NON_EXISTENT_ID),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
-                .thenApplyAsync(result -> {
+                .thenApply(result -> {
                     try {
                         List<VersionedEntry<K, T>> items = result.getItems().stream().map(x -> {
                             T deserialized = fromBytesValue.apply(getArray(x.getValue()));
@@ -348,7 +348,7 @@ public class TableStore extends AbstractService {
                     } finally {
                         releaseEntries(result.getItems());
                     }
-                }, executor);
+                });
     }
 
     private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier,
