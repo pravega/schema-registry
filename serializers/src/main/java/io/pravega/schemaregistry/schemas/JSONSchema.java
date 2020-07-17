@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.schemas;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchemaGenerator;
@@ -105,18 +106,20 @@ public class JSONSchema<T> implements Schema<T> {
     }
 
     /**
-     * Method to create a typed JSONSchema of type {@link Object} from the given schema string. 
+     * Method to create a typed JSONSchema of type T from the given schema string. 
      *
      * @param type type of object identified by {@link SchemaInfo#getType()}.
      * @param schemaString Schema string to use. 
+     * @param tClass class for the type of object
+     * @param <T> Type of object
      * @return Returns an JSONSchema with {@link Object} type. 
      */
-    public static JSONSchema<Object> of(String type, String schemaString) {
+    public static <T> JSONSchema<T> of(String type, String schemaString, Class<T> tClass) {
         Preconditions.checkNotNull(type, "Type cannot be null.");
         Preconditions.checkArgument(!Strings.isNullOrEmpty(schemaString), "Schema String cannot be null or empty.");
         try {
             JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-            return new JSONSchema<>(schema, type, schemaString, Object.class);
+            return new JSONSchema<>(schema, type, schemaString, tClass);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to parse schema string", e);
         }
@@ -147,18 +150,18 @@ public class JSONSchema<T> implements Schema<T> {
     }
 
     /**
-     * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
+     * Method to create a typed JSONSchema of type {@link JsonNode} from the given schema. 
      *
      * @param schemaInfo Schema info to translate into json schema. 
-     * @return Returns an JSONSchema with {@link Object} type. 
+     * @return Returns an JSONSchema with {@link JsonNode} type. 
      */
-    public static JSONSchema<Object> from(SchemaInfo schemaInfo) {
+    public static JSONSchema<JsonNode> from(SchemaInfo schemaInfo) {
         Preconditions.checkNotNull(schemaInfo);
         try {
             String schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
 
             JsonSchema schema = OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-            return new JSONSchema<>(schemaInfo, schema, schemaString, Object.class);
+            return new JSONSchema<>(schemaInfo, schema, schemaString, JsonNode.class);
         } catch (JsonProcessingException e) {
             throw new IllegalArgumentException("Unable to get json schema from schema info", e);
         }

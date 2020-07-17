@@ -279,14 +279,14 @@ public class SerializerTest {
 
         String schemaString = "{\"type\": \"object\",\"title\": \"The external data schema\",\"properties\": {\"content\": {\"type\": \"string\"}}}";
 
-        JSONSchema<Object> myData = JSONSchema.of("MyData", schemaString);
+        JSONSchema<HashMap> myData = JSONSchema.of("MyData", schemaString, HashMap.class);
         VersionInfo versionInfo3 = new VersionInfo("myData", 0, 2);
         doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(myData.getSchemaInfo()));
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
         doAnswer(x -> new EncodingInfo(versionInfo3, myData.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
 
-        Serializer<Object> serializer2 = SerializerFactory.jsonSerializer(config, myData);
-        Map<String, String> jsonObject = new HashMap<>();
+        Serializer<HashMap> serializer2 = SerializerFactory.jsonSerializer(config, myData);
+        HashMap<String, String> jsonObject = new HashMap<>();
         jsonObject.put("content", "mxx");
         
         ByteBuffer s = serializer2.serialize(jsonObject);
@@ -294,19 +294,19 @@ public class SerializerTest {
         
         String stringSchema = new ObjectMapper().writeValueAsString(JsonSchema.minimalForFormat(JsonFormatTypes.STRING));
 
-        JSONSchema<Object> strSchema = JSONSchema.of("string", stringSchema);
+        JSONSchema<String> strSchema = JSONSchema.of("string", stringSchema, String.class);
         VersionInfo versionInfo4 = new VersionInfo("myData", 0, 3);
         doAnswer(x -> versionInfo4).when(client).getVersionForSchema(anyString(), eq(strSchema.getSchemaInfo()));
         doAnswer(x -> new EncodingId(3)).when(client).getEncodingId(anyString(), eq(versionInfo4), any());
         doAnswer(x -> new EncodingInfo(versionInfo4, strSchema.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(3)));
 
-        Serializer<Object> serializer3 = SerializerFactory.jsonSerializer(config, strSchema);
-        Serializer<Object> deserializer3 = SerializerFactory.jsonDeserializer(config, strSchema);
+        Serializer<String> serializer3 = SerializerFactory.jsonSerializer(config, strSchema);
+        Serializer<String> deserializer3 = SerializerFactory.jsonDeserializer(config, strSchema);
         Serializer<WithSchema<JsonNode>> generic3 = SerializerFactory.jsonGenericDeserializer(config);
         String string = "a";
         s = serializer3.serialize(string);
         Object x = deserializer3.deserialize(s);
-        assertTrue(x instanceof String);
+        assertNotNull(x);
         assertEquals(x, string);
         s = serializer3.serialize(string);
         Object jsonNode = generic3.deserialize(s);

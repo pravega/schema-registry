@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -212,6 +213,8 @@ public class WithSchema<T> {
      * @return A WithSchema object which has Avro Schema and the corresponding object.  
      */
     public static <T> WithSchema<T> avro(T object, AvroSchema<T> avroSchema) {
+        Preconditions.checkNotNull(object, "object cannot be null");
+        Preconditions.checkNotNull(avroSchema, "schema cannot be null");
         return new WithSchema<>(avroSchema.getSchemaInfo(), object, (x, y) -> object);
     }
 
@@ -224,6 +227,8 @@ public class WithSchema<T> {
      * @return A WithSchema object which has Protobuf Schema and the corresponding object.  
      */
     public static <T extends GeneratedMessageV3> WithSchema<T> proto(T object, ProtobufSchema<T> protobufSchema) {
+        Preconditions.checkNotNull(object, "object cannot be null");
+        Preconditions.checkNotNull(protobufSchema, "schema cannot be null");
         return new WithSchema<>(protobufSchema.getSchemaInfo(), object, (x, y) -> object);
     }
 
@@ -236,6 +241,8 @@ public class WithSchema<T> {
      * @return A WithSchema object which has Json schema and the corresponding object.  
      */
     public static <T> WithSchema<T> json(T object, JSONSchema<T> jsonSchema) {
+        Preconditions.checkNotNull(object, "object cannot be null");
+        Preconditions.checkNotNull(jsonSchema, "schema cannot be null");
         return new WithSchema<>(jsonSchema.getSchemaInfo(), object, (x, y) -> object);
     }
 }
