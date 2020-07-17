@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -862,7 +863,7 @@ public class SchemaRegistryService {
                 default:
                     break;
             }
-        } catch (Exception e) {
+        } catch (IOException | RuntimeException e) {
             log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
@@ -879,12 +880,12 @@ public class SchemaRegistryService {
             // jackson JsonSchema only supports json draft 3. If the schema definition is not compatible with draft 3, 
             // try parsing the schema with everit library which supports drafts 4 6 and 7. 
             OBJECT_MAPPER.readValue(schemaString, JsonSchema.class);
-        } catch (IOException e) {
-            handleDraft4onward(schemaString);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
         }
     }
 
-    private void handleDraft4onward(String schemaString) {
+    private void validateJsonSchema4Onward(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
         // draft 4 to 7
         if (rawSchema.has("id")) {
