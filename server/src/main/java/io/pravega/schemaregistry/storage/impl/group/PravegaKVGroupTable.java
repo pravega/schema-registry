@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.fromBytes;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdChunkKey;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableValue;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.VersionDeletedRecord;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingIdRecord;
@@ -50,7 +51,7 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     // in the cache. 
     private static final List<Class<? extends TableKey>> IMMUTABLE_RECORDS =
             Lists.newArrayList(SchemaIdKey.class, VersionDeletedRecord.class, IndexTypeVersionToIdKey.class,
-                    GroupPropertyKey.class, EncodingIdRecord.class, EncodingInfoRecord.class);
+                    GroupPropertyKey.class, EncodingIdRecord.class, EncodingInfoRecord.class, SchemaIdChunkKey.class);
 
     private final TableStore tablesStore;
     private final String tableName;

@@ -18,7 +18,7 @@ import org.junit.Before;
 import java.net.URI;
 
 public class TestPravegaEndToEnd extends TestEndToEnd {
-    ClientConfig clientConfig;
+    private ClientConfig clientConfig;
     
     @Before
     public void startPravega() {

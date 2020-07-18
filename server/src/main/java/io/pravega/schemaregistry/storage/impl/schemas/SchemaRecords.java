@@ -43,6 +43,7 @@ public interface SchemaRecords {
                     .put(SchemaIdKey.class, SchemaRecord.SERIALIZER)
                     .put(SchemaFingerprintKey.class, SchemaIdList.SERIALIZER)
                     .put(SchemaGroupsKey.class, SchemaGroupsList.SERIALIZER)
+                    .put(SchemaIdChunkKey.class, SchemaChunkRecord.SERIALIZER)
                     .build();
 
     interface Key {
@@ -169,6 +170,46 @@ public interface SchemaRecords {
             }
         }
     }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class SchemaIdChunkKey implements Key {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final String id;
+        private final int chunkNumber;
+
+        private static class SchemaIdChunkKeyBuilder implements ObjectBuilder<SchemaIdChunkKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdChunkKey, SchemaIdChunkKey.SchemaIdChunkKeyBuilder> {
+            @Override
+            protected SchemaIdChunkKey.SchemaIdChunkKeyBuilder newBuilder() {
+                return SchemaIdChunkKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(SchemaIdChunkKey e, RevisionDataOutput target) throws IOException {
+                target.writeUTF(e.id);
+                target.writeCompactInt(e.chunkNumber);
+            }
+
+            private void read00(RevisionDataInput source, SchemaIdChunkKey.SchemaIdChunkKeyBuilder b) throws IOException {
+                b.id(source.readUTF());
+                b.chunkNumber(source.readCompactInt());
+            }
+        }
+    }
 
     @Data
     @Builder
@@ -177,6 +218,7 @@ public interface SchemaRecords {
         public static final SchemaRecord.Serializer SERIALIZER = new SchemaRecord.Serializer();
 
         private final SchemaInfo schemaInfo;
+        private final int additionalChunkCount;
 
         @Override
         @SneakyThrows(IOException.class)
@@ -205,10 +247,55 @@ public interface SchemaRecords {
 
             private void write00(SchemaRecord e, RevisionDataOutput target) throws IOException {
                 SchemaInfoSerializer.SERIALIZER.serialize(target, e.schemaInfo);
+                target.writeCompactInt(e.additionalChunkCount);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
-                b.schemaInfo(SchemaInfoSerializer.SERIALIZER.deserialize(source));
+                b.schemaInfo(SchemaInfoSerializer.SERIALIZER.deserialize(source))
+                 .additionalChunkCount(source.readCompactInt());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class SchemaChunkRecord implements Value {
+        public static final SchemaChunkRecord.Serializer SERIALIZER = new SchemaChunkRecord.Serializer();
+
+        private final ByteArraySegment chunkPayload;
+
+        @Override
+        @SneakyThrows(IOException.class)
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class SchemaChunkRecordBuilder implements ObjectBuilder<SchemaChunkRecord> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaChunkRecord, SchemaChunkRecord.SchemaChunkRecordBuilder> {
+            @Override
+            protected SchemaChunkRecord.SchemaChunkRecordBuilder newBuilder() {
+                return SchemaChunkRecord.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(SchemaChunkRecord e, RevisionDataOutput target) throws IOException {
+                target.writeArray(e.chunkPayload.array(), e.chunkPayload.arrayOffset(), e.chunkPayload.getLength());
+            }
+
+            private void read00(RevisionDataInput source, SchemaChunkRecord.SchemaChunkRecordBuilder b) throws IOException {
+                b.chunkPayload(new ByteArraySegment(source.readArray()));
             }
         }
     }
@@ -305,7 +392,8 @@ public interface SchemaRecords {
             // - 0: Unsupported Serializer.
             builder.serializer(SchemaRecords.SchemaIdKey.class, 1, new SchemaRecords.SchemaIdKey.Serializer())
                    .serializer(SchemaRecords.SchemaFingerprintKey.class, 2, new SchemaRecords.SchemaFingerprintKey.Serializer())
-                   .serializer(SchemaRecords.SchemaGroupsKey.class, 3, new SchemaRecords.SchemaGroupsKey.Serializer());
+                   .serializer(SchemaRecords.SchemaGroupsKey.class, 3, new SchemaRecords.SchemaGroupsKey.Serializer())
+                   .serializer(SchemaRecords.SchemaIdChunkKey.class, 4, new SchemaRecords.SchemaIdChunkKey.Serializer());
         }
 
         /**

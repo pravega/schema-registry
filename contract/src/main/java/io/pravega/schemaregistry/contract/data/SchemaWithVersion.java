@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.contract.data;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Object that encapsulates schemaInfo with its associated version. 
@@ -23,9 +24,9 @@ public class SchemaWithVersion {
     /**
      * Schema Information object. 
      */
-    private final SchemaInfo schemaInfo;
+    private @NonNull final SchemaInfo schemaInfo;
     /**
      * Version information object that identifies the corresponding schema object. 
      */
-    private final VersionInfo versionInfo;
+    private @NonNull final VersionInfo versionInfo;
 }

@@ -45,6 +45,7 @@ import org.junit.rules.Timeout;
 import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.List;
+import java.util.Random;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -54,6 +55,7 @@ import static org.junit.Assert.*;
 
 @Slf4j
 public abstract class TestEndToEnd {
+    public static final Random RANDOM = new Random();
     @Rule
     public Timeout globalTimeout = new Timeout(3, TimeUnit.MINUTES);
 
@@ -130,7 +132,7 @@ public abstract class TestEndToEnd {
     public void testEndToEnd() {
         SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
-
+        
         String group = "group";
 
         int groupsCount = Lists.newArrayList(client.listGroups()).size();
@@ -226,6 +228,37 @@ public abstract class TestEndToEnd {
         assertEquals(version4.getVersion(), 2);
         
         client.removeGroup(group);
+    }
+
+    @Test
+    public void testLargeSchemas() {
+        SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(
+                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
+
+        String group = "group";
+
+        // recreate group with different properties
+        SerializationFormat custom = SerializationFormat.custom("a");
+        client.addGroup(group, new GroupProperties(custom,
+                Compatibility.allowAny(),
+                true));
+
+        // generate a schema of 8 mb in size
+        byte[] array = new byte[8 * 1024 * 1024];
+        RANDOM.nextBytes(array);
+
+        SchemaInfo s = new SchemaInfo("x", custom,
+                ByteBuffer.wrap(array), ImmutableMap.of());
+
+        VersionInfo v = client.addSchema(group, s);
+        assertEquals(v.getId(), 0);
+        assertEquals(v.getVersion(), 0);
+        assertEquals(v.getType(), "x");
+
+        assertEquals(client.getSchemas(group).get(0).getSchemaInfo(), s);
+        assertEquals(client.getGroupHistory(group).get(0).getSchemaInfo(), s);
+        assertEquals(v, client.getVersionForSchema(group, s));
+        assertEquals(client.getSchemaReferences(s).size(), 1);
     }
 
     abstract SchemaStore getStore();

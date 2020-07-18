@@ -14,6 +14,7 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.common.ObjectBuilder;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Encapsulates properties of a codecType.  
@@ -22,11 +23,13 @@ import lombok.Data;
 @Builder
 public class CodecType {
     public static final CodecType NONE = new CodecType("");
+    private static final int MAX_PROPERTIES_SIZE = 900 * 1024; // 900 kb
 
     /**
      * Name that identifies the codec type. Users could typically use the mime type name for the encoding.   
      */
-    private final String name;
+    private @NonNull
+    final String name;
     /**
      * User defined key value strings that users can use to add any additional metadata to the codecType. 
      * This can be used to share additional information with the decoder about how to decode, for example, if codecType was
@@ -41,7 +44,9 @@ public class CodecType {
     }
 
     public CodecType(String name, ImmutableMap<String, String> properties) {
-        Preconditions.checkArgument(name != null);
+        Preconditions.checkArgument(properties.entrySet().stream().mapToInt(x -> x.getKey().length() + x.getValue().length())
+                                  .reduce(0, Integer::sum) < MAX_PROPERTIES_SIZE,
+                "Invalid properties, make sure that total size of properties map is less than 900 kb.");
         this.name = name;
         this.properties = properties;
     }
