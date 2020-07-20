@@ -140,18 +140,9 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                     .getRecord().getSchemaIds().stream()
                     .collect(Collectors.toMap(x -> x, x -> {
                         SchemaIdKey schemaIdKey = new SchemaIdKey(x);
-                        VersionedRecord<SchemaRecord> cachedValue = tableStore.getCachedRecord(SCHEMAS, schemaIdKey, SchemaRecord.class);
-                        CompletableFuture<VersionedRecord<SchemaRecord>> schemaRecordFuture;
-                        if (cachedValue != null) {
-                            schemaRecordFuture = CompletableFuture.completedFuture(cachedValue);
-                        } else {
-                            schemaRecordFuture = tableStore.getEntry(SCHEMAS, KEY_SERIALIZER.toBytes(schemaIdKey),
-                                    y -> fromBytes(SchemaIdKey.class, y, SchemaRecord.class))
-                                             .thenApply(entry -> {
-                                                 tableStore.cacheRecord(SCHEMAS, schemaIdKey, entry);
-                                                 return entry;
-                                             });
-                        }
+                        CompletableFuture<VersionedRecord<SchemaRecord>> schemaRecordFuture =
+                                tableStore.getEntry(SCHEMAS, KEY_SERIALIZER.toBytes(schemaIdKey),
+                                        y -> fromBytes(SchemaIdKey.class, y, SchemaRecord.class));
                         return schemaRecordFuture.thenCompose(si -> getSchemaInfo(x, si.getRecord()));
                     }))).thenApply(schemas -> schemas.entrySet().stream().filter(x -> {
                 SchemaInfo schema = x.getValue();
