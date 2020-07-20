@@ -49,7 +49,7 @@ public class SchemaChunks {
         return new SchemaChunks(chunkedSchemaInfo, chunks);
     }
 
-    public static SchemaInfo combine(SchemaInfo schemaInfo, List<ByteArraySegment> chunks) {
+    public static SchemaInfo assemble(SchemaInfo schemaInfo, List<ByteArraySegment> chunks) {
         // collect all chunks and create a new byte buffer as concat of all chunks
         ByteBuffer schemaData = schemaInfo.getSchemaData();
 

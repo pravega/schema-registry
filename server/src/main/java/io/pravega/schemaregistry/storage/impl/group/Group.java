@@ -177,7 +177,7 @@ public class Group<V> {
             List<SchemaIdChunkKey> keys = IntStream.range(0, sr.getAdditionalChunkCount()).boxed().map(y -> 
                     new SchemaIdChunkKey(sr.getId(), y)).collect(Collectors.toList());
             return groupTable.getEntries(keys, SchemaChunkRecord.class)
-                    .thenApply(chunks -> SchemaChunks.combine(sr.getSchemaInfo(), 
+                    .thenApply(chunks -> SchemaChunks.assemble(sr.getSchemaInfo(), 
                             chunks.stream().map(SchemaChunkRecord::getChunkPayload).collect(Collectors.toList())));
         }
     }

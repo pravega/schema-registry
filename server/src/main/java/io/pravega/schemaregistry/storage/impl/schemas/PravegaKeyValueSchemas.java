@@ -173,7 +173,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                                          .map(y -> KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, y))).collect(Collectors.toList());
             return tableStore.getEntries(SCHEMAS, keys, false)
                              .thenApply(chunks -> {
-                                 return SchemaChunks.combine(record.getSchemaInfo(),
+                                 return SchemaChunks.assemble(record.getSchemaInfo(),
                                          chunks.stream().map(x -> fromBytes(SchemaIdChunkKey.class, x.getRecord(), SchemaChunkRecord.class)
                                                  .getChunkPayload()).collect(Collectors.toList()));
                              });
