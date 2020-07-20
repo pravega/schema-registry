@@ -53,9 +53,9 @@ public class SchemaInfo {
     public SchemaInfo(@NonNull String type, @NonNull SerializationFormat serializationFormat, @NonNull ByteBuffer schemaData, @NonNull ImmutableMap<String, String> properties) {
         Preconditions.checkArgument(serializationFormat != SerializationFormat.Any, "Invalid Serialization Format.");
         Preconditions.checkArgument(schemaData.remaining() <= 8 * ONE_MB, "Invalid schema binary.");
-        Preconditions.checkArgument(properties.size() < 100 && 
-                        properties.entrySet().stream().allMatch(x -> x.getKey().length() < 200 && x.getValue().length() < 200),
-                "Invalid properties, make sure each key and value are less than 200 bytes and there are no more than 100 entries.");
+        Preconditions.checkArgument(properties.size() <= 100 && 
+                        properties.entrySet().stream().allMatch(x -> x.getKey().length() <= 200 && x.getValue().length() <= 200),
+                "Invalid properties, make sure each key and value are less than or equal to 200 bytes and there are no more than 100 entries.");
         this.type = type;
         this.serializationFormat = serializationFormat;
         this.schemaData = schemaData;

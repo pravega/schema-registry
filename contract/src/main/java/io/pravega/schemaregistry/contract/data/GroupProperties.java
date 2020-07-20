@@ -58,9 +58,9 @@ public class GroupProperties {
 
     public GroupProperties(@NonNull SerializationFormat serializationFormat, @NonNull Compatibility compatibility, boolean allowMultipleTypes,
                            @NonNull ImmutableMap<String, String> properties) {
-        Preconditions.checkArgument(properties != null && properties.size() < 100 &&
-                        properties.entrySet().stream().allMatch(x -> x.getKey().length() < 200 && x.getValue().length() < 200),
-                "Invalid properties, make sure each key and value are less than 200 bytes and there are no more than 100 entries.");
+        Preconditions.checkArgument(properties != null && properties.size() <= 100 &&
+                        properties.entrySet().stream().allMatch(x -> x.getKey().length() <= 200 && x.getValue().length() <= 200),
+                "Invalid properties, make sure each key and value are less than or equal to 200 bytes and there are no more than 100 entries.");
         this.serializationFormat = serializationFormat;
         this.compatibility = compatibility;
         this.allowMultipleTypes = allowMultipleTypes;
