@@ -191,7 +191,7 @@ project('contract') {
         compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
         compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
-
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
 
     javadoc {

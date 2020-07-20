@@ -50,7 +50,7 @@ public class SchemaInfo {
      */
     private @NonNull final ImmutableMap<String, String> properties;
 
-    public SchemaInfo(String type, SerializationFormat serializationFormat, ByteBuffer schemaData, ImmutableMap<String, String> properties) {
+    public SchemaInfo(@NonNull String type, @NonNull SerializationFormat serializationFormat, @NonNull ByteBuffer schemaData, @NonNull ImmutableMap<String, String> properties) {
         Preconditions.checkArgument(serializationFormat != SerializationFormat.Any, "Invalid Serialization Format.");
         Preconditions.checkArgument(schemaData.remaining() <= 8 * ONE_MB, "Invalid schema binary.");
         Preconditions.checkArgument(properties.size() < 100 && 

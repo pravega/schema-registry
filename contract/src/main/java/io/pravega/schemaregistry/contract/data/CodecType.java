@@ -28,8 +28,7 @@ public class CodecType {
     /**
      * Name that identifies the codec type. Users could typically use the mime type name for the encoding.   
      */
-    private @NonNull
-    final String name;
+    private @NonNull final String name;
     /**
      * User defined key value strings that users can use to add any additional metadata to the codecType. 
      * This can be used to share additional information with the decoder about how to decode, for example, if codecType was
@@ -37,13 +36,13 @@ public class CodecType {
      * This is opaque to the service and stored with the codecType when the codec is registered for a group and delivered
      * with encoding information. 
      */
-    private final ImmutableMap<String, String> properties;
+    private @NonNull final ImmutableMap<String, String> properties;
 
     public CodecType(String name) {
         this(name, ImmutableMap.of());
     }
 
-    public CodecType(String name, ImmutableMap<String, String> properties) {
+    public CodecType(@NonNull String name, @NonNull ImmutableMap<String, String> properties) {
         Preconditions.checkArgument(properties.entrySet().stream().mapToInt(x -> x.getKey().length() + x.getValue().length())
                                   .reduce(0, Integer::sum) < MAX_PROPERTIES_SIZE,
                 "Invalid properties, make sure that total size of properties map is less than 900 kb.");
