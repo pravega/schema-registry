@@ -9,17 +9,22 @@
  */
 package io.pravega.schemaregistry.storage.impl.schemas;
 
+import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
+import io.pravega.common.util.ByteArraySegment;
 import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.client.TableStore;
 import io.pravega.schemaregistry.storage.client.Version;
 import io.pravega.schemaregistry.storage.client.VersionedRecord;
-import io.pravega.schemaregistry.storage.impl.SchemaChunks;
+import io.pravega.schemaregistry.common.ChunkUtil;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
+import lombok.val;
 
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -118,18 +123,19 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                 new VersionedRecord<>(new SchemaIdList(schemaIdList).toBytes(), fingerprintKeyVersion));
         // 2. add schemaId record
         SchemaIdKey key = new SchemaIdKey(id);
-        SchemaChunks chunks = SchemaChunks.chunk(schemaInfo);
-        
+        List<ByteArraySegment> chunks = ChunkUtil.chunk(schemaInfo.getSchemaData(), Config.MAX_CHUNK_SIZE_BYTES);
+        assert !chunks.isEmpty();
+        ByteArraySegment firstChunk = chunks.get(0);
         entries.put(KEY_SERIALIZER.toBytes(key),
-                new VersionedRecord<>(new SchemaRecord(chunks.getSchemaInfo(), chunks.getChunks().size()).toBytes(), null));
-        for (int i = 0; i < chunks.getChunks().size(); i++) {
-            byte[] bytes = new SchemaChunkRecord(chunks.getChunks().get(i)).toBytes();
+                new VersionedRecord<>(new SchemaRecord(schemaInfo.getType(), schemaInfo.getSerializationFormat(), 
+                        firstChunk, Config.MAX_CHUNK_SIZE_BYTES, chunks.size()).toBytes(), null));
+        for (int i = 1; i < chunks.size(); i++) {
+            byte[] bytes = new SchemaChunkRecord(chunks.get(i)).toBytes();
             entries.put(KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, i)),
                     new VersionedRecord<>(bytes, null));
         }
         return tableStore.updateEntries(SCHEMAS, entries)
                          .thenApply(v -> id);
-
     }
 
     private CompletableFuture<String> findSchemaId(SchemaInfo schemaInfo, VersionedRecord<SchemaIdList> fingerprintEntry) {
@@ -157,16 +163,21 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
     }
 
     private CompletableFuture<SchemaInfo> getSchemaInfo(String id, SchemaRecord record) {
-        if (record.getAdditionalChunkCount() == 0) {
+        if (record.getSchemaInfo() != null) {
             return CompletableFuture.completedFuture(record.getSchemaInfo());
         } else {
             List<byte[]> keys = IntStream.range(0, record.getAdditionalChunkCount()).boxed()
                                          .map(y -> KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, y))).collect(Collectors.toList());
             return tableStore.getEntries(SCHEMAS, keys, false)
                              .thenApply(chunks -> {
-                                 return SchemaChunks.assemble(record.getSchemaInfo(),
-                                         chunks.stream().map(x -> fromBytes(SchemaIdChunkKey.class, x.getRecord(), SchemaChunkRecord.class)
-                                                 .getChunkPayload()).collect(Collectors.toList()));
+                                 List<ByteArraySegment> collect = new ArrayList<>();
+                                 collect.add(record.getSchemaBinary());
+                                 for (val chunk : chunks) {
+                                     collect.add(fromBytes(SchemaIdChunkKey.class, chunk.getRecord(), SchemaChunkRecord.class)
+                                             .getChunkPayload());
+                                 }
+                                 ByteBuffer combined = ChunkUtil.combine(collect);
+                                 return new SchemaInfo(record.getType(), record.getSerializationFormat(), combined, ImmutableMap.of());
                              });
         }
     }

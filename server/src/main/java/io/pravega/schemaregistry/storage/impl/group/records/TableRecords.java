@@ -25,12 +25,14 @@ import io.pravega.schemaregistry.contract.data.VersionInfo;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.math.BigInteger;
+import java.nio.ByteBuffer;
 import java.util.Map;
 
 /**
@@ -506,25 +508,74 @@ public interface TableRecords {
         }
     }
 
-    @Data
-    @Builder
-    @AllArgsConstructor
     class SchemaRecord implements TableValue {
         public static final SchemaRecord.Serializer SERIALIZER = new SchemaRecord.Serializer();
+        @Getter
+        private final String type;
+        @Getter
+        private final SerializationFormat serializationFormat;
+        @Getter
+        private final ImmutableMap<String, String> properties;
+        @Getter
+        private final ByteArraySegment schemaBinary;
 
-        private final SchemaInfo schemaInfo;
+        @Getter
         private final int id;
+        @Getter
         private final int version;
+        @Getter
         private final Compatibility compatibility;
+        @Getter
         private final long timestamp;
+        @Getter
+        private final int maxChunkSize;
+        @Getter
         private final int additionalChunkCount;
+
+        /**
+         * Excluded from serialization. 
+         */
+        @Getter
+        private final SchemaInfo schemaInfo;
+
+        @Builder
+        public SchemaRecord(String type, SerializationFormat serializationFormat, ImmutableMap<String, String> properties, 
+                            ByteArraySegment schemaBinary, int id, int version, Compatibility compatibility, long timestamp, 
+                            int maxChunkSize, int additionalChunkCount) {
+            this.type = type;
+            this.serializationFormat = serializationFormat;
+            this.properties = properties;
+            this.schemaBinary = schemaBinary;
+            this.id = id;
+            this.version = version;
+            this.compatibility = compatibility;
+            this.timestamp = timestamp;
+            this.maxChunkSize = maxChunkSize;
+            this.additionalChunkCount = additionalChunkCount;
+            this.schemaInfo = additionalChunkCount == 0 ? new SchemaInfo(type, serializationFormat, ByteBuffer.wrap(schemaBinary.array(), 
+                    schemaBinary.arrayOffset(), schemaBinary.getLength()), properties) : null;
+        }
         
+        public SchemaRecord(SchemaInfo schemaInfo, int id, int version, Compatibility compatibility, long timestamp) {
+            this.type = schemaInfo.getType();
+            this.serializationFormat = schemaInfo.getSerializationFormat();
+            this.properties = schemaInfo.getProperties();
+            this.schemaBinary = new ByteArraySegment(schemaInfo.getSchemaData());
+            this.id = id;
+            this.version = version;
+            this.compatibility = compatibility;
+            this.timestamp = timestamp;
+            this.maxChunkSize = schemaInfo.getSchemaData().remaining();
+            this.additionalChunkCount = 0;
+            this.schemaInfo = schemaInfo;
+        }
+
         @Override
         @SneakyThrows(IOException.class)
         public byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
-
+        
         private static class SchemaRecordBuilder implements ObjectBuilder<SchemaRecord> {
         }
 
@@ -545,20 +596,32 @@ public interface TableRecords {
             }
 
             private void write00(SchemaRecord e, RevisionDataOutput target) throws IOException {
-                SchemaInfoSerializer.SERIALIZER.serialize(target, e.schemaInfo);
+                target.writeUTF(e.getType());
+                SerializationFormatRecord.SERIALIZER.serialize(target, new SerializationFormatRecord(e.getSerializationFormat()));
+                target.writeMap(e.getProperties(), DataOutput::writeUTF, DataOutput::writeUTF);
                 target.writeCompactInt(e.getId());
                 target.writeCompactInt(e.getVersion());
                 CompatibilitySerializer.SERIALIZER.serialize(target, e.compatibility);
                 target.writeLong(e.timestamp);
+                target.writeArray(e.schemaBinary.array(), e.schemaBinary.arrayOffset(), e.schemaBinary.getLength());
+                target.writeInt(e.maxChunkSize);
                 target.writeCompactInt(e.additionalChunkCount);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
-                b.schemaInfo(SchemaInfoSerializer.SERIALIZER.deserialize(source))
-                 .id(source.readCompactInt())
+                b.type(source.readUTF())
+                 .serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat());
+                
+                ImmutableMap.Builder<String, String> mapBuilder = ImmutableMap.builder();
+                source.readMap(DataInput::readUTF, DataInput::readUTF, mapBuilder);
+                b.properties(mapBuilder.build());
+                
+                b.id(source.readCompactInt())
                  .version(source.readCompactInt())
                  .compatibility(CompatibilitySerializer.SERIALIZER.deserialize(source))
                  .timestamp(source.readLong())
+                 .schemaBinary(new ByteArraySegment(source.readArray()))
+                 .maxChunkSize(source.readInt())
                  .additionalChunkCount(source.readCompactInt());
             }
         }
