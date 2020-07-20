@@ -55,8 +55,6 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 AuthHandlerManager.Context context = authManager.getContext(credentials);
                 context.authenticate();
                 containerRequest.setSecurityContext(context);
-                log.info("shivesh:: User authentication successful");
-
             } catch (AuthenticationException e) {
                 log.warn("User authentication failed");
                 containerRequest.abortWith(Response.status(Response.Status.FORBIDDEN).build());            

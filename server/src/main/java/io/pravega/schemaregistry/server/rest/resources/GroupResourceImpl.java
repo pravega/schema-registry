@@ -100,7 +100,6 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
                 return context == null || context.authorize(resource, READ);
             } catch (AuthException e) {
-                log.info("shivesh:: authorization failed");
                 return false;
             }
         };
