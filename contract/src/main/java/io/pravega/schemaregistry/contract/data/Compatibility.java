@@ -34,7 +34,7 @@ public class Compatibility {
         this(type, null);
     }
 
-    private Compatibility(Type type, BackwardAndForward backwardAndForward) {
+    private Compatibility(@NonNull Type type, BackwardAndForward backwardAndForward) {
         Preconditions.checkArgument(!type.equals(Type.Advanced) || backwardAndForward != null, 
                 "For advanced type, At lease one of backward or forward policy should be supplied.");
         this.type = type;

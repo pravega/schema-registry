@@ -13,7 +13,6 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
 import io.pravega.auth.AuthHandler;
-import io.pravega.auth.AuthenticationException;
 import io.pravega.auth.AuthorizationException;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
@@ -27,9 +26,9 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
@@ -55,28 +54,19 @@ abstract class AbstractResource {
     @Getter
     private final Executor executorService;
 
-    AbstractResource(SchemaRegistryService registryService, ServiceConfig config, Executor executorService) {
+    AbstractResource(SchemaRegistryService registryService, ServiceConfig config, AuthHandlerManager authManager, Executor executorService) {
         this.registryService = registryService;
         this.config = config;
-        this.authManager = new AuthHandlerManager(config);
+        this.authManager = authManager;
         this.executorService = executorService;
     }
-
-    /**
-     * This is a shortcut for {@code headers.getRequestHeader().get(HttpHeaders.AUTHORIZATION)}.
-     *
-     * @return a list of read-only values of the HTTP Authorization header
-     * @throws IllegalStateException if called outside the scope of the HTTP request
-     */
-    List<String> getAuthorizationHeader() {
-        return headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
-    }
-
-    CompletableFuture<Response> withAuthenticateAndAuthorize(String request, AuthHandler.Permissions permissions,
-                                                             String resource, AsyncResponse response,
-                                                             Supplier<CompletableFuture<Response>> future) {
+    
+    CompletableFuture<Response> withAuthorization(String request, AuthHandler.Permissions permissions,
+                                                  String resource, AsyncResponse response,
+                                                  Supplier<CompletableFuture<Response>> future,
+                                                  SecurityContext securityContext) {
         try {
-            authenticateAuthorize(getAuthorizationHeader(), resource, permissions);
+            authorize(securityContext, resource, permissions);
             return future.get();
         } catch (AuthException e) {
             log.warn("Auth failed {}", request, e);
@@ -91,12 +81,11 @@ abstract class AbstractResource {
         }
     }
 
-    void authenticateAuthorize(List<String> authHeader, String resource, AuthHandler.Permissions permission)
+    private void authorize(SecurityContext securityContext, String resource, AuthHandler.Permissions permission)
             throws AuthException {
         if (config.isAuthEnabled()) {
-            String credentials = parseCredentials(authHeader);
-            AuthHandlerManager.Context context = authManager.getContext(credentials);
-            if (!context.authenticateAndAuthorize(resource, permission)) {
+            AuthHandlerManager.Context context = (AuthHandlerManager.Context) securityContext;
+            if (!context.authorize(resource, permission)) {
                 throw new AuthorizationException(
                         String.format("Failed to authorize for resource [%s]", resource),
                         Response.Status.FORBIDDEN.getStatusCode());
@@ -165,16 +154,5 @@ abstract class AbstractResource {
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException("Invalid group or namespace name.");
         }
-    }
-
-    static String parseCredentials(List<String> authHeader) throws AuthenticationException {
-        if (authHeader == null || authHeader.isEmpty()) {
-            throw new AuthenticationException("Missing authorization header.");
-        }
-
-        // Expecting a single value here. If there are multiple, we'll deal with just the first one.
-        String credentials = authHeader.get(0);
-        Preconditions.checkNotNull(credentials, "Missing credentials.");
-        return credentials;
     }
 }

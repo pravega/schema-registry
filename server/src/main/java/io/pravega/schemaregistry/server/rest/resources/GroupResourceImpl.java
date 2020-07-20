@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.server.rest.resources;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
-import io.pravega.auth.AuthenticationException;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.common.FuturesUtility;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -48,12 +47,13 @@ import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.util.AbstractMap;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -69,28 +69,24 @@ import static javax.ws.rs.core.Response.Status;
 public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsApiAsync {
     private static final int DEFAULT_LIST_GROUPS_LIMIT = 100;
     
-    public GroupResourceImpl(SchemaRegistryService registryService, ServiceConfig config, Executor executor) {
-        super(registryService, config, executor);
+    public GroupResourceImpl(SchemaRegistryService registryService, ServiceConfig config, 
+                             AuthHandlerManager authHandlerManager, Executor executor) {
+        super(registryService, config, authHandlerManager, executor);
     }
 
     @Override
-    public void listGroups(String namespace, String continuationToken, Integer limit, 
-                           AsyncResponse asyncResponse) {
+    public void listGroups(String namespace, String continuationToken, Integer limit,
+                           SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("List Groups called for namespace {} with limit {} and continuation token {}", namespace, limit, continuationToken);
         int toFetch = limit == null ? DEFAULT_LIST_GROUPS_LIMIT : limit;
         ListGroupsResponse groupsList = new ListGroupsResponse();
 
-        List<String> authorizationHeader = getConfig().isAuthEnabled() ? getAuthorizationHeader() : Collections.emptyList();
         final AuthHandlerManager.Context context;
         if (getConfig().isAuthEnabled()) {
-            String credentials = parseCredentials(authorizationHeader);
             try {
-                context = getAuthManager().getContext(credentials);
-                context.authenticate();
-            } catch (AuthenticationException e) {
-                log.warn("User authentication failed.", e);
-                asyncResponse.resume(Response.status(Response.Status.FORBIDDEN.getStatusCode()).build());
-                return;
+                context = getAuthManager().getContext(securityContext);
+            } catch (Exception e) {
+                throw new CompletionException(e);
             }
         } else {
             context = null;
@@ -104,6 +100,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
                 return context == null || context.authorize(resource, READ);
             } catch (AuthException e) {
+                log.info("shivesh:: authorization failed");
                 return false;
             }
         };
@@ -141,10 +138,10 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void createGroup(String namespace, CreateGroupRequest createGroupRequest, 
-                            AsyncResponse asyncResponse) {
+                            SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(createGroupRequest);
         String resource = Strings.isNullOrEmpty(namespace) ? getNamespaceResource() : getNamespaceResource(namespace);
-        withAuthenticateAndAuthorize("createGroup", READ_UPDATE, resource, asyncResponse, () -> {
+        withAuthorization("createGroup", READ_UPDATE, resource, asyncResponse, () -> {
             GroupProperties groupProperties = ModelHelper.decode(createGroupRequest.getGroupProperties());
             String group = createGroupRequest.getGroupName();
             return getRegistryService().createGroup(namespace, group, groupProperties)
@@ -160,7 +157,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                       log.warn("createGroup failed with exception: ", Exceptions.unwrap(exception));
                                       return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                   });
-        }).thenApply(response -> {
+        }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
@@ -168,10 +165,10 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void getGroupProperties(String namespace, String group, 
-                                   AsyncResponse asyncResponse) {
+                                   SecurityContext securityContext, AsyncResponse asyncResponse) {
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) : 
                 getGroupResource(group, namespace);
-        withAuthenticateAndAuthorize("getGroupProperties", READ, resource, asyncResponse,
+        withAuthorization("getGroupProperties", READ, resource, asyncResponse,
                 () -> getRegistryService().getGroupProperties(namespace, group)
                                      .thenApply(groupProperty -> {
                                          log.info("Group {} {} property found are {}", namespace, group, groupProperty);
@@ -184,7 +181,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
                                          log.warn("getGroupProperties for group {} failed with exception: ", group, Exceptions.unwrap(exception));
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -192,11 +189,11 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
     
     @Override
-    public void getGroupHistory(String namespace, String group, AsyncResponse asyncResponse) {
+    public void getGroupHistory(String namespace, String group, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Get group history called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
-        withAuthenticateAndAuthorize("getGroupHistory", READ, resource, asyncResponse,
+        withAuthorization("getGroupHistory", READ, resource, asyncResponse,
                 () -> getRegistryService().getGroupHistory(namespace, group, null)
                                      .thenApply(history -> {
                                          GroupHistory list = new GroupHistory()
@@ -213,7 +210,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
                                          log.warn("getGroupHistory failed with exception: ", Exceptions.unwrap(exception));
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -222,13 +219,13 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void updateCompatibility(String namespace, String group, UpdateCompatibilityRequest updateCompatibilityRequest, 
-                                            AsyncResponse asyncResponse) {
+                                            SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(updateCompatibilityRequest);
         log.info("Update compatibility called for group {} {} with new request {}", namespace, group, updateCompatibilityRequest);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("updateCompatibility", READ_UPDATE, resource, asyncResponse,
+        withAuthorization("updateCompatibility", READ_UPDATE, resource, asyncResponse,
                 () -> {
                     Compatibility rules = ModelHelper.decode(updateCompatibilityRequest.getCompatibility());
                     Compatibility previous = updateCompatibilityRequest.getPreviousCompatibility() == null ?
@@ -248,7 +245,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                               }
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
@@ -256,11 +253,11 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     
     @Override
     public void deleteGroup(String namespace, String group, 
-                            AsyncResponse asyncResponse) {
+                            SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Delete group called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
-        withAuthenticateAndAuthorize("deleteGroup", READ_UPDATE, resource, asyncResponse,
+        withAuthorization("deleteGroup", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteGroup(namespace, group)
                                      .thenApply(status -> {
                                          log.info("Group {} {} deleted", namespace, group);
@@ -269,7 +266,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                      .exceptionally(exception -> {
                                          log.warn("deleteGroup failed with exception: ", exception);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -277,12 +274,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void getSchemaVersions(String namespace, String group, String type, AsyncResponse asyncResponse) {
+    public void getSchemaVersions(String namespace, String group, String type, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Get group schemas called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getSchemaVersions", READ, resource, asyncResponse,
+        withAuthorization("getSchemaVersions", READ, resource, asyncResponse,
                 () -> getRegistryService().getGroupHistory(namespace, group, type)
                                      .thenApply(history -> {
                                          SchemaVersionsList list = new SchemaVersionsList()
@@ -302,7 +299,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
                                          log.warn("getSchemaVersions failed with exception: ", unwrap);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -311,13 +308,13 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void addSchema(String namespace, String group, SchemaInfo schemaInfo, 
-                                          AsyncResponse asyncResponse) {
+                                          SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(schemaInfo);
         log.info("Add schema to group called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupSchemaResource(group) :
                 getGroupSchemaResource(group, namespace);
 
-        withAuthenticateAndAuthorize("addSchema", READ_UPDATE, resource, asyncResponse,
+        withAuthorization("addSchema", READ_UPDATE, resource, asyncResponse,
                 () -> {
                     return getRegistryService().addSchema(namespace, group, ModelHelper.decode(schemaInfo))
                                           .thenApply(versionInfo -> {
@@ -341,20 +338,20 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                               }
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
     }
 
     @Override
-    public void validate(String namespace, String group, ValidateRequest validateRequest, AsyncResponse asyncResponse) {
+    public void validate(String namespace, String group, ValidateRequest validateRequest, SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(validateRequest);
         log.info("Validate schema called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("validate", READ, resource, asyncResponse,
+        withAuthorization("validate", READ, resource, asyncResponse,
                 () -> {
                     return getRegistryService().validateSchema(namespace, group, 
                             ModelHelper.decode(validateRequest.getSchemaInfo()),
@@ -372,20 +369,20 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                               log.warn("validate failed with exception: ", unwrap);
                                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
     }
 
     @Override
-    public void canRead(String namespace, String group, SchemaInfo schemaInfo, AsyncResponse asyncResponse) {
+    public void canRead(String namespace, String group, SchemaInfo schemaInfo, SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(schemaInfo);
         log.info("Can read using schema called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("canRead", READ, resource, asyncResponse,
+        withAuthorization("canRead", READ, resource, asyncResponse,
                 () -> {
                     return getRegistryService().canRead(namespace, group, ModelHelper.decode(schemaInfo))
                                           .thenApply(canRead -> {
@@ -401,19 +398,19 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                               log.warn("can read failed with exception: ", unwrap);
                                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
     }
 
     @Override
-    public void getSchemaForId(String namespace, String group, Integer schemaId, AsyncResponse asyncResponse) {
+    public void getSchemaForId(String namespace, String group, Integer schemaId, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Get schema from version {} called for group {} {}", schemaId, namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getSchemaForId", READ, resource, asyncResponse,
+        withAuthorization("getSchemaForId", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchema(namespace, group, schemaId)
                                      .thenApply(schemaWithVersion -> {
                                          SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
@@ -428,7 +425,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
                                          log.warn("getSchemaForId failed with exception: ", unwrap);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -436,12 +433,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void getSchemaFromVersion(String namespace, String group, String schemaType, Integer version, AsyncResponse asyncResponse) {
+    public void getSchemaFromVersion(String namespace, String group, String schemaType, Integer version, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Get schema from version {} called for group {} {}", version, namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getSchemaFromVersion", READ, resource, asyncResponse,
+        withAuthorization("getSchemaFromVersion", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchema(namespace, group, schemaType, version)
                                                                     .thenApply(schemaWithVersion -> {
                                                                         SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
@@ -456,7 +453,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                                         }
                                                                         log.warn("getSchemaFromVersion failed with exception: ", unwrap);
                                                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                                                    }))
+                                                                    }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -465,12 +462,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void deleteSchemaForId(String namespace, String group, Integer schemaId, 
-                                               AsyncResponse asyncResponse) {
+                                               SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Delete schema from version {} called for group {} {}", schemaId, namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("deleteSchemaForId", READ_UPDATE, resource, asyncResponse,
+        withAuthorization("deleteSchemaForId", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteSchema(namespace, group, schemaId)
                                      .thenApply(v -> {
                                          log.info("Schema for version {} for group {} {} deleted.", schemaId, namespace, group);
@@ -484,7 +481,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
                                          log.warn("deleteSchemaForId failed with exception: ", unwrap);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -493,12 +490,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void deleteSchemaVersion(String namespace, String group, String schemaType, Integer version, 
-                                    AsyncResponse asyncResponse) {
+                                    SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Delete schema from version {}/{} called for group {} {}", schemaType, version, namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupSchemaResource(group) :
                 getGroupSchemaResource(group, namespace);
 
-        withAuthenticateAndAuthorize("deleteSchemaVersion", READ_UPDATE, resource, asyncResponse,
+        withAuthorization("deleteSchemaVersion", READ_UPDATE, resource, asyncResponse,
                 () -> getRegistryService().deleteSchema(namespace, group, schemaType, version)
                                      .thenApply(v -> {
                                          log.info("Schema for version {}/{} for group {} {} deleted.", schemaType, version, namespace, group);
@@ -512,7 +509,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
                                          log.warn("deleteSchemaVersion failed with exception: ", unwrap);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -521,14 +518,14 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
     @Override
     public void getEncodingId(String namespace, String group, GetEncodingIdRequest getEncodingIdRequest, 
-                              AsyncResponse asyncResponse) {
+                              SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(getEncodingIdRequest);
         log.info("getEncodingId called for group {} {} with version {} and codec {}", namespace, group,
                 getEncodingIdRequest.getVersionInfo(), getEncodingIdRequest.getCodecType());
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getEncodingId", READ, resource, asyncResponse,
+        withAuthorization("getEncodingId", READ, resource, asyncResponse,
                 () -> {
                     io.pravega.schemaregistry.contract.data.VersionInfo version = ModelHelper.decode(getEncodingIdRequest.getVersionInfo());
                     String codecType = getEncodingIdRequest.getCodecType();
@@ -552,20 +549,20 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                               }
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
     }
 
     @Override
-    public void getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo, AsyncResponse asyncResponse) {
+    public void getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo, SecurityContext securityContext, AsyncResponse asyncResponse) {
         Preconditions.checkNotNull(schemaInfo);
         log.info("Get schema version called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getSchemaVersion", READ, resource, asyncResponse,
+        withAuthorization("getSchemaVersion", READ, resource, asyncResponse,
                 () -> {
                     return getRegistryService().getSchemaVersion(namespace, group, ModelHelper.decode(schemaInfo))
                                           .thenApply(version -> {
@@ -583,19 +580,19 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                               log.warn("getSchemaVersion failed with exception: ", unwrap);
                                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
     }
     
     @Override
-    public void getSchemas(String namespace, String group, String type, AsyncResponse asyncResponse) {
+    public void getSchemas(String namespace, String group, String type, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("getSchemas called for group {} {} ", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getSchemas", READ, resource, asyncResponse,
+        withAuthorization("getSchemas", READ, resource, asyncResponse,
                 () -> getRegistryService().getSchemas(namespace, group, type)
                                                           .thenApply(schemas -> {
                                                               SchemaVersionsList schemaList = new SchemaVersionsList()
@@ -612,7 +609,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                               }
                                                               log.warn("getSchemas failed with exception: ", unwrap);
                                                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                                          }))
+                                                          }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -620,12 +617,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void getEncodingInfo(String namespace, String group, Integer encodingId, AsyncResponse asyncResponse) {
+    public void getEncodingInfo(String namespace, String group, Integer encodingId, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("getEncodingInfo called for group {} {} encodingId {}", namespace, group, encodingId);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getEncodingInfo", READ, resource, asyncResponse,
+        withAuthorization("getEncodingInfo", READ, resource, asyncResponse,
                 () -> {
                     io.pravega.schemaregistry.contract.data.EncodingId id = new io.pravega.schemaregistry.contract.data.EncodingId(encodingId);
                     return getRegistryService().getEncodingInfo(namespace, group, id)
@@ -643,7 +640,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                               log.warn("getEncodingInfo failed with exception: ", unwrap);
                                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
                                           });
-                }).thenApply(response -> {
+                }, securityContext).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
         });
@@ -651,12 +648,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
 
 
     @Override
-    public void getCodecTypesList(String namespace, String group, AsyncResponse asyncResponse) {
+    public void getCodecTypesList(String namespace, String group, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("getCodecTypesList called for group {} {}", namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
-        withAuthenticateAndAuthorize("getCodecTypesList", READ, resource, asyncResponse,
+        withAuthorization("getCodecTypesList", READ, resource, asyncResponse,
                 () -> getRegistryService().getCodecTypes(namespace, group)
                                      .thenApply(list -> {
                                          CodecTypes codecsList = new CodecTypes()
@@ -672,7 +669,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
                                          log.warn("getCodecTypesList failed with exception: ", unwrap);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
@@ -680,12 +677,12 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void addCodecType(String namespace, String group, CodecType codecType, AsyncResponse asyncResponse) {
+    public void addCodecType(String namespace, String group, CodecType codecType, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("addCodecType called for group {} {} codecType {}", namespace, group, codecType);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupCodecResource(group) :
                 getGroupCodecResource(group, namespace);
 
-        withAuthenticateAndAuthorize("addCodecType", READ, resource, asyncResponse,
+        withAuthorization("addCodecType", READ, resource, asyncResponse,
                 () -> getRegistryService().addCodecType(namespace, group, ModelHelper.decode(codecType))
                                      .thenApply(v -> {
                                          log.info("codecType {} added to group {} {}", codecType, namespace, group);
@@ -699,7 +696,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
                                          log.warn("addCodecType failed with exception: ", unwrap);
                                          return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                     }))
+                                     }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;

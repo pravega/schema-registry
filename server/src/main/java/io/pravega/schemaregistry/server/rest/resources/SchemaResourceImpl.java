@@ -15,12 +15,14 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.util.Map;
 import java.util.concurrent.Executor;
 import java.util.stream.Collectors;
@@ -35,13 +37,13 @@ import static javax.ws.rs.core.Response.Status;
 public class SchemaResourceImpl extends AbstractResource implements ApiV1.SchemasApiAsync {
     private SchemaRegistryService registryService;
 
-    public SchemaResourceImpl(SchemaRegistryService registryService, ServiceConfig config, Executor executor) {
-        super(registryService, config, executor);
+    public SchemaResourceImpl(SchemaRegistryService registryService, ServiceConfig config, AuthHandlerManager authManager, Executor executor) {
+        super(registryService, config, authManager, executor);
     }
 
     @Override
-    public void getSchemaReferences(SchemaInfo schemaInfo, String namespace, AsyncResponse asyncResponse) {
-        withAuthenticateAndAuthorize("getSchemaReferences", READ, getNamespaceResource(namespace), asyncResponse,
+    public void getSchemaReferences(SchemaInfo schemaInfo, String namespace, SecurityContext securityContext, AsyncResponse asyncResponse) {
+        withAuthorization("getSchemaReferences", READ, getNamespaceResource(namespace), asyncResponse,
                 () -> getRegistryService().getSchemaReferences(namespace, ModelHelper.decode(schemaInfo))
                                           .thenApply(map -> {
                                               AddedTo addedTo = new AddedTo()
@@ -58,7 +60,7 @@ public class SchemaResourceImpl extends AbstractResource implements ApiV1.Schema
                                               }
                                               log.warn("getCodecTypesList failed with exception: ", exception);
                                               return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                          }))
+                                          }), securityContext)
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;

@@ -19,6 +19,9 @@ import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.UriBuilder;
 
 import io.pravega.common.security.JKSHelper;
+import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
+import io.pravega.schemaregistry.server.rest.filter.AuthenticationFilter;
+import io.pravega.schemaregistry.server.rest.filter.NamespaceRedirectFilter;
 import io.pravega.schemaregistry.server.rest.resources.GroupResourceImpl;
 import io.pravega.schemaregistry.server.rest.resources.PingImpl;
 import io.pravega.schemaregistry.server.rest.resources.SchemaResourceImpl;
@@ -49,9 +52,12 @@ public class RestServer extends AbstractIdleService {
         this.baseUri = UriBuilder.fromUri("http://" + restServerConfig.getHost()).port(restServerConfig.getPort()).build();
 
         final Set<Object> resourceObjs = new HashSet<>();
+        AuthHandlerManager authManager = new AuthHandlerManager(restServerConfig);
+        resourceObjs.add(new AuthenticationFilter(restServerConfig.isAuthEnabled(), authManager));
+        resourceObjs.add(new NamespaceRedirectFilter());
         resourceObjs.add(new PingImpl());
-        resourceObjs.add(new GroupResourceImpl(registryService, restServerConfig, executor()));
-        resourceObjs.add(new SchemaResourceImpl(registryService, restServerConfig, executor()));
+        resourceObjs.add(new GroupResourceImpl(registryService, restServerConfig, authManager, executor()));
+        resourceObjs.add(new SchemaResourceImpl(registryService, restServerConfig, authManager, executor()));
 
         final RegistryApplication application = new RegistryApplication(resourceObjs);
         this.resourceConfig = ResourceConfig.forApplication(application);
