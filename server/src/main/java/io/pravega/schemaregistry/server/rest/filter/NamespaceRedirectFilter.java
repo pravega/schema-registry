@@ -30,7 +30,7 @@ import java.util.List;
  */
 @Provider
 @PreMatching
-public class NamespacePathRequestFilter implements ContainerRequestFilter {
+public class NamespaceRedirectFilter implements ContainerRequestFilter {
     private static final String NAMESPACE = "namespace";
     private static final String GROUPS = "groups";
 
