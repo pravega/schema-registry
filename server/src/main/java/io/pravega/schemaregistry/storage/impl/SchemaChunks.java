@@ -47,7 +47,9 @@ public class SchemaChunks {
      * @return SchemaChunks object
      */
     public static SchemaChunks chunk(SchemaInfo schemaInfo) {
-        int numberOfChunks = schemaInfo.getSchemaData().remaining() / MAX_CHUNK_SIZE;
+        int numberOfChunks = schemaInfo.getSchemaData().remaining() % MAX_CHUNK_SIZE == 0 ?
+                schemaInfo.getSchemaData().remaining() / MAX_CHUNK_SIZE - 1 :
+                schemaInfo.getSchemaData().remaining() / MAX_CHUNK_SIZE;
         int firstChunkSize = numberOfChunks > 0 ? MAX_CHUNK_SIZE : schemaInfo.getSchemaData().remaining();
 
         ByteBuffer firstChunk = ByteBuffer.wrap(schemaInfo.getSchemaData().array(), schemaInfo.getSchemaData().position(), firstChunkSize);
