@@ -16,6 +16,7 @@ import io.pravega.common.ObjectBuilder;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
+import io.pravega.common.util.ByteArraySegment;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -40,6 +41,7 @@ public interface TableRecords {
             ? extends ObjectBuilder<? extends TableValue>>> SERIALIZERS_BY_KEY_TYPE =
             ImmutableMap.<Class<? extends TableKey>, VersionedSerializer.WithBuilder<? extends TableValue, ? extends ObjectBuilder<? extends TableValue>>>builder()
                     .put(SchemaIdKey.class, SchemaRecord.SERIALIZER)
+                    .put(SchemaIdChunkKey.class, SchemaChunkRecord.SERIALIZER)
                     .put(VersionDeletedRecord.class, VersionDeletedRecord.SERIALIZER)
                     .put(SchemaFingerprintKey.class, SchemaVersionList.SERIALIZER)
                     .put(GroupPropertyKey.class, GroupPropertiesRecord.SERIALIZER)
@@ -384,6 +386,46 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
+    class SchemaIdChunkKey implements TableKey {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final int id;
+        private final int chunkNumber;
+
+        private static class SchemaIdChunkKeyBuilder implements ObjectBuilder<SchemaIdChunkKey> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdChunkKey, SchemaIdChunkKey.SchemaIdChunkKeyBuilder> {
+            @Override
+            protected SchemaIdChunkKey.SchemaIdChunkKeyBuilder newBuilder() {
+                return SchemaIdChunkKey.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(SchemaIdChunkKey e, RevisionDataOutput target) throws IOException {
+                target.writeCompactInt(e.id);
+                target.writeCompactInt(e.chunkNumber);
+            }
+
+            private void read00(RevisionDataInput source, SchemaIdChunkKey.SchemaIdChunkKeyBuilder b) throws IOException {
+                b.id(source.readCompactInt());
+                b.chunkNumber(source.readCompactInt());
+            }
+        }
+    }
+    
+    @Data
+    @Builder
+    @AllArgsConstructor
     class IndexTypeVersionToIdKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
@@ -475,7 +517,8 @@ public interface TableRecords {
         private final int version;
         private final Compatibility compatibility;
         private final long timestamp;
-
+        private final int additionalChunkCount;
+        
         @Override
         @SneakyThrows(IOException.class)
         public byte[] toBytes() {
@@ -507,6 +550,7 @@ public interface TableRecords {
                 target.writeCompactInt(e.getVersion());
                 CompatibilitySerializer.SERIALIZER.serialize(target, e.compatibility);
                 target.writeLong(e.timestamp);
+                target.writeCompactInt(e.additionalChunkCount);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
@@ -514,7 +558,51 @@ public interface TableRecords {
                  .id(source.readCompactInt())
                  .version(source.readCompactInt())
                  .compatibility(CompatibilitySerializer.SERIALIZER.deserialize(source))
-                 .timestamp(source.readLong());
+                 .timestamp(source.readLong())
+                 .additionalChunkCount(source.readCompactInt());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class SchemaChunkRecord implements TableValue {
+        public static final SchemaChunkRecord.Serializer SERIALIZER = new SchemaChunkRecord.Serializer();
+
+        private final ByteArraySegment chunkPayload;
+        
+        @Override
+        @SneakyThrows(IOException.class)
+        public byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class SchemaChunkRecordBuilder implements ObjectBuilder<SchemaChunkRecord> {
+        }
+
+        static class Serializer extends VersionedSerializer.WithBuilder<SchemaChunkRecord, SchemaChunkRecord.SchemaChunkRecordBuilder> {
+            @Override
+            protected SchemaChunkRecord.SchemaChunkRecordBuilder newBuilder() {
+                return SchemaChunkRecord.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(SchemaChunkRecord e, RevisionDataOutput target) throws IOException {
+                target.writeArray(e.chunkPayload.array(), e.chunkPayload.arrayOffset(), e.chunkPayload.getLength());
+            }
+
+            private void read00(RevisionDataInput source, SchemaChunkRecord.SchemaChunkRecordBuilder b) throws IOException {
+                b.chunkPayload(new ByteArraySegment(source.readArray()));
             }
         }
     }

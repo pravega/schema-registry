@@ -73,7 +73,7 @@ public class InMemorySchemas implements Schemas<Integer> {
         String schemaId;
         schemaId = UUID.randomUUID().toString();
         SchemaIdKey schemaIdKey = new SchemaIdKey(schemaId);
-        schemas.put(schemaIdKey, new Value(new SchemaRecord(schemaInfo), 0));
+        schemas.put(schemaIdKey, new Value(new SchemaRecord(schemaInfo, 1), 0));
 
         if (fingerprintValue == null) {
             schemas.put(fingerprintKey, new Value(new SchemaIdList(Collections.singletonList(schemaId)), 0));

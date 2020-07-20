@@ -34,7 +34,8 @@ public class TableKeySerializer extends VersionedSerializer.MultiType<TableRecor
                .serializer(TableRecords.CodecTypesKey.class, 10, new TableRecords.CodecTypesKey.Serializer())
                .serializer(TableRecords.LatestSchemasKey.class, 11, new TableRecords.LatestSchemasKey.Serializer())
                .serializer(TableRecords.IndexTypeVersionToIdKey.class, 12, new TableRecords.IndexTypeVersionToIdKey.Serializer())
-               .serializer(TableRecords.VersionDeletedRecord.class, 13, new TableRecords.VersionDeletedRecord.Serializer());
+               .serializer(TableRecords.VersionDeletedRecord.class, 13, new TableRecords.VersionDeletedRecord.Serializer())
+               .serializer(TableRecords.SchemaIdChunkKey.class, 14, new TableRecords.SchemaIdChunkKey.Serializer());
     }
 
     /**
