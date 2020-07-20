@@ -255,10 +255,10 @@ public abstract class TestEndToEnd {
         assertEquals(v.getVersion(), 0);
         assertEquals(v.getType(), "x");
 
+        assertEquals(client.getSchemaReferences(s).size(), 1);
         assertEquals(client.getSchemas(group).get(0).getSchemaInfo(), s);
         assertEquals(client.getGroupHistory(group).get(0).getSchemaInfo(), s);
         assertEquals(v, client.getVersionForSchema(group, s));
-        assertEquals(client.getSchemaReferences(s).size(), 1);
     }
 
     abstract SchemaStore getStore();

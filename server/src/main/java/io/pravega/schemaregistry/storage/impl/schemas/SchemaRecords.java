@@ -17,11 +17,13 @@ import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
 import io.pravega.common.util.ByteArraySegment;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.storage.impl.group.records.SchemaInfoSerializer;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
+import io.pravega.schemaregistry.storage.impl.group.records.SerializationFormatRecord;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Getter;
 import lombok.SneakyThrows;
 
 import java.io.DataInput;
@@ -211,14 +213,45 @@ public interface SchemaRecords {
         }
     }
 
-    @Data
-    @Builder
-    @AllArgsConstructor
     class SchemaRecord implements Value {
         public static final SchemaRecord.Serializer SERIALIZER = new SchemaRecord.Serializer();
 
+        @Getter
+        private final String type;
+        @Getter
+        private final SerializationFormat serializationFormat;
+        @Getter
+        private final ByteArraySegment schemaBinary;
+        @Getter
+        private final int maxChunkSize;
+        @Getter
+        private final int numberOfChunks;
+        /**
+         * Excluded from serialization.
+         */
+        @Getter
         private final SchemaInfo schemaInfo;
-        private final int additionalChunkCount;
+
+        @Builder
+        public SchemaRecord(String type, SerializationFormat serializationFormat, 
+                            ByteArraySegment schemaBinary, int maxChunkSize, int numberOfChunks) {
+            this.type = type;
+            this.serializationFormat = serializationFormat;
+            this.schemaBinary = schemaBinary;
+            this.maxChunkSize = maxChunkSize;
+            this.numberOfChunks = numberOfChunks;
+            this.schemaInfo = numberOfChunks == 0 ? new SchemaInfo(type, serializationFormat, 
+                    ByteBuffer.wrap(schemaBinary.array(), schemaBinary.arrayOffset(), schemaBinary.getLength()), ImmutableMap.of()) : null;
+        }
+
+        public SchemaRecord(SchemaInfo schemaInfo) {
+            this.type = schemaInfo.getType();
+            this.serializationFormat = schemaInfo.getSerializationFormat();
+            this.schemaBinary = new ByteArraySegment(schemaInfo.getSchemaData());
+            this.maxChunkSize = schemaBinary.getLength();
+            this.numberOfChunks = 0;
+            this.schemaInfo = schemaInfo;
+        }
 
         @Override
         @SneakyThrows(IOException.class)
@@ -246,13 +279,19 @@ public interface SchemaRecords {
             }
 
             private void write00(SchemaRecord e, RevisionDataOutput target) throws IOException {
-                SchemaInfoSerializer.SERIALIZER.serialize(target, e.schemaInfo);
-                target.writeCompactInt(e.additionalChunkCount);
+                target.writeUTF(e.getType());
+                SerializationFormatRecord.SERIALIZER.serialize(target, new SerializationFormatRecord(e.getSerializationFormat()));
+                target.writeArray(e.schemaBinary.array(), e.schemaBinary.arrayOffset(), e.schemaBinary.getLength());
+                target.writeInt(e.maxChunkSize);
+                target.writeCompactInt(e.numberOfChunks);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
-                b.schemaInfo(SchemaInfoSerializer.SERIALIZER.deserialize(source))
-                 .additionalChunkCount(source.readCompactInt());
+                b.type(source.readUTF())
+                 .serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat())
+                 .schemaBinary(new ByteArraySegment(source.readArray()))
+                 .maxChunkSize(source.readInt())
+                 .numberOfChunks(source.readCompactInt());
             }
         }
     }

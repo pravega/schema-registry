@@ -31,7 +31,6 @@ import java.util.stream.Collectors;
 
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.fromBytes;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdKey;
-import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdChunkKey;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.TableValue;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.VersionDeletedRecord;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.EncodingIdRecord;
@@ -48,10 +47,13 @@ public class PravegaKVGroupTable implements GroupTable<Version> {
     static final String TABLE_NAME_FORMAT = TableStore.SCHEMA_REGISTRY_SCOPE + "/%s.#.metadata/0";
     private static final TableKeySerializer KEY_SERIALIZER = new TableKeySerializer();
     // for immutable keys check in the local cache. If its not in the cache, fetch it from the store and load it 
-    // in the cache. 
+    // in the cache. Although a schema chunk is also immutable, we will not cache very large schemas beside the first chunk. 
+    // This is because the guava cache library we make use of has number of elements and time based eviction rules but
+    // does not impose any restriction on size of an entry overall. And we dont want the cache to be taken over by
+    // multiple chunks of a single schema. 
     private static final List<Class<? extends TableKey>> IMMUTABLE_RECORDS =
             Lists.newArrayList(SchemaIdKey.class, VersionDeletedRecord.class, IndexTypeVersionToIdKey.class,
-                    GroupPropertyKey.class, EncodingIdRecord.class, EncodingInfoRecord.class, SchemaIdChunkKey.class);
+                    GroupPropertyKey.class, EncodingIdRecord.class, EncodingInfoRecord.class);
 
     private final TableStore tablesStore;
     private final String tableName;
