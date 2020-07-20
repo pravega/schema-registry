@@ -176,7 +176,7 @@ public class Group<V> {
         if (sr.getSchemaInfo() != null) {
             return CompletableFuture.completedFuture(sr.getSchemaInfo());
         } else {
-            List<SchemaIdChunkKey> keys = IntStream.range(0, sr.getAdditionalChunkCount()).boxed().map(y -> 
+            List<SchemaIdChunkKey> keys = IntStream.range(1, sr.getNumberOfChunks()).boxed().map(y -> 
                     new SchemaIdChunkKey(sr.getId(), y)).collect(Collectors.toList());
             return groupTable.getEntries(keys, SchemaChunkRecord.class)
                     .thenApply(chunks -> {
@@ -230,12 +230,13 @@ public class Group<V> {
                                                               schemaRecords.add((SchemaRecord) entry.getValue());
                                                           }
                                                       }
-                                                      return Futures.allOfWithResults(schemaRecords.stream().filter(x -> !deleted.contains(x.getId()))
-                                                                             .map(x -> getSchemaInfo(x)
-                                                                                     .thenApply(schemaInfo -> new SchemaRecord(
-                                                                                             schemaInfo, x.getId(), x.getVersion(), 
-                                                                                             x.getCompatibility(), x.getTimestamp())))
-                                                                             .collect(Collectors.toList()));
+                                                      return Futures.allOfWithResults(schemaRecords
+                                                              .stream().filter(x -> !deleted.contains(x.getId()))
+                                                              .map(x -> getSchemaInfo(x)
+                                                                      .thenApply(schemaInfo -> new SchemaRecord(
+                                                                              schemaInfo, x.getId(), x.getVersion(),
+                                                                              x.getCompatibility(), x.getTimestamp())))
+                                                              .collect(Collectors.toList()));
                                                   });
                              }
                          });
@@ -576,9 +577,9 @@ public class Group<V> {
                     new SchemaRecord(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaInfo.getProperties(),
                             chunks.get(0), next.getId(), next.getVersion(), prop.getCompatibility(), System.currentTimeMillis(), 
                             Config.MAX_CHUNK_SIZE_BYTES,
-                            chunks.size() - 1), null));
+                            chunks.size()), null));
 
-            for (int i = 1; i < chunks.size(); i++) {
+            for (int i = 1; i < chunks.size(); i++) { 
                 entries.add(new Entry<>(new SchemaIdChunkKey(next.getId(), i),
                         new SchemaChunkRecord(chunks.get(i)), null));
             } 

@@ -225,7 +225,7 @@ public interface SchemaRecords {
         @Getter
         private final int maxChunkSize;
         @Getter
-        private final int additionalChunkCount;
+        private final int numberOfChunks;
         /**
          * Excluded from serialization.
          */
@@ -234,13 +234,13 @@ public interface SchemaRecords {
 
         @Builder
         public SchemaRecord(String type, SerializationFormat serializationFormat, 
-                            ByteArraySegment schemaBinary, int maxChunkSize, int additionalChunkCount) {
+                            ByteArraySegment schemaBinary, int maxChunkSize, int numberOfChunks) {
             this.type = type;
             this.serializationFormat = serializationFormat;
             this.schemaBinary = schemaBinary;
             this.maxChunkSize = maxChunkSize;
-            this.additionalChunkCount = additionalChunkCount;
-            this.schemaInfo = additionalChunkCount == 0 ? new SchemaInfo(type, serializationFormat, 
+            this.numberOfChunks = numberOfChunks;
+            this.schemaInfo = numberOfChunks == 0 ? new SchemaInfo(type, serializationFormat, 
                     ByteBuffer.wrap(schemaBinary.array(), schemaBinary.arrayOffset(), schemaBinary.getLength()), ImmutableMap.of()) : null;
         }
 
@@ -249,7 +249,7 @@ public interface SchemaRecords {
             this.serializationFormat = schemaInfo.getSerializationFormat();
             this.schemaBinary = new ByteArraySegment(schemaInfo.getSchemaData());
             this.maxChunkSize = schemaBinary.getLength();
-            this.additionalChunkCount = 0;
+            this.numberOfChunks = 0;
             this.schemaInfo = schemaInfo;
         }
 
@@ -283,7 +283,7 @@ public interface SchemaRecords {
                 SerializationFormatRecord.SERIALIZER.serialize(target, new SerializationFormatRecord(e.getSerializationFormat()));
                 target.writeArray(e.schemaBinary.array(), e.schemaBinary.arrayOffset(), e.schemaBinary.getLength());
                 target.writeInt(e.maxChunkSize);
-                target.writeCompactInt(e.additionalChunkCount);
+                target.writeCompactInt(e.numberOfChunks);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
@@ -291,7 +291,7 @@ public interface SchemaRecords {
                  .serializationFormat(SerializationFormatRecord.SERIALIZER.deserialize(source).getSerializationFormat())
                  .schemaBinary(new ByteArraySegment(source.readArray()))
                  .maxChunkSize(source.readInt())
-                 .additionalChunkCount(source.readCompactInt());
+                 .numberOfChunks(source.readCompactInt());
             }
         }
     }

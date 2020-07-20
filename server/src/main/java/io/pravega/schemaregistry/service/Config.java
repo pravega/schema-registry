@@ -81,7 +81,7 @@ public final class Config {
     private static final Property<String> PROPERTY_PRAVEGA_TLS_TRUST_STORE = Property.named("store.pravega.controller.connect.security.tls.trustStore.location", "");
     private static final Property<Boolean> PROPERTY_PRAVEGA_TLS_VALIDATE_HOSTNAME = Property.named("store.pravega.controller.connect.security.tls.validateHostName.enable", true);
 
-    private static final Property<Integer> PROPERTY_MAX_CHUNK_SIZE_BYTES = Property.named("store.pravega.maxChunk.bytes", 9216000);
+    private static final Property<Integer> PROPERTY_MAX_CHUNK_SIZE_BYTES = Property.named("store.pravega.maxChunk.bytes", 900 * 1024);
     private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("threadPool.size", 50);
 
     private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enable", false);

@@ -125,10 +125,9 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
         SchemaIdKey key = new SchemaIdKey(id);
         List<ByteArraySegment> chunks = ChunkUtil.chunk(schemaInfo.getSchemaData(), Config.MAX_CHUNK_SIZE_BYTES);
         assert !chunks.isEmpty();
-        ByteArraySegment firstChunk = chunks.get(0);
         entries.put(KEY_SERIALIZER.toBytes(key),
-                new VersionedRecord<>(new SchemaRecord(schemaInfo.getType(), schemaInfo.getSerializationFormat(), 
-                        firstChunk, Config.MAX_CHUNK_SIZE_BYTES, chunks.size()).toBytes(), null));
+                new VersionedRecord<>(new SchemaRecord(schemaInfo.getType(), schemaInfo.getSerializationFormat(),
+                        chunks.get(0), Config.MAX_CHUNK_SIZE_BYTES, chunks.size()).toBytes(), null));
         for (int i = 1; i < chunks.size(); i++) {
             byte[] bytes = new SchemaChunkRecord(chunks.get(i)).toBytes();
             entries.put(KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, i)),
@@ -166,7 +165,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
         if (record.getSchemaInfo() != null) {
             return CompletableFuture.completedFuture(record.getSchemaInfo());
         } else {
-            List<byte[]> keys = IntStream.range(0, record.getAdditionalChunkCount()).boxed()
+            List<byte[]> keys = IntStream.range(1, record.getNumberOfChunks()).boxed()
                                          .map(y -> KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, y))).collect(Collectors.toList());
             return tableStore.getEntries(SCHEMAS, keys, false)
                              .thenApply(chunks -> {

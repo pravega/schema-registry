@@ -61,6 +61,7 @@ public class ChunkUtil {
         ByteBuffer combined = ByteBuffer.allocate(chunks.stream().mapToInt(ByteArraySegment::getLength).reduce(0, Integer::sum));
 
         chunks.forEach(x -> combined.put(x.array(), x.arrayOffset(), x.getLength()));
+        combined.rewind();
         return combined;
     }
 }

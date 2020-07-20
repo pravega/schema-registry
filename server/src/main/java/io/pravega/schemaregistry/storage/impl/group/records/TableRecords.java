@@ -530,7 +530,7 @@ public interface TableRecords {
         @Getter
         private final int maxChunkSize;
         @Getter
-        private final int additionalChunkCount;
+        private final int numberOfChunks;
 
         /**
          * Excluded from serialization. 
@@ -541,7 +541,7 @@ public interface TableRecords {
         @Builder
         public SchemaRecord(String type, SerializationFormat serializationFormat, ImmutableMap<String, String> properties, 
                             ByteArraySegment schemaBinary, int id, int version, Compatibility compatibility, long timestamp, 
-                            int maxChunkSize, int additionalChunkCount) {
+                            int maxChunkSize, int numberOfChunks) {
             this.type = type;
             this.serializationFormat = serializationFormat;
             this.properties = properties;
@@ -551,8 +551,8 @@ public interface TableRecords {
             this.compatibility = compatibility;
             this.timestamp = timestamp;
             this.maxChunkSize = maxChunkSize;
-            this.additionalChunkCount = additionalChunkCount;
-            this.schemaInfo = additionalChunkCount == 0 ? new SchemaInfo(type, serializationFormat, ByteBuffer.wrap(schemaBinary.array(), 
+            this.numberOfChunks = numberOfChunks;
+            this.schemaInfo = numberOfChunks == 1 ? new SchemaInfo(type, serializationFormat, ByteBuffer.wrap(schemaBinary.array(), 
                     schemaBinary.arrayOffset(), schemaBinary.getLength()), properties) : null;
         }
         
@@ -566,7 +566,7 @@ public interface TableRecords {
             this.compatibility = compatibility;
             this.timestamp = timestamp;
             this.maxChunkSize = schemaInfo.getSchemaData().remaining();
-            this.additionalChunkCount = 0;
+            this.numberOfChunks = 0;
             this.schemaInfo = schemaInfo;
         }
 
@@ -605,7 +605,7 @@ public interface TableRecords {
                 target.writeLong(e.timestamp);
                 target.writeArray(e.schemaBinary.array(), e.schemaBinary.arrayOffset(), e.schemaBinary.getLength());
                 target.writeInt(e.maxChunkSize);
-                target.writeCompactInt(e.additionalChunkCount);
+                target.writeCompactInt(e.numberOfChunks);
             }
 
             private void read00(RevisionDataInput source, SchemaRecord.SchemaRecordBuilder b) throws IOException {
@@ -622,7 +622,7 @@ public interface TableRecords {
                  .timestamp(source.readLong())
                  .schemaBinary(new ByteArraySegment(source.readArray()))
                  .maxChunkSize(source.readInt())
-                 .additionalChunkCount(source.readCompactInt());
+                 .numberOfChunks(source.readCompactInt());
             }
         }
     }
