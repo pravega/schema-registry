@@ -846,7 +846,9 @@ public class SchemaRegistryService {
                         // Users can define a group of schemas into the same schema file as union,
                         // which is logically equivalent to a nested structure for each individual record type.
                         // We will always normalize a schema into the nested structure from the union so that it
-                        // only includes entities referred to in the object of a specific type. 
+                        // only includes entities referred to in the object of a specific type.
+                        // if the SchemaInfo.type is not defined as one of the types in the union, then we will store
+                        // the schema as a union itself. 
                         schema = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType()))
                                        .findAny().orElse(schema);
                     }
