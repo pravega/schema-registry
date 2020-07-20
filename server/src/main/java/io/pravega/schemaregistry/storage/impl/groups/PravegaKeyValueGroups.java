@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.storage.impl.groups;
 
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
-import io.pravega.client.tables.impl.IteratorState;
+import io.pravega.client.tables.impl.IteratorStateImpl;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.schemaregistry.ResultPage;
@@ -108,7 +108,7 @@ public class PravegaKeyValueGroups implements Groups<Version> {
         String namespace = nameSpace == null ? "" : nameSpace;
         ByteBuf continuationToken;
         if (token == null || token.equals(ContinuationToken.EMPTY)) {
-            continuationToken = IteratorState.EMPTY.toBytes();
+            continuationToken = IteratorStateImpl.EMPTY.getToken();
         } else {
             byte[] bytes = Base64.getDecoder().decode(token.toString());
             continuationToken = Unpooled.wrappedBuffer(bytes);
