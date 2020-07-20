@@ -14,6 +14,7 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.common.ObjectBuilder;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 import java.nio.ByteBuffer;
 
@@ -31,26 +32,30 @@ import java.nio.ByteBuffer;
 @Data
 @Builder
 public class SchemaInfo {
+    public static final int ONE_MB = 1024 * 1024;
     /**
      * Identifies the object type that is represented by the schema. 
      */
-    private final String type;
+    private @NonNull final String type;
     /**
      * Serialization format that this schema is intended to be used for. 
      */
-    private final SerializationFormat serializationFormat;
+    private @NonNull final SerializationFormat serializationFormat;
     /**
      * Schema as an array of 8-bit unsigned bytes. 
      */
-    private final ByteBuffer schemaData;
+    private @NonNull final ByteBuffer schemaData;
     /**
      * User defined key value strings that users can use to add any additional metadata to the schema. 
      */
-    private final ImmutableMap<String, String> properties;
+    private @NonNull final ImmutableMap<String, String> properties;
 
-    public SchemaInfo(String type, SerializationFormat serializationFormat, ByteBuffer schemaData, ImmutableMap<String, String> properties) {
-        Preconditions.checkArgument(type != null);
-        Preconditions.checkArgument(serializationFormat != SerializationFormat.Any);
+    public SchemaInfo(@NonNull String type, @NonNull SerializationFormat serializationFormat, @NonNull ByteBuffer schemaData, @NonNull ImmutableMap<String, String> properties) {
+        Preconditions.checkArgument(serializationFormat != SerializationFormat.Any, "Invalid Serialization Format.");
+        Preconditions.checkArgument(schemaData.remaining() <= 8 * ONE_MB, "Invalid schema binary.");
+        Preconditions.checkArgument(properties.size() <= 100 && 
+                        properties.entrySet().stream().allMatch(x -> x.getKey().length() <= 200 && x.getValue().length() <= 200),
+                "Invalid properties, make sure each key and value are less than or equal to 200 bytes and there are no more than 100 entries.");
         this.type = type;
         this.serializationFormat = serializationFormat;
         this.schemaData = schemaData;

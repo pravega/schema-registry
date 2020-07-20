@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import io.pravega.common.ObjectBuilder;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Defines different Compatibility policy options for schema evolution for schemas within a group.
@@ -26,15 +27,16 @@ public class Compatibility {
     /**
      * Enum that defines the Type of compatibility policy.
      */
-    private final Type type;
+    private @NonNull final Type type;
     private final BackwardAndForward backwardAndForward;
 
     private Compatibility(Type type) {
         this(type, null);
     }
 
-    private Compatibility(Type type, BackwardAndForward backwardAndForward) {
-        Preconditions.checkArgument(!type.equals(Type.Advanced) || backwardAndForward != null);
+    private Compatibility(@NonNull Type type, BackwardAndForward backwardAndForward) {
+        Preconditions.checkArgument(!type.equals(Type.Advanced) || backwardAndForward != null, 
+                "For advanced type, At lease one of backward or forward policy should be supplied.");
         this.type = type;
         this.backwardAndForward = backwardAndForward;
     }

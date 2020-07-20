@@ -13,6 +13,7 @@ import io.pravega.common.ObjectBuilder;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Version information object that encapsulates properties that uniquely identify a specific version of a schema within a group.
@@ -34,7 +35,7 @@ public class VersionInfo {
      * Object type which is declared in the corresponding {@link SchemaInfo#type} for the schemainfo that is identified 
      * by this version info. 
      */
-    private final String type;
+    private @NonNull final String type;
     /**
      * A version number that identifies the position of schema among other schemas in the group that share the same 'type'.
      */
