@@ -9,9 +9,11 @@
  */
 package io.pravega.schemaregistry.contract.data;
 
+import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Different configuration choices for a group. 
@@ -35,11 +37,11 @@ public class GroupProperties {
     /**
      * Serialization format allowed for the group. 
      */
-    private final SerializationFormat serializationFormat;
+    private @NonNull final SerializationFormat serializationFormat;
     /**
      * Compatibility to be applied for the group. 
      */
-    private final Compatibility compatibility;
+    private @NonNull final Compatibility compatibility;
     /**
      * Flag to indicate whether multiple types of schemas can be added to the group or not. If set to false, all schemas
      * added to the group should have the same {@link SchemaInfo#type}.
@@ -48,13 +50,16 @@ public class GroupProperties {
     /**
      * User defined key value strings for any metadata they want to associate with the group. 
      */
-    private final ImmutableMap<String, String> properties;
+    private @NonNull final ImmutableMap<String, String> properties;
 
     public GroupProperties(SerializationFormat serializationFormat, Compatibility compatibility, boolean allowMultipleTypes) {
         this(serializationFormat, compatibility, allowMultipleTypes, ImmutableMap.of());
     }
 
     public GroupProperties(SerializationFormat serializationFormat, Compatibility compatibility, boolean allowMultipleTypes, ImmutableMap<String, String> properties) {
+        Preconditions.checkArgument(properties != null && properties.size() < 100 &&
+                        properties.entrySet().stream().allMatch(x -> x.getKey().length() < 200 && x.getValue().length() < 200),
+                "Invalid properties, make sure each key and value are less than 200 bytes and there are no more than 100 entries.");
         this.serializationFormat = serializationFormat;
         this.compatibility = compatibility;
         this.allowMultipleTypes = allowMultipleTypes;

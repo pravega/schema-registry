@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.contract.data;
 
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Describes changes to the group and the compatibility {@link GroupHistoryRecord#compatibility} that were 
@@ -24,15 +25,15 @@ public class GroupHistoryRecord {
     /**
      * Schema information object for the schemaInfo that was added to the group.
      */
-    private final SchemaInfo schemaInfo;
+    private @NonNull final SchemaInfo schemaInfo;
     /**
      * Version information object that uniquely identifies the schemaInfo in the group. 
      */
-    private final VersionInfo versionInfo;
+    private @NonNull final VersionInfo versionInfo;
     /**
      * Compatibility applied at the time when the schemaInfo was registered. 
      */
-    private final Compatibility compatibility;
+    private @NonNull final Compatibility compatibility;
     /**
      * Service's Time when the schemaInfo was registered. 
      */
