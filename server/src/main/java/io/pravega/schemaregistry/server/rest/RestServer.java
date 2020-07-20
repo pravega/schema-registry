@@ -18,7 +18,7 @@ import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.ws.rs.core.UriBuilder;
 
-import io.pravega.common.auth.JKSHelper;
+import io.pravega.common.security.JKSHelper;
 import io.pravega.schemaregistry.server.rest.filter.NamespacePathRequestFilter;
 import io.pravega.schemaregistry.server.rest.resources.GroupResourceImpl;
 import io.pravega.schemaregistry.server.rest.resources.PingImpl;
