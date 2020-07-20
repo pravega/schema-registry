@@ -21,6 +21,8 @@ import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
+import io.pravega.schemaregistry.server.rest.filter.AuthenticationFilter;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
@@ -79,8 +81,10 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
         ServiceConfig config = ServiceConfig.builder().authEnabled(true).userPasswordFilePath(authFile.getAbsolutePath()).build();
-        resourceObjs.add(new GroupResourceImpl(service, config, executor));
-        resourceObjs.add(new SchemaResourceImpl(service, config, executor));
+        AuthHandlerManager authHandlerManager = new AuthHandlerManager(config);
+        resourceObjs.add(new AuthenticationFilter(config.isAuthEnabled(), authHandlerManager));
+        resourceObjs.add(new GroupResourceImpl(service, config, authHandlerManager, executor));
+        resourceObjs.add(new SchemaResourceImpl(service, config, authHandlerManager, executor));
 
         RegistryApplication registryApplication = new RegistryApplication(resourceObjs);
         return registryApplication;

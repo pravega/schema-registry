@@ -11,13 +11,13 @@ package io.pravega.schemaregistry.server.rest.auth;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
-import io.pravega.auth.AuthException;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
 import io.pravega.controller.server.rpc.auth.PasswordAuthHandler;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 
+import javax.ws.rs.core.SecurityContext;
 import java.security.Principal;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
@@ -84,6 +84,27 @@ public class AuthHandlerManager {
 
         return new Context(handler, token);
     }
+
+    /**
+     * Get auth context for the credentials. It extracts method and token from the credentials
+     * and loads the auth handler corresponding to the method. 
+     * Subsequently, authentication and authorization can be called on the context which will use the auth handler
+     * and then token from the credentials to authenticate and authorize. 
+     * 
+     * @param securityContext Security Context. 
+     * @return Context object that can be used to perform authentication and authorization for supplied credentials
+     * @throws AuthenticationException if the handler 
+     */
+    public Context getContext(SecurityContext securityContext) throws AuthenticationException {
+        AuthHandler handler;
+
+        handler = handlerMap.get(securityContext.getAuthenticationScheme());
+        if (handler == null) {
+            throw new AuthenticationException("Handler does not exist for method " + securityContext.getAuthenticationScheme());
+        }
+
+        return new Context(handler, securityContext.getUserPrincipal());
+    }
     
     /**
      * This method is not only visible for testing, but also intended to be used solely for testing. It allows tests
@@ -102,7 +123,7 @@ public class AuthHandlerManager {
      * Context class which sets the context for a request. It is derived by using the auth handler for the authentication 
      * method and stores the authentication token.  
      */
-    public static class Context {
+    public static class Context implements SecurityContext {
         private final AuthHandler handler;
         private final String token;
         private final AtomicReference<Principal> principal = new AtomicReference<>();
@@ -111,7 +132,13 @@ public class AuthHandlerManager {
             this.handler = handler;
             this.token = token;
         }
-
+        
+        private Context(AuthHandler handler, Principal principal) {
+            this.handler = handler;
+            this.principal.set(principal);
+            this.token = null;
+        }
+        
         /**
          * Authenticate the user using the token.
          *
@@ -135,25 +162,25 @@ public class AuthHandlerManager {
             Preconditions.checkNotNull(principal.get(), "Authentication should have been called before authorization");
             return handler.authorize(resource, principal.get()).ordinal() >= level.ordinal();
         }
+        
+        @Override
+        public Principal getUserPrincipal() {
+            return principal.get();
+        }
 
-        /**
-         * API to authenticate and authorize access to a given resource.
-         *
-         * @param resource    The resource identifier for which the access needs to be controlled.
-         * @param level       Expected level of access.
-         * @return Returns true if the entity represented by the custom auth headers had given level of access to the resource.
-         * Returns false if the entity does not have access.
-         * @throws AuthenticationException if an authentication failure occurred.
-         */
-        public boolean authenticateAndAuthorize(String resource, AuthHandler.Permissions level) throws AuthenticationException {
-            boolean retVal = false;
-            try {
-                authenticate();
-                authorize(resource, level);
-            } catch (AuthException e) {
-                throw new AuthenticationException("Authentication failure");
-            }
-            return retVal;
+        @Override
+        public boolean isUserInRole(String role) {
+            return false;
+        }
+
+        @Override
+        public boolean isSecure() {
+            return false;
+        }
+
+        @Override
+        public String getAuthenticationScheme() {
+            return handler.getHandlerName();
         }
     }
 }
