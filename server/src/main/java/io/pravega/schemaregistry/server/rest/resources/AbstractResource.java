@@ -74,7 +74,7 @@ abstract class AbstractResource {
             throw e;
         } catch (IllegalArgumentException e) {
             log.warn("Bad request {} error:{}", request, e.getMessage());
-            return CompletableFuture.completedFuture(Response.status(Response.Status.BAD_REQUEST).build());
+            return CompletableFuture.completedFuture(Response.status(Response.Status.BAD_REQUEST).entity(e.getMessage()).build());
         } catch (Exception e) {
             log.error("request failed with exception {}", e);
             return Futures.failedFuture(e);
@@ -153,6 +153,14 @@ abstract class AbstractResource {
                     encodedNamespace, URLEncoder.encode(group, Charsets.UTF_8.toString()));
         } catch (UnsupportedEncodingException e) {
             throw new IllegalArgumentException("Invalid group or namespace name.");
+        }
+    }
+
+    Response handleGeneralExceptions(Throwable unwrap) {
+        if (unwrap instanceof IllegalArgumentException) {
+            return Response.status(Response.Status.BAD_REQUEST).entity(unwrap.getMessage()).build();
+        } else {
+            return Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(unwrap.getMessage()).build();
         }
     }
 }
