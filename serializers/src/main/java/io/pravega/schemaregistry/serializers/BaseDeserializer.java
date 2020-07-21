@@ -6,15 +6,16 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.serializers;
 
-include 'client',
-        'common',
-        'contract',
-        'serializers',
-        'server',
-        'auth'
+import io.pravega.client.stream.Serializer;
 
-        
+import java.nio.ByteBuffer;
+
+abstract class BaseDeserializer<T> implements Serializer<T> {
+    @Override
+    public final ByteBuffer serialize(T value) {
+        throw new UnsupportedOperationException();
+    }
+}
