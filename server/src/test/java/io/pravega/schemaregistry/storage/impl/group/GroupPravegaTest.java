@@ -14,7 +14,16 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.client.ClientConfig;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.common.HashUtil;
-import io.pravega.schemaregistry.contract.data.*;
+import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.contract.data.Compatibility;
+import io.pravega.schemaregistry.contract.data.EncodingId;
+import io.pravega.schemaregistry.contract.data.EncodingInfo;
+import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
+import io.pravega.schemaregistry.contract.data.GroupProperties;
+import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
+import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -40,11 +49,12 @@ import java.util.concurrent.ScheduledExecutorService;
 
 import static io.pravega.schemaregistry.storage.impl.group.PravegaKVGroupTable.TABLE_NAME_FORMAT;
 import static io.pravega.schemaregistry.storage.impl.groups.PravegaKeyValueGroups.GROUPS;
-import static org.junit.Assert.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 public class GroupPravegaTest {
-    private static final TableRecords.LatestSchemasKey LATEST_SCHEMA_VERSION_KEY =
-            new TableRecords.LatestSchemasKey();
+    private static final TableRecords.LatestSchemasKey LATEST_SCHEMA_VERSION_KEY = new TableRecords.LatestSchemasKey();
     private static final TableRecords.CodecTypesKey CODECS_KEY = new TableRecords.CodecTypesKey();
     private static final TableRecords.ValidationPolicyKey VALIDATION_POLICY_KEY =
             new TableRecords.ValidationPolicyKey();
@@ -52,10 +62,10 @@ public class GroupPravegaTest {
     private ClientConfig clientConfig;
     private String groupName;
     private TableStore tableStore;
-    private PravegaKeyValueGroups PravegaKeyValueGroups;
+    private PravegaKeyValueGroups pravegaKeyValueGroups;
     private ScheduledExecutorService executor;
-    String anygroup = "anygroup";
-    String anygroup1 = "anygroup1";
+    private String anygroup = "anygroup";
+    private String anygroup1 = "anygroup1";
     @Before
     public void setUp() {
         PravegaStandaloneUtils pravegaStandaloneUtils = PravegaStandaloneUtils.startPravega();
@@ -64,12 +74,12 @@ public class GroupPravegaTest {
         groupName = "mygroup";
         executor = Executors.newScheduledThreadPool(5);
         tableStore = new TableStore(clientConfig, executor);
-        PravegaKeyValueGroups = new PravegaKeyValueGroups(tableStore, executor);
+        pravegaKeyValueGroups = new PravegaKeyValueGroups(tableStore, executor);
     }
 
     @After
     public void tearDown() {
-        PravegaKeyValueGroups.deleteGroup(null, groupName).join();
+        pravegaKeyValueGroups.deleteGroup(null, groupName).join();
         executor.shutdownNow();
     }
 
@@ -79,8 +89,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         assertEquals(tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -93,11 +103,11 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         assertEquals(tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord().getState(), GroupsValue.State.Active);
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -115,11 +125,11 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
-        List<SchemaWithVersion> schemaWithVersionList = PravegaKeyValueGroups.getGroup(
+        List<SchemaWithVersion> schemaWithVersionList = pravegaKeyValueGroups.getGroup(
                 null, groupName).join().getLatestSchemas().join();
         assertTrue(schemaWithVersionList.isEmpty());
         //non-null case
@@ -128,15 +138,15 @@ public class GroupPravegaTest {
                 ImmutableMap.of());
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
-        schemaWithVersionList = PravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemas().join();
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
+        schemaWithVersionList = pravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemas().join();
         assertEquals(1, schemaWithVersionList.size());
         assertEquals(anygroup, schemaWithVersionList.get(0).getSchemaInfo().getType());
         // two schemas
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
-        schemaWithVersionList = PravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemas().join();
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
+        schemaWithVersionList = pravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemas().join();
         assertEquals(2, schemaWithVersionList.size());
         assertEquals(anygroup, schemaWithVersionList.get(0).getSchemaInfo().getType());
         assertEquals(anygroup1, schemaWithVersionList.get(1).getSchemaInfo().getType());
@@ -148,15 +158,15 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
         // one schema
@@ -188,15 +198,15 @@ public class GroupPravegaTest {
         //multiple schemas
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
-        VersionInfo versionInfo1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo1).join();
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
+        VersionInfo versionInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo1).join();
 
         SchemaInfo schemaInfo2 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
-        VersionInfo versionInfo2 = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo2).join();
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
+        VersionInfo versionInfo2 = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo2).join();
         //versionInfo key
         schemaRecord = tableStore.getEntry(String.format(TABLE_NAME_FORMAT, gv.getId()),
                 new TableKeySerializer().toBytes(new TableRecords.SchemaIdKey(versionInfo1.getId())),
@@ -232,8 +242,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         byte[] schemaData = new byte[0];
@@ -243,30 +253,30 @@ public class GroupPravegaTest {
 
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
-        List<SchemaWithVersion> schemaWitheVersionList = PravegaKeyValueGroups.getGroup(null,
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
+        List<SchemaWithVersion> schemaWitheVersionList = pravegaKeyValueGroups.getGroup(null,
                 groupName).join().getSchemas().join();
         assertEquals(1, schemaWitheVersionList.size());
         assertEquals(anygroup, schemaWitheVersionList.get(0).getSchemaInfo().getType());
         //two schemas
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
-        schemaWitheVersionList = PravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas().join();
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
+        schemaWitheVersionList = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas().join();
         assertEquals(2, schemaWitheVersionList.size());
         assertEquals(anygroup, schemaWitheVersionList.get(0).getSchemaInfo().getType());
         assertEquals(anygroup1, schemaWitheVersionList.get(1).getSchemaInfo().getType());
-        schemaWitheVersionList = PravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas(1).join();
+        schemaWitheVersionList = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas(1).join();
         assertEquals(1, schemaWitheVersionList.size());
         assertEquals(anygroup1, schemaWitheVersionList.get(0).getSchemaInfo().getType());
-        schemaWitheVersionList = PravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas(0).join();
+        schemaWitheVersionList = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas(0).join();
         assertEquals(2, schemaWitheVersionList.size());
         schemaData = new byte[3];
         SchemaInfo schemaInfo2 = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
-        schemaWitheVersionList = PravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas(anygroup, 1).join();
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo2, groupProperties, etag).join();
+        schemaWitheVersionList = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchemas(anygroup, 1).join();
         assertEquals(1, schemaWitheVersionList.size());
         assertEquals(ImmutableMap.of(),
                 schemaWitheVersionList.get(0).getSchemaInfo().getProperties());
@@ -278,8 +288,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -289,12 +299,12 @@ public class GroupPravegaTest {
                 ImmutableMap.of());
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
-        VersionInfo versionInfo = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        VersionInfo versionInfo1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo1).join();
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, etag).join();
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo1, groupProperties, etag).join();
+        VersionInfo versionInfo = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        VersionInfo versionInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo1).join();
         TableRecords.SchemaVersionList schemaVersionList = tableStore.getEntry(
                 String.format(TABLE_NAME_FORMAT, gv.getId()), new TableKeySerializer().toBytes(
                         new TableRecords.SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData().array()))),
@@ -311,13 +321,13 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
         TableRecords.CodecTypesListValue codecTypesListValue = tableStore.getEntry(
                 String.format(TABLE_NAME_FORMAT, gv.getId()),
                 new TableKeySerializer().toBytes(CODECS_KEY),
@@ -334,26 +344,26 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
         //null case
-        List<CodecType> codecTypeList = PravegaKeyValueGroups.getGroup(null, groupName).join().getCodecTypes().join();
+        List<CodecType> codecTypeList = pravegaKeyValueGroups.getGroup(null, groupName).join().getCodecTypes().join();
         assertEquals(0, codecTypeList.size());
         assertTrue(codecTypeList.isEmpty());
         //non-null
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("snappy")).join();
-        codecTypeList = PravegaKeyValueGroups.getGroup(null, groupName).join().getCodecTypes().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("snappy")).join();
+        codecTypeList = pravegaKeyValueGroups.getGroup(null, groupName).join().getCodecTypes().join();
         List<String> codecTypes = tableStore.getEntry(String.format(TABLE_NAME_FORMAT, gv.getId()),
                 new TableKeySerializer().toBytes(CODECS_KEY),
                 x -> TableRecords.fromBytes(
                         TableRecords.CodecTypesKey.class, x,
                         TableRecords.CodecTypesListValue.class)).join().getRecord().getCodecTypes();
-        assertEquals(codecTypeList.size(),codecTypes.size());
+        assertEquals(codecTypeList.size(), codecTypes.size());
         assertEquals(codecTypeList.get(0).getName(), codecTypes.get(0));
         assertEquals(codecTypeList.get(1).getName(), codecTypes.get(1));
     }
@@ -364,8 +374,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -373,12 +383,12 @@ public class GroupPravegaTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        EncodingId encodingId = PravegaKeyValueGroups.getGroup(null, groupName).join().createEncodingId(versionInfo, "gzip",
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        VersionInfo versionInfo = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        EncodingId encodingId = pravegaKeyValueGroups.getGroup(null, groupName).join().createEncodingId(versionInfo, "gzip",
                 eTag).join();
         TableRecords.EncodingInfoRecord encodingInfoRecord = new TableRecords.EncodingInfoRecord(versionInfo,
                 "gzip");
@@ -397,21 +407,21 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        EncodingId encodingId = PravegaKeyValueGroups.getGroup(null, groupName).join().createEncodingId(versionInfo, "gzip",
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        VersionInfo versionInfo = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        EncodingId encodingId = pravegaKeyValueGroups.getGroup(null, groupName).join().createEncodingId(versionInfo, "gzip",
                 eTag).join();
-        EncodingInfo encodingInfo = PravegaKeyValueGroups.getGroup(null, groupName).join().getEncodingInfo(encodingId).join();
+        EncodingInfo encodingInfo = pravegaKeyValueGroups.getGroup(null, groupName).join().getEncodingInfo(encodingId).join();
         assertEquals(new CodecType("gzip"), encodingInfo.getCodecType());
         assertEquals(schemaInfo, encodingInfo.getSchemaInfo());
         assertEquals(versionInfo, encodingInfo.getVersionInfo());
@@ -424,28 +434,28 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
-        Either<EncodingId, Etag> idEtagEither = PravegaKeyValueGroups.getGroup(null, groupName).join().getEncodingId(
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        VersionInfo versionInfo = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addCodecType(new CodecType("gzip")).join();
+        Either<EncodingId, Etag> idEtagEither = pravegaKeyValueGroups.getGroup(null, groupName).join().getEncodingId(
                 versionInfo,
                 "gzip").join();
         assertTrue(idEtagEither.isRight());
         //non-null
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        EncodingId encodingId = PravegaKeyValueGroups.getGroup(null, groupName).join().createEncodingId(versionInfo, "gzip",
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        EncodingId encodingId = pravegaKeyValueGroups.getGroup(null, groupName).join().createEncodingId(versionInfo, "gzip",
                 eTag).join();
-        idEtagEither = PravegaKeyValueGroups.getGroup(null, groupName).join().getEncodingId(versionInfo, "gzip").join();
+        idEtagEither = pravegaKeyValueGroups.getGroup(null, groupName).join().getEncodingId(versionInfo, "gzip").join();
         assertTrue(idEtagEither.isLeft());
         assertEquals(encodingId, idEtagEither.getLeft());
         TableRecords.EncodingInfoRecord encodingInfoRecord = new TableRecords.EncodingInfoRecord(versionInfo,
@@ -465,29 +475,29 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
         //null case
-        assertNull(PravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemaVersion().join());
+        assertNull(pravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemaVersion().join());
         //non-null
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        SchemaWithVersion schemaWithVersion = PravegaKeyValueGroups.getGroup(
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        SchemaWithVersion schemaWithVersion = pravegaKeyValueGroups.getGroup(
                 null, groupName).join().getLatestSchemaVersion().join();
         assertEquals(anygroup1, schemaWithVersion.getSchemaInfo().getType());
         TableRecords.LatestSchemasValue latestSchemaVersionValue = tableStore.getEntry(
@@ -501,7 +511,7 @@ public class GroupPravegaTest {
         assertEquals(latestSchemaVersionValue.getTypes().get(anygroup1).getLatestVersion(), 0);
         assertEquals(latestSchemaVersionValue.getTypes().get(anygroup1).getLatestId(), 2);
         // withObjectName
-        schemaWithVersion = PravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemaVersion(anygroup).join();
+        schemaWithVersion = pravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemaVersion(anygroup).join();
         assertEquals(ImmutableMap.of(), schemaWithVersion.getSchemaInfo().getProperties());
     }
 
@@ -510,21 +520,21 @@ public class GroupPravegaTest {
         GroupProperties groupProperties = new GroupProperties(SerializationFormat.Avro,
                 Compatibility.backward(), Boolean.TRUE,
                 ImmutableMap.of());
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Avro,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Avro,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         byte[] schemaData = new byte[3];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         schemaData = new byte[5];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        List<GroupHistoryRecord> groupHistoryRecords = PravegaKeyValueGroups.getGroup(null,
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        List<GroupHistoryRecord> groupHistoryRecords = pravegaKeyValueGroups.getGroup(null,
                 groupName).join().getHistory().join();
         assertEquals(2, groupHistoryRecords.size());
         assertEquals(anygroup, groupHistoryRecords.get(0).getSchemaInfo().getType());
@@ -533,9 +543,9 @@ public class GroupPravegaTest {
         byte[] schemaData1 = new byte[10];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Avro, ByteBuffer.wrap(schemaData1),
                 ImmutableMap.of());
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        groupHistoryRecords = PravegaKeyValueGroups.getGroup(null, groupName).join().getHistory(anygroup1).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        groupHistoryRecords = pravegaKeyValueGroups.getGroup(null, groupName).join().getHistory(anygroup1).join();
         assertEquals(2, groupHistoryRecords.size());
         assertTrue(Arrays.equals(ByteBuffer.wrap(schemaData).array(),
                 groupHistoryRecords.get(0).getSchemaInfo().getSchemaData().array()));
@@ -549,14 +559,14 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().updateValidationPolicy(
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().updateValidationPolicy(
                 Compatibility.forward(), etag).join();
         TableRecords.ValidationRecord validationRecord = tableStore.getEntry(
                 String.format(TABLE_NAME_FORMAT, gv.getId()),
@@ -565,8 +575,8 @@ public class GroupPravegaTest {
                         TableRecords.ValidationRecord.class)).join().getRecord();
         assertEquals(Compatibility.forward(), validationRecord.getCompatibility());
         // no change
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        Assert.assertNull(PravegaKeyValueGroups.getGroup(null, groupName).join().updateValidationPolicy(
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        Assert.assertNull(pravegaKeyValueGroups.getGroup(null, groupName).join().updateValidationPolicy(
                 Compatibility.forward(), etag).join());
     }
 
@@ -576,13 +586,13 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
                 GroupsValue::fromBytes).join().getRecord();
-        GroupProperties groupProperties1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getGroupProperties().join();
+        GroupProperties groupProperties1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getGroupProperties().join();
         TableRecords.ValidationRecord validationRecord = tableStore.getEntry(
                 String.format(TABLE_NAME_FORMAT, gv.getId()),
                 new TableKeySerializer().toBytes(VALIDATION_POLICY_KEY), x -> TableRecords.fromBytes(
@@ -605,8 +615,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -614,16 +624,16 @@ public class GroupPravegaTest {
         byte[] schemaData = new byte[3];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         schemaData = new byte[5];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        Etag etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(versionInfo.getId(), etag).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        VersionInfo versionInfo = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        Etag etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(versionInfo.getId(), etag).join();
         TableRecords.VersionDeletedRecord versionDeletedRecordKey = new TableRecords.VersionDeletedRecord(
                 versionInfo.getId());
         TableRecords.VersionDeletedRecord versionDeletedRecord = tableStore.getEntry(
@@ -633,18 +643,18 @@ public class GroupPravegaTest {
                         TableRecords.VersionDeletedRecord.class)).join().getRecord();
         assertEquals(versionInfo.getId(), versionDeletedRecord.getId());
         // already deleted
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         assertNull(
-                PravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(versionInfo.getId(), eTag).join());
+                pravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(versionInfo.getId(), eTag).join());
         // using schemaType and version
-        etag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        assertNull(PravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(schemaInfo.getType(),
+        etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        assertNull(pravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(schemaInfo.getType(),
                 versionInfo.getVersion(), etag).join());
         // delete schema that does not exist
-        eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         Etag finalETag = eTag;
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> PravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(200,
+                () -> pravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(200,
                         finalETag).join(), e -> e instanceof StoreExceptions.DataNotFoundException);
     }
 
@@ -654,8 +664,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -663,10 +673,10 @@ public class GroupPravegaTest {
         byte[] schemaData = new byte[3];
         SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        SchemaInfo schemaInfo1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        VersionInfo versionInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        SchemaInfo schemaInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(
                 versionInfo1.getId()).join();
         assertEquals(schemaInfo, schemaInfo1);
         TableRecords.TableValue tableValue = tableStore.getEntry(
@@ -678,7 +688,7 @@ public class GroupPravegaTest {
         assertEquals(schemaRecord.getSchemaInfo(), schemaInfo);
         // testing for incorrect ordinal value
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> PravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(100).join(),
+                () -> pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(100).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
     }
 
@@ -688,8 +698,8 @@ public class GroupPravegaTest {
                 ImmutableMap.<String, String>builder().build()).serializationFormat(
                 SerializationFormat.custom("custom1")).compatibility(
                 Compatibility.forward()).build();
-        PravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
+        pravegaKeyValueGroups.addNewGroup(null, groupName, groupProperties).join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().create(SerializationFormat.Custom,
                 ImmutableMap.of(),
                 Boolean.TRUE, Compatibility.backward()).join();
         GroupsValue gv = tableStore.getEntry(GROUPS, new NamespaceAndGroup(null, groupName).toBytes(),
@@ -697,15 +707,15 @@ public class GroupPravegaTest {
         byte[] schemaData = new byte[3];
         SchemaInfo schemaInfo = new SchemaInfo("anygroup", SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        Etag eTag = PravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
-        PravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
-        SchemaInfo schemaInfo1 = PravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(versionInfo1.getType(),
+        Etag eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo, groupProperties, eTag).join();
+        VersionInfo versionInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getVersion(schemaInfo).join();
+        SchemaInfo schemaInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(versionInfo1.getType(),
                 versionInfo1.getVersion()).join();
         assertEquals(schemaInfo, schemaInfo1);
         // test incorrect value of version
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> PravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(versionInfo1.getType(),
+                () -> pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(versionInfo1.getType(),
                         100).join(), e -> e instanceof RuntimeException);
     }
 }
