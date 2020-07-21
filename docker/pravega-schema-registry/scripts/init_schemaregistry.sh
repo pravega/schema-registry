@@ -10,6 +10,6 @@
 #
 
 init_schemaregistry() {
-    add_system_property "schema-registry.controller.server.url" "${CONTROLLER_URL}"
+    add_system_property "schema-registry.store.pravega.controller.connect.uri" "${CONTROLLER_URL}"
     echo "JAVA_OPTS=${JAVA_OPTS}"
 }
