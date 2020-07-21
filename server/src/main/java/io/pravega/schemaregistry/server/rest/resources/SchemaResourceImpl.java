@@ -52,12 +52,13 @@ public class SchemaResourceImpl extends AbstractResource implements ApiV1.Schema
                                               return Response.status(Status.OK).entity(addedTo).build();
                                           })
                                           .exceptionally(exception -> {
-                                              if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                              Throwable unwrap = Exceptions.unwrap(exception);
+                                              if (unwrap instanceof StoreExceptions.DataNotFoundException) {
                                                   log.warn("Schema {} not found", schemaInfo.getType());
                                                   return Response.status(Status.NOT_FOUND).build();
                                               }
-                                              log.warn("getCodecTypesList failed with exception: ", exception);
-                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                              log.warn("getCodecTypesList failed with exception: ", unwrap);
+                                              return handleGeneralExceptions(unwrap);
                                           }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);

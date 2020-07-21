@@ -131,8 +131,9 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                       .setContinuationToken(contToken);
         }).thenApply(r -> Response.status(Status.OK).entity(groupsList).build())
               .exceptionally(exception -> {
-                  log.warn("listGroups failed with exception: ", Exceptions.unwrap(exception));
-                  return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                  Throwable unwrap = Exceptions.unwrap(exception);
+                  log.warn("listGroups failed with exception: ", unwrap);
+                  return handleGeneralExceptions(unwrap);
               }).thenApply(response -> {
             asyncResponse.resume(response);
             return response;
@@ -157,8 +158,9 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                       return Response.status(Status.CREATED).build();
                                   })
                                   .exceptionally(exception -> {
-                                      log.warn("createGroup failed with exception: ", Exceptions.unwrap(exception));
-                                      return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                      Throwable unwrap = Exceptions.unwrap(exception);
+                                      log.warn("createGroup failed with exception: ", unwrap);
+                                      return handleGeneralExceptions(unwrap);
                                   });
         }).thenApply(response -> {
             asyncResponse.resume(response);
@@ -178,12 +180,13 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          return Response.status(Status.OK).entity(ModelHelper.encode(groupProperty)).build();
                                      })
                                      .exceptionally(exception -> {
-                                         if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                         Throwable unwrap = Exceptions.unwrap(exception);
+                                         if (unwrap instanceof StoreExceptions.DataNotFoundException) {
                                              log.warn("Group {} {} not found", namespace, group);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
-                                         log.warn("getGroupProperties for group {} failed with exception: ", group, Exceptions.unwrap(exception));
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         log.warn("getGroupProperties for group {} failed with exception: ", group, unwrap);
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -206,13 +209,14 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          return Response.status(Status.OK).entity(list).build();
                                      })
                                      .exceptionally(exception -> {
-                                         if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
+                                         Throwable unwrap = Exceptions.unwrap(exception);
+                                         if (unwrap instanceof StoreExceptions.DataNotFoundException) {
                                              log.warn("Group {} {} not found", namespace, group);
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
 
-                                         log.warn("getGroupHistory failed with exception: ", Exceptions.unwrap(exception));
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         log.warn("getGroupHistory failed with exception: ", unwrap);
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -245,7 +249,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.CONFLICT).build();
                                               } else {
                                                   log.warn("updateCompatibility failed with exception: ", unwrap);
-                                                  return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                  return handleGeneralExceptions(unwrap);
                                               }
                                           });
                 }).thenApply(response -> {
@@ -268,7 +272,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                      })
                                      .exceptionally(exception -> {
                                          log.warn("deleteGroup failed with exception: ", exception);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(Exceptions.unwrap(exception));
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -301,7 +305,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                          }
 
                                          log.warn("getSchemaVersions failed with exception: ", unwrap);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -338,7 +342,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.EXPECTATION_FAILED).build();
                                               } else {
                                                   log.warn("addSchema failed with exception: ", unwrap);
-                                                  return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                  return handleGeneralExceptions(unwrap);
                                               }
                                           });
                 }).thenApply(response -> {
@@ -370,7 +374,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.NOT_FOUND).build();
                                               }
                                               log.warn("validate failed with exception: ", unwrap);
-                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                              return handleGeneralExceptions(unwrap);
                                           });
                 }).thenApply(response -> {
             asyncResponse.resume(response);
@@ -399,7 +403,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.NOT_FOUND).build();
                                               }
                                               log.warn("can read failed with exception: ", unwrap);
-                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                              return handleGeneralExceptions(unwrap);
                                           });
                 }).thenApply(response -> {
             asyncResponse.resume(response);
@@ -427,7 +431,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
                                          log.warn("getSchemaForId failed with exception: ", unwrap);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -455,7 +459,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                                             return Response.status(Status.NOT_FOUND).build();
                                                                         }
                                                                         log.warn("getSchemaFromVersion failed with exception: ", unwrap);
-                                                                        return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                                        return handleGeneralExceptions(unwrap);
                                                                     }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -483,7 +487,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
                                          log.warn("deleteSchemaForId failed with exception: ", unwrap);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -511,7 +515,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
                                          log.warn("deleteSchemaVersion failed with exception: ", unwrap);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -549,7 +553,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.PRECONDITION_FAILED).build();
                                               } else {
                                                   log.warn("getEncodingId failed with exception: ", unwrap);
-                                                  return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                  return handleGeneralExceptions(unwrap);
                                               }
                                           });
                 }).thenApply(response -> {
@@ -581,7 +585,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                               }
 
                                               log.warn("getSchemaVersion failed with exception: ", unwrap);
-                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                              return handleGeneralExceptions(unwrap);
                                           });
                 }).thenApply(response -> {
             asyncResponse.resume(response);
@@ -611,7 +615,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                                   return Response.status(Status.NOT_FOUND).build();
                                                               }
                                                               log.warn("getSchemas failed with exception: ", unwrap);
-                                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                                              return handleGeneralExceptions(unwrap);
                                                           }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -641,7 +645,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                                   return Response.status(Status.NOT_FOUND).build();
                                               }
                                               log.warn("getEncodingInfo failed with exception: ", unwrap);
-                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                              return handleGeneralExceptions(unwrap);
                                           });
                 }).thenApply(response -> {
             asyncResponse.resume(response);
@@ -671,7 +675,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
                                          log.warn("getCodecTypesList failed with exception: ", unwrap);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
@@ -698,7 +702,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
                                              return Response.status(Status.NOT_FOUND).build();
                                          }
                                          log.warn("addCodecType failed with exception: ", unwrap);
-                                         return Response.status(Status.INTERNAL_SERVER_ERROR).build();
+                                         return handleGeneralExceptions(unwrap);
                                      }))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
