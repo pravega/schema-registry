@@ -71,7 +71,7 @@ abstract class AbstractResource {
                                                   Supplier<CompletableFuture<Response>> future,
                                                   SecurityContext securityContext, 
                                                   Supplier<String> logSupplier) {
-        return CompletableFuture.completedFuture(authorize(securityContext, resource, permissions))
+        return CompletableFuture.runAsync(() -> authorize(securityContext, resource, permissions), executorService)
                          .thenCompose(v -> future.get())
                          .exceptionally(e -> {
                              Throwable unwrap = Exceptions.unwrap(e);
@@ -83,7 +83,7 @@ abstract class AbstractResource {
     private boolean authorize(SecurityContext securityContext, String resource, AuthHandler.Permissions permission)
             throws AuthException {
         if (config.isAuthEnabled()) {
-            AuthHandlerManager.Context context = (AuthHandlerManager.Context) securityContext;
+            AuthHandlerManager.Context context = getAuthManager().getContext(securityContext);
             if (!context.authorize(resource, permission)) {
                 throw new AuthorizationException(
                         String.format("Failed to authorize for resource [%s]", resource),

@@ -18,7 +18,10 @@ import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
@@ -31,8 +34,10 @@ import org.glassfish.jersey.test.TestProperties;
 import org.junit.After;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileWriter;
@@ -187,6 +192,27 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         list = response.readEntity(ListGroupsResponse.class);
         assertEquals(list.getGroups().size(), 10);
         assertEquals(list.getContinuationToken(), ContinuationToken.fromString("token").toString());
+    }
+
+    @Test
+    public void groupSchemas() throws ExecutionException, InterruptedException {
+        doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any(), any());
+        SchemaInfo schemaInfo = new SchemaInfo()
+                .type("name")
+                .serializationFormat(ModelHelper.encode(SerializationFormat.Avro))
+                .schemaData(new byte[0])
+                .properties(Collections.emptyMap());
+        Future<Response> future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((SYSTEM_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                                     .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        Response response = future.get();
+        assertTrue(response.readEntity(CanRead.class).isCompatible());
+
+        future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((GROUP1_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                                     .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        response = future.get();
+        assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
     }
 
     private File createAuthFile() {
