@@ -1,0 +1,9 @@
+{
+   "namespace": "io.pravega.schemaregistry.testobjs.generated",
+   "type": "record",
+   "name": "Type1",
+   "fields": [
+      {"name": "a", "type": "string"},
+      {"name": "b", "type": "int"}
+   ]
+}
