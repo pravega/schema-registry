@@ -22,20 +22,20 @@ public class TableKeySerializer extends VersionedSerializer.MultiType<TableRecor
     protected void declareSerializers(Builder builder) {
         // Unused values (Do not repurpose!):
         // - 0: Unsupported Serializer.
-        builder.serializer(TableRecords.SchemaIdKey.class, 1, new TableRecords.SchemaIdKey.Serializer())
-               .serializer(TableRecords.ValidationPolicyKey.class, 2, new TableRecords.ValidationPolicyKey.Serializer())
-               .serializer(TableRecords.Etag.class, 3, new TableRecords.Etag.Serializer())
-               .serializer(TableRecords.GroupPropertyKey.class, 4, new TableRecords.GroupPropertyKey.Serializer())
-               .serializer(TableRecords.SchemaFingerprintKey.class, 5, new TableRecords.SchemaFingerprintKey.Serializer())
-               .serializer(TableRecords.EncodingInfoRecord.class, 6, new TableRecords.EncodingInfoRecord.Serializer())
-               .serializer(TableRecords.EncodingIdRecord.class, 7, new TableRecords.EncodingIdRecord.Serializer())
-               .serializer(TableRecords.LatestEncodingIdKey.class, 8, new TableRecords.LatestEncodingIdKey.Serializer())
-               .serializer(TableRecords.CodecTypeKey.class, 9, new TableRecords.CodecTypeKey.Serializer())
-               .serializer(TableRecords.CodecTypesKey.class, 10, new TableRecords.CodecTypesKey.Serializer())
-               .serializer(TableRecords.LatestSchemasKey.class, 11, new TableRecords.LatestSchemasKey.Serializer())
-               .serializer(TableRecords.IndexTypeVersionToIdKey.class, 12, new TableRecords.IndexTypeVersionToIdKey.Serializer())
-               .serializer(TableRecords.VersionDeletedRecord.class, 13, new TableRecords.VersionDeletedRecord.Serializer())
-               .serializer(TableRecords.SchemaIdChunkKey.class, 14, new TableRecords.SchemaIdChunkKey.Serializer());
+        builder.serializer(TableRecords.SchemaIdKey.class, 1, TableRecords.SchemaIdKey.SERIALIZER)
+               .serializer(TableRecords.ValidationPolicyKey.class, 2, TableRecords.ValidationPolicyKey.SERIALIZER)
+               .serializer(TableRecords.Etag.class, 3, TableRecords.Etag.SERIALIZER)
+               .serializer(TableRecords.GroupPropertyKey.class, 4, TableRecords.GroupPropertyKey.SERIALIZER)
+               .serializer(TableRecords.SchemaFingerprintKey.class, 5, TableRecords.SchemaFingerprintKey.SERIALIZER)
+               .serializer(TableRecords.EncodingInfoRecord.class, 6, TableRecords.EncodingInfoRecord.SERIALIZER)
+               .serializer(TableRecords.EncodingIdRecord.class, 7, TableRecords.EncodingIdRecord.SERIALIZER)
+               .serializer(TableRecords.LatestEncodingIdKey.class, 8, TableRecords.LatestEncodingIdKey.SERIALIZER)
+               .serializer(TableRecords.CodecTypeKey.class, 9, TableRecords.CodecTypeKey.SERIALIZER)
+               .serializer(TableRecords.CodecTypesKey.class, 10, TableRecords.CodecTypesKey.SERIALIZER)
+               .serializer(TableRecords.LatestSchemasKey.class, 11, TableRecords.LatestSchemasKey.SERIALIZER)
+               .serializer(TableRecords.IndexTypeVersionToIdKey.class, 12, TableRecords.IndexTypeVersionToIdKey.SERIALIZER)
+               .serializer(TableRecords.VersionDeletedRecord.class, 13, TableRecords.VersionDeletedRecord.SERIALIZER)
+               .serializer(TableRecords.SchemaIdChunkKey.class, 14, TableRecords.SchemaIdChunkKey.SERIALIZER);
     }
 
     /**

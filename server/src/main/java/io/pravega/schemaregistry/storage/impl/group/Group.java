@@ -181,7 +181,7 @@ public class Group<V> {
             return groupTable.getEntries(keys, SchemaChunkRecord.class)
                     .thenApply(chunks -> {
                         List<ByteArraySegment> chunkList = new ArrayList<>();
-                        chunkList.add(sr.getSchemaBinary());
+                        chunkList.add(sr.getSchemaChunk());
                         chunks.forEach(x -> chunkList.add(x.getChunkPayload()));
                         return new SchemaInfo(sr.getType(), sr.getSerializationFormat(), ChunkUtil.combine(chunkList),
                                 sr.getProperties());
@@ -574,11 +574,20 @@ public class Group<V> {
             // break schema binary into smaller chunks.
             List<ByteArraySegment> chunks = ChunkUtil.chunk(schemaInfo.getSchemaData(), Config.MAX_CHUNK_SIZE_BYTES);
             entries.add(new Entry<>(new SchemaIdKey(next.getId()),
-                    new SchemaRecord(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaInfo.getProperties(),
-                            chunks.get(0), next.getId(), next.getVersion(), prop.getCompatibility(), System.currentTimeMillis(), 
-                            Config.MAX_CHUNK_SIZE_BYTES,
-                            chunks.size()), null));
+                    SchemaRecord.builder()
+                                .type(schemaInfo.getType())
+                                .serializationFormat(schemaInfo.getSerializationFormat())
+                                .properties(schemaInfo.getProperties())
+                                .schemaChunk(chunks.get(0))
+                                .id(next.getId())
+                                .version(next.getVersion())
+                                .compatibility(prop.getCompatibility())
+                                .timestamp(System.currentTimeMillis())
+                                .maxChunkSize(Config.MAX_CHUNK_SIZE_BYTES)
+                                .numberOfChunks(chunks.size())
+                                .build(), null));
 
+            // Start from chunk 1 because we have already included chunk 0 in the schema record
             for (int i = 1; i < chunks.size(); i++) { 
                 entries.add(new Entry<>(new SchemaIdChunkKey(next.getId(), i),
                         new SchemaChunkRecord(chunks.get(i)), null));
