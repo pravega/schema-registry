@@ -1,0 +1,41 @@
+# /**
+#  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#  *
+#  * Licensed under the Apache License, Version 2.0 (the "License");
+#  * you may not use this file except in compliance with the License.
+#  * You may obtain a copy of the License at
+#  *
+#  *     http://www.apache.org/licenses/LICENSE-2.0
+#  */
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ template "schema-registry.fullname" . }}-configmap
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "schema-registry.commonLabels" . | indent 4 }}
+data:
+  "CONTROLLER_URL": "{{ .Values.controllerUri }}"
+  "STORE_TYPE": "{{ .Values.storeType }}"
+  {{- if .Values.pravega.tlsTrustStore }}
+  "CONTROLLER_TLS_TRUST_STORE": "{{ .Values.pravega.tlsTrustStore }}"
+  {{- end }}
+  "CONTROLLER_TLS_VALIDATE_HOSTNAME": "{{ .Values.pravega.validateHostName }}"
+  "AUTHORIZATION_ENABLED": "{{ .Values.authentication.enabled }}"
+  "TLS_ENABLED": "{{ .Values.tls.enabled }}"
+  "pravega_client_auth_loadDynamic": "{{ .Values.client.loadDynamic }}"
+  "pravega_client_auth_method": "{{ .Values.client.method }}"
+  "pravega_client_auth_token": "{{ .Values.client.token }}"
+  {{- if .Values.authentication.enabled }}
+  "USER_PASSWORD_FILE": "/etc/auth-passwd-volume/{{ .Values.authentication.userPasswordFile }}"
+  "DISABLE_BASIC_AUTH": "{{ .Values.authentication.disableBasicAuthentication }}"
+  {{- end }}
+  {{- if .Values.authentication.authorizationResourceQualifier }}
+  "AUTHORIZATION_RESOURCE_QUALIFIER": "{{ .Values.authentication.authorizationResourceQualifier }}"
+  {{- end }}
+  {{- if .Values.tls.enabled }}
+  "TLS_CERT_FILE": "/etc/secret-volume/{{ .Values.tls.certFile }}"
+  "TLS_KEY_FILE": "/etc/secret-volume/{{ .Values.tls.keyFile }}"
+  "TLS_KEY_PASSWORD_FILE": "/etc/secret-volume/{{ .Values.tls.keyPasswordFile }}"
+  {{- end }}
