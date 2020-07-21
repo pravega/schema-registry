@@ -808,18 +808,23 @@ public class SchemaRegistryService {
     private SchemaInfo normalizeSchemaBinary(SchemaInfo schemaInfo) {
         // validates and the schema binary. 
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
+        String type;
         boolean isValid = true;
         String invalidityCause = "";
         try {
             String schemaString;
             switch (schemaInfo.getSerializationFormat()) {
                 case Protobuf:
-                    String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
-                    String qualifier = tokens[1]; // this can be empty string if schema info had no qualifier
-                    String name = tokens[0];
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(
                             schemaInfo.getSchemaData());
 
+                    String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    final String qualifier = Strings.isNullOrEmpty(tokens[1]) && !fileDescriptorSet.getFileList().isEmpty() ? 
+                            fileDescriptorSet.getFile(0).getPackage() : tokens[1];
+                    final String name = Strings.isNullOrEmpty(tokens[0]) && !fileDescriptorSet.getFileList().isEmpty() 
+                            && !fileDescriptorSet.getFile(0).getMessageTypeList() .isEmpty() ?
+                            fileDescriptorSet.getFile(0).getMessageTypeList().get(0).getName() : tokens[0];
+                    type = Strings.isNullOrEmpty(qualifier) ? name : qualifier + "." + name;
                     isValid = fileDescriptorSet
                             .getFileList().stream()
                             .anyMatch(x -> {
@@ -842,17 +847,26 @@ public class SchemaRegistryService {
                     Schema schema = new Schema.Parser().parse(schemaString);
                     
                     if (schema.isUnion()) {
-                        // check if the union has the schema definition for the type. 
-                        // Users can define a group of schemas into the same schema file as union,
-                        // which is logically equivalent to a nested structure for each individual record type.
-                        // We will always normalize a schema into the nested structure from the union so that it
-                        // only includes entities referred to in the object of a specific type.
-                        // if the SchemaInfo.type is not defined as one of the types in the union, then we will store
-                        // the schema as a union itself. 
-                        schema = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType()))
-                                       .findAny().orElse(schema);
-                    }
-
+                        if (!Strings.isNullOrEmpty(schemaInfo.getType())) {
+                            // check if the union has the schema definition for the type. 
+                            // Users can define a group of schemas into the same schema file as union,
+                            // which is logically equivalent to a nested structure for each individual record type.
+                            // We will always normalize a schema into the nested structure from the union so that it
+                            // only includes entities referred to in the object of a specific type.
+                            // if the SchemaInfo.type is not defined as one of the types in the union, then we will store
+                            // the schema as a union itself. 
+                            schema = schema.getTypes().stream().filter(x -> x.getFullName().equals(schemaInfo.getType()))
+                                           .findAny().orElse(schema);
+                        } else {
+                            // take the first type from the schema
+                            if (schema.getTypes().isEmpty()) {
+                                   
+                            } else {
+                                schema = schema.getTypes().get(0);
+                                type = schema.getFullName();
+                            }
+                        }
+                    } 
                     isValid = schema.getFullName().equals(schemaInfo.getType());
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
@@ -884,7 +898,7 @@ public class SchemaRegistryService {
         if (!isValid) {
             throw new IllegalArgumentException(invalidityCause);
         }
-        return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
+        return new SchemaInfo(type, schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
     }
 
     private void validateJsonSchema(String schemaString) {
