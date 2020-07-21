@@ -47,6 +47,7 @@ public final class Config {
     public static final int SERVICE_PORT;
     public static final int THREAD_POOL_SIZE;
     public static final String STORE_TYPE;
+    public static final int MAX_CHUNK_SIZE_BYTES;
 
     public static final String PRAVEGA_CONTROLLER_URI;
     public static final String PRAVEGA_CREDENTIALS_AUTH_METHOD;
@@ -80,6 +81,7 @@ public final class Config {
     private static final Property<String> PROPERTY_PRAVEGA_TLS_TRUST_STORE = Property.named("store.pravega.controller.connect.security.tls.trustStore.location", "");
     private static final Property<Boolean> PROPERTY_PRAVEGA_TLS_VALIDATE_HOSTNAME = Property.named("store.pravega.controller.connect.security.tls.validateHostName.enable", true);
 
+    private static final Property<Integer> PROPERTY_MAX_CHUNK_SIZE_BYTES = Property.named("store.pravega.maxChunk.bytes", 900 * 1024);
     private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("threadPool.size", 50);
 
     private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enable", false);
@@ -113,6 +115,7 @@ public final class Config {
 
         THREAD_POOL_SIZE = p.getInt(PROPERTY_THREAD_POOL_SIZE);
         STORE_TYPE = p.get(PROPERTY_STORE_TYPE);
+        MAX_CHUNK_SIZE_BYTES = p.getInt(PROPERTY_MAX_CHUNK_SIZE_BYTES);
 
         TLS_ENABLED = p.getBoolean(PROPERTY_TLS_ENABLED);
         TLS_KEY_FILE = p.get(PROPERTY_TLS_KEY_FILE);
