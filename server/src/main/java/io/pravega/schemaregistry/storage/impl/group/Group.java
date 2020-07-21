@@ -19,6 +19,7 @@ import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.util.JsonFormat;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
+import io.pravega.common.util.ByteArraySegment;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.common.HashUtil;
@@ -33,8 +34,10 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
+import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.StoreExceptions;
+import io.pravega.schemaregistry.common.ChunkUtil;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import lombok.extern.slf4j.Slf4j;
 
@@ -83,6 +86,8 @@ import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.ValidationPolicyKey;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestEncodingIdValue;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdValue;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaIdChunkKey;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.SchemaChunkRecord;
 
 /**
  * Class that implements all storage business logic for a group.
@@ -159,11 +164,29 @@ public class Group<V> {
                                                              .collect(Collectors.toList());
                              
                              return groupTable.getEntries(keys, SchemaRecord.class)
-                                     .thenApply(entries -> entries
-                                             .stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), 
-                                                     new VersionInfo(x.getSchemaInfo().getType(), x.getVersion(), x.getId())))
-                                             .collect(Collectors.toList()));
+                                     .thenCompose(entries -> Futures.allOfWithResults(entries
+                                             .stream().map(x -> getSchemaInfo(x)
+                                                     .thenApply(schemaInfo -> new SchemaWithVersion(schemaInfo,
+                                                             new VersionInfo(x.getType(), x.getVersion(), x.getId()))))
+                                             .collect(Collectors.toList())));
                          });
+    }
+
+    private CompletableFuture<SchemaInfo> getSchemaInfo(SchemaRecord sr) {
+        if (sr.getSchemaInfo() != null) {
+            return CompletableFuture.completedFuture(sr.getSchemaInfo());
+        } else {
+            List<SchemaIdChunkKey> keys = IntStream.range(1, sr.getNumberOfChunks()).boxed().map(y -> 
+                    new SchemaIdChunkKey(sr.getId(), y)).collect(Collectors.toList());
+            return groupTable.getEntries(keys, SchemaChunkRecord.class)
+                    .thenApply(chunks -> {
+                        List<ByteArraySegment> chunkList = new ArrayList<>();
+                        chunkList.add(sr.getSchemaChunk());
+                        chunks.forEach(x -> chunkList.add(x.getChunkPayload()));
+                        return new SchemaInfo(sr.getType(), sr.getSerializationFormat(), ChunkUtil.combine(chunkList),
+                                sr.getProperties());
+                    });
+        }
     }
 
     public CompletableFuture<List<SchemaWithVersion>> getSchemas() {
@@ -174,7 +197,7 @@ public class Group<V> {
         return getSchemaRecords(fromPos)
                 .thenApply(entries -> entries
                         .stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), 
-                                new VersionInfo(x.getSchemaInfo().getType(), x.getVersion(), x.getId())))
+                                new VersionInfo(x.getType(), x.getVersion(), x.getId())))
                         .collect(Collectors.toList()));
     }
 
@@ -199,7 +222,7 @@ public class Group<V> {
                                  List<TableKey> keys = IntStream.range(fromPos, endPos)
                                                                 .boxed().map(SchemaIdKey::new).collect(Collectors.toList());
                                  return groupTable.getEntriesWithVersion(keys, TableValue.class)
-                                                  .thenApply(entries -> {
+                                                  .thenCompose(entries -> {
                                                       List<SchemaRecord> schemaRecords = new ArrayList<>();
 
                                                       for (Value<TableValue, V> entry : entries) {
@@ -207,9 +230,13 @@ public class Group<V> {
                                                               schemaRecords.add((SchemaRecord) entry.getValue());
                                                           }
                                                       }
-                                                      return schemaRecords.stream().filter(x -> 
-                                                              !deleted.contains(x.getId()))
-                                                                          .collect(Collectors.toList());
+                                                      return Futures.allOfWithResults(schemaRecords
+                                                              .stream().filter(x -> !deleted.contains(x.getId()))
+                                                              .map(x -> getSchemaInfo(x)
+                                                                      .thenApply(schemaInfo -> new SchemaRecord(
+                                                                              schemaInfo, x.getId(), x.getVersion(),
+                                                                              x.getCompatibility(), x.getTimestamp())))
+                                                              .collect(Collectors.toList()));
                                                   });
                              }
                          });
@@ -241,7 +268,7 @@ public class Group<V> {
                     if (schema == null) {
                         throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version id found %s", id));
                     }
-                    String type = schema.getSchemaInfo().getType();
+                    String type = schema.getType();
                     LatestSchemasValue types = (LatestSchemasValue) entries.get(2).getValue();
                     SchemaTypeValue value = types.getTypes().get(type);
 
@@ -321,13 +348,13 @@ public class Group<V> {
         List<? extends TableKey> keys = Lists.newArrayList(new SchemaIdKey(id),
                 new VersionDeletedRecord(id));
         return groupTable.getEntriesWithVersion(keys, TableValue.class)
-                         .thenApply(entries -> {
+                         .thenCompose(entries -> {
                              if (entries.get(1).getValue() != null && throwOnDeleted) {
                                  throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, Integer.toString(id));
                              } else {
                                  TableValue value = entries.get(0).getValue();
                                  if (value != null) {
-                                     return ((SchemaRecord) value).getSchemaInfo();
+                                     return getSchemaInfo((SchemaRecord) value);
                                  } else {
                                      throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "schema version not found");
                                  }
@@ -483,7 +510,7 @@ public class Group<V> {
     public CompletableFuture<List<GroupHistoryRecord>> getHistory() {
         return getSchemaRecords(0).thenApply(schemaRecords -> schemaRecords
                 .stream().map(x -> new GroupHistoryRecord(x.getSchemaInfo(), 
-                        new VersionInfo(x.getSchemaInfo().getType(), x.getVersion(), x.getId()), 
+                        new VersionInfo(x.getType(), x.getVersion(), x.getId()), 
                         x.getCompatibility(), x.getTimestamp(), getSchemaString(x.getSchemaInfo())))
                 .collect(Collectors.toList()));
     }
@@ -544,9 +571,27 @@ public class Group<V> {
             // 1.1 index for version to id
             entries.add(new Entry<>(new IndexTypeVersionToIdKey(next.getType(), next.getVersion()),
                     new SchemaIdValue(next.getId()), null));
+            // break schema binary into smaller chunks.
+            List<ByteArraySegment> chunks = ChunkUtil.chunk(schemaInfo.getSchemaData(), Config.MAX_CHUNK_SIZE_BYTES);
             entries.add(new Entry<>(new SchemaIdKey(next.getId()),
-                    new SchemaRecord(schemaInfo, next.getId(), next.getVersion(), prop.getCompatibility(), 
-                            System.currentTimeMillis()), null));
+                    SchemaRecord.builder()
+                                .type(schemaInfo.getType())
+                                .serializationFormat(schemaInfo.getSerializationFormat())
+                                .properties(schemaInfo.getProperties())
+                                .schemaChunk(chunks.get(0))
+                                .id(next.getId())
+                                .version(next.getVersion())
+                                .compatibility(prop.getCompatibility())
+                                .timestamp(System.currentTimeMillis())
+                                .maxChunkSize(Config.MAX_CHUNK_SIZE_BYTES)
+                                .numberOfChunks(chunks.size())
+                                .build(), null));
+
+            // Start from chunk 1 because we have already included chunk 0 in the schema record
+            for (int i = 1; i < chunks.size(); i++) { 
+                entries.add(new Entry<>(new SchemaIdChunkKey(next.getId(), i),
+                        new SchemaChunkRecord(chunks.get(i)), null));
+            } 
 
             // 2. Schema fingerprint key
             ImmutableList.Builder<VersionInfo> versionsBuilder = new ImmutableList.Builder<>();
