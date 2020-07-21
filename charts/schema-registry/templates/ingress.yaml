@@ -1,0 +1,43 @@
+# /**
+#  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#  *
+#  * Licensed under the Apache License, Version 2.0 (the "License");
+#  * you may not use this file except in compliance with the License.
+#  * You may obtain a copy of the License at
+#  *
+#  *     http://www.apache.org/licenses/LICENSE-2.0
+#  */
+
+{{- $ingress := .Values.ingress -}}
+{{- $svc := .Values.service -}}
+{{- if $ingress.enabled -}}
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: {{ template "schema-registry.fullname" . }}
+  labels:
+{{ include "schema-registry.commonLabels" . | indent 4 }}
+  annotations:
+{{ toYaml $ingress.annotations | indent 4 }}
+spec:
+  {{- if $ingress.tls }}
+  tls:
+    {{- range $ingress.tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range $ingress.hosts }}
+    - host: {{ . }}
+      http:
+        paths:
+          - path: {{ $ingress.path }}
+            backend:
+              serviceName: {{ template "schema-registry.fullname" $ }}
+              servicePort: {{ $svc.port }}
+    {{- end }}
+{{- end }}
