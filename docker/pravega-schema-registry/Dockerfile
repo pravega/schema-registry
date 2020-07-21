@@ -11,14 +11,14 @@ FROM openjdk:8u212-jre-alpine3.9
 
 RUN apk add --update \
     rpcbind \
-    nfs-utils \
+    curl \
     gcompat \
     python \
     jq \
-    curl \
+
   && rm -rf /var/cache/apk/*
 
-EXPOSE 9090 9091 10000 12345
+EXPOSE 9092 
 
 WORKDIR /opt/schema-registry
 
