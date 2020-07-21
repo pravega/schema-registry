@@ -56,8 +56,7 @@ public enum Codecs {
             if (data.hasArray()) {
                 bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
             } else {
-                byte[] b = new byte[data.remaining()];
-                data.get(b);
+                byte[] b = getBytes(data);
                 bos.write(b, 0, b.length);
             }
         }

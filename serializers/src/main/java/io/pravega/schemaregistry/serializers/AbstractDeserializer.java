@@ -76,12 +76,15 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
     @Override
     public T deserialize(ByteBuffer data) {
         int start = data.hasArray() ? data.arrayOffset() + data.position() : data.position();
+        ByteArrayInputStream inputStream;
+        SchemaInfo writerSchema;
+        SchemaInfo readerSchema;
         if (this.encodeHeader) {
-            SchemaInfo writerSchema = null;
             ByteBuffer decoded;
             if (skipHeaders) {
                 data.position(start + HEADER_SIZE);
                 decoded = data;
+                writerSchema = null;
             } else {
                 byte protocol = data.get();
                 EncodingId encodingId = new EncodingId(data.getInt());
@@ -90,15 +93,10 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                 decoded = decoders.decode(encodingInfo.getCodecType(), data);
             }
 
-            ByteArrayInputStream bais = new ByteArrayInputStream(decoded.array(), 
+            inputStream = new ByteArrayInputStream(decoded.array(), 
                     decoded.arrayOffset() + decoded.position(), decoded.remaining());
-            if (schemaInfo == null) { // deserialize into writer schema
-                // pass writer schema for schema to be read into
-                return deserialize(bais, writerSchema, writerSchema);
-            } else {
-                // pass reader schema for schema on read to the underlying implementation
-                return deserialize(bais, writerSchema, schemaInfo);
-            }
+            // pass writer schema for schema to be read into
+            readerSchema = schemaInfo == null ? writerSchema : schemaInfo;
         } else {
             byte[] b;
             if (data.hasArray()) {
@@ -107,11 +105,13 @@ abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                 b = new byte[data.remaining()];
                 data.get(b);
             }
+            writerSchema = null;
+            readerSchema = schemaInfo;
             // pass reader schema for schema on read to the underlying implementation
-            ByteArrayInputStream inputStream = new ByteArrayInputStream(b, start, data.remaining());
-
-            return deserialize(inputStream, null, schemaInfo);
+            inputStream = new ByteArrayInputStream(b, start, data.remaining());
         }
+
+        return deserialize(inputStream, writerSchema, readerSchema);
     }
     
     protected abstract T deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) throws IOException;

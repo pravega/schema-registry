@@ -143,7 +143,7 @@ public class WithSchema<T> {
      * Json Schema for the underlying deserialized object. This is available if {@link WithSchema#hasJsonSchema()} returns true.
      * This means underlying object was serialized as Json. 
      *
-     * @return Json schema {@link org.everit.json.schema.Schema} representing the schema for the object. 
+     * @return Json schema String representing the schema for the object. 
      */
     @SuppressWarnings("unchecked")
     public org.everit.json.schema.Schema getJsonSchema() {

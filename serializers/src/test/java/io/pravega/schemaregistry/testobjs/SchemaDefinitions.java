@@ -61,4 +61,49 @@ public class SchemaDefinitions {
             "}" + 
             "}" + 
             "}";
+
+    public static final String JSON_SCHEMA_STRING_DRAFT_4 = "{\n" +
+            "   \"$schema\": \"http://json-schema.org/draft-04/schema#\",\n" +
+            "   \"title\": \"User\",\n" +
+            "   \"id\": \"UserV4\",\n" +
+            "   \"type\": \"object\",\n" +
+            "\t\n" +
+            "   \"properties\": {\n" +
+            "\t\n" +
+            "      \"id\": {\n" +
+            "         \"type\": \"integer\"\n" +
+            "      },\n" +
+            "\t\t\n" +
+            "      \"name\": {\n" +
+            "         \"type\": \"string\"\n" +
+            "      },\n" +
+            "\t\t\n" +
+            "      \"age\": {\n" +
+            "         \"type\": \"number\",\n" +
+            "         \"minimum\": 0,\n" +
+            "         \"exclusiveMinimum\": true\n" +
+            "      }\n" +
+            "   },\n" +
+            "\t\n" +
+            "   \"required\": [\"id\", \"name\", \"age\"]\n" +
+            "}";
+
+    public static final String JSON_SCHEMA_STRING_DRAFT_7 = "{\n" +
+            "  \"$id\": \"UserV7\",\n" +
+            "  \"$schema\": \"http://json-schema.org/draft-07/schema#\",\n" +
+            "  \"title\": \"User\",\n" +
+            "  \"type\": \"object\",\n" +
+            "  \"properties\": {\n" +
+            "    \"firstName\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"lastName\": {\n" +
+            "      \"type\": \"string\"\n" +
+            "    },\n" +
+            "    \"age\": {\n" +
+            "      \"type\": \"integer\",\n" +
+            "      \"minimum\": 0\n" +
+            "    }\n" +
+            "  }\n" +
+            "}";
 }

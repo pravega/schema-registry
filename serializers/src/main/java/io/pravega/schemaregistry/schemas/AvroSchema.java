@@ -72,7 +72,7 @@ public class AvroSchema<T> implements Schema<T> {
      * This schema can be used to express any non record schema.
      *
      * @param schema Schema to use. 
-     * @return Returns an AvroSchema with {@link GenericRecord} type. 
+     * @return Returns an AvroSchema with {@link Object} type. 
      */
     public static AvroSchema<Object> of(org.apache.avro.Schema schema) {
         return new AvroSchema<>(schema, Object.class);
@@ -121,10 +121,10 @@ public class AvroSchema<T> implements Schema<T> {
     }
 
     /**
-     * Method to create a typed AvroSchema of type {@link GenericRecord} from schema info. 
+     * Method to create a typed AvroSchema of type {@link Object} from schema info. 
      *
      * @param schemaInfo Schema info object that has schema data in binary form.  
-     * @return Returns an AvroSchema with {@link GenericRecord} type. 
+     * @return Returns an AvroSchema with {@link Object} type. 
      */
     public static AvroSchema<Object> from(SchemaInfo schemaInfo) {
         return new AvroSchema<>(schemaInfo);
