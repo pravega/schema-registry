@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.contract.data;
 
 import lombok.Data;
+import lombok.NonNull;
 
 /**
  * Encoding Info describes the details of encoding for each event payload. Each combination of schema version and codec type
@@ -21,13 +22,13 @@ public class EncodingInfo {
     /**
      * Version of the schema which is used in encoding the data. 
      */
-    private final VersionInfo versionInfo;
+    private @NonNull final VersionInfo versionInfo;
     /**
      * Actual schema which is used in encoding the data. 
      */
-    private final SchemaInfo schemaInfo;
+    private @NonNull final SchemaInfo schemaInfo;
     /**
      * Codec type which is used in encoding the data. 
      */
-    private final CodecType codecType;
+    private @NonNull final CodecType codecType;
 }

@@ -51,9 +51,9 @@ public enum SerializationFormat {
     /**
      * Method to create a serialization format with a full name.
      * 
-     * @param fullTypeName Custom type name. 
+     * @param fullTypeName Full type name. 
      * @param format Serialization format.
-     * @return {@link SerializationFormat#Custom} with supplied custom type name. 
+     * @return {@link SerializationFormat#fullTypeName} with supplied custom type name. 
      */
     public static SerializationFormat withName(SerializationFormat format, String fullTypeName) {
         Preconditions.checkArgument(format != null);

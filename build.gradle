@@ -191,7 +191,7 @@ project('contract') {
         compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
         compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
         compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
-
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
 
     javadoc {
@@ -213,6 +213,40 @@ def getProjectVersion() {
         ver = versionLabel + "-" + count + "." + commitId + "-SNAPSHOT"
     }
     return ver
+}
+
+project('serializers') {
+    dependencies {
+        compile project(':common')
+        compile project(':client')
+        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
+        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
+        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
+        compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+    }
+
+    javadoc {
+        title = "Serializers"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+
+    jar {
+        manifest {}
+
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
 }
 
 project('server') {
@@ -311,6 +345,15 @@ distributions {
             from 'NOTICE'
         }
     }
+    serializers {
+        baseName = "schema-registry-serializers"
+        contents {
+            from { project(":serializers").configurations.runtime }
+            from { project(":serializers").configurations.runtime.allArtifacts.files }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
 }
 
 task sourceCopy(type: Copy) {
@@ -350,6 +393,7 @@ task publishAllJars() {
     dependsOn ':common:publish'
     dependsOn ':contract:publish'
     dependsOn ':server:publish'
+    dependsOn ':serializers:publish'
 }
 
 task prepareRegistryImage(type: Copy) {
