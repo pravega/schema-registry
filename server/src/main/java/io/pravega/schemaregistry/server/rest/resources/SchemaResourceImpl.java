@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
-import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.contract.generated.rest.model.AddedTo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
@@ -17,7 +16,6 @@ import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
-import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.container.AsyncResponse;
@@ -43,7 +41,7 @@ public class SchemaResourceImpl extends AbstractResource implements ApiV1.Schema
 
     @Override
     public void getSchemaReferences(SchemaInfo schemaInfo, String namespace, SecurityContext securityContext, AsyncResponse asyncResponse) {
-        withAuthorization("getSchemaReferences", READ, getNamespaceResource(namespace), asyncResponse,
+        withAuthorization(READ, getNamespaceResource(namespace), asyncResponse,
                 () -> getRegistryService().getSchemaReferences(namespace, ModelHelper.decode(schemaInfo))
                                           .thenApply(map -> {
                                               AddedTo addedTo = new AddedTo()
@@ -52,15 +50,8 @@ public class SchemaResourceImpl extends AbstractResource implements ApiV1.Schema
                                                                       x -> ModelHelper.encode(x.getValue()))));
                                               log.info("getSchemaReferences {} ", map.keySet());
                                               return Response.status(Status.OK).entity(addedTo).build();
-                                          })
-                                          .exceptionally(exception -> {
-                                              if (Exceptions.unwrap(exception) instanceof StoreExceptions.DataNotFoundException) {
-                                                  log.warn("Schema {} not found", schemaInfo.getType());
-                                                  return Response.status(Status.NOT_FOUND).build();
-                                              }
-                                              log.warn("getCodecTypesList failed with exception: ", exception);
-                                              return Response.status(Status.INTERNAL_SERVER_ERROR).build();
-                                          }), securityContext)
+                                          }), 
+                securityContext, () -> String.format("getSchemaReferences for namespace %s failed with exception:", namespace))
                 .thenApply(response -> {
                     asyncResponse.resume(response);
                     return response;
