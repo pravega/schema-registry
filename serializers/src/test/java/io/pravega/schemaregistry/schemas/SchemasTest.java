@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.schemas;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.DescriptorProtos;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
@@ -29,6 +30,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import static io.pravega.schemaregistry.testobjs.SchemaDefinitions.JSON_SCHEMA_STRING;
+import static io.pravega.schemaregistry.testobjs.SchemaDefinitions.JSON_SCHEMA_STRING_DRAFT_4;
+import static io.pravega.schemaregistry.testobjs.SchemaDefinitions.JSON_SCHEMA_STRING_DRAFT_7;
 import static org.junit.Assert.*;
 
 public class SchemasTest {
@@ -103,10 +106,18 @@ public class SchemasTest {
         assertNotNull(schema.getSchema());
         assertEquals(schema.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
 
-        JSONSchema<Object> schema2 = JSONSchema.of("Person", JSON_SCHEMA_STRING, Object.class);
+        JSONSchema<String> schema2 = JSONSchema.of("Person", JSON_SCHEMA_STRING, String.class);
         assertNotNull(schema2.getSchema());
         assertEquals(schema2.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
         
+        JSONSchema<JsonNode> schema3 = JSONSchema.of("", JSON_SCHEMA_STRING_DRAFT_4, JsonNode.class);
+        assertNotNull(schema3.getSchema());
+        assertEquals(schema3.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
+
+        JSONSchema<JsonNode> schema4 = JSONSchema.of("", JSON_SCHEMA_STRING_DRAFT_7, JsonNode.class);
+        assertNotNull(schema4.getSchema());
+        assertEquals(schema4.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);
+
         JSONSchema<User> baseSchema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
         assertNotNull(baseSchema1.getSchema());
         assertEquals(baseSchema1.getSchemaInfo().getSerializationFormat(), SerializationFormat.Json);

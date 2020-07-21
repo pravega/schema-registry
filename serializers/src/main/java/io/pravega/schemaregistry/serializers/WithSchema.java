@@ -146,8 +146,8 @@ public class WithSchema<T> {
      * @return Json schema String representing the schema for the object. 
      */
     @SuppressWarnings("unchecked")
-    public String getJsonSchema() {
-        return ((JSONSchema<Object>) schema).getSchemaString();
+    public org.everit.json.schema.Schema getJsonSchema() {
+        return ((JSONSchema<Object>) schema).getSchema();
     }
 
     /**

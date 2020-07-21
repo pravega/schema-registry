@@ -89,7 +89,7 @@ public class JSONSchema<T> implements Schema<T> {
     }
 
     /**
-     * Method to create a typed JSONSchema of type {@link Object} from the given schema. 
+     * Method to create a typed JSONSchema of type T from the given schema. 
      * This method can be used to pass Json schema string which can be used to represent primitive data types. 
      *
      * @param type type of object identified by {@link SchemaInfo#getType()}.
