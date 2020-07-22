@@ -213,6 +213,19 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                                                      .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
         response = future.get();
         assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
+
+        // Different auth method
+        future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
+                AuthHelper.getAuthorizationHeader("Bearer", Base64.getEncoder().encodeToString((GROUP1_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                    .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        response = future.get();
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
+
+        // no creds
+        future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request()
+                                                     .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        response = future.get();
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
     }
 
     private File createAuthFile() {

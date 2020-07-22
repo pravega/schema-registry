@@ -48,11 +48,10 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     }
 
     @Override
-    public void filter(ContainerRequestContext containerRequest)
-            throws WebApplicationException {
+    public void filter(ContainerRequestContext containerRequest) throws WebApplicationException {
         if (authEnabled) {
-            String credentials = parseCredentials(headers.getRequestHeader(HttpHeaders.AUTHORIZATION));
             try {
+                String credentials = parseCredentials(headers.getRequestHeader(HttpHeaders.AUTHORIZATION));
                 AuthContext context = authManager.getContext(credentials);
                 context.authenticate();
                 containerRequest.setSecurityContext(context);
