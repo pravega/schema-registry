@@ -18,9 +18,14 @@ import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.contract.generated.rest.model.CanRead;
 import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
+import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
+import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
+import io.pravega.schemaregistry.server.rest.filter.AuthenticationFilter;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
@@ -29,8 +34,10 @@ import org.glassfish.jersey.test.TestProperties;
 import org.junit.After;
 import org.junit.Test;
 
+import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.Application;
 import javax.ws.rs.core.HttpHeaders;
+import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 import java.io.File;
 import java.io.FileWriter;
@@ -79,8 +86,10 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
         ServiceConfig config = ServiceConfig.builder().authEnabled(true).userPasswordFilePath(authFile.getAbsolutePath()).build();
-        resourceObjs.add(new GroupResourceImpl(service, config, executor));
-        resourceObjs.add(new SchemaResourceImpl(service, config, executor));
+        AuthHandlerManager authHandlerManager = new AuthHandlerManager(config);
+        resourceObjs.add(new AuthenticationFilter(config.isAuthEnabled(), authHandlerManager));
+        resourceObjs.add(new GroupResourceImpl(service, config, authHandlerManager, executor));
+        resourceObjs.add(new SchemaResourceImpl(service, config, authHandlerManager, executor));
 
         RegistryApplication registryApplication = new RegistryApplication(resourceObjs);
         return registryApplication;
@@ -123,7 +132,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                         AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((NO_PREMISSION + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
-        assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
 
         future = target("v1/groups").queryParam("limit", 10)
                                     .request().header(HttpHeaders.AUTHORIZATION,
@@ -183,6 +192,40 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         list = response.readEntity(ListGroupsResponse.class);
         assertEquals(list.getGroups().size(), 10);
         assertEquals(list.getContinuationToken(), ContinuationToken.fromString("token").toString());
+    }
+
+    @Test
+    public void groupSchemas() throws ExecutionException, InterruptedException {
+        doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any(), any());
+        SchemaInfo schemaInfo = new SchemaInfo()
+                .type("name")
+                .serializationFormat(ModelHelper.encode(SerializationFormat.Avro))
+                .schemaData(new byte[0])
+                .properties(Collections.emptyMap());
+        Future<Response> future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((SYSTEM_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                                     .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        Response response = future.get();
+        assertTrue(response.readEntity(CanRead.class).isCompatible());
+
+        future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
+                        AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((GROUP1_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                                     .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        response = future.get();
+        assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
+
+        // Different auth method
+        future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
+                AuthHelper.getAuthorizationHeader("Bearer", Base64.getEncoder().encodeToString((GROUP1_USER + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
+                                    .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        response = future.get();
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
+
+        // no creds
+        future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request()
+                                                     .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
+        response = future.get();
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
     }
 
     private File createAuthFile() {

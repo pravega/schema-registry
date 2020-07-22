@@ -20,6 +20,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.server.rest.RegistryApplication;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.server.rest.filter.NamespaceRedirectFilter;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import org.glassfish.jersey.test.JerseyTest;
@@ -62,8 +63,10 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         service = mock(SchemaRegistryService.class);
         final Set<Object> resourceObjs = new HashSet<>();
         resourceObjs.add(new NamespaceRedirectFilter());
-        resourceObjs.add(new GroupResourceImpl(service, ServiceConfig.builder().build(), executor));
-        resourceObjs.add(new SchemaResourceImpl(service, ServiceConfig.builder().build(), executor));
+        ServiceConfig config = ServiceConfig.builder().build();
+        AuthHandlerManager authHandlerManager = new AuthHandlerManager(config);
+        resourceObjs.add(new GroupResourceImpl(service, config, authHandlerManager, executor));
+        resourceObjs.add(new SchemaResourceImpl(service, config, authHandlerManager, executor));
 
         return new RegistryApplication(resourceObjs);
     }

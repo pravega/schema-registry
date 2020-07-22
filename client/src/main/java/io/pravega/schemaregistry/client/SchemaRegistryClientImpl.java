@@ -472,6 +472,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     private <T> T handleResponse(Response.Status status, String errorMessage) {
         switch (status) {
+            case UNAUTHORIZED:
             case FORBIDDEN:
                 throw new UnauthorizedException("User not authorized.");
             default:
