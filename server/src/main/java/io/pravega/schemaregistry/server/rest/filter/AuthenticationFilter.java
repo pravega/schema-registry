@@ -58,7 +58,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
                 containerRequest.setSecurityContext(context);
             } catch (AuthenticationException e) {
                 log.warn("User authentication failed");
-                containerRequest.abortWith(Response.status(Response.Status.FORBIDDEN).build());            
+                containerRequest.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());            
             }
         }
     }

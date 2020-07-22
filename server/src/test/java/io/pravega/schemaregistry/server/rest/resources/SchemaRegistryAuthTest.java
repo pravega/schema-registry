@@ -132,7 +132,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                         AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((NO_PREMISSION + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                     .async().get();
         response = future.get();
-        assertEquals(response.getStatus(), Response.Status.FORBIDDEN.getStatusCode());
+        assertEquals(response.getStatus(), Response.Status.UNAUTHORIZED.getStatusCode());
 
         future = target("v1/groups").queryParam("limit", 10)
                                     .request().header(HttpHeaders.AUTHORIZATION,
