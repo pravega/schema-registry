@@ -16,7 +16,6 @@ SCRIPTS_DIR=${DIR}/scripts
 
 source ${SCRIPTS_DIR}/common.sh
 source ${SCRIPTS_DIR}/init_schemaregistry.sh
-source ${SCRIPTS_DIR}/init_kubernetes.sh
 
 if [ ${WAIT_FOR} ];then
     ${SCRIPTS_DIR}/wait_for
