@@ -18,10 +18,8 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.SecurityContext;
-import java.security.Principal;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicReference;
 
 import static io.pravega.schemaregistry.common.AuthHelper.extractMethodAndToken;
 
@@ -69,9 +67,9 @@ public class AuthHandlerManager {
      * 
      * @param credentials Credentials to use. 
      * @return Context object that can be used to perform authentication and authorization for supplied credentials
-     * @throws AuthenticationException if the handler 
+     * @throws AuthenticationException if the handler is not registered. 
      */
-    public Context getContext(String credentials) throws AuthenticationException {
+    public AuthContext getContext(String credentials) throws AuthenticationException {
         AuthHandler handler;
         String[] parts = extractMethodAndToken(credentials);
         String method = parts[0];
@@ -82,7 +80,7 @@ public class AuthHandlerManager {
             throw new AuthenticationException("Handler does not exist for method " + method);
         }
 
-        return new Context(handler, token);
+        return new AuthContext(handler, token);
     }
 
     /**
@@ -95,15 +93,14 @@ public class AuthHandlerManager {
      * @return Context object that can be used to perform authentication and authorization for supplied credentials
      * @throws AuthenticationException if the handler 
      */
-    public Context getContext(SecurityContext securityContext) throws AuthenticationException {
-        AuthHandler handler;
+    public AuthContext getContext(SecurityContext securityContext) throws AuthenticationException {
+        AuthHandler handler = handlerMap.get(securityContext.getAuthenticationScheme());
 
-        handler = handlerMap.get(securityContext.getAuthenticationScheme());
         if (handler == null) {
             throw new AuthenticationException("Handler does not exist for method " + securityContext.getAuthenticationScheme());
         }
 
-        return new Context(handler, securityContext.getUserPrincipal());
+        return new AuthContext(handler, securityContext.getUserPrincipal());
     }
     
     /**
@@ -117,70 +114,5 @@ public class AuthHandlerManager {
     void registerHandler(AuthHandler authHandler) {
         Preconditions.checkNotNull(authHandler, "authHandler");
         this.handlerMap.put(authHandler.getHandlerName(), authHandler);
-    }
-
-    /**
-     * Context class which sets the context for a request. It is derived by using the auth handler for the authentication 
-     * method and stores the authentication token.  
-     */
-    public static class Context implements SecurityContext {
-        private final AuthHandler handler;
-        private final String token;
-        private final AtomicReference<Principal> principal = new AtomicReference<>();
-
-        private Context(AuthHandler handler, String token) {
-            this.handler = handler;
-            this.token = token;
-        }
-        
-        private Context(AuthHandler handler, Principal principal) {
-            this.handler = handler;
-            this.principal.set(principal);
-            this.token = null;
-        }
-        
-        /**
-         * Authenticate the user using the token.
-         *
-         * @throws AuthenticationException if an authentication failure occurred.
-         */
-        public void authenticate() throws AuthenticationException {
-            principal.compareAndSet(null, handler.authenticate(token));
-        }
-
-        /**
-         * Authorize user for permissions on the resource with ACLs. It is important to have called authenticate
-         * before calling authorize. 
-         * 
-         * @param resource resource to check authorization on. 
-         * @param level ACLs. 
-         * @return true if the user is authorized, false otherwise. 
-         */
-        public boolean authorize(String resource, AuthHandler.Permissions level) {
-            Preconditions.checkNotNull(resource);
-            Preconditions.checkNotNull(level);
-            Preconditions.checkNotNull(principal.get(), "Authentication should have been called before authorization");
-            return handler.authorize(resource, principal.get()).ordinal() >= level.ordinal();
-        }
-        
-        @Override
-        public Principal getUserPrincipal() {
-            return principal.get();
-        }
-
-        @Override
-        public boolean isUserInRole(String role) {
-            return false;
-        }
-
-        @Override
-        public boolean isSecure() {
-            return false;
-        }
-
-        @Override
-        public String getAuthenticationScheme() {
-            return handler.getHandlerName();
-        }
     }
 }

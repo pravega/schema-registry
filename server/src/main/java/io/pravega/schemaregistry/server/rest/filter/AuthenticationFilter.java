@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.server.rest.filter;
 
 import com.google.common.base.Preconditions;
 import io.pravega.auth.AuthenticationException;
+import io.pravega.schemaregistry.server.rest.auth.AuthContext;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,7 +53,7 @@ public class AuthenticationFilter implements ContainerRequestFilter {
         if (authEnabled) {
             String credentials = parseCredentials(headers.getRequestHeader(HttpHeaders.AUTHORIZATION));
             try {
-                AuthHandlerManager.Context context = authManager.getContext(credentials);
+                AuthContext context = authManager.getContext(credentials);
                 context.authenticate();
                 containerRequest.setSecurityContext(context);
             } catch (AuthenticationException e) {

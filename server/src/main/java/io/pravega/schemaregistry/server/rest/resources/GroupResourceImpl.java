@@ -36,6 +36,7 @@ import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
+import io.pravega.schemaregistry.server.rest.auth.AuthContext;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import lombok.extern.slf4j.Slf4j;
@@ -76,7 +77,7 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
         int toFetch = limit == null ? DEFAULT_LIST_GROUPS_LIMIT : limit;
         ListGroupsResponse groupsList = new ListGroupsResponse();
 
-        final AuthHandlerManager.Context context;
+        final AuthContext context;
         if (getConfig().isAuthEnabled()) {
             try {
                 context = getAuthManager().getContext(securityContext);

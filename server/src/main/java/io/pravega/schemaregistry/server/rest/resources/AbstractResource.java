@@ -19,6 +19,7 @@ import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.server.rest.auth.AuthContext;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -83,7 +84,7 @@ abstract class AbstractResource {
     private boolean authorize(SecurityContext securityContext, String resource, AuthHandler.Permissions permission)
             throws AuthException {
         if (config.isAuthEnabled()) {
-            AuthHandlerManager.Context context = getAuthManager().getContext(securityContext);
+            AuthContext context = getAuthManager().getContext(securityContext);
             if (!context.authorize(resource, permission)) {
                 throw new AuthorizationException(
                         String.format("Failed to authorize for resource [%s]", resource),
