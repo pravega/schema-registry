@@ -13,12 +13,16 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
 import io.pravega.auth.AuthHandler;
-import io.pravega.auth.AuthenticationException;
 import io.pravega.auth.AuthorizationException;
-import io.pravega.common.concurrent.Futures;
+import io.pravega.common.Exceptions;
+import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
+import io.pravega.schemaregistry.exceptions.PreconditionFailedException;
+import io.pravega.schemaregistry.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.server.rest.auth.AuthContext;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
+import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
@@ -27,10 +31,11 @@ import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import javax.ws.rs.core.SecurityContext;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.Executor;
 import java.util.function.Supplier;
 
@@ -55,53 +60,38 @@ abstract class AbstractResource {
     @Getter
     private final Executor executorService;
 
-    AbstractResource(SchemaRegistryService registryService, ServiceConfig config, Executor executorService) {
+    AbstractResource(SchemaRegistryService registryService, ServiceConfig config, AuthHandlerManager authManager, Executor executorService) {
         this.registryService = registryService;
         this.config = config;
-        this.authManager = new AuthHandlerManager(config);
+        this.authManager = authManager;
         this.executorService = executorService;
     }
-
-    /**
-     * This is a shortcut for {@code headers.getRequestHeader().get(HttpHeaders.AUTHORIZATION)}.
-     *
-     * @return a list of read-only values of the HTTP Authorization header
-     * @throws IllegalStateException if called outside the scope of the HTTP request
-     */
-    List<String> getAuthorizationHeader() {
-        return headers.getRequestHeader(HttpHeaders.AUTHORIZATION);
+    
+    CompletableFuture<Response> withAuthorization(AuthHandler.Permissions permissions,
+                                                  String resource, AsyncResponse response,
+                                                  Supplier<CompletableFuture<Response>> future,
+                                                  SecurityContext securityContext, 
+                                                  Supplier<String> logSupplier) {
+        return CompletableFuture.runAsync(() -> authorize(securityContext, resource, permissions), executorService)
+                         .thenCompose(v -> future.get())
+                         .exceptionally(e -> {
+                             Throwable unwrap = Exceptions.unwrap(e);
+                             response.resume(handleExceptions(unwrap, logSupplier));
+                             throw new CompletionException(e);
+                         });
     }
 
-    CompletableFuture<Response> withAuthenticateAndAuthorize(String request, AuthHandler.Permissions permissions,
-                                                             String resource, AsyncResponse response,
-                                                             Supplier<CompletableFuture<Response>> future) {
-        try {
-            authenticateAuthorize(getAuthorizationHeader(), resource, permissions);
-            return future.get();
-        } catch (AuthException e) {
-            log.warn("Auth failed {}", request, e);
-            response.resume(Response.status(Response.Status.fromStatusCode(e.getResponseCode())).build());
-            throw e;
-        } catch (IllegalArgumentException e) {
-            log.warn("Bad request {} error:{}", request, e.getMessage());
-            return CompletableFuture.completedFuture(Response.status(Response.Status.BAD_REQUEST).build());
-        } catch (Exception e) {
-            log.error("request failed with exception {}", e);
-            return Futures.failedFuture(e);
-        }
-    }
-
-    void authenticateAuthorize(List<String> authHeader, String resource, AuthHandler.Permissions permission)
+    private boolean authorize(SecurityContext securityContext, String resource, AuthHandler.Permissions permission)
             throws AuthException {
         if (config.isAuthEnabled()) {
-            String credentials = parseCredentials(authHeader);
-            AuthHandlerManager.Context context = authManager.getContext(credentials);
-            if (!context.authenticateAndAuthorize(resource, permission)) {
+            AuthContext context = getAuthManager().getContext(securityContext);
+            if (!context.authorize(resource, permission)) {
                 throw new AuthorizationException(
                         String.format("Failed to authorize for resource [%s]", resource),
                         Response.Status.FORBIDDEN.getStatusCode());
             }
         }
+        return true;
     }
 
     String getNamespaceResource() {
@@ -167,14 +157,30 @@ abstract class AbstractResource {
         }
     }
 
-    static String parseCredentials(List<String> authHeader) throws AuthenticationException {
-        if (authHeader == null || authHeader.isEmpty()) {
-            throw new AuthenticationException("Missing authorization header.");
-        }
-
-        // Expecting a single value here. If there are multiple, we'll deal with just the first one.
-        String credentials = authHeader.get(0);
-        Preconditions.checkNotNull(credentials, "Missing credentials.");
-        return credentials;
+    Response handleExceptions(Throwable unwrap, Supplier<String> logSupplier) {
+        Response response;
+        if (unwrap instanceof AuthException) {
+            log.warn("Auth failed for request {}.", logSupplier.get(), unwrap);
+            response = Response.status(Response.Status.fromStatusCode(((AuthException) unwrap).getResponseCode())).build();
+        } else if (unwrap instanceof IllegalArgumentException) {
+            log.warn("Bad argument for request {}. {}. {}", logSupplier.get(), unwrap.getMessage());
+            response = Response.status(Response.Status.BAD_REQUEST).entity(unwrap.getMessage()).build();
+        } else if (unwrap instanceof PreconditionFailedException) {
+            log.warn("Request {} failed. Precondition failed.", logSupplier.get());
+            response = Response.status(Response.Status.CONFLICT).build();
+        } else if (unwrap instanceof IncompatibleSchemaException) {
+            log.warn("Request {} failed with Incompatible Schema.", logSupplier.get());
+            response = Response.status(Response.Status.CONFLICT).build();
+        } else if (unwrap instanceof StoreExceptions.DataNotFoundException || unwrap instanceof StoreExceptions.DataContainerNotFoundException) {
+            log.warn("Request {} failed with resource not found. ", logSupplier.get());
+            response = Response.status(Response.Status.NOT_FOUND).build();
+        } else if (unwrap instanceof SerializationFormatMismatchException) {
+            log.warn("Request {} failed with SerializationFormat Mismatch.", logSupplier.get());
+            response = Response.status(Response.Status.EXPECTATION_FAILED).entity(unwrap.getMessage()).build();
+        } else {
+            log.warn("Request {} failed with Internal Server error.", logSupplier.get(), unwrap);
+            response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(unwrap.getMessage()).build();
+        } 
+        return response;
     }
 }

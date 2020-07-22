@@ -1,0 +1,72 @@
+# /**
+#  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#  *
+#  * Licensed under the Apache License, Version 2.0 (the "License");
+#  * you may not use this file except in compliance with the License.
+#  * You may obtain a copy of the License at
+#  *
+#  *     http://www.apache.org/licenses/LICENSE-2.0
+#  */
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ template "schema-registry.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+{{ include "schema-registry.commonLabels" . | indent 4 }}
+spec:
+  replicas: {{ .Values.replicas }}
+  selector:
+    matchLabels:
+{{ include "schema-registry.selectorLabels" . | indent 6 }}
+  template:
+    metadata:
+      labels:
+{{ include "schema-registry.selectorLabels" . | indent 8 }}
+    spec:
+      {{- if .Values.serviceAccount.create }}
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      {{- end }}
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          envFrom:
+          - configMapRef:
+              name: {{ template "schema-registry.fullname" . }}-configmap
+          ports:
+            - name: rest
+              containerPort: {{ .Values.service.port }}
+              protocol: TCP
+          livenessProbe:
+            initialDelaySeconds: 2
+            httpGet:
+              path: /ping
+              port: rest
+          {{- if or .Values.authentication.enabled .Values.tls.enabled }}
+          volumeMounts:
+          {{- if .Values.authentication.enabled }}
+          - name: auth-passwd-secret
+            mountPath: /etc/auth-passwd-volume
+            readOnly: true
+          {{- end }}
+          {{- if .Values.tls.enabled }}
+          - name: tls-secret
+            mountPath: /etc/secret-volume
+            readOnly: true
+          {{- end }}
+          {{- end }}
+      {{- if or .Values.authentication.enabled .Values.tls.enabled }}
+      volumes:
+      {{- if .Values.authentication.enabled }}
+      - name: auth-passwd-secret
+        secret:
+          secretName: {{ .Values.authentication.passwordAuthSecret }}
+      {{- end }}
+      {{- if .Values.tls.enabled }}
+      - name: tls-secret
+        secret:
+          secretName: {{ .Values.tls.secret }}
+      {{- end }}
+      {{- end }}

@@ -1,0 +1,81 @@
+# /**
+#  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#  *
+#  * Licensed under the Apache License, Version 2.0 (the "License");
+#  * you may not use this file except in compliance with the License.
+#  * You may obtain a copy of the License at
+#  *
+#  *     http://www.apache.org/licenses/LICENSE-2.0
+#  */
+
+## Default values for schema-registry.
+## This is a YAML-formatted file.
+## Declare variables to be passed into your templates.
+
+replicas: 2
+
+image:
+  repository: pravega/schema-registry
+  tag: 0.0.1
+  pullPolicy: IfNotPresent
+
+## Service account name and whether to create it.
+serviceAccount:
+  create: true
+  name: schema-registry
+  annotations:
+
+service:
+  type: LoadBalancer
+  port: 9092
+
+## Ingress configuration.
+ingress:
+  enabled: false
+  path: /
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+
+  ## List of hosts for the ingress
+  hosts:
+    - schema-registry.pravega.com
+
+  ## TLS configuration
+  tls: []
+   # - secretName: schema-registry-tls
+   #   hosts:
+   #     - schema-registry.pravega.com
+
+client:
+  loadDynamic: false
+  method: ""
+  token: ""
+
+storeType: Pravega
+controllerUri: tcp://localhost:9090
+pravega:
+  ## following values should be configured if TLS is required for
+  ## talking to pravega and we want to perform server auth certificate
+  ## validation
+  tlsTrustStore:
+  validateHostName: true
+
+authentication:
+  enabled: false
+  ## following values are considered only when
+  ## authentication is enabled
+  passwordAuthSecret:
+  userPasswordFile:
+  authorizationResourceQualifier: ""
+  disableBasicAuthentication: false
+
+tls:
+  enabled: false
+  ## following values are considered only when
+  ## tls is enabled
+  secret:
+  certFile:
+  trustStore:
+  keyFile:
+  keyPasswordFile:
