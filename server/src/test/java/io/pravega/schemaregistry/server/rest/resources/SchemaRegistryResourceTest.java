@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
@@ -118,7 +118,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         assertEquals(response.getStatus(), 200);
         ListGroupsResponse list = response.readEntity(ListGroupsResponse.class);
         assertEquals(list.getGroups().size(), 1);
-        
+
         // Runtime Exception
         doAnswer(x ->
                 Futures.failedFuture(new RuntimeException())
@@ -194,7 +194,8 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     @Test
     public void testCanRead() throws ExecutionException, InterruptedException {
         doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), anyString(), any());
-        io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo()
+        io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo =
+                new io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo()
                 .type("name")
                 .serializationFormat(ModelHelper.encode(SerializationFormat.Avro))
                 .schemaData(new byte[0])
@@ -721,7 +722,8 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         Response response = target(
                 GROUPS + "/" + groupName + "/schemas/schema/" + ordinal).request().async().get().get();
         assertEquals(200, response.getStatus());
-        io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo1 = response.readEntity(io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class);
+        io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo1 = response.readEntity(
+                io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class);
         assertTrue(Objects.equals(schemaInfo1, ModelHelper.encode(schemaInfo)));
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(

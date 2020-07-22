@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.storage.impl.group;
 
@@ -28,6 +28,7 @@ import io.pravega.test.common.AssertExtensions;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
 import java.util.stream.Collectors;
+
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
@@ -136,7 +138,8 @@ public class GroupTest {
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
         assertFalse(tableValueListEtag.isEmpty());
-        List<TableRecords.TableValue> tableValueListVersionInfo = inMemoryGroupTable.getTable().entrySet().stream().filter(
+        List<TableRecords.TableValue> tableValueListVersionInfo =
+                inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.SchemaIdKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
@@ -146,7 +149,8 @@ public class GroupTest {
         assertEquals(anygroup, schemaRecord.getSchemaInfo().getType());
         assertEquals(0, schemaRecord.getId());
 
-        List<TableRecords.TableValue> tableValueListSchemaInfo = inMemoryGroupTable.getTable().entrySet().stream().filter(
+        List<TableRecords.TableValue> tableValueListSchemaInfo =
+                inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.SchemaFingerprintKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
@@ -157,7 +161,8 @@ public class GroupTest {
                         0);
         assertEquals(0, schemaVersionValue.getVersions().get(0).getVersion());
 
-        List<TableRecords.TableValue> tableValueListLatestSchema = inMemoryGroupTable.getTable().entrySet().stream().filter(
+        List<TableRecords.TableValue> tableValueListLatestSchema =
+                inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.LatestSchemasKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
@@ -196,7 +201,8 @@ public class GroupTest {
         assertEquals(1, schemaWithVersionListWithToken.size());
         schemaWithVersionListWithToken = inMemoryGroup.getSchemas(anygroup1).join();
         assertEquals(1, schemaWithVersionListWithToken.size());
-        List<TableRecords.TableValue> tableValueListVersionInfo = inMemoryGroupTable.getTable().entrySet().stream().filter(
+        List<TableRecords.TableValue> tableValueListVersionInfo =
+                inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.SchemaIdKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());
@@ -235,7 +241,8 @@ public class GroupTest {
         inMemoryGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
         VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
         VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo1).join();
-        List<TableRecords.TableValue> tableValueListVersionInfo = inMemoryGroupTable.getTable().entrySet().stream().filter(
+        List<TableRecords.TableValue> tableValueListVersionInfo =
+                inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.SchemaIdKey).map(
                 x -> x.getValue().getValue()).collect(
                 Collectors.toList());

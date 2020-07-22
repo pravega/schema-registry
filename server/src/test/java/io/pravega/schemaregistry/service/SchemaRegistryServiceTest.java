@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.service;
 
@@ -87,7 +87,8 @@ public class SchemaRegistryServiceTest {
                     StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "group prop not found"));
         }).when(store).getGroupProperties(any(), eq("grp2"));
 
-        ResultPage<Map.Entry<String, GroupProperties>, ContinuationToken> result = service.listGroups(null, null, 100).join();
+        ResultPage<Map.Entry<String, GroupProperties>, ContinuationToken> result = service.listGroups(null, null,
+                100).join();
         assertEquals(result.getList().size(), 1);
     }
 
@@ -453,7 +454,8 @@ public class SchemaRegistryServiceTest {
         //Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getGroupProperties(any(), anyString());
         AssertExtensions.assertThrows("An Exception should have been thrown",
-                () -> service.validateSchema(null, "mygroup", schemaInfo, Compatibility.forward()).join(), e -> e instanceof RuntimeException);
+                () -> service.validateSchema(null, "mygroup", schemaInfo, Compatibility.forward()).join(),
+                e -> e instanceof RuntimeException);
     }
 
     @Test
@@ -534,7 +536,8 @@ public class SchemaRegistryServiceTest {
         //Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).addCodecType(any(), anyString(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
-                () -> service.addCodecType(null, "mygroup", new CodecType("gzip")).join(), e -> e instanceof RuntimeException);
+                () -> service.addCodecType(null, "mygroup", new CodecType("gzip")).join(),
+                e -> e instanceof RuntimeException);
     }
 
     @Test
