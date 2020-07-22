@@ -15,6 +15,7 @@ import io.pravega.auth.AuthException;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthorizationException;
 import io.pravega.common.Exceptions;
+import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
 import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.exceptions.SerializationFormatMismatchException;
@@ -177,6 +178,9 @@ abstract class AbstractResource {
         } else if (unwrap instanceof SerializationFormatMismatchException) {
             log.warn("Request {} failed with SerializationFormat Mismatch.", logSupplier.get());
             response = Response.status(Response.Status.EXPECTATION_FAILED).entity(unwrap.getMessage()).build();
+        } else if (unwrap instanceof CodecTypeNotRegisteredException) {
+            log.warn("Request {} failed with Codec type not registered.", logSupplier.get());
+            response = Response.status(Response.Status.PRECONDITION_FAILED).entity(unwrap.getMessage()).build();
         } else {
             log.warn("Request {} failed with Internal Server error.", logSupplier.get(), unwrap);
             response = Response.status(Response.Status.INTERNAL_SERVER_ERROR).entity(unwrap.getMessage()).build();
