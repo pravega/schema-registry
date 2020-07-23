@@ -63,9 +63,9 @@ public class TableStore extends AbstractService {
     /**
      * Segment helper to make KVT wire command calls to segment store. 
      */
-    private final TableHelper segmentHelper;
+    private final WireCommandClient wireCommandClient;
     /**
-     * Host Store implementation required by {@link TableHelper}. This wraps a controller client to get the URI for
+     * Host Store implementation required by {@link WireCommandClient}. This wraps a controller client to get the URI for
      * a segment store instance. 
      */
     private final HostStore hostStore;
@@ -86,9 +86,13 @@ public class TableStore extends AbstractService {
     private final Cache<String, String> tokenCache;
 
     public TableStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
-        ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
-        hostStore = new HostStore(clientConfig, executor);
-        segmentHelper = new TableHelper(connectionFactory, hostStore);
+        this(new WireCommandClient(new ConnectionFactoryImpl(clientConfig), new HostStore(clientConfig, executor)), 
+                executor);
+    }
+    
+    TableStore(WireCommandClient wireCommandClient, ScheduledExecutorService executor) {
+        this.wireCommandClient = wireCommandClient;
+        this.hostStore = wireCommandClient.getHostStore();
         this.executor = executor;
         this.tokenSupplier = x -> {
             String[] splits = x.split("/");
@@ -129,7 +133,7 @@ public class TableStore extends AbstractService {
     public CompletableFuture<Void> createTable(String tableName) {
         log.debug("create table called for table: {}", tableName);
 
-        return Futures.toVoid(withRetries(() -> segmentHelper.createTableSegment(
+        return Futures.toVoid(withRetries(() -> wireCommandClient.createTableSegment(
                 tableName, getToken(tableName)),
                 () -> String.format("create table: %s", tableName), tableName))
                       .whenComplete((r, e) -> {
@@ -143,7 +147,7 @@ public class TableStore extends AbstractService {
 
     public CompletableFuture<Void> deleteTable(String tableName, boolean mustBeEmpty) {
         log.debug("delete table called for table: {}", tableName);
-        return withRetries(() -> segmentHelper.deleteTableSegment(
+        return withRetries(() -> wireCommandClient.deleteTableSegment(
                 tableName, mustBeEmpty, getToken(tableName)),
                 () -> String.format("delete table: %s", tableName), tableName)
                 .exceptionally(e -> {
@@ -179,10 +183,10 @@ public class TableStore extends AbstractService {
                     TableSegmentEntry.notExists(x.getKey(), x.getValue().getRecord()) :
                     TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().toLong());
         }).collect(Collectors.toList());
-        return segmentHelper.updateTableEntries(tableName, entries, getToken(tableName))
-                            .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
+        return wireCommandClient.updateTableEntries(tableName, entries, getToken(tableName))
+                                .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
                                                    .collect(Collectors.toList()))
-                            .whenComplete((r, e) -> {
+                                .whenComplete((r, e) -> {
                                 releaseEntries(entries);
                             });
     }
@@ -201,7 +205,7 @@ public class TableStore extends AbstractService {
 
         CompletableFuture<List<VersionedRecord<byte[]>>> result = new CompletableFuture<>();
         String message = "get entries for table: %s";
-        withRetries(() -> segmentHelper.readTable(tableName, keys, getToken(tableName)),
+        withRetries(() -> wireCommandClient.readTable(tableName, keys, getToken(tableName)),
                 () -> String.format(message, tableName), tableName)
                 .thenApply(entriesFromStore -> {
                     try {
@@ -235,7 +239,7 @@ public class TableStore extends AbstractService {
     public CompletableFuture<Void> removeEntry(String tableName, byte[] key) {
         log.trace("remove entry called for : {} key : {}", tableName, key);
         List<TableSegmentKey> keys = Collections.singletonList(TableSegmentKey.unversioned(key));
-        return withRetries(() -> segmentHelper.removeTableKeys(
+        return withRetries(() -> wireCommandClient.removeTableKeys(
                 tableName, keys, getToken(tableName)),
                 () -> String.format("remove entry: table: %s", tableName), tableName)
                 .thenAccept(v -> log.trace("entry for key {} removed from table {}", key, tableName))
@@ -307,7 +311,7 @@ public class TableStore extends AbstractService {
         log.trace("get keys paginated called for : {}", tableName);
 
         return withRetries(() ->
-                        segmentHelper.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
+                        wireCommandClient.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
                                 getToken(tableName)),
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
@@ -326,7 +330,7 @@ public class TableStore extends AbstractService {
             String tableName, ByteBuf continuationToken, int limit, Function<byte[], K> fromBytesKey,
             Function<byte[], T> fromBytesValue) {
         log.trace("get entries paginated called for : {}", tableName);
-        return withRetries(() -> segmentHelper.readTableEntries(tableName, limit,
+        return withRetries(() -> wireCommandClient.readTableEntries(tableName, limit,
                 IteratorStateImpl.fromBytes(continuationToken), getToken(tableName)),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
@@ -379,7 +383,9 @@ public class TableStore extends AbstractService {
     
     @SneakyThrows(ExecutionException.class)
     private String getToken(String tableName) {
-        return tokenCache.get(tableName, () ->  tokenSupplier.apply(tableName));
+        return tokenCache.get(tableName, () ->  {
+            return tokenSupplier.apply(tableName);
+        });
     }
     
     @Data
@@ -407,5 +413,4 @@ public class TableStore extends AbstractService {
             ReferenceCountUtil.safeRelease(e.getValue());
         }
     }
-
 }

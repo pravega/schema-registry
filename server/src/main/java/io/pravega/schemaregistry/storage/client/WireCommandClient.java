@@ -25,7 +25,6 @@ import io.pravega.client.tables.impl.TableSegmentKey;
 import io.pravega.client.tables.impl.TableSegmentKeyVersion;
 import io.pravega.common.Exceptions;
 import io.pravega.common.tracing.TagLogger;
-import io.pravega.controller.stream.api.grpc.v1.Controller;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.shared.protocol.netty.ConnectionFailedException;
 import io.pravega.shared.protocol.netty.Reply;
@@ -33,6 +32,8 @@ import io.pravega.shared.protocol.netty.Request;
 import io.pravega.shared.protocol.netty.WireCommand;
 import io.pravega.shared.protocol.netty.WireCommandType;
 import io.pravega.shared.protocol.netty.WireCommands;
+import lombok.AccessLevel;
+import lombok.Getter;
 import org.slf4j.LoggerFactory;
 
 import java.util.AbstractMap;
@@ -43,12 +44,13 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.stream.Collectors;
 
-/**
- * Used by the Controller for interacting with Segment Store. Think of this class as a 'SegmentStoreHelper'. 
- */
-public class TableHelper implements AutoCloseable {
+import static io.pravega.controller.stream.api.grpc.v1.Controller.NodeUri;
 
-    private static final TagLogger log = new TagLogger(LoggerFactory.getLogger(TableHelper.class));
+/**
+ * Used for making wire command calls into Segment Store.  
+ */
+public class WireCommandClient implements AutoCloseable {
+    private static final TagLogger log = new TagLogger(LoggerFactory.getLogger(WireCommandClient.class));
 
     private static final Map<Class<? extends Request>, Set<Class<? extends Reply>>> EXPECTED_SUCCESS_REPLIES =
             ImmutableMap.<Class<? extends Request>, Set<Class<? extends Reply>>>builder()
@@ -75,15 +77,16 @@ public class TableHelper implements AutoCloseable {
                     .put(WireCommands.ReadTableEntries.class, ImmutableSet.of(WireCommands.NoSuchSegment.class))
                     .build();
 
+    @Getter(AccessLevel.PACKAGE)
     private final HostStore hostStore;
     private final ConnectionFactory connectionFactory;
 
-    TableHelper(final ConnectionFactory clientCF, HostStore hostStore) {
+    WireCommandClient(final ConnectionFactory clientCF, HostStore hostStore) {
         this.connectionFactory = clientCF;
         this.hostStore = hostStore;
     }
 
-    private CompletableFuture<Controller.NodeUri> getTableUri(final String tableName) {
+    CompletableFuture<NodeUri> getTableUri(final String tableName) {
         return hostStore.getHostForTableSegment(tableName);
     }
 
@@ -98,7 +101,6 @@ public class TableHelper implements AutoCloseable {
      */
     CompletableFuture<Void> createTableSegment(final String tableName,
                                                String delegationToken) {
-
         return getTableUri(tableName)
                 .thenCompose(uri -> {
                     final WireCommandType type = WireCommandType.CREATE_TABLE_SEGMENT;
@@ -106,7 +108,6 @@ public class TableHelper implements AutoCloseable {
                     RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
                     final long requestId = connection.getFlow().asLong();
 
-                    // All Controller Metadata Segments are non-sorted.
                     return sendRequest(connection, requestId, new WireCommands.CreateTableSegment(requestId, tableName, false, delegationToken))
                             .thenAccept(rpl -> handleReply(rpl, connection, tableName, WireCommands.CreateTableSegment.class, type));
                 });
