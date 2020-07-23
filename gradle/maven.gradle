@@ -59,6 +59,7 @@ plugins.withId('maven') {
                         developer {
                             id 'shiveshr'
                             name 'Shivesh Ranjan'
+                        }
                         developer {
                             id 'fpj'
                             name 'Flavio Junqueira'
