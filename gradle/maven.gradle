@@ -39,15 +39,15 @@ plugins.withId('maven') {
                     }
                 }
 
-                pom.artifactId = "pravega" + project.path.replace(':', '-')
+                pom.artifactId = project.path.replace(':', '-')
                 pom.project {
                     name "Pravega"
                     url "http://pravega.io"
                     description "Streaming Storage Platform"
                     scm {
-                        url 'https://github.com/pravega/pravega/tree/master'
-                        connection 'scm:git:git://github.com/pravega/pravega.git'
-                        developerConnection 'scm:git:https://github.com/pravega/pravega.git'
+                        url 'https://github.com/pravega/schema-registry/tree/master'
+                        connection 'scm:git:git://github.com/pravega/schema-registry.git'
+                        developerConnection 'scm:git:https://github.com/pravega/schema-registry.git'
                     }
                     licenses {
                         license {
@@ -56,6 +56,9 @@ plugins.withId('maven') {
                         }
                     }
                     developers {
+                        developer {
+                            id 'shiveshr'
+                            name 'Shivesh Ranjan'
                         developer {
                             id 'fpj'
                             name 'Flavio Junqueira'
@@ -76,7 +79,7 @@ plugins.withId('maven') {
     install {
         repositories {
             mavenInstaller {
-                pom.artifactId = "pravega" + project.path.replace(':', '-')
+                pom.artifactId = project.path.replace(':', '-')
             }
         }
     }
