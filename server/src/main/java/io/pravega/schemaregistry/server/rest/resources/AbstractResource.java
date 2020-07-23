@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.server.rest.resources;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import io.pravega.auth.AuthException;
@@ -26,7 +27,6 @@ import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import javax.ws.rs.container.AsyncResponse;
 import javax.ws.rs.core.Context;

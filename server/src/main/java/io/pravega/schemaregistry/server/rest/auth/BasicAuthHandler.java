@@ -17,8 +17,6 @@ import io.pravega.auth.AuthException;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
 import io.pravega.auth.ServerConfig;
-import io.pravega.controller.server.rpc.auth.StrongPasswordProcessor;
-import io.pravega.controller.server.rpc.auth.UserPrincipal;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -86,7 +84,7 @@ public class BasicAuthHandler implements AuthHandler {
 
         try {
             if (userMap.containsKey(userName) && encryptor.checkPassword(password, userMap.get(userName).encryptedPassword)) {
-                return new UserPrincipal(userName);
+                return () -> userName;
             }
             throw new AuthenticationException("User authentication exception");
         } catch (NoSuchAlgorithmException | InvalidKeySpecException e) {

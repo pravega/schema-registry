@@ -11,7 +11,6 @@ package io.pravega.schemaregistry.storage;
 
 import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
-import io.pravega.controller.retryable.RetryableException;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,6 +28,7 @@ public class StoreExceptions extends RuntimeException {
         DATA_NOT_EMPTY,
         WRITE_CONFLICT,
         CONNECTION_ERROR,
+        AUTH_ERROR,
         UNKNOWN
     }
 
@@ -97,6 +97,9 @@ public class StoreExceptions extends RuntimeException {
             case CONNECTION_ERROR:
                 exception = new StoreConnectionException(errorMessage, cause);
                 break;
+            case AUTH_ERROR:
+                exception = new AuthenticationException(errorMessage, cause);
+                break;
             case UNKNOWN:
                 exception = new UnknownException(errorMessage, cause);
                 break;
@@ -156,6 +159,15 @@ public class StoreExceptions extends RuntimeException {
      */
     public static class StoreConnectionException extends StoreExceptions implements RetryableException {
         private StoreConnectionException(String errorMessage, Throwable cause) {
+            super(errorMessage, cause);
+        }
+    }
+
+    /**
+     * Exception type due to failure in authenticating with store.
+     */
+    public static class AuthenticationException extends StoreExceptions implements RetryableException {
+        private AuthenticationException(String errorMessage, Throwable cause) {
             super(errorMessage, cause);
         }
     }

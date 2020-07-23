@@ -25,14 +25,8 @@ import io.pravega.client.tables.impl.TableSegmentKey;
 import io.pravega.client.tables.impl.TableSegmentKeyVersion;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
-import io.pravega.common.tracing.RequestTag;
 import io.pravega.common.util.ContinuationTokenAsyncIterator;
-import io.pravega.common.util.RetriesExhaustedException;
-import io.pravega.controller.server.SegmentHelper;
-import io.pravega.controller.server.WireCommandFailedException;
-import io.pravega.controller.store.host.HostStoreException;
-import io.pravega.controller.store.stream.StoreException;
-import io.pravega.controller.util.RetryHelper;
+import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.Data;
@@ -40,6 +34,7 @@ import lombok.NonNull;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 
+import java.time.Duration;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Collections;
@@ -54,26 +49,26 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static io.pravega.controller.server.WireCommandFailedException.Reason.ConnectionDropped;
-import static io.pravega.controller.server.WireCommandFailedException.Reason.ConnectionFailed;
-
 /**
- * Wrapper class over {@link SegmentHelper}. Its implementation abstracts the caller classes from the library
+ * Its implementation abstracts the caller classes from the library
  * used for interacting with pravega tables.
  */
 @Slf4j
 public class TableStore extends AbstractService {
     public static final String SCHEMA_REGISTRY_SCOPE = "_schemaregistry";
+    private final static long RETRY_INIT_DELAY = 100;
+    private final static int RETRY_MULTIPLIER = 2;
+    private final static long RETRY_MAX_DELAY = Duration.ofSeconds(5).toMillis();
     private static final int NUM_OF_RETRIES = 15; // approximately 1 minute worth of retries
     /**
      * Segment helper to make KVT wire command calls to segment store. 
      */
-    private final SegmentHelper segmentHelper;
+    private final TableHelper segmentHelper;
     /**
-     * Host Store implementation required by {@link SegmentHelper}. This wraps a controller client to get the URI for
+     * Host Store implementation required by {@link TableHelper}. This wraps a controller client to get the URI for
      * a segment store instance. 
      */
-    private final HostStoreImpl hostStore;
+    private final HostStore hostStore;
     private final int numOfRetries;
     private final ScheduledExecutorService executor;
     /**
@@ -92,8 +87,8 @@ public class TableStore extends AbstractService {
 
     public TableStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
         ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
-        hostStore = new HostStoreImpl(clientConfig, executor);
-        segmentHelper = new SegmentHelper(connectionFactory, hostStore);
+        hostStore = new HostStore(clientConfig, executor);
+        segmentHelper = new TableHelper(connectionFactory, hostStore);
         this.executor = executor;
         this.tokenSupplier = x -> {
             String[] splits = x.split("/");
@@ -126,7 +121,7 @@ public class TableStore extends AbstractService {
         
     }
 
-    public CompletableFuture<Void> createScope() {
+    private CompletableFuture<Void> createScope() {
         return withRetries(() -> Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE)),
                 () -> "Failed to create scope. Retrying...", "");
     }
@@ -135,7 +130,7 @@ public class TableStore extends AbstractService {
         log.debug("create table called for table: {}", tableName);
 
         return Futures.toVoid(withRetries(() -> segmentHelper.createTableSegment(
-                tableName, getToken(tableName), RequestTag.NON_EXISTENT_ID, false),
+                tableName, getToken(tableName)),
                 () -> String.format("create table: %s", tableName), tableName))
                       .whenComplete((r, e) -> {
                           if (e != null) {
@@ -149,7 +144,7 @@ public class TableStore extends AbstractService {
     public CompletableFuture<Void> deleteTable(String tableName, boolean mustBeEmpty) {
         log.debug("delete table called for table: {}", tableName);
         return withRetries(() -> segmentHelper.deleteTableSegment(
-                tableName, mustBeEmpty, getToken(tableName), RequestTag.NON_EXISTENT_ID),
+                tableName, mustBeEmpty, getToken(tableName)),
                 () -> String.format("delete table: %s", tableName), tableName)
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataContainerNotFoundException) {
@@ -184,14 +179,12 @@ public class TableStore extends AbstractService {
                     TableSegmentEntry.notExists(x.getKey(), x.getValue().getRecord()) :
                     TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().toLong());
         }).collect(Collectors.toList());
-        return withRetries(() -> {
-            return segmentHelper.updateTableEntries(tableName, entries, getToken(tableName), RequestTag.NON_EXISTENT_ID)
-                                .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
-                                                       .collect(Collectors.toList()));
-        }, () -> String.format("update entries : %s", tableName), tableName, true)
-                .whenComplete((r, e) -> {
-                    releaseEntries(entries);
-                });
+        return segmentHelper.updateTableEntries(tableName, entries, getToken(tableName))
+                            .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
+                                                   .collect(Collectors.toList()))
+                            .whenComplete((r, e) -> {
+                                releaseEntries(entries);
+                            });
     }
 
     public <T> CompletableFuture<VersionedRecord<T>> getEntry(String tableName, byte[] key, Function<byte[], T> fromBytes) {
@@ -208,11 +201,11 @@ public class TableStore extends AbstractService {
 
         CompletableFuture<List<VersionedRecord<byte[]>>> result = new CompletableFuture<>();
         String message = "get entries for table: %s";
-        withRetries(() -> segmentHelper.readTable(tableName, keys, getToken(tableName), RequestTag.NON_EXISTENT_ID),
+        withRetries(() -> segmentHelper.readTable(tableName, keys, getToken(tableName)),
                 () -> String.format(message, tableName), tableName)
                 .thenApply(entriesFromStore -> {
                     try {
-                        List<VersionedRecord<byte[]>> entries = entriesFromStore.stream().map(y -> {
+                        return entriesFromStore.stream().map(y -> {
                             TableSegmentKeyVersion version = y.getKey().getVersion();
                             if (version.equals(TableSegmentKeyVersion.NOT_EXISTS)) {
                                 if (throwOnNotFound) {
@@ -224,7 +217,6 @@ public class TableStore extends AbstractService {
                                 return new VersionedRecord<>(getArray(y.getValue()), new Version(version.getSegmentVersion()));
                             }
                         }).collect(Collectors.toList());
-                        return entries;
                     } finally {
                         releaseEntries(entriesFromStore);
                     }
@@ -244,8 +236,8 @@ public class TableStore extends AbstractService {
         log.trace("remove entry called for : {} key : {}", tableName, key);
         List<TableSegmentKey> keys = Collections.singletonList(TableSegmentKey.unversioned(key));
         return withRetries(() -> segmentHelper.removeTableKeys(
-                tableName, keys, getToken(tableName), RequestTag.NON_EXISTENT_ID),
-                () -> String.format("remove entry: key: %s table: %s", key, tableName), tableName)
+                tableName, keys, getToken(tableName)),
+                () -> String.format("remove entry: table: %s", tableName), tableName)
                 .thenAccept(v -> log.trace("entry for key {} removed from table {}", key, tableName))
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException) {
@@ -316,7 +308,7 @@ public class TableStore extends AbstractService {
 
         return withRetries(() ->
                         segmentHelper.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
-                                getToken(tableName), RequestTag.NON_EXISTENT_ID),
+                                getToken(tableName)),
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
                     try {
@@ -335,7 +327,7 @@ public class TableStore extends AbstractService {
             Function<byte[], T> fromBytesValue) {
         log.trace("get entries paginated called for : {}", tableName);
         return withRetries(() -> segmentHelper.readTableEntries(tableName, limit,
-                IteratorStateImpl.fromBytes(continuationToken), getToken(tableName), RequestTag.NON_EXISTENT_ID),
+                IteratorStateImpl.fromBytes(continuationToken), getToken(tableName)),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
                     try {
@@ -359,76 +351,30 @@ public class TableStore extends AbstractService {
     }
 
     private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier,
-                                                                   String tableName, boolean throwOriginalOnCfe) {
+                                                                   String tableName) {
         return () -> CompletableFuture.completedFuture(null).thenComposeAsync(v -> future.get(), executor).exceptionally(t -> {
             String errorMessage = errorMessageSupplier.get();
             Throwable cause = Exceptions.unwrap(t);
-            Throwable toThrow;
-            if (cause instanceof WireCommandFailedException) {
-                WireCommandFailedException wcfe = (WireCommandFailedException) cause;
-                switch (wcfe.getReason()) {
-                    case ConnectionDropped:
-                    case ConnectionFailed:
-                        toThrow = throwOriginalOnCfe ? wcfe :
-                                StoreException.create(StoreException.Type.CONNECTION_ERROR, wcfe, errorMessage);
-                        hostStore.invalidateCache(tableName);
-                        break;
-                    case UnknownHost:
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, wcfe, errorMessage);
-                        hostStore.invalidateCache(tableName);
-                        break;
-                    case AuthFailed:
-                        tokenCache.invalidate(tableName);
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, wcfe, errorMessage);
-                        break;
-                    case SegmentDoesNotExist:
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.DATA_CONTAINER_NOT_FOUND, wcfe, errorMessage);
-                        break;
-                    case TableKeyDoesNotExist:
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, wcfe, errorMessage);
-                        break;
-                    case TableKeyBadVersion:
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.WRITE_CONFLICT, wcfe, errorMessage);
-                        break;
-                    default:
-                        toThrow = StoreExceptions.create(StoreExceptions.Type.UNKNOWN, wcfe, errorMessage);
+            if (cause instanceof StoreExceptions) {
+                if (cause instanceof StoreExceptions.StoreConnectionException) {
+                    hostStore.invalidateCache(tableName);
+                } else if (cause instanceof StoreExceptions.AuthenticationException) {
+                    tokenCache.invalidate(tableName);
                 }
-            } else if (cause instanceof HostStoreException) {
-                log.warn("Host Store exception {}", cause.getMessage());
-                toThrow = StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, cause, errorMessage);
             } else {
                 log.warn("exception of unknown type thrown {} ", errorMessage, cause);
-                toThrow = StoreExceptions.create(StoreExceptions.Type.UNKNOWN, cause, errorMessage);
+                cause = StoreExceptions.create(StoreExceptions.Type.UNKNOWN, cause, errorMessage);
             }
 
-            throw new CompletionException(toThrow);
+            throw new CompletionException(cause);
         });
     }
 
-    private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage, String tableName) {
-        return withRetries(futureSupplier, errorMessage, tableName, false);
-    }
-
     private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage,
-                                                 String tableName, boolean throwOriginalOnCfe) {
-        return RetryHelper.withRetriesAsync(exceptionalCallback(futureSupplier, errorMessage, tableName, throwOriginalOnCfe),
-                e -> Exceptions.unwrap(e) instanceof StoreExceptions.StoreConnectionException, numOfRetries, executor)
-                          .exceptionally(e -> {
-                              Throwable t = Exceptions.unwrap(e);
-                              if (t instanceof RetriesExhaustedException) {
-                                  throw new CompletionException(t.getCause());
-                              } else {
-                                  Throwable unwrap = Exceptions.unwrap(e);
-                                  if (unwrap instanceof WireCommandFailedException &&
-                                          (((WireCommandFailedException) unwrap).getReason().equals(ConnectionDropped) ||
-                                                  ((WireCommandFailedException) unwrap).getReason().equals(ConnectionFailed))) {
-                                      throw new CompletionException(StoreException.create(StoreException.Type.CONNECTION_ERROR,
-                                              errorMessage.get()));
-                                  } else {
-                                      throw new CompletionException(unwrap);
-                                  }
-                              }
-                          });
+                                                 String tableName) {
+        return Retry.withExpBackoff(RETRY_INIT_DELAY, RETRY_MULTIPLIER, numOfRetries, RETRY_MAX_DELAY)
+                    .retryWhen(e -> Exceptions.unwrap(e) instanceof StoreExceptions.StoreConnectionException)
+                    .runAsync(exceptionalCallback(futureSupplier, errorMessage, tableName), executor);
     }
     
     @SneakyThrows(ExecutionException.class)
