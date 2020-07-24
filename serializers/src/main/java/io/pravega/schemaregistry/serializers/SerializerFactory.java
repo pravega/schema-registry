@@ -267,7 +267,7 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<WithSchema<JsonNode>> jsonGenericDeserializer(SerializerConfig config) {
+    public static Serializer<JsonNode> jsonGenericDeserializer(SerializerConfig config) {
         return JsonSerializerFactory.genericDeserializer(config);
     }
 
@@ -281,7 +281,7 @@ public class SerializerFactory {
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
     public static Serializer<String> jsonStringDeserializer(SerializerConfig config) {
-        return JsonSerializerFactory.jsonStringDeserializer(config);
+        return JsonSerializerFactory.deserializeAsString(config);
     }
 
     /**
@@ -320,7 +320,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> Serializer<Either<T, WithSchema<JsonNode>>> jsonTypedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, JsonNode>> jsonTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         return JsonSerializerFactory.typedOrGenericDeserializer(config, schemas);
     }

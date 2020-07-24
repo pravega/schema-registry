@@ -9,14 +9,14 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.schemas.AvroSchema;
+import io.pravega.schemaregistry.schemas.JSONSchema;
 import lombok.extern.slf4j.Slf4j;
 
-import javax.annotation.Nullable;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -24,61 +24,74 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
 import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForSerializer;
 
 /**
- * Internal Factory class for Avro serializers and deserializers. 
+ * Internal Factory class for json serializers and deserializers. 
  */
 @Slf4j
-class AvroSerializerFactory {
-    static <T> Serializer<T> serializer(SerializerConfig config, AvroSchema<T> schema) {
+class JsonSerializerFactory {
+    static <T> Serializer<T> serializer(SerializerConfig config, JSONSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
-        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
+        String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
-        String groupId = config.getGroupId();
-        return new AvroSerializer<>(groupId, schemaRegistryClient, schema, config.getEncoder(), config.isRegisterSchema());
+        return new JsonSerializer<>(groupId, schemaRegistryClient, schema, config.getEncoder(),
+                config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
-    static <T> Serializer<T> deserializer(SerializerConfig config, AvroSchema<T> schema) {
+    static <T> Serializer<T> deserializer(SerializerConfig config, JSONSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
-        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
-        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
         String groupId = config.getGroupId();
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AvroDeserializer<>(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache);
+        // schema can be null in which case deserialization will happen into dynamic message
+        return new JsonDeserializer<>(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache, 
+                config.isWriteEncodingHeader());
     }
 
-    static Serializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
+    static Serializer<JsonNode> genericDeserializer(SerializerConfig config) {
         Preconditions.checkNotNull(config);
-        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
-        String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
+
+        String groupId = config.getGroupId();
+
         EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
 
-        return new AvroGenericDeserializer(groupId, schemaRegistryClient, schema, config.getDecoders(), encodingCache);
+        return new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoders(),
+                encodingCache, config.isWriteEncodingHeader());
     }
 
-    static <T> Serializer<T> multiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+    static Serializer<String> deserializeAsString(SerializerConfig config) {
+        Preconditions.checkNotNull(config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
+
+        String groupId = config.getGroupId();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
+
+        return new JsonStringDeserializer(groupId, schemaRegistryClient, config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
+    }
+
+    static <T> Serializer<T> multiTypeSerializer(
+            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
-
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         Map<Class<? extends T>, AbstractSerializer<T>> serializerMap = schemas
                 .entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey,
-                        x -> new AvroSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getEncoder(),
-                                config.isRegisterSchema())));
+                        x -> new JsonSerializer<>(groupId, schemaRegistryClient, x.getValue(), config.getEncoder(),
+                                config.isRegisterSchema(), config.isWriteEncodingHeader())));
         return new MultiplexedSerializer<>(serializerMap);
     }
 
     static <T> Serializer<T> multiTypeDeserializer(
-            SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
-
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -86,17 +99,17 @@ class AvroSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new AvroDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache)));
-        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoders(),
-                encodingCache);
+                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(),
+                                encodingCache, config.isWriteEncodingHeader())));
+        return new MultiplexedDeserializer<>(groupId, schemaRegistryClient,
+                deserializerMap, config.getDecoders(), encodingCache);
     }
 
-    static <T> Serializer<Either<T, Object>> typedOrGenericDeserializer(
-            SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+    static <T> Serializer<Either<T, JsonNode>> typedOrGenericDeserializer(
+            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
-
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -104,10 +117,12 @@ class AvroSerializerFactory {
 
         Map<String, AbstractDeserializer<T>> deserializerMap = schemas
                 .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
-                        x -> new AvroDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache)));
-        AbstractDeserializer<Object> genericDeserializer = new AvroGenericDeserializer(groupId, schemaRegistryClient,
-                null, config.getDecoders(), encodingCache);
-        return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient, deserializerMap, genericDeserializer,
-                config.getDecoders(), encodingCache);
+                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache, 
+                                config.isWriteEncodingHeader())));
+        JsonGenericDeserializer genericDeserializer = new JsonGenericDeserializer(groupId, schemaRegistryClient, config.getDecoders(),
+                encodingCache, config.isWriteEncodingHeader());
+
+        return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient,
+                deserializerMap, genericDeserializer, config.getDecoders(), encodingCache);
     }
 }

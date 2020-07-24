@@ -21,7 +21,6 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import lombok.Getter;
-import org.apache.avro.specific.SpecificRecordBase;
 import org.everit.json.schema.loader.SchemaLoader;
 import org.everit.json.schema.loader.SpecificationVersion;
 import org.json.JSONObject;
@@ -133,7 +132,7 @@ public class JSONSchema<T> implements Schema<T> {
      * @param tBase Base class whose type is used in the JSON schema object.
      * @param tDerived Class whose schema should be used.
      * @param <T> Type of base class. 
-     * @return Returns an AvroSchema with {@link SpecificRecordBase} type. 
+     * @return Returns an JsonSchema of type T. 
      */
     public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
         Preconditions.checkNotNull(tDerived);

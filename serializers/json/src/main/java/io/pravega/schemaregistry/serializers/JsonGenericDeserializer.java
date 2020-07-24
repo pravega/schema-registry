@@ -19,7 +19,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import java.io.IOException;
 import java.io.InputStream;
 
-class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<JsonNode>> {
+class JsonGenericDeserializer extends AbstractDeserializer<JsonNode> {
     private final ObjectMapper objectMapper;
 
     JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
@@ -30,8 +30,7 @@ class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<JsonNode>>
     }
     
     @Override
-    protected WithSchema<JsonNode> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
-        JsonNode obj = objectMapper.readTree(inputStream);
-        return new WithSchema<>(writerSchemaInfo, obj, (x, y) -> (JsonNode) y);
+    protected JsonNode deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
+        return objectMapper.readTree(inputStream);
     }
 }

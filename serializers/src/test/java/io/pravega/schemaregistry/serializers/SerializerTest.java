@@ -267,10 +267,9 @@ public class SerializerTest {
         assertEquals(deserialized, user1);
 
         serialized = serializer.serialize(user1);
-        Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
-        WithSchema<JsonNode> generic = genericDeserializer.deserialize(serialized);
-        assertEquals(((JSONSchema) generic.getSchema()).getSchema(), schema1.getSchema());
-        assertEquals(((JsonNode) generic.getObject()).size(), 4);
+        Serializer<JsonNode> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        JsonNode generic = genericDeserializer.deserialize(serialized);
+        assertEquals(generic.size(), 4);
 
         serialized = serializer.serialize(user1);
         Serializer<String> stringDeserializer = SerializerFactory.jsonStringDeserializer(config);
@@ -302,7 +301,7 @@ public class SerializerTest {
 
         Serializer<String> serializer3 = SerializerFactory.jsonSerializer(config, strSchema);
         Serializer<String> deserializer3 = SerializerFactory.jsonDeserializer(config, strSchema);
-        Serializer<WithSchema<JsonNode>> generic3 = SerializerFactory.jsonGenericDeserializer(config);
+        Serializer<JsonNode> generic3 = SerializerFactory.jsonGenericDeserializer(config);
         String string = "a";
         s = serializer3.serialize(string);
         Object x = deserializer3.deserialize(s);
@@ -310,8 +309,8 @@ public class SerializerTest {
         assertEquals(x, string);
         s = serializer3.serialize(string);
         Object jsonNode = generic3.deserialize(s);
-        assertTrue(((WithSchema) jsonNode).getObject() instanceof TextNode);
-        assertEquals(((TextNode) ((WithSchema) jsonNode).getObject()).textValue(), string);
+        assertTrue(jsonNode instanceof TextNode);
+        assertEquals(((TextNode) jsonNode).textValue(), string);
         // multi type
         DerivedUser2 user2 = new DerivedUser2("user", new Address("street", "city"), 2, "user2");
 
@@ -332,9 +331,9 @@ public class SerializerTest {
 
         Map<Class<?>, JSONSchema<Object>> map2 = new HashMap<>();
         map2.put(DerivedUser1.class, schema1Base);
-        Serializer<Either<Object, WithSchema<JsonNode>>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
+        Serializer<Either<Object, JsonNode>> fallbackDeserializer = SerializerFactory.jsonTypedOrGenericDeserializer(config, map2);
         serialized = multiSerializer.serialize(user1);
-        Either<Object, WithSchema<JsonNode>> fallback = fallbackDeserializer.deserialize(serialized);
+        Either<Object, JsonNode> fallback = fallbackDeserializer.deserialize(serialized);
         assertTrue(fallback.isLeft());
         assertEquals(fallback.getLeft(), user1);
 
@@ -391,7 +390,7 @@ public class SerializerTest {
         deserialized = deserializer.deserialize(serializedProto);
         assertTrue(deserialized instanceof DynamicMessage);
         deserialized = deserializer.deserialize(serializedJson);
-        assertTrue(deserialized instanceof WithSchema);
+        assertTrue(deserialized instanceof JsonNode);
 
         Serializer<String> jsonStringDeserializer = SerializerFactory.deserializeAsJsonString(config);
         serializedAvro.position(0);
@@ -473,11 +472,10 @@ public class SerializerTest {
         
         serialized = serializer.serialize(user1);
 
-        Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
+        Serializer<JsonNode> genericDeserializer = SerializerFactory.jsonGenericDeserializer(config);
 
-        WithSchema<JsonNode> generic = genericDeserializer.deserialize(serialized);
-        assertNotNull(generic.getObject());
-        assertNull(generic.getSchema());
+        JsonNode generic = genericDeserializer.deserialize(serialized);
+        assertNotNull(generic);
     }
 
     @Data

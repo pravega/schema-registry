@@ -30,8 +30,8 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
  * Internal Factory class for protobuf serializers and deserializers. 
  */
 @Slf4j
-class ProtobufSerializerFactory {
-    static <T extends Message> Serializer<T> serializer(SerializerConfig config,
+public class ProtobufSerializerFactory {
+    public static <T extends Message> Serializer<T> serializer(SerializerConfig config,
                                                         ProtobufSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
@@ -41,7 +41,7 @@ class ProtobufSerializerFactory {
                 config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
-    static <T extends GeneratedMessageV3> Serializer<T> deserializer(SerializerConfig config,
+    public static <T extends GeneratedMessageV3> Serializer<T> deserializer(SerializerConfig config,
                                                                      ProtobufSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
@@ -55,7 +55,7 @@ class ProtobufSerializerFactory {
                 config.isWriteEncodingHeader());
     }
 
-    static Serializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
+    public static Serializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(schema != null || config.isWriteEncodingHeader(), 
                 "Either read schema should be supplied or events should be tagged with encoding ids.");
@@ -68,7 +68,7 @@ class ProtobufSerializerFactory {
                 config.isWriteEncodingHeader());
     }
 
-    static <T extends GeneratedMessageV3> Serializer<T> multiTypeSerializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -83,7 +83,7 @@ class ProtobufSerializerFactory {
         return new MultiplexedSerializer<>(serializerMap);
     }
 
-    static <T extends GeneratedMessageV3> Serializer<T> multiTypeDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -100,7 +100,7 @@ class ProtobufSerializerFactory {
         return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoders(), encodingCache);
     }
 
-    static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
