@@ -23,4 +23,29 @@ public class SchemaDefinitions {
             .type(Schema.create(Schema.Type.STRING))
             .noDefault()
             .endRecord();
+
+    public static final Schema SCHEMA2 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .withDefault("backwardPolicy compatible with schema1")
+            .endRecord();
+
+    public static final Schema SCHEMA3 = SchemaBuilder
+            .record("MyTest")
+            .fields()
+            .name("a")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("b")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .name("c")
+            .type(Schema.create(Schema.Type.STRING))
+            .noDefault()
+            .endRecord();
 }

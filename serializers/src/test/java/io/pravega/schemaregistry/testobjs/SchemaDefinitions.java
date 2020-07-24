@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry;
+package io.pravega.schemaregistry.testobjs;
 
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
