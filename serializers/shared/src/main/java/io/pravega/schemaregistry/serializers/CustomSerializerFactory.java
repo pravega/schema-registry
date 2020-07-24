@@ -27,8 +27,18 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
  * Internal Factory class for Custom serializers and deserializers. 
  */
 @Slf4j
-class CustomSerializerFactory {
-    static <T> Serializer<T> serializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
+public class CustomSerializerFactory {
+    /**
+     * A serializer that uses user supplied implementation of {@link CustomSerializer} for serializing the objects.
+     * It also takes user supplied schema and registers/validates it against the registry.
+     *
+     * @param config     Serializer config.
+     * @param schema     Schema for the object to serialize
+     * @param serializer user supplied serializer
+     * @param <T>        Type of object to serialize
+     * @return Serializer that uses user supplied serialization function for serializing events.
+     */
+    public static <T> Serializer<T> serializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         Preconditions.checkNotNull(serializer);
@@ -43,7 +53,17 @@ class CustomSerializerFactory {
         };
     }
 
-    static <T> Serializer<T> deserializer(SerializerConfig config, @Nullable Schema<T> schema,
+    /**
+     * A deserializer that uses user supplied implementation of {@link CustomDeserializer} for deserializing the data into
+     * typed java objects.
+     *
+     * @param config       Serializer config.
+     * @param schema       optional Schema for the object to deserialize
+     * @param deserializer user supplied deserializer
+     * @param <T>          Type of object to deserialize
+     * @return Deserializer that uses user supplied deserialization function for deserializing payload into typed events.
+     */
+    public static <T> Serializer<T> deserializer(SerializerConfig config, @Nullable Schema<T> schema,
                                           CustomDeserializer<T> deserializer) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(deserializer);

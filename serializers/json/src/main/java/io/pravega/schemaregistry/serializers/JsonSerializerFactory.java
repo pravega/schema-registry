@@ -14,9 +14,11 @@ import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import lombok.extern.slf4j.Slf4j;
 
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -27,8 +29,21 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
  * Internal Factory class for json serializers and deserializers. 
  */
 @Slf4j
-class JsonSerializerFactory {
-    static <T> Serializer<T> serializer(SerializerConfig config, JSONSchema<T> schema) {
+public class JsonSerializerFactory {
+    /**
+     * Creates a typed json serializer for the Schema. The serializer implementation returned from this method is
+     * responsible for interacting with schema registry service and ensures that only valid registered schema can be used.
+     *
+     * Note: the returned serializer only implements {@link Serializer#serialize(Object)}.
+     * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
+     *
+     * @param config     Serializer Config used for instantiating a new serializer.
+     * @param schema Schema container that encapsulates an Json Schema.
+     * @param <T>        Type of event.
+     * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
+     * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
+     */
+    public static <T> Serializer<T> serializer(SerializerConfig config, JSONSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
@@ -37,7 +52,20 @@ class JsonSerializerFactory {
                 config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
-    static <T> Serializer<T> deserializer(SerializerConfig config, JSONSchema<T> schema) {
+    /**
+     * Creates a typed json deserializer for the Schema. The deserializer implementation returned from this method is
+     * responsible for interacting with schema registry service and validate the writer schema before using it.
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}.
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config     Serializer Config used for instantiating a new serializer.
+     * @param schema Schema container that encapsulates an JSONSchema
+     * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use 
+     * {@link #genericDeserializer(SerializerConfig)}
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
+    public static <T> Serializer<T> deserializer(SerializerConfig config, JSONSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
@@ -50,7 +78,16 @@ class JsonSerializerFactory {
                 config.isWriteEncodingHeader());
     }
 
-    static Serializer<JsonNode> genericDeserializer(SerializerConfig config) {
+    /**
+     * Creates a generic json deserializer.
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}.
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config Serializer Config used for instantiating a new serializer.
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
+    public static Serializer<JsonNode> genericDeserializer(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -62,7 +99,16 @@ class JsonSerializerFactory {
                 encodingCache, config.isWriteEncodingHeader());
     }
 
-    static Serializer<String> deserializeAsString(SerializerConfig config) {
+    /**
+     * Creates a generic json deserializer which deserializes bytes into a json string.
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}.
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config Serializer Config used for instantiating a new serializer.
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
+    public static Serializer<String> deserializeAsString(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -73,7 +119,15 @@ class JsonSerializerFactory {
         return new JsonStringDeserializer(groupId, schemaRegistryClient, config.getDecoders(), encodingCache, config.isWriteEncodingHeader());
     }
 
-    static <T> Serializer<T> multiTypeSerializer(
+    /**
+     * A multiplexed Json serializer that takes a map of schemas and validates them individually.
+     *
+     * @param config  Serializer config.
+     * @param schemas map of json schemas.
+     * @param <T>     Base Type of schemas.
+     * @return a Serializer which can serialize events of different types for which schemas are supplied.
+     */
+    public static <T> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -87,7 +141,16 @@ class JsonSerializerFactory {
         return new MultiplexedSerializer<>(serializerMap);
     }
 
-    static <T> Serializer<T> multiTypeDeserializer(
+    /**
+     * A multiplexed json Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     *
+     * @param config  Serializer config.
+     * @param schemas map of json schemas.
+     * @param <T>     Base type of schemas.
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
+     */
+    public static <T> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -105,7 +168,16 @@ class JsonSerializerFactory {
                 deserializerMap, config.getDecoders(), encodingCache);
     }
 
-    static <T> Serializer<Either<T, JsonNode>> typedOrGenericDeserializer(
+    /**
+     * A multiplexed json Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     *
+     * @param config  Serializer config.
+     * @param schemas map of json schemas.
+     * @param <T>     Base type of schemas.
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
+     */
+    public static <T> Serializer<Either<T, JsonNode>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);

@@ -16,10 +16,12 @@ import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
+import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.stream.Collectors;
 
@@ -31,6 +33,19 @@ import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.init
  */
 @Slf4j
 public class ProtobufSerializerFactory {
+    /**
+     * Creates a typed protobuf serializer for the Schema. The serializer implementation returned from this method is
+     * responsible for interacting with schema registry service and ensures that only valid registered schema can be used.
+     *
+     * Note: the returned serializer only implements {@link Serializer#serialize(Object)}.
+     * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
+     *
+     * @param config     Serializer Config used for instantiating a new serializer.
+     * @param schema Schema container that encapsulates an Protobuf Schema.
+     * @param <T>        Type of event.
+     * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
+     * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
+     */
     public static <T extends Message> Serializer<T> serializer(SerializerConfig config,
                                                         ProtobufSchema<T> schema) {
         Preconditions.checkNotNull(config);
@@ -41,6 +56,19 @@ public class ProtobufSerializerFactory {
                 config.isRegisterSchema(), config.isWriteEncodingHeader());
     }
 
+    /**
+     * Creates a typed protobuf deserializer for the Schema. The deserializer implementation returned from this method is
+     * responsible for interacting with schema registry service and validate the writer schema before using it.
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}.
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config     Serializer Config used for instantiating a new serializer.
+     * @param schema Schema container that encapsulates an ProtobufSchema
+     * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use 
+     * {@link #genericDeserializer(SerializerConfig, ProtobufSchema)}
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
     public static <T extends GeneratedMessageV3> Serializer<T> deserializer(SerializerConfig config,
                                                                      ProtobufSchema<T> schema) {
         Preconditions.checkNotNull(config);
@@ -55,6 +83,17 @@ public class ProtobufSerializerFactory {
                 config.isWriteEncodingHeader());
     }
 
+    /**
+     * Creates a generic protobuf deserializer. It has the optional parameter for schema.
+     * If the schema is not supplied, the writer schema is used for deserialization into {@link DynamicMessage}.
+     *
+     * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}.
+     * It does not implement {@link Serializer#serialize(Object)}.
+     *
+     * @param config Serializer Config used for instantiating a new serializer.
+     * @param schema Schema container that encapsulates an ProtobufSchema.
+     * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
+     */
     public static Serializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(schema != null || config.isWriteEncodingHeader(), 
@@ -68,6 +107,14 @@ public class ProtobufSerializerFactory {
                 config.isWriteEncodingHeader());
     }
 
+    /**
+     * A multiplexed Protobuf serializer that takes a map of schemas and validates them individually.
+     *
+     * @param config  Serializer config.
+     * @param schemas map of protobuf schemas.
+     * @param <T>     Base Type of schemas.
+     * @return a Serializer which can serialize events of different types for which schemas are supplied.
+     */
     public static <T extends GeneratedMessageV3> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
@@ -83,6 +130,15 @@ public class ProtobufSerializerFactory {
         return new MultiplexedSerializer<>(serializerMap);
     }
 
+    /**
+     * A multiplexed protobuf Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     *
+     * @param config  Serializer config.
+     * @param schemas map of protobuf schemas.
+     * @param <T>     Base type of schemas.
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
+     */
     public static <T extends GeneratedMessageV3> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
@@ -100,6 +156,15 @@ public class ProtobufSerializerFactory {
         return new MultiplexedDeserializer<>(groupId, schemaRegistryClient, deserializerMap, config.getDecoders(), encodingCache);
     }
 
+    /**
+     * A multiplexed protobuf Deserializer that takes a map of schemas and deserializes events into those events depending
+     * on the object type information in {@link EncodingInfo}.
+     *
+     * @param config  Serializer config.
+     * @param schemas map of protobuf schemas.
+     * @param <T>     Base type of schemas.
+     * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
+     */
     public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);

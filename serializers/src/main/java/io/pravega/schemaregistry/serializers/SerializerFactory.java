@@ -45,13 +45,13 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an AvroSchema
+     * @param schema Schema container that encapsulates an AvroSchema
      * @param <T>        Type of event. It accepts either POJO or Avro generated classes and serializes them.
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T> Serializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schemaContainer) {
-        return AvroSerializerFactory.serializer(config, schemaContainer);
+    public static <T> Serializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schema) {
+        return AvroSerializerFactory.serializer(config, schema);
     }
 
     /**
@@ -62,12 +62,12 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#serialize(Object)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an AvroSchema
+     * @param schema Schema container that encapsulates an AvroSchema
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #avroGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> Serializer<T> avroDeserializer(SerializerConfig config, AvroSchema<T> schemaContainer) {
-        return AvroSerializerFactory.deserializer(config, schemaContainer);
+    public static <T> Serializer<T> avroDeserializer(SerializerConfig config, AvroSchema<T> schema) {
+        return AvroSerializerFactory.deserializer(config, schema);
     }
 
     /**
@@ -78,12 +78,12 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#serialize(Object)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an AvroSchema. It can be null to indicate that writer schema should
+     * @param schema Schema container that encapsulates an AvroSchema. It can be null to indicate that writer schema should
      *                   be used for deserialization.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<Object> avroGenericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schemaContainer) {
-        return AvroSerializerFactory.genericDeserializer(config, schemaContainer);
+    public static Serializer<Object> avroGenericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
+        return AvroSerializerFactory.genericDeserializer(config, schema);
     }
 
     /**
@@ -138,14 +138,14 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an Protobuf Schema.
+     * @param schema Schema container that encapsulates an Protobuf Schema.
      * @param <T>        Type of event.
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
     public static <T extends Message> Serializer<T> protobufSerializer(SerializerConfig config,
-                                                                       ProtobufSchema<T> schemaContainer) {
-        return ProtobufSerializerFactory.serializer(config, schemaContainer);
+                                                                       ProtobufSchema<T> schema) {
+        return ProtobufSerializerFactory.serializer(config, schema);
     }
 
     /**
@@ -156,13 +156,13 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#serialize(Object)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an ProtobufSchema
+     * @param schema Schema container that encapsulates an ProtobufSchema
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #protobufGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
     public static <T extends GeneratedMessageV3> Serializer<T> protobufDeserializer(SerializerConfig config,
-                                                                                    ProtobufSchema<T> schemaContainer) {
-        return ProtobufSerializerFactory.deserializer(config, schemaContainer);
+                                                                                    ProtobufSchema<T> schema) {
+        return ProtobufSerializerFactory.deserializer(config, schema);
     }
 
     /**
@@ -233,13 +233,13 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an Json Schema.
+     * @param schema Schema container that encapsulates an Json Schema.
      * @param <T>        Type of event.
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T> Serializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schemaContainer) {
-        return JsonSerializerFactory.serializer(config, schemaContainer);
+    public static <T> Serializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schema) {
+        return JsonSerializerFactory.serializer(config, schema);
     }
 
     /**
@@ -250,12 +250,12 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#serialize(Object)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schemaContainer Schema container that encapsulates an JSONSchema
+     * @param schema Schema container that encapsulates an JSONSchema
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #jsonGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schemaContainer) {
-        return JsonSerializerFactory.deserializer(config, schemaContainer);
+    public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schema) {
+        return JsonSerializerFactory.deserializer(config, schema);
     }
 
     /**
