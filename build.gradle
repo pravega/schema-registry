@@ -490,7 +490,7 @@ task publishAllJars() {
     dependsOn ':serializers:avro:publish'
     dependsOn ':serializers:json:publish'
     dependsOn ':serializers:protobuf:publish'
-    dependsOn ':serializers:all:publish'
+    dependsOn ':serializers:publish'
 }
 
 task prepareRegistryImage(type: Copy) {
