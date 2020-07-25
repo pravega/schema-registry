@@ -1308,7 +1308,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                                     Compatibility.allowAny(),
                                                                     false)
                                                             .registerSchema(true)
-                                                            .registryConfig(SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build())
+                                                            .registryClient(client)
                                                             .build();
         
         // region write
