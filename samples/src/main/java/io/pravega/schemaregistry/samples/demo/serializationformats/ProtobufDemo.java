@@ -39,6 +39,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.samples.generated.ProtobufTest;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializers.ProtobufSerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
@@ -108,7 +109,7 @@ public class ProtobufDemo {
                                                                 .writeEncodingHeader(encodeHeaders)
                                                                 .build();
             // region writer
-            Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
+            Serializer<ProtobufTest.Message1> serializer = ProtobufSerializerFactory.serializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<ProtobufTest.Message1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -122,7 +123,7 @@ public class ProtobufDemo {
                 readerGroupManager.createReaderGroup(readerGroupName,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<ProtobufTest.Message1> deserializer = SerializerFactory.protobufDeserializer(serializerConfig, schema);
+                Serializer<ProtobufTest.Message1> deserializer = ProtobufSerializerFactory.deserializer(serializerConfig, schema);
 
                 EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
@@ -138,7 +139,7 @@ public class ProtobufDemo {
                     readerGroupManager.createReaderGroup(rg2,
                             ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                    Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
+                    Serializer<DynamicMessage> genericDeserializer = ProtobufSerializerFactory.genericDeserializer(serializerConfig, null);
 
                     EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -155,7 +156,7 @@ public class ProtobufDemo {
                     DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
                     ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
-                    genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
+                    genericDeserializer = ProtobufSerializerFactory.genericDeserializer(serializerConfig, schema2);
 
                     reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
@@ -232,7 +233,7 @@ public class ProtobufDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
+                Serializer<DynamicMessage> genericDeserializer = ProtobufSerializerFactory.genericDeserializer(serializerConfig, null);
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 

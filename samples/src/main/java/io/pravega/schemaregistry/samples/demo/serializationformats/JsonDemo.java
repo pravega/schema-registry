@@ -41,12 +41,12 @@ import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
 import io.pravega.schemaregistry.samples.demo.objects.User;
 import io.pravega.schemaregistry.schemas.JSONSchema;
+import io.pravega.schemaregistry.serializers.JsonSerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.everit.json.schema.Schema;
 
 import java.net.URI;
 import java.util.HashMap;
@@ -116,7 +116,7 @@ public class JsonDemo {
                                                                 .writeEncodingHeader(encodeHeaders)
                                                                 .build();
             // region writer
-            Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
+            Serializer<DerivedUser2> serializer = JsonSerializerFactory.serializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<DerivedUser2> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -130,7 +130,7 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(readerGroupName,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<DerivedUser2> deserializer = SerializerFactory.jsonDeserializer(serializerConfig, schema);
+                Serializer<DerivedUser2> deserializer = JsonSerializerFactory.deserializer(serializerConfig, schema);
 
                 EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
@@ -144,20 +144,13 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<JsonNode> genericDeserializer = JsonSerializerFactory.genericDeserializer(serializerConfig);
 
-                EventStreamReader<WithSchema<JsonNode>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<JsonNode> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<WithSchema<JsonNode>> event2 = reader2.readNextEvent(1000);
+                EventRead<JsonNode> event2 = reader2.readNextEvent(1000);
                 assert event2.getEvent() != null;
-                WithSchema<JsonNode> obj = event2.getEvent();
-
-                Schema jsonSchema = obj.getJsonSchema();
-                if (encodeHeaders) {
-                    assert jsonSchema != null;
-                } else {
-                    assert jsonSchema == null;
-                }
+                JsonNode obj = event2.getEvent();
                 // endregion
             }
         }
@@ -222,11 +215,11 @@ public class JsonDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<JsonNode> genericDeserializer = JsonSerializerFactory.genericDeserializer(serializerConfig);
 
-                EventStreamReader<WithSchema<JsonNode>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<JsonNode> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<WithSchema<JsonNode>> genEvent = reader2.readNextEvent(1000);
+                EventRead<JsonNode> genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;
                 genEvent = reader2.readNextEvent(1000);
                 assert genEvent.getEvent() != null;

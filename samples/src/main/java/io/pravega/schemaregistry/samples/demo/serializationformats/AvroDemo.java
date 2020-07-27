@@ -38,6 +38,7 @@ import io.pravega.schemaregistry.samples.generated.Test1;
 import io.pravega.schemaregistry.samples.generated.Test2;
 import io.pravega.schemaregistry.samples.generated.Test3;
 import io.pravega.schemaregistry.schemas.AvroSchema;
+import io.pravega.schemaregistry.serializers.AvroSerializerFactory;
 import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.shared.NameUtils;
@@ -150,7 +151,7 @@ public class AvroDemo {
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             // region writer with schema1
-            Serializer<GenericRecord> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
+            Serializer<GenericRecord> serializer = AvroSerializerFactory.serializer(serializerConfig, schema1);
 
             EventStreamWriter<GenericRecord> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
             GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
@@ -162,7 +163,7 @@ public class AvroDemo {
             AvroSchema<GenericRecord> schema2 = AvroSchema.ofRecord(SCHEMA2);
 
             // region writer with schema2
-            serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
+            serializer = AvroSerializerFactory.serializer(serializerConfig, schema2);
 
             writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
             record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
@@ -177,7 +178,7 @@ public class AvroDemo {
 
                 AvroSchema<GenericRecord> schema3 = AvroSchema.ofRecord(SCHEMA3);
 
-                SerializerFactory.avroSerializer(serializerConfig, schema3);
+                AvroSerializerFactory.serializer(serializerConfig, schema3);
             } catch (Exception ex) {
                 exceptionThrown = true;
                 System.out.println("schema registration failed with " + Exceptions.unwrap(ex));
@@ -194,7 +195,7 @@ public class AvroDemo {
 
                 AvroSchema<Object> readSchema = AvroSchema.of(SCHEMA2);
 
-                Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                Serializer<Object> deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, readSchema);
 
                 EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -216,7 +217,7 @@ public class AvroDemo {
 
                     exceptionThrown = false;
                     try {
-                        SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                        AvroSerializerFactory.genericDeserializer(serializerConfig, readSchema);
                     } catch (Exception ex) {
                         exceptionThrown = Exceptions.unwrap(ex) instanceof IllegalArgumentException;
                         System.out.println("schema validation failed with " + Exceptions.unwrap(ex));
@@ -229,7 +230,7 @@ public class AvroDemo {
                     readerGroupManager2.createReaderGroup(rg2,
                             ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                    deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                    deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
                     reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
@@ -270,7 +271,7 @@ public class AvroDemo {
                                                                 .build();
 
             // region writer
-            Serializer<TestClass> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
+            Serializer<TestClass> serializer = AvroSerializerFactory.serializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -286,7 +287,7 @@ public class AvroDemo {
 
                 AvroSchema<Object> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
-                Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                Serializer<Object> deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, readSchema);
 
                 EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -299,7 +300,7 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
                 reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
@@ -333,7 +334,7 @@ public class AvroDemo {
                                                                 .registryClient(client)
                                                                 .build();
             // region writer
-            Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
+            Serializer<Test1> serializer = AvroSerializerFactory.serializer(serializerConfig, schema);
             EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
 
             EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
@@ -349,7 +350,7 @@ public class AvroDemo {
 
                 AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
-                Serializer<Test1> deserializer = SerializerFactory.avroDeserializer(serializerConfig, readSchema);
+                Serializer<Test1> deserializer = AvroSerializerFactory.deserializer(serializerConfig, readSchema);
 
                 EventStreamReader<Test1> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -362,7 +363,7 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<Object> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> genericDeserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
                 EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
@@ -438,7 +439,7 @@ public class AvroDemo {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                Serializer<Object> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> genericDeserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
                 EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 

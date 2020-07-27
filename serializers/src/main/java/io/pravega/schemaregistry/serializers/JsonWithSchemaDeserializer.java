@@ -19,16 +19,16 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import java.io.IOException;
 import java.io.InputStream;
 
-class JsonGenericDeserializer extends AbstractDeserializer<WithSchema<JsonNode>> {
+class JsonWithSchemaDeserializer extends AbstractDeserializer<WithSchema<JsonNode>> {
     private final ObjectMapper objectMapper;
 
-    JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
+    JsonWithSchemaDeserializer(String groupId, SchemaRegistryClient client,
                             SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
         super(groupId, client, null, false, decoders, encodingCache, encodeHeader);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
     }
-    
+
     @Override
     protected WithSchema<JsonNode> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         JsonNode obj = objectMapper.readTree(inputStream);

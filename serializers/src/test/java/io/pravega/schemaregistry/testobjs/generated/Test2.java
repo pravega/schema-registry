@@ -5,12 +5,11 @@
  */
 package io.pravega.schemaregistry.testobjs.generated;
 
-import org.apache.avro.generic.GenericArray;
+import org.apache.avro.message.BinaryMessageDecoder;
+import org.apache.avro.message.BinaryMessageEncoder;
+import org.apache.avro.message.SchemaStore;
 import org.apache.avro.specific.SpecificData;
 import org.apache.avro.util.Utf8;
-import org.apache.avro.message.BinaryMessageEncoder;
-import org.apache.avro.message.BinaryMessageDecoder;
-import org.apache.avro.message.SchemaStore;
 
 @org.apache.avro.specific.AvroGenerated
 public class Test2 extends org.apache.avro.specific.SpecificRecordBase implements org.apache.avro.specific.SpecificRecord {
@@ -172,8 +171,8 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
    * Creates a new Test2 RecordBuilder.
    * @return A new Test2 RecordBuilder
    */
-  public static io.pravega.schemaregistry.testobjs.generated.Test2.Builder newBuilder() {
-    return new io.pravega.schemaregistry.testobjs.generated.Test2.Builder();
+  public static Builder newBuilder() {
+    return new Builder();
   }
 
   /**
@@ -181,11 +180,11 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
    * @param other The existing builder to copy.
    * @return A new Test2 RecordBuilder
    */
-  public static io.pravega.schemaregistry.testobjs.generated.Test2.Builder newBuilder(io.pravega.schemaregistry.testobjs.generated.Test2.Builder other) {
+  public static Builder newBuilder(Builder other) {
     if (other == null) {
-      return new io.pravega.schemaregistry.testobjs.generated.Test2.Builder();
+      return new Builder();
     } else {
-      return new io.pravega.schemaregistry.testobjs.generated.Test2.Builder(other);
+      return new Builder(other);
     }
   }
 
@@ -194,11 +193,11 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
    * @param other The existing instance to copy.
    * @return A new Test2 RecordBuilder
    */
-  public static io.pravega.schemaregistry.testobjs.generated.Test2.Builder newBuilder(io.pravega.schemaregistry.testobjs.generated.Test2 other) {
+  public static Builder newBuilder(Test2 other) {
     if (other == null) {
-      return new io.pravega.schemaregistry.testobjs.generated.Test2.Builder();
+      return new Builder();
     } else {
-      return new io.pravega.schemaregistry.testobjs.generated.Test2.Builder(other);
+      return new Builder(other);
     }
   }
 
@@ -221,7 +220,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
      * Creates a Builder by copying an existing Builder.
      * @param other The existing Builder to copy.
      */
-    private Builder(io.pravega.schemaregistry.testobjs.generated.Test2.Builder other) {
+    private Builder(Builder other) {
       super(other);
       if (isValidValue(fields()[0], other.name)) {
         this.name = data().deepCopy(fields()[0].schema(), other.name);
@@ -241,7 +240,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
      * Creates a Builder by copying an existing Test2 instance
      * @param other The existing instance to copy.
      */
-    private Builder(io.pravega.schemaregistry.testobjs.generated.Test2 other) {
+    private Builder(Test2 other) {
       super(SCHEMA$);
       if (isValidValue(fields()[0], other.name)) {
         this.name = data().deepCopy(fields()[0].schema(), other.name);
@@ -271,7 +270,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
       * @param value The value of 'name'.
       * @return This builder.
       */
-    public io.pravega.schemaregistry.testobjs.generated.Test2.Builder setName(CharSequence value) {
+    public Builder setName(CharSequence value) {
       validate(fields()[0], value);
       this.name = value;
       fieldSetFlags()[0] = true;
@@ -291,7 +290,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
       * Clears the value of the 'name' field.
       * @return This builder.
       */
-    public io.pravega.schemaregistry.testobjs.generated.Test2.Builder clearName() {
+    public Builder clearName() {
       name = null;
       fieldSetFlags()[0] = false;
       return this;
@@ -311,7 +310,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
       * @param value The value of 'field1'.
       * @return This builder.
       */
-    public io.pravega.schemaregistry.testobjs.generated.Test2.Builder setField1(int value) {
+    public Builder setField1(int value) {
       validate(fields()[1], value);
       this.field1 = value;
       fieldSetFlags()[1] = true;
@@ -331,7 +330,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
       * Clears the value of the 'field1' field.
       * @return This builder.
       */
-    public io.pravega.schemaregistry.testobjs.generated.Test2.Builder clearField1() {
+    public Builder clearField1() {
       fieldSetFlags()[1] = false;
       return this;
     }
@@ -350,7 +349,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
       * @param value The value of 'field2'.
       * @return This builder.
       */
-    public io.pravega.schemaregistry.testobjs.generated.Test2.Builder setField2(CharSequence value) {
+    public Builder setField2(CharSequence value) {
       validate(fields()[2], value);
       this.field2 = value;
       fieldSetFlags()[2] = true;
@@ -370,7 +369,7 @@ public class Test2 extends org.apache.avro.specific.SpecificRecordBase implement
       * Clears the value of the 'field2' field.
       * @return This builder.
       */
-    public io.pravega.schemaregistry.testobjs.generated.Test2.Builder clearField2() {
+    public Builder clearField2() {
       field2 = null;
       fieldSetFlags()[2] = false;
       return this;
