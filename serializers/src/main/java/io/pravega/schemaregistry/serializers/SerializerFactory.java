@@ -11,10 +11,12 @@ package io.pravega.schemaregistry.serializers;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.module.jsonSchema.JsonSchema;
+import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
+import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -29,8 +31,10 @@ import javax.annotation.Nullable;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 
 import static com.google.protobuf.DescriptorProtos.FileDescriptorSet;
+import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
 import static io.pravega.schemaregistry.serializers.WithSchema.JSON_TRANSFORM;
 import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
 
@@ -267,8 +271,16 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<JsonNode> jsonGenericDeserializer(SerializerConfig config) {
-        return JsonSerializerFactory.genericDeserializer(config);
+    public static Serializer<WithSchema<JsonNode>> jsonGenericDeserializer(SerializerConfig config) {
+        Preconditions.checkNotNull(config);
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
+
+        String groupId = config.getGroupId();
+
+        EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
+
+        return new JsonWithSchemaDeserializer(groupId, schemaRegistryClient, config.getDecoders(),
+                encodingCache, config.isWriteEncodingHeader());
     }
 
     /**
@@ -320,9 +332,25 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> Serializer<Either<T, JsonNode>> jsonTypedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, WithSchema<JsonNode>>> jsonTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
-        return JsonSerializerFactory.typedOrGenericDeserializer(config, schemas);
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(schemas);
+        Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
+        String groupId = config.getGroupId();
+        SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
+
+        EncodingCache encodingCache = new EncodingCache(groupId, schemaRegistryClient);
+
+        Map<String, AbstractDeserializer<T>> deserializerMap = schemas
+                .values().stream().collect(Collectors.toMap(x -> x.getSchemaInfo().getType(),
+                        x -> new JsonDeserializer<>(groupId, schemaRegistryClient, x, config.getDecoders(), encodingCache,
+                                config.isWriteEncodingHeader())));
+        JsonWithSchemaDeserializer genericDeserializer = new JsonWithSchemaDeserializer(groupId, schemaRegistryClient, config.getDecoders(),
+                encodingCache, config.isWriteEncodingHeader());
+
+        return new MultiplexedAndGenericDeserializer<>(groupId, schemaRegistryClient,
+                deserializerMap, genericDeserializer, config.getDecoders(), encodingCache);
     }
     //endregion
 
