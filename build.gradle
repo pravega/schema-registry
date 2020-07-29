@@ -227,7 +227,7 @@ project('serializers:shared') {
     }
 
     javadoc {
-        title = "Serializers common"
+        title = "Serializers shared"
         dependsOn delombok
         source = delombok.outputDir
         failOnError = true
@@ -240,7 +240,7 @@ project('serializers:avro') {
     dependencies {
         compile project(':serializers:shared')
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
-        testCompile project(':serializers:shared')
+        testCompile files(project(':serializers:shared').sourceSets.test.output)
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -267,7 +267,7 @@ project('serializers:protobuf') {
         compile project(':serializers:shared')
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
-        testCompile project(':serializers:shared')
+        testCompile files(project(':serializers:shared').sourceSets.test.output)
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -294,7 +294,7 @@ project('serializers:json') {
         compile project(':serializers:shared')
         compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
-        testCompile project(':serializers:shared')
+        testCompile files(project(':serializers:shared').sourceSets.test.output)
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -322,10 +322,10 @@ project('serializers') {
         compile project(':serializers:protobuf')
         compile project(':serializers:json')
         compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
-        testCompile project(':serializers:shared')
-        testCompile project(':serializers:avro')
-        testCompile project(':serializers:protobuf')
-        testCompile project(':serializers:json')
+        testCompile files(project(':serializers:shared').sourceSets.test.output)
+        testCompile files(project(':serializers:avro').sourceSets.test.output)
+        testCompile files(project(':serializers:protobuf').sourceSets.test.output)
+        testCompile files(project(':serializers:json').sourceSets.test.output)
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -341,6 +341,7 @@ project('serializers') {
     }
 
     jar {
+        manifest {}
         zip64=true
 
         from {

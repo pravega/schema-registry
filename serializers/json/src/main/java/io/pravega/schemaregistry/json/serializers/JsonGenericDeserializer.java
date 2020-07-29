@@ -7,7 +7,7 @@
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
-package io.pravega.schemaregistry.serializers;
+package io.pravega.schemaregistry.json.serializers;
 
 import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.PropertyAccessor;
@@ -22,19 +22,18 @@ import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
 import java.io.IOException;
 import java.io.InputStream;
 
-class JsonWithSchemaDeserializer extends AbstractDeserializer<WithSchema<JsonNode>> {
+public class JsonGenericDeserializer extends AbstractDeserializer<JsonNode> {
     private final ObjectMapper objectMapper;
 
-    JsonWithSchemaDeserializer(String groupId, SchemaRegistryClient client,
-                               SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
+    public JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
+                            SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
         super(groupId, client, null, false, decoders, encodingCache, encodeHeader);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
     }
-
+    
     @Override
-    public final WithSchema<JsonNode> deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
-        JsonNode obj = objectMapper.readTree(inputStream);
-        return new WithSchema<>(writerSchemaInfo, obj, (x, y) -> (JsonNode) y);
+    public final JsonNode deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
+        return objectMapper.readTree(inputStream);
     }
 }

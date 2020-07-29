@@ -16,14 +16,25 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
 import com.google.protobuf.Message;
 import io.pravega.client.stream.Serializer;
+import io.pravega.schemaregistry.avro.schemas.AvroSchema;
+import io.pravega.schemaregistry.avro.serializers.AvroSerializerFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.schemas.Schema;
+import io.pravega.schemaregistry.json.schemas.JSONSchema;
+import io.pravega.schemaregistry.json.serializers.JsonDeserializer;
+import io.pravega.schemaregistry.json.serializers.JsonSerializerFactory;
+import io.pravega.schemaregistry.protobuf.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.protobuf.serializers.ProtobufSerializerFactory;
+import io.pravega.schemaregistry.shared.schemas.Schema;
+import io.pravega.schemaregistry.shared.serializers.AbstractDeserializer;
+import io.pravega.schemaregistry.shared.serializers.CustomDeserializer;
+import io.pravega.schemaregistry.shared.serializers.CustomSerializer;
+import io.pravega.schemaregistry.shared.serializers.CustomSerializerFactory;
+import io.pravega.schemaregistry.shared.serializers.EncodingCache;
+import io.pravega.schemaregistry.shared.serializers.MultiplexedAndGenericDeserializer;
+import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -34,7 +45,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static com.google.protobuf.DescriptorProtos.FileDescriptorSet;
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
+import static io.pravega.schemaregistry.shared.serializers.SerializerFactoryHelper.initForDeserializer;
 import static io.pravega.schemaregistry.serializers.WithSchema.JSON_TRANSFORM;
 import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
 
