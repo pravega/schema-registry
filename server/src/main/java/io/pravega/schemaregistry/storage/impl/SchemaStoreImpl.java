@@ -29,6 +29,7 @@ import io.pravega.schemaregistry.storage.impl.groups.Groups;
 import io.pravega.schemaregistry.storage.impl.schemas.Schemas;
 
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -130,14 +131,16 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
     
     @Override
-    public CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
-        return schemas.addSchema(schemaInfo, namespace, groupId)
-                .thenCompose(v -> getGroup(namespace, groupId).thenCompose(grp -> grp.addSchema(schemaInfo, prop, etag)));
+    public CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, SchemaInfo normalized,
+                                                    BigInteger fingerprint, GroupProperties prop, Etag etag) {
+        // Store normalized form of schema with the global schemas while the original form is stored within the group.  
+        return schemas.addSchema(normalized, namespace, groupId)
+                .thenCompose(v -> getGroup(namespace, groupId).thenCompose(grp -> grp.addSchema(schemaInfo, fingerprint, prop, etag)));
     }
 
     @Override
-    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String groupId, SchemaInfo schemaInfo) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getVersion(schemaInfo));
+    public CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String groupId, SchemaInfo schemaInfo, BigInteger fingerprint) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getVersion(schemaInfo, fingerprint));
     }
 
     @Override

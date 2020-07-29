@@ -22,7 +22,6 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.ByteArraySegment;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.common.Either;
-import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -43,7 +42,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Iterator;
@@ -362,8 +360,7 @@ public class Group<V> {
                          });
     }
 
-    public CompletableFuture<VersionInfo> getVersion(SchemaInfo schemaInfo) {
-        BigInteger fingerprint = getFingerprint(schemaInfo);
+    public CompletableFuture<VersionInfo> getVersion(SchemaInfo schemaInfo, BigInteger fingerprint) {
         SchemaFingerprintKey key = new SchemaFingerprintKey(fingerprint);
 
         return groupTable.getEntry(key, SchemaVersionList.class)
@@ -521,10 +518,10 @@ public class Group<V> {
                     .collect(Collectors.toList()));
     }
 
-    public CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, GroupProperties prop, Etag etag) {
+    public CompletableFuture<VersionInfo> addSchema(SchemaInfo schemaInfo, BigInteger fingerprint, GroupProperties prop, Etag etag) {
         List<TableKey> keys = new ArrayList<>();
         keys.add(LATEST_SCHEMAS_KEY);
-        SchemaFingerprintKey schemaFingerprintKey = new SchemaFingerprintKey(getFingerprint(schemaInfo));
+        SchemaFingerprintKey schemaFingerprintKey = new SchemaFingerprintKey(fingerprint);
         keys.add(schemaFingerprintKey);
 
         // add or upadte following entries:
@@ -653,10 +650,6 @@ public class Group<V> {
                          });
     }
 
-    private BigInteger getFingerprint(SchemaInfo schemaInfo) {
-        return HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
-    }
-
     private CompletableFuture<EncodingId> generateNewEncodingId(VersionInfo versionInfo, String codecType, Etag etag) {
         return getSchema(versionInfo.getId(), true)
                 .thenCompose(schema -> getCodecTypeNames()
@@ -703,14 +696,21 @@ public class Group<V> {
     private CompletableFuture<VersionInfo> findVersion(List<VersionInfo> versions, SchemaInfo toFind) {
         AtomicReference<VersionInfo> found = new AtomicReference<>();
         Iterator<VersionInfo> iterator = versions.iterator();
-        return Futures.loop(() -> {
-            return iterator.hasNext() && found.get() == null;
-        }, () -> {
+        return Futures.loop(() -> iterator.hasNext() && found.get() == null, () -> {
             VersionInfo version = iterator.next();
             return Futures.exceptionallyExpecting(getSchema(version.getId(), true)
                     .thenAccept(schema -> {
-                        if (Arrays.equals(schema.getSchemaData().array(), toFind.getSchemaData().array()) 
-                                && schema.getType().equals(toFind.getType()) && schema.getSerializationFormat().equals(toFind.getSerializationFormat())) {
+                        // Do note that we store the user supplied schema in its original avatar. While the fingerprint
+                        // is computed on the normalized form. So when we fetch the schemas that have identical fingerprints,
+                        // we will only compare type name and format and declare two schemas equal. 
+                        // We can do this with fair confidence because we use the sha 256 hash for fingerprints. 
+                        // The probability of collision on two non identical byte arrays to produce same fingerprint
+                        // is next to impossible. 
+                        // However, since we also deal with composite schemas (e.g. protobuf file descriptor set or avro union)
+                        // where same schema could include definition for multiple objects and the type name distinguishes
+                        // different entities, we will still need to compare type and format if the schema binary has identical
+                        // fingerprint before we consider two schemas to be identical. 
+                        if (schema.getType().equals(toFind.getType()) && schema.getSerializationFormat().equals(toFind.getSerializationFormat())) {
                             found.set(version);
                         }
                     }), e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);

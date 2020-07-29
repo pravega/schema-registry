@@ -210,10 +210,10 @@ public class SchemaRegistryServiceTest {
                 ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
         VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
-        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(any(), anyString(), any(),
-                any(), any());
+        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(any(), anyString(), any(), any(),
+                any(), any(), any());
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
-                any());
+                any(), any());
         VersionInfo versionInfo1 = service.addSchema(null, "mygroup", schemaInfo).join();
         assertEquals(7, versionInfo1.getId());
         // SerializationFormatMismatch Exception
@@ -225,7 +225,7 @@ public class SchemaRegistryServiceTest {
                 any(), anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                store).getSchemaVersion(any(), anyString(), any());
+                store).getSchemaVersion(any(), anyString(), any(), any());
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> service.addSchema(null, "mygroup", schemaInfo).join(),
                 e -> e instanceof SerializationFormatMismatchException);
@@ -239,7 +239,7 @@ public class SchemaRegistryServiceTest {
                 any(), anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                store).getSchemaVersion(any(), anyString(), any());
+                store).getSchemaVersion(any(), anyString(), any(), any());
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         List<SchemaWithVersion> schemaWithVersionList = new ArrayList<>();
         schemaWithVersionList.add(schemaWithVersion);
@@ -248,7 +248,7 @@ public class SchemaRegistryServiceTest {
         // get CheckCompatibility to fail
         versionInfo1 = service.addSchema(null, "mygroup", schemaInfo).join();
         // Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> service.addSchema(null, "mygroup", schemaInfo).join(), e -> e instanceof RuntimeException);
@@ -402,7 +402,7 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetSchemaVersion() {
         VersionInfo versionInfo = new VersionInfo("objectTYpe", 5, 7);
-        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
@@ -414,12 +414,12 @@ public class SchemaRegistryServiceTest {
         //GroupNotFoundException
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(
-                store).getSchemaVersion(any(), anyString(), any());
+                store).getSchemaVersion(any(), anyString(), any(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.getSchemaVersion(null, "mygroup", schemaInfo).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
         //Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.getSchemaVersion(null, "mygroup", schemaInfo).join(), e -> e instanceof RuntimeException);
@@ -552,7 +552,7 @@ public class SchemaRegistryServiceTest {
         List<String> groupNameList = new ArrayList<>();
         groupNameList.add(groupName);
         doAnswer(x -> CompletableFuture.completedFuture(groupNameList)).when(store).getGroupsUsing(any(), any());
-        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         Map<String, VersionInfo> map = service.getSchemaReferences(null, schemaInfo).join();
         assertTrue(map.get(groupName).equals(versionInfo));
