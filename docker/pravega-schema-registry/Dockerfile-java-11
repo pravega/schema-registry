@@ -10,16 +10,17 @@
 FROM openjdk:11.0-jre-slim
 
 RUN apt-get update && apt-get install -y -q \
+    curl \
     rpcbind \
-    nfs-common \
     python \
     jq \
     curl \
     net-tools \
     iproute2  \
+
   && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 9090 9091 10000 12345
+EXPOSE 9092
 
 WORKDIR /opt/schema-registry
 

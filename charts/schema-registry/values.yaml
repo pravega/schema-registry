@@ -29,6 +29,24 @@ service:
   type: LoadBalancer
   port: 9092
 
+## Ingress configuration.
+ingress:
+  enabled: false
+  path: /
+  annotations: {}
+    # kubernetes.io/ingress.class: nginx
+    # kubernetes.io/tls-acme: "true"
+
+  ## List of hosts for the ingress
+  hosts:
+    - schema-registry.pravega.com
+
+  ## TLS configuration
+  tls: []
+   # - secretName: schema-registry-tls
+   #   hosts:
+   #     - schema-registry.pravega.com
+
 client:
   loadDynamic: false
   method: ""
@@ -37,10 +55,10 @@ client:
 storeType: Pravega
 controllerUri: tcp://localhost:9090
 pravega:
-  ## following values should be configured if TLS is required for 
-  ## talking to pravega and we want to perform server auth certificate 
-  ## validation 
-  tlsTrustStore: 
+  ## following values should be configured if TLS is required for
+  ## talking to pravega and we want to perform server auth certificate
+  ## validation
+  tlsTrustStore:
   validateHostName: true
 
 authentication:
@@ -49,7 +67,7 @@ authentication:
   ## authentication is enabled
   passwordAuthSecret:
   userPasswordFile:
-  authorizationResourceQualifier: "" 
+  authorizationResourceQualifier: ""
   disableBasicAuthentication: false
 
 tls:

@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.server.rest.filter;
 
 import com.google.common.base.Preconditions;
 import io.pravega.auth.AuthenticationException;
+import io.pravega.schemaregistry.server.rest.auth.AuthContext;
 import io.pravega.schemaregistry.server.rest.auth.AuthHandlerManager;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,19 +48,16 @@ public class AuthenticationFilter implements ContainerRequestFilter {
     }
 
     @Override
-    public void filter(ContainerRequestContext containerRequest)
-            throws WebApplicationException {
+    public void filter(ContainerRequestContext containerRequest) throws WebApplicationException {
         if (authEnabled) {
-            String credentials = parseCredentials(headers.getRequestHeader(HttpHeaders.AUTHORIZATION));
             try {
-                AuthHandlerManager.Context context = authManager.getContext(credentials);
+                String credentials = parseCredentials(headers.getRequestHeader(HttpHeaders.AUTHORIZATION));
+                AuthContext context = authManager.getContext(credentials);
                 context.authenticate();
                 containerRequest.setSecurityContext(context);
-                log.info("shivesh:: User authentication successful");
-
             } catch (AuthenticationException e) {
                 log.warn("User authentication failed");
-                containerRequest.abortWith(Response.status(Response.Status.FORBIDDEN).build());            
+                containerRequest.abortWith(Response.status(Response.Status.UNAUTHORIZED).build());            
             }
         }
     }
