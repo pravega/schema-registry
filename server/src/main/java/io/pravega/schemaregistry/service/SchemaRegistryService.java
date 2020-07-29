@@ -860,7 +860,8 @@ public class SchemaRegistryService {
                     // in alphabetical order. This ensures that identical schemas with different order of fields are 
                     // treated to be equal. 
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
-                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonNode).getBytes(Charsets.UTF_8));
+                    Object obj = OBJECT_MAPPER.treeToValue(jsonNode, Object.class);
+                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(obj).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
