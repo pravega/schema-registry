@@ -39,8 +39,7 @@ plugins.withId('maven') {
                     }
                 }
 
-                pom.artifactId = project.path.replaceFirst(':', '')
-                pom.artifactId = project.path.replace(':', '-')
+                pom.artifactId = project.path.replaceFirst(':', '').replace(':', '-')
                 pom.project {
                     name "Pravega"
                     url "http://pravega.io"
@@ -81,8 +80,7 @@ plugins.withId('maven') {
     install {
         repositories {
             mavenInstaller {
-                pom.artifactId = project.path.replaceFirst(':', '')
-                pom.artifactId = project.path.replace(':', '-')
+                pom.artifactId = project.path.replaceFirst(':', '').replace(':', '-')
             }
         }
     }
