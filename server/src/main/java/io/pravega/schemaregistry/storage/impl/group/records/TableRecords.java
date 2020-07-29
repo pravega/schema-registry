@@ -74,7 +74,7 @@ public interface TableRecords {
         private static class GroupPropertyKeyBuilder implements ObjectBuilder<GroupPropertyKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<GroupPropertyKey, GroupPropertyKey.GroupPropertyKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<GroupPropertyKey, GroupPropertyKey.GroupPropertyKeyBuilder> {
             @Override
             protected GroupPropertyKey.GroupPropertyKeyBuilder newBuilder() {
                 return GroupPropertyKey.builder();
@@ -118,7 +118,7 @@ public interface TableRecords {
         private static class GroupPropertiesRecordBuilder implements ObjectBuilder<GroupPropertiesRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<GroupPropertiesRecord, GroupPropertiesRecord.GroupPropertiesRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<GroupPropertiesRecord, GroupPropertiesRecord.GroupPropertiesRecordBuilder> {
             @Override
             protected GroupPropertiesRecord.GroupPropertiesRecordBuilder newBuilder() {
                 return GroupPropertiesRecord.builder();
@@ -159,7 +159,7 @@ public interface TableRecords {
         private static class ValidationPolicyKeyBuilder implements ObjectBuilder<ValidationPolicyKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<ValidationPolicyKey, ValidationPolicyKey.ValidationPolicyKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<ValidationPolicyKey, ValidationPolicyKey.ValidationPolicyKeyBuilder> {
             @Override
             protected ValidationPolicyKey.ValidationPolicyKeyBuilder newBuilder() {
                 return ValidationPolicyKey.builder();
@@ -200,7 +200,7 @@ public interface TableRecords {
         private static class ValidationRecordBuilder implements ObjectBuilder<ValidationRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<ValidationRecord, ValidationRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<ValidationRecord, ValidationRecordBuilder> {
             @Override
             protected ValidationRecordBuilder newBuilder() {
                 return ValidationRecord.builder();
@@ -241,7 +241,7 @@ public interface TableRecords {
         private static class EtagBuilder implements ObjectBuilder<Etag> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<Etag, Etag.EtagBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<Etag, Etag.EtagBuilder> {
             @Override
             protected Etag.EtagBuilder newBuilder() {
                 return Etag.builder();
@@ -276,7 +276,7 @@ public interface TableRecords {
         private static class SchemaFingerprintKeyBuilder implements ObjectBuilder<SchemaFingerprintKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaFingerprintKey, SchemaFingerprintKey.SchemaFingerprintKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaFingerprintKey, SchemaFingerprintKey.SchemaFingerprintKeyBuilder> {
             @Override
             protected SchemaFingerprintKey.SchemaFingerprintKeyBuilder newBuilder() {
                 return SchemaFingerprintKey.builder();
@@ -320,7 +320,7 @@ public interface TableRecords {
         private static class SchemaVersionListBuilder implements ObjectBuilder<SchemaVersionList> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaVersionList, SchemaVersionList.SchemaVersionListBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaVersionList, SchemaVersionList.SchemaVersionListBuilder> {
             @Override
             protected SchemaVersionList.SchemaVersionListBuilder newBuilder() {
                 return SchemaVersionList.builder();
@@ -359,7 +359,7 @@ public interface TableRecords {
         private static class SchemaIdKeyBuilder implements ObjectBuilder<SchemaIdKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdKey, SchemaIdKey.SchemaIdKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdKey, SchemaIdKey.SchemaIdKeyBuilder> {
             @Override
             protected SchemaIdKey.SchemaIdKeyBuilder newBuilder() {
                 return SchemaIdKey.builder();
@@ -384,7 +384,11 @@ public interface TableRecords {
             }
         }
     }
-    
+
+    /**
+     * For large schemas that cannot be stored into a single table record, it is chunked into smaller chunks.
+     * This is the key used to represent each chunk. A chunk is uniquely identified by chunk number and schema id. 
+     */
     @Data
     @Builder
     @AllArgsConstructor
@@ -397,7 +401,7 @@ public interface TableRecords {
         private static class SchemaIdChunkKeyBuilder implements ObjectBuilder<SchemaIdChunkKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdChunkKey, SchemaIdChunkKey.SchemaIdChunkKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdChunkKey, SchemaIdChunkKey.SchemaIdChunkKeyBuilder> {
             @Override
             protected SchemaIdChunkKey.SchemaIdChunkKeyBuilder newBuilder() {
                 return SchemaIdChunkKey.builder();
@@ -437,7 +441,7 @@ public interface TableRecords {
         private static class IndexTypeVersionToIdKeyBuilder implements ObjectBuilder<IndexTypeVersionToIdKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<IndexTypeVersionToIdKey, IndexTypeVersionToIdKey.IndexTypeVersionToIdKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<IndexTypeVersionToIdKey, IndexTypeVersionToIdKey.IndexTypeVersionToIdKeyBuilder> {
             @Override
             protected IndexTypeVersionToIdKey.IndexTypeVersionToIdKeyBuilder newBuilder() {
                 return IndexTypeVersionToIdKey.builder();
@@ -482,7 +486,7 @@ public interface TableRecords {
         private static class VersionDeletedRecordBuilder implements ObjectBuilder<VersionDeletedRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<VersionDeletedRecord, VersionDeletedRecord.VersionDeletedRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<VersionDeletedRecord, VersionDeletedRecord.VersionDeletedRecordBuilder> {
             @Override
             protected VersionDeletedRecord.VersionDeletedRecordBuilder newBuilder() {
                 return VersionDeletedRecord.builder();
@@ -508,6 +512,16 @@ public interface TableRecords {
         }
     }
 
+    /**
+     * Schema record for storing all the information for a schema. 
+     * If the schema binary is greater than {@link io.pravega.schemaregistry.service.Config#MAX_CHUNK_SIZE_BYTES} then
+     * it is chunked into smaller chunks and stored into {@link SchemaChunkRecord}. 
+     * The first chunk is still included with the schema record. So additional chunks are created only if the size contraint
+     * is not satisfied.  
+     * It also stores the chunk size used and the total number of chunks. 
+     * To assemble a schema back from chunks, first retrieve the schema record followed by all the chunks identified by
+     * schema id and chunk number. 
+     */
     class SchemaRecord implements TableValue {
         public static final SchemaRecord.Serializer SERIALIZER = new SchemaRecord.Serializer();
         @Getter
@@ -517,7 +531,7 @@ public interface TableRecords {
         @Getter
         private final ImmutableMap<String, String> properties;
         @Getter
-        private final ByteArraySegment schemaBinary;
+        private final ByteArraySegment schemaChunk;
 
         @Getter
         private final int id;
@@ -539,28 +553,28 @@ public interface TableRecords {
         private final SchemaInfo schemaInfo;
 
         @Builder
-        public SchemaRecord(String type, SerializationFormat serializationFormat, ImmutableMap<String, String> properties, 
-                            ByteArraySegment schemaBinary, int id, int version, Compatibility compatibility, long timestamp, 
+        private SchemaRecord(String type, SerializationFormat serializationFormat, ImmutableMap<String, String> properties,
+                            ByteArraySegment schemaChunk, int id, int version, Compatibility compatibility, long timestamp,
                             int maxChunkSize, int numberOfChunks) {
             this.type = type;
             this.serializationFormat = serializationFormat;
             this.properties = properties;
-            this.schemaBinary = schemaBinary;
+            this.schemaChunk = schemaChunk;
             this.id = id;
             this.version = version;
             this.compatibility = compatibility;
             this.timestamp = timestamp;
             this.maxChunkSize = maxChunkSize;
             this.numberOfChunks = numberOfChunks;
-            this.schemaInfo = numberOfChunks == 1 ? new SchemaInfo(type, serializationFormat, ByteBuffer.wrap(schemaBinary.array(), 
-                    schemaBinary.arrayOffset(), schemaBinary.getLength()), properties) : null;
+            this.schemaInfo = numberOfChunks == 1 ? new SchemaInfo(type, serializationFormat, ByteBuffer.wrap(schemaChunk.array(), 
+                    schemaChunk.arrayOffset(), schemaChunk.getLength()), properties) : null;
         }
         
         public SchemaRecord(SchemaInfo schemaInfo, int id, int version, Compatibility compatibility, long timestamp) {
             this.type = schemaInfo.getType();
             this.serializationFormat = schemaInfo.getSerializationFormat();
             this.properties = schemaInfo.getProperties();
-            this.schemaBinary = new ByteArraySegment(schemaInfo.getSchemaData());
+            this.schemaChunk = new ByteArraySegment(schemaInfo.getSchemaData());
             this.id = id;
             this.version = version;
             this.compatibility = compatibility;
@@ -576,10 +590,10 @@ public interface TableRecords {
             return SERIALIZER.serialize(this).getCopy();
         }
         
-        private static class SchemaRecordBuilder implements ObjectBuilder<SchemaRecord> {
+        public static class SchemaRecordBuilder implements ObjectBuilder<SchemaRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaRecord, SchemaRecord.SchemaRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaRecord, SchemaRecord.SchemaRecordBuilder> {
             @Override
             protected SchemaRecord.SchemaRecordBuilder newBuilder() {
                 return SchemaRecord.builder();
@@ -603,7 +617,7 @@ public interface TableRecords {
                 target.writeCompactInt(e.getVersion());
                 CompatibilitySerializer.SERIALIZER.serialize(target, e.compatibility);
                 target.writeLong(e.timestamp);
-                target.writeArray(e.schemaBinary.array(), e.schemaBinary.arrayOffset(), e.schemaBinary.getLength());
+                target.writeArray(e.schemaChunk.array(), e.schemaChunk.arrayOffset(), e.schemaChunk.getLength());
                 target.writeInt(e.maxChunkSize);
                 target.writeCompactInt(e.numberOfChunks);
             }
@@ -620,13 +634,16 @@ public interface TableRecords {
                  .version(source.readCompactInt())
                  .compatibility(CompatibilitySerializer.SERIALIZER.deserialize(source))
                  .timestamp(source.readLong())
-                 .schemaBinary(new ByteArraySegment(source.readArray()))
+                 .schemaChunk(new ByteArraySegment(source.readArray()))
                  .maxChunkSize(source.readInt())
                  .numberOfChunks(source.readCompactInt());
             }
         }
     }
 
+    /**
+     * Represents the chunk for a schema. This contains a subset/chunk of schema binary array. 
+     */
     @Data
     @Builder
     @AllArgsConstructor
@@ -644,7 +661,7 @@ public interface TableRecords {
         private static class SchemaChunkRecordBuilder implements ObjectBuilder<SchemaChunkRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaChunkRecord, SchemaChunkRecord.SchemaChunkRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaChunkRecord, SchemaChunkRecord.SchemaChunkRecordBuilder> {
             @Override
             protected SchemaChunkRecord.SchemaChunkRecordBuilder newBuilder() {
                 return SchemaChunkRecord.builder();
@@ -679,7 +696,7 @@ public interface TableRecords {
         private static class CodecTypesKeyBuilder implements ObjectBuilder<CodecTypesKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypesKey, CodecTypesKey.CodecTypesKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<CodecTypesKey, CodecTypesKey.CodecTypesKeyBuilder> {
             @Override
             protected CodecTypesKey.CodecTypesKeyBuilder newBuilder() {
                 return CodecTypesKey.builder();
@@ -720,7 +737,7 @@ public interface TableRecords {
         private static class CodecTypesListValueBuilder implements ObjectBuilder<CodecTypesListValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypesListValue, CodecTypesListValue.CodecTypesListValueBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<CodecTypesListValue, CodecTypesListValue.CodecTypesListValueBuilder> {
             @Override
             protected CodecTypesListValue.CodecTypesListValueBuilder newBuilder() {
                 return CodecTypesListValue.builder();
@@ -759,7 +776,7 @@ public interface TableRecords {
         private static class CodecTypeKeyBuilder implements ObjectBuilder<CodecTypeKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypeKey, CodecTypeKey.CodecTypeKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<CodecTypeKey, CodecTypeKey.CodecTypeKeyBuilder> {
             @Override
             protected CodecTypeKey.CodecTypeKeyBuilder newBuilder() {
                 return CodecTypeKey.builder();
@@ -802,7 +819,7 @@ public interface TableRecords {
         private static class CodecTypeValueBuilder implements ObjectBuilder<CodecTypeValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<CodecTypeValue, CodecTypeValue.CodecTypeValueBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<CodecTypeValue, CodecTypeValue.CodecTypeValueBuilder> {
             @Override
             protected CodecTypeValue.CodecTypeValueBuilder newBuilder() {
                 return CodecTypeValue.builder();
@@ -839,7 +856,7 @@ public interface TableRecords {
         private static class LatestSchemasKeyBuilder implements ObjectBuilder<LatestSchemasKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemasKey, LatestSchemasKey.LatestSchemasKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemasKey, LatestSchemasKey.LatestSchemasKeyBuilder> {
             @Override
             protected LatestSchemasKey.LatestSchemasKeyBuilder newBuilder() {
                 return LatestSchemasKey.builder();
@@ -882,7 +899,7 @@ public interface TableRecords {
         private static class LatestSchemasValueBuilder implements ObjectBuilder<LatestSchemasValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemasValue, LatestSchemasValue.LatestSchemasValueBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<LatestSchemasValue, LatestSchemasValue.LatestSchemasValueBuilder> {
             @Override
             protected LatestSchemasValue.LatestSchemasValueBuilder newBuilder() {
                 return LatestSchemasValue.builder();
@@ -937,7 +954,7 @@ public interface TableRecords {
         private static class SchemaTypeValueBuilder implements ObjectBuilder<SchemaTypeValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaTypeValue, SchemaTypeValue.SchemaTypeValueBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaTypeValue, SchemaTypeValue.SchemaTypeValueBuilder> {
             @Override
             protected SchemaTypeValue.SchemaTypeValueBuilder newBuilder() {
                 return SchemaTypeValue.builder();
@@ -989,7 +1006,7 @@ public interface TableRecords {
         private static class EncodingInfoRecordBuilder implements ObjectBuilder<EncodingInfoRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<EncodingInfoRecord, EncodingInfoRecord.EncodingInfoRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<EncodingInfoRecord, EncodingInfoRecord.EncodingInfoRecordBuilder> {
             @Override
             protected EncodingInfoRecord.EncodingInfoRecordBuilder newBuilder() {
                 return EncodingInfoRecord.builder();
@@ -1034,7 +1051,7 @@ public interface TableRecords {
         private static class EncodingIdRecordBuilder implements ObjectBuilder<EncodingIdRecord> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<EncodingIdRecord, EncodingIdRecord.EncodingIdRecordBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<EncodingIdRecord, EncodingIdRecord.EncodingIdRecordBuilder> {
             @Override
             protected EncodingIdRecord.EncodingIdRecordBuilder newBuilder() {
                 return EncodingIdRecord.builder();
@@ -1069,7 +1086,7 @@ public interface TableRecords {
         private static class LatestEncodingIdKeyBuilder implements ObjectBuilder<LatestEncodingIdKey> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<LatestEncodingIdKey, LatestEncodingIdKey.LatestEncodingIdKeyBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<LatestEncodingIdKey, LatestEncodingIdKey.LatestEncodingIdKeyBuilder> {
             @Override
             protected LatestEncodingIdKey.LatestEncodingIdKeyBuilder newBuilder() {
                 return LatestEncodingIdKey.builder();
@@ -1110,7 +1127,7 @@ public interface TableRecords {
         private static class LatestEncodingIdValueBuilder implements ObjectBuilder<LatestEncodingIdValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<LatestEncodingIdValue, LatestEncodingIdValue.LatestEncodingIdValueBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<LatestEncodingIdValue, LatestEncodingIdValue.LatestEncodingIdValueBuilder> {
             @Override
             protected LatestEncodingIdValue.LatestEncodingIdValueBuilder newBuilder() {
                 return LatestEncodingIdValue.builder();
@@ -1153,7 +1170,7 @@ public interface TableRecords {
         private static class SchemaIdValueBuilder implements ObjectBuilder<SchemaIdValue> {
         }
 
-        static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdValue, SchemaIdValue.SchemaIdValueBuilder> {
+        private static class Serializer extends VersionedSerializer.WithBuilder<SchemaIdValue, SchemaIdValue.SchemaIdValueBuilder> {
             @Override
             protected SchemaIdValue.SchemaIdValueBuilder newBuilder() {
                 return SchemaIdValue.builder();

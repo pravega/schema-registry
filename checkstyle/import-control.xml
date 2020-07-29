@@ -46,7 +46,5 @@
     <allow pkg="org.json" />
     <allow pkg="org.everit.json" />
     <allow pkg="org.xerial.snappy" />
-    <allow pkg="org.json" />
-    <allow pkg="org.everit.json" />
 
 </import-control>

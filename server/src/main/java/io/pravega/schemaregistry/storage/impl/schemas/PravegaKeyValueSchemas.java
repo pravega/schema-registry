@@ -124,7 +124,6 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
         // 2. add schemaId record
         SchemaIdKey key = new SchemaIdKey(id);
         List<ByteArraySegment> chunks = ChunkUtil.chunk(schemaInfo.getSchemaData(), Config.MAX_CHUNK_SIZE_BYTES);
-        assert !chunks.isEmpty();
         entries.put(KEY_SERIALIZER.toBytes(key),
                 new VersionedRecord<>(new SchemaRecord(schemaInfo.getType(), schemaInfo.getSerializationFormat(),
                         chunks.get(0), Config.MAX_CHUNK_SIZE_BYTES, chunks.size()).toBytes(), null));
