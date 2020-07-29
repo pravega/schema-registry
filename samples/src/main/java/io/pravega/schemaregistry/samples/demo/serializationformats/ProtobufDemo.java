@@ -37,11 +37,11 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.protobuf.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.protobuf.serializers.ProtobufSerializerFactory;
 import io.pravega.schemaregistry.samples.generated.ProtobufTest;
-import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.serializers.ProtobufSerializerFactory;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
+import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 

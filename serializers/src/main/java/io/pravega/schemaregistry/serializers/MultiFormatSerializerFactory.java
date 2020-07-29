@@ -13,13 +13,25 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
 import io.pravega.client.stream.Serializer;
+import io.pravega.schemaregistry.avro.schemas.AvroSchema;
+import io.pravega.schemaregistry.avro.serializers.AvroGenericDeserializer;
+import io.pravega.schemaregistry.avro.serializers.AvroSerializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.schemas.Schema;
+import io.pravega.schemaregistry.json.schemas.JSONSchema;
+import io.pravega.schemaregistry.json.serializers.JsonGenericDeserializer;
+import io.pravega.schemaregistry.json.serializers.JsonSerializer;
+import io.pravega.schemaregistry.protobuf.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.protobuf.serializers.ProtobufGenericDeserializer;
+import io.pravega.schemaregistry.protobuf.serializers.ProtobufSerializer;
+import io.pravega.schemaregistry.shared.schemas.Schema;
+import io.pravega.schemaregistry.shared.serializers.AbstractDeserializer;
+import io.pravega.schemaregistry.shared.serializers.AbstractSerializer;
+import io.pravega.schemaregistry.shared.serializers.CustomDeserializer;
+import io.pravega.schemaregistry.shared.serializers.CustomSerializer;
+import io.pravega.schemaregistry.shared.serializers.EncodingCache;
+import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -31,9 +43,9 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForSerializer;
 import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
+import static io.pravega.schemaregistry.shared.serializers.SerializerFactoryHelper.initForDeserializer;
+import static io.pravega.schemaregistry.shared.serializers.SerializerFactoryHelper.initForSerializer;
 
 /**
  * Internal Factory class for multi format serializers and deserializers. 
@@ -116,7 +128,7 @@ class MultiFormatSerializerFactory {
             map.put(key, new AbstractDeserializer<Object>(groupId, schemaRegistryClient, null, false, 
                     config.getDecoders(), encodingCache, config.isWriteEncodingHeader()) {
                 @Override
-                protected Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+                public final Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                     return value.deserialize(inputStream, writerSchema, readerSchema);
                 }
             });
@@ -148,7 +160,7 @@ class MultiFormatSerializerFactory {
             map.put(key, new AbstractDeserializer<Object>(groupId, schemaRegistryClient, null, false, 
                     config.getDecoders(), encodingCache, config.isWriteEncodingHeader()) {
                 @Override
-                protected Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+                public final Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                     return value.deserialize(inputStream, writerSchema, readerSchema);
                 }
             });
