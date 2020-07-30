@@ -9,8 +9,8 @@
  */
 package io.pravega.schemaregistry.samples.demo.serde;
 
-import io.pravega.schemaregistry.shared.serializers.CustomDeserializer;
-import io.pravega.schemaregistry.shared.serializers.CustomSerializer;
+import io.pravega.schemaregistry.serializer.shared.impl.CustomDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.CustomSerializer;
 import lombok.SneakyThrows;
 
 import java.net.URL;

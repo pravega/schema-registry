@@ -36,15 +36,15 @@ import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.json.schemas.JSONSchema;
-import io.pravega.schemaregistry.json.serializers.JsonSerializerFactory;
+import io.pravega.schemaregistry.serializer.json.schemas.JSONSchema;
+import io.pravega.schemaregistry.serializer.json.impl.JsonSerializerFactory;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
 import io.pravega.schemaregistry.samples.demo.objects.User;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.WithSchema;
-import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 import io.pravega.shared.NameUtils;
 import lombok.extern.slf4j.Slf4j;
 

@@ -32,8 +32,8 @@ import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
 import io.pravega.common.Exceptions;
-import io.pravega.schemaregistry.avro.schemas.AvroSchema;
-import io.pravega.schemaregistry.avro.serializers.AvroSerializerFactory;
+import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
+import io.pravega.schemaregistry.serializer.avro.impl.AvroSerializerFactory;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -45,11 +45,11 @@ import io.pravega.schemaregistry.contract.data.GroupProperties;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
-import io.pravega.schemaregistry.json.schemas.JSONSchema;
-import io.pravega.schemaregistry.json.serializers.JsonSerializerFactory;
+import io.pravega.schemaregistry.serializer.json.schemas.JSONSchema;
+import io.pravega.schemaregistry.serializer.json.impl.JsonSerializerFactory;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
-import io.pravega.schemaregistry.protobuf.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.protobuf.serializers.ProtobufSerializerFactory;
+import io.pravega.schemaregistry.serializer.protobuf.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufSerializerFactory;
 import io.pravega.schemaregistry.samples.demo.objects.Address;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser1;
 import io.pravega.schemaregistry.samples.demo.objects.DerivedUser2;
@@ -64,9 +64,9 @@ import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.schemaregistry.server.rest.RestServer;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
-import io.pravega.schemaregistry.shared.codec.Codec;
-import io.pravega.schemaregistry.shared.codec.Codecs;
-import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializer.shared.codec.Codec;
+import io.pravega.schemaregistry.serializer.shared.codec.Codecs;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.shared.NameUtils;
@@ -1362,6 +1362,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamReader<String> reader3 = clientFactory.createReader("r3", rg, deserializer3, ReaderConfig.builder().build());
         EventRead<String> eventRead3 = reader3.readNextEvent(1000L); 
         assertFalse(Strings.isNullOrEmpty(eventRead3.getEvent()));
+        clientFactory.close();
     }
 }
 

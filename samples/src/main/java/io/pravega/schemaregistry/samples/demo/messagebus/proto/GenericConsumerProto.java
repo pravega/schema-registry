@@ -30,7 +30,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
-import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 import io.pravega.shared.NameUtils;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;

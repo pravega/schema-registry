@@ -10,7 +10,7 @@
 package io.pravega.schemaregistry.samples.demo.serde;
 
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.shared.serializers.CustomDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.CustomDeserializer;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -13,9 +13,9 @@ import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.shared.serializers.AbstractDeserializer;
-import io.pravega.schemaregistry.shared.serializers.EncodingCache;
-import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,7 +30,7 @@ class MultiFormatWithSchemaDeserializer<T> extends AbstractDeserializer<WithSche
                                       Map<SerializationFormat, AbstractDeserializer> genericDeserializers,
                                       SerializerConfig.Decoders decoders,
                                       EncodingCache encodingCache, BiFunction<SerializationFormat, Object, T> transform) {
-        super(groupId, client, null, false, decoders, encodingCache, true);
+        super(groupId, client, null, false, decoders, encodingCache, true, canCloseClient);
         this.genericDeserializers = genericDeserializers;
         this.transform = transform;
     }

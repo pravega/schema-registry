@@ -28,7 +28,7 @@ import io.pravega.schemaregistry.server.rest.RestServer;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
-import io.pravega.schemaregistry.shared.codec.Codecs;
+import io.pravega.schemaregistry.serializer.shared.codec.Codecs;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.test.common.AssertExtensions;
 import io.pravega.test.common.TestUtils;

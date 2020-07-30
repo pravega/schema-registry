@@ -15,9 +15,9 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
-import io.pravega.schemaregistry.shared.serializers.AbstractDeserializer;
-import io.pravega.schemaregistry.shared.serializers.EncodingCache;
-import io.pravega.schemaregistry.shared.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -27,7 +27,7 @@ class JsonWithSchemaDeserializer extends AbstractDeserializer<WithSchema<JsonNod
 
     JsonWithSchemaDeserializer(String groupId, SchemaRegistryClient client,
                                SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
-        super(groupId, client, null, false, decoders, encodingCache, encodeHeader);
+        super(groupId, client, null, false, decoders, encodingCache, encodeHeader, canCloseClient);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
     }
