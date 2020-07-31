@@ -17,8 +17,6 @@ import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableDeserializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableSerializer;
 import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedAndGenericDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedDeserializer;
@@ -53,7 +51,7 @@ public class AvroSerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T> ClosableSerializer<T> serializer(SerializerConfig config, AvroSchema<T> schema) {
+    public static <T> Serializer<T> serializer(SerializerConfig config, AvroSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
@@ -75,7 +73,7 @@ public class AvroSerializerFactory {
      * {@link #genericDeserializer(SerializerConfig, AvroSchema)}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> ClosableDeserializer<T> deserializer(SerializerConfig config, AvroSchema<T> schema) {
+    public static <T> Serializer<T> deserializer(SerializerConfig config, AvroSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
@@ -99,7 +97,7 @@ public class AvroSerializerFactory {
      *                   be used for deserialization.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
+    public static Serializer<Object> genericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         String groupId = config.getGroupId();
@@ -117,7 +115,7 @@ public class AvroSerializerFactory {
      * @param <T>     Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
-    public static <T> ClosableSerializer<T> multiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+    public static <T> Serializer<T> multiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
@@ -140,7 +138,7 @@ public class AvroSerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> ClosableDeserializer<T> multiTypeDeserializer(
+    public static <T> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -168,7 +166,7 @@ public class AvroSerializerFactory {
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects or a generic
      * object
      */
-    public static <T> ClosableDeserializer<Either<T, Object>> typedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, Object>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);

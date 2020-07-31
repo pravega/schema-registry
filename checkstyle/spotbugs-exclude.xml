@@ -6,7 +6,7 @@
         <Package name="io.pravega.schemaregistry.samples.generated" />
     </Match>
     <Match> <!-- generated code -->
-        <Package name="io.pravega.schemaregistry.protobuf.testobjs.generated" />
+        <Package name="io.pravega.schemaregistry.serializer.protobuf.generated" />
     </Match>
 
     <Match> <!-- generated code -->

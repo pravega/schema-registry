@@ -18,8 +18,6 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.serializer.json.schemas.JSONSchema;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableDeserializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableSerializer;
 import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedAndGenericDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedDeserializer;
@@ -52,7 +50,7 @@ public class JsonSerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T> ClosableSerializer<T> serializer(SerializerConfig config, JSONSchema<T> schema) {
+    public static <T> Serializer<T> serializer(SerializerConfig config, JSONSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
@@ -74,7 +72,7 @@ public class JsonSerializerFactory {
      * {@link #genericDeserializer(SerializerConfig)}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> ClosableDeserializer<T> deserializer(SerializerConfig config, JSONSchema<T> schema) {
+    public static <T> Serializer<T> deserializer(SerializerConfig config, JSONSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
@@ -96,7 +94,7 @@ public class JsonSerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<JsonNode> genericDeserializer(SerializerConfig config) {
+    public static Serializer<JsonNode> genericDeserializer(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -117,7 +115,7 @@ public class JsonSerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<String> deserializeAsString(SerializerConfig config) {
+    public static Serializer<String> deserializeAsString(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -136,7 +134,7 @@ public class JsonSerializerFactory {
      * @param <T>     Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
-    public static <T> ClosableSerializer<T> multiTypeSerializer(
+    public static <T> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -159,7 +157,7 @@ public class JsonSerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> ClosableDeserializer<T> multiTypeDeserializer(
+    public static <T> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -186,7 +184,7 @@ public class JsonSerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> ClosableDeserializer<Either<T, JsonNode>> typedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, JsonNode>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);

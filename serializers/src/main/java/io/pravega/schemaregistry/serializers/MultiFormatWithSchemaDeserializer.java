@@ -30,7 +30,7 @@ class MultiFormatWithSchemaDeserializer<T> extends AbstractDeserializer<WithSche
                                       Map<SerializationFormat, AbstractDeserializer> genericDeserializers,
                                       SerializerConfig.Decoders decoders,
                                       EncodingCache encodingCache, BiFunction<SerializationFormat, Object, T> transform) {
-        super(groupId, client, null, false, decoders, encodingCache, true, canCloseClient);
+        super(groupId, client, null, false, decoders, encodingCache, true);
         this.genericDeserializers = genericDeserializers;
         this.transform = transform;
     }

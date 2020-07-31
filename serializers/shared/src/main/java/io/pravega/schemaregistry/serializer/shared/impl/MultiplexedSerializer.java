@@ -17,7 +17,7 @@ import java.util.Map;
  * 
  * @param <T> Type of object. 
  */
-public class MultiplexedSerializer<T> extends ClosableSerializer<T> {
+public class MultiplexedSerializer<T> extends BaseSerializer<T> {
     private final Map<Class<? extends T>, AbstractSerializer<T>> serializers;
 
     public MultiplexedSerializer(Map<Class<? extends T>, AbstractSerializer<T>> serializers) {

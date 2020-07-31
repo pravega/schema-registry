@@ -29,8 +29,8 @@ import java.io.OutputStream;
 public class AvroSerializer<T> extends AbstractSerializer<T> {
     private final AvroSchema<T> avroSchema;
     public AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
-                   Encoder encoder, boolean registerSchema, boolean canCloseClient) {
-        super(groupId, client, schema, encoder, registerSchema, true, canCloseClient);
+                   Encoder encoder, boolean registerSchema) {
+        super(groupId, client, schema, encoder, registerSchema, true);
         this.avroSchema = schema;
     }
 

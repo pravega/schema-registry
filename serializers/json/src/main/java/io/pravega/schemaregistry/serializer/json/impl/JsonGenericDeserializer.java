@@ -27,7 +27,7 @@ public class JsonGenericDeserializer extends AbstractDeserializer<JsonNode> {
 
     public JsonGenericDeserializer(String groupId, SchemaRegistryClient client,
                             SerializerConfig.Decoders decoders, EncodingCache encodingCache, boolean encodeHeader) {
-        super(groupId, client, null, false, decoders, encodingCache, encodeHeader, canCloseClient);
+        super(groupId, client, null, false, decoders, encodingCache, encodeHeader);
         this.objectMapper = new ObjectMapper();
         objectMapper.setVisibility(PropertyAccessor.ALL, JsonAutoDetect.Visibility.ANY);
     }

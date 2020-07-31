@@ -20,8 +20,6 @@ import io.pravega.schemaregistry.contract.data.EncodingInfo;
 import io.pravega.schemaregistry.serializer.protobuf.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableDeserializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableSerializer;
 import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedAndGenericDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedDeserializer;
@@ -55,8 +53,8 @@ public class ProtobufSerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T extends Message> ClosableSerializer<T> serializer(SerializerConfig config,
-                                                                       ProtobufSchema<T> schema) {
+    public static <T extends Message> Serializer<T> serializer(SerializerConfig config,
+                                                        ProtobufSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
@@ -78,8 +76,8 @@ public class ProtobufSerializerFactory {
      * {@link #genericDeserializer(SerializerConfig, ProtobufSchema)}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T extends GeneratedMessageV3> ClosableDeserializer<T> deserializer(SerializerConfig config,
-                                                                                      ProtobufSchema<T> schema) {
+    public static <T extends GeneratedMessageV3> Serializer<T> deserializer(SerializerConfig config,
+                                                                     ProtobufSchema<T> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schema);
         String groupId = config.getGroupId();
@@ -103,7 +101,7 @@ public class ProtobufSerializerFactory {
      * @param schema Schema container that encapsulates an ProtobufSchema.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
+    public static Serializer<DynamicMessage> genericDeserializer(SerializerConfig config, @Nullable ProtobufSchema<DynamicMessage> schema) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(schema != null || config.isWriteEncodingHeader(), 
                 "Either read schema should be supplied or events should be tagged with encoding ids.");
@@ -124,7 +122,7 @@ public class ProtobufSerializerFactory {
      * @param <T>     Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
-    public static <T extends GeneratedMessageV3> ClosableSerializer<T> multiTypeSerializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> multiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -148,7 +146,7 @@ public class ProtobufSerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T extends GeneratedMessageV3> ClosableDeserializer<T> multiTypeDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> multiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -174,7 +172,7 @@ public class ProtobufSerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T extends GeneratedMessageV3> ClosableDeserializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> typedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);

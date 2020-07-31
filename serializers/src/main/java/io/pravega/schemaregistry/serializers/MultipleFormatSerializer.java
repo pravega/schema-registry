@@ -9,15 +9,16 @@
  */
 package io.pravega.schemaregistry.serializers;
 
+import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableSerializer;
+import org.apache.commons.lang3.NotImplementedException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-class MultipleFormatSerializer extends ClosableSerializer<WithSchema<Object>> {
+class MultipleFormatSerializer implements Serializer<WithSchema<Object>> {
     private final Function<SchemaInfo, AbstractSerializer<Object>> serializerFunction;
 
     private final ConcurrentHashMap<SchemaInfo, AbstractSerializer<Object>> serializersMap;
@@ -35,7 +36,7 @@ class MultipleFormatSerializer extends ClosableSerializer<WithSchema<Object>> {
     }
 
     @Override
-    public void close() throws Exception {
-        
+    public WithSchema<Object> deserialize(ByteBuffer serializedValue) {
+        throw new NotImplementedException("Deserializer not implemented");
     }
 }

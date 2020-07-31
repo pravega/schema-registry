@@ -30,8 +30,8 @@ public class AvroGenericDeserializer extends AbstractDeserializer<Object> {
     private final ConcurrentHashMap<SchemaInfo, Schema> knownSchemas;
 
     public AvroGenericDeserializer(String groupId, SchemaRegistryClient client, @Nullable AvroSchema<Object> schema,
-                            SerializerConfig.Decoders decoder, EncodingCache encodingCache, boolean canCloseClient) {
-        super(groupId, client, schema, false, decoder, encodingCache, true, canCloseClient);
+                            SerializerConfig.Decoders decoder, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decoder, encodingCache, true);
         this.knownSchemas = new ConcurrentHashMap<>();
     }
 

@@ -31,7 +31,7 @@ public class MultiplexedDeserializer<T> extends AbstractDeserializer<T> {
                             Map<String, AbstractDeserializer<T>> deserializers,
                             SerializerConfig.Decoders decoders, 
                             EncodingCache encodingCache) {
-        super(groupId, client, null, false, decoders, encodingCache, true, canCloseClient);
+        super(groupId, client, null, false, decoders, encodingCache, true);
         this.deserializers = deserializers; 
     }
 

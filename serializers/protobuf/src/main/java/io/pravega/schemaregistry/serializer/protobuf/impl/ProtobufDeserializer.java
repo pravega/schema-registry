@@ -27,7 +27,7 @@ public class ProtobufDeserializer<T extends GeneratedMessageV3> extends Abstract
     ProtobufDeserializer(String groupId, SchemaRegistryClient client,
                          ProtobufSchema<T> schema, SerializerConfig.Decoders decoder,
                          EncodingCache encodingCache, boolean encodeHeader) {
-        super(groupId, client, schema, true, decoder, encodingCache, encodeHeader, canCloseClient);
+        super(groupId, client, schema, true, decoder, encodingCache, encodeHeader);
         Preconditions.checkNotNull(schema);
         this.protobufSchema = schema;
     }

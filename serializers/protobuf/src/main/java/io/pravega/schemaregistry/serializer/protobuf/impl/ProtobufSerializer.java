@@ -22,7 +22,7 @@ import java.io.OutputStream;
 public class ProtobufSerializer<T extends Message> extends AbstractSerializer<T> {
     public ProtobufSerializer(String groupId, SchemaRegistryClient client, ProtobufSchema<T> schema,
                        Encoder encoder, boolean registerSchema, boolean encodeHeader) {
-        super(groupId, client, schema, encoder, registerSchema, encodeHeader, canCloseClient);
+        super(groupId, client, schema, encoder, registerSchema, encodeHeader);
     }
 
     @Override

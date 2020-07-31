@@ -13,9 +13,9 @@ import io.pravega.client.stream.Serializer;
 
 import java.nio.ByteBuffer;
 
-public abstract class ClosableSerializer<T> implements Serializer<T>, AutoCloseable {
+abstract class BaseDeserializer<T> implements Serializer<T> {
     @Override
-    public final T deserialize(ByteBuffer serializedValue) {
+    public final ByteBuffer serialize(T value) {
         throw new UnsupportedOperationException();
     }
 }

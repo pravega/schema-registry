@@ -27,7 +27,7 @@ import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.concurrent.atomic.AtomicReference;
 
-public abstract class AbstractSerializer<T> extends ClosableSerializer<T> {
+public abstract class AbstractSerializer<T> extends BaseSerializer<T> {
     private static final byte PROTOCOL = 0x1;
 
     private final String groupId;
@@ -39,15 +39,13 @@ public abstract class AbstractSerializer<T> extends ClosableSerializer<T> {
     @Getter
     private final Encoder encoder;
     private final boolean registerSchema;
-    private final boolean canCloseClient;
     
     protected AbstractSerializer(String groupId,
                                  SchemaRegistryClient client,
                                  Schema<T> schema,
                                  Encoder encoder,
-                                 boolean registerSchema,
-                                 boolean encodeHeader, boolean canCloseClient) {
-        this.canCloseClient = canCloseClient;
+                                 boolean registerSchema, 
+                                 boolean encodeHeader) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(encoder);
@@ -105,11 +103,4 @@ public abstract class AbstractSerializer<T> extends ClosableSerializer<T> {
     }
 
     protected abstract void serialize(T var, SchemaInfo schema, OutputStream outputStream) throws IOException;
-
-    @Override
-    public void close() throws Exception {
-        if (canCloseClient) {
-            client.close();
-        }
-    }
 }

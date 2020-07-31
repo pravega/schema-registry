@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.serializers;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
+import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
 import io.pravega.schemaregistry.serializer.avro.impl.AvroGenericDeserializer;
 import io.pravega.schemaregistry.serializer.avro.impl.AvroSerializer;
@@ -24,8 +25,6 @@ import io.pravega.schemaregistry.serializer.json.impl.JsonSerializer;
 import io.pravega.schemaregistry.serializer.protobuf.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufGenericDeserializer;
 import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufSerializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableDeserializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableSerializer;
 import io.pravega.schemaregistry.serializer.shared.schemas.Schema;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
@@ -56,13 +55,13 @@ import static io.pravega.schemaregistry.serializer.shared.impl.SerializerFactory
 @Slf4j
 class MultiFormatSerializerFactory {
     // region multi format 
-    static ClosableSerializer<WithSchema<Object>> serializer(SerializerConfig config) {
+    static Serializer<WithSchema<Object>> serializer(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return serializerInternal(config, Collections.emptyMap());
     }
 
-    static ClosableDeserializer<WithSchema<Object>> deserializerWithSchema(SerializerConfig config) {
+    static Serializer<WithSchema<Object>> deserializerWithSchema(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return deserializerInternal(config, Collections.emptyMap(), NO_TRANSFORM);
@@ -84,7 +83,7 @@ class MultiFormatSerializerFactory {
      * @param <T> Type of object to get back from deserializer. 
      * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
      */
-    static <T> ClosableDeserializer<T> deserializeAsT(SerializerConfig config,
+    static <T> Serializer<T> deserializeAsT(SerializerConfig config,
                                             BiFunction<SerializationFormat, Object, T> transform) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(transform);
@@ -93,7 +92,7 @@ class MultiFormatSerializerFactory {
     }
     // endregion
 
-    private static ClosableSerializer<WithSchema<Object>> serializerInternal(SerializerConfig config,
+    private static Serializer<WithSchema<Object>> serializerInternal(SerializerConfig config,
                                                                      Map<SerializationFormat, CustomSerializer<Object>> customSerializers) {
         Preconditions.checkNotNull(config);
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
@@ -106,7 +105,7 @@ class MultiFormatSerializerFactory {
         return new MultipleFormatSerializer(serializerFunction);
     }
 
-    private static <T> ClosableDeserializer<T> deserializeAsTInternal(SerializerConfig config,
+    private static <T> Serializer<T> deserializeAsTInternal(SerializerConfig config,
                                                     Map<SerializationFormat, CustomDeserializer<Object>> deserializers,
                                                     BiFunction<SerializationFormat, Object, T> transform) {
         String groupId = config.getGroupId();
@@ -127,7 +126,7 @@ class MultiFormatSerializerFactory {
 
         deserializers.forEach((key, value) -> {
             map.put(key, new AbstractDeserializer<Object>(groupId, schemaRegistryClient, null, false, 
-                    config.getDecoders(), encodingCache, config.isWriteEncodingHeader(), canCloseClient) {
+                    config.getDecoders(), encodingCache, config.isWriteEncodingHeader()) {
                 @Override
                 public final Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                     return value.deserialize(inputStream, writerSchema, readerSchema);
@@ -139,7 +138,7 @@ class MultiFormatSerializerFactory {
                 encodingCache, transform);
     }
 
-    private static <T> ClosableDeserializer<WithSchema<T>> deserializerInternal(SerializerConfig config, Map<SerializationFormat,
+    private static <T> Serializer<WithSchema<T>> deserializerInternal(SerializerConfig config, Map<SerializationFormat,
             CustomDeserializer<Object>> deserializers, BiFunction<SerializationFormat, Object, T> transform) {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
@@ -159,7 +158,7 @@ class MultiFormatSerializerFactory {
 
         deserializers.forEach((key, value) -> {
             map.put(key, new AbstractDeserializer<Object>(groupId, schemaRegistryClient, null, false, 
-                    config.getDecoders(), encodingCache, config.isWriteEncodingHeader(), canCloseClient) {
+                    config.getDecoders(), encodingCache, config.isWriteEncodingHeader()) {
                 @Override
                 public final Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                     return value.deserialize(inputStream, writerSchema, readerSchema);
@@ -211,7 +210,7 @@ class MultiFormatSerializerFactory {
                 }
             };
             return new AbstractSerializer<Object>(groupId, schemaRegistryClient,
-                    schema, config.getEncoder(), config.isRegisterSchema(), config.isWriteEncodingHeader(), canCloseClient) {
+                    schema, config.getEncoder(), config.isRegisterSchema(), config.isWriteEncodingHeader()) {
                 @Override
                 protected void serialize(Object var, SchemaInfo schema, OutputStream outputStream) {
                     serializer.serialize(var, schema, outputStream);

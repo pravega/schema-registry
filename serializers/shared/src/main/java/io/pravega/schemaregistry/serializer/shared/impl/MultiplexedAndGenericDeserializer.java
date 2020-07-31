@@ -27,7 +27,7 @@ public class MultiplexedAndGenericDeserializer<T, G> extends AbstractDeserialize
                                       AbstractDeserializer<G> genericDeserializer,
                                       SerializerConfig.Decoders decoders,
                                       EncodingCache encodingCache) {
-        super(groupId, client, null, false, decoders, encodingCache, true, canCloseClient);
+        super(groupId, client, null, false, decoders, encodingCache, true);
         this.deserializers = deserializers; 
         this.genericDeserializer = genericDeserializer;
     }

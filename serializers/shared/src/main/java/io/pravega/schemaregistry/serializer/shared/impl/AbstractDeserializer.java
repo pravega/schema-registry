@@ -25,7 +25,7 @@ import java.io.InputStream;
 import java.nio.ByteBuffer;
 
 @Slf4j
-public abstract class AbstractDeserializer<T> extends ClosableDeserializer<T> {
+public abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
     private static final int HEADER_SIZE = 1 + Integer.BYTES;
 
     private final String groupId;
@@ -37,7 +37,6 @@ public abstract class AbstractDeserializer<T> extends ClosableDeserializer<T> {
     private final SerializerConfig.Decoders decoders;
     private final boolean skipHeaders;
     private final EncodingCache encodingCache;
-    private final boolean canCloseClient;
 
     protected AbstractDeserializer(String groupId,
                                    SchemaRegistryClient client,
@@ -45,8 +44,7 @@ public abstract class AbstractDeserializer<T> extends ClosableDeserializer<T> {
                                    boolean skipHeaders,
                                    SerializerConfig.Decoders decoders,
                                    EncodingCache encodingCache,
-                                   boolean encodeHeader, boolean canCloseClient) {
-        this.canCloseClient = canCloseClient;
+                                   boolean encodeHeader) {
         Preconditions.checkNotNull(groupId);
         Preconditions.checkNotNull(client);
         Preconditions.checkNotNull(encodingCache);
@@ -120,12 +118,5 @@ public abstract class AbstractDeserializer<T> extends ClosableDeserializer<T> {
     
     protected boolean isEncodeHeader() {
         return encodeHeader;
-    }
-
-    @Override
-    public void close() throws Exception {
-        if (canCloseClient) {
-            client.close();
-        }
     }
 }

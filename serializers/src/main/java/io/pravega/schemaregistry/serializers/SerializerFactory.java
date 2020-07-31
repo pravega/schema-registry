@@ -27,8 +27,6 @@ import io.pravega.schemaregistry.serializer.json.impl.JsonDeserializer;
 import io.pravega.schemaregistry.serializer.json.impl.JsonSerializerFactory;
 import io.pravega.schemaregistry.serializer.protobuf.schemas.ProtobufSchema;
 import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufSerializerFactory;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableDeserializer;
-import io.pravega.schemaregistry.serializer.shared.impl.ClosableSerializer;
 import io.pravega.schemaregistry.serializer.shared.schemas.Schema;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.CustomDeserializer;
@@ -67,7 +65,7 @@ public class SerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T> ClosableSerializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schema) {
+    public static <T> Serializer<T> avroSerializer(SerializerConfig config, AvroSchema<T> schema) {
         return AvroSerializerFactory.serializer(config, schema);
     }
 
@@ -83,7 +81,7 @@ public class SerializerFactory {
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #avroGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> ClosableDeserializer<T> avroDeserializer(SerializerConfig config, AvroSchema<T> schema) {
+    public static <T> Serializer<T> avroDeserializer(SerializerConfig config, AvroSchema<T> schema) {
         return AvroSerializerFactory.deserializer(config, schema);
     }
 
@@ -99,7 +97,7 @@ public class SerializerFactory {
      *                   be used for deserialization.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<Object> avroGenericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
+    public static Serializer<Object> avroGenericDeserializer(SerializerConfig config, @Nullable AvroSchema<Object> schema) {
         return AvroSerializerFactory.genericDeserializer(config, schema);
     }
 
@@ -111,7 +109,7 @@ public class SerializerFactory {
      * @param <T>     Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
-    public static <T> ClosableSerializer<T> avroMultiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
+    public static <T> Serializer<T> avroMultiTypeSerializer(SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         return AvroSerializerFactory.multiTypeSerializer(config, schemas);
     }
 
@@ -124,7 +122,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> ClosableDeserializer<T> avroMultiTypeDeserializer(
+    public static <T> Serializer<T> avroMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         return AvroSerializerFactory.multiTypeDeserializer(config, schemas);
     }
@@ -139,7 +137,7 @@ public class SerializerFactory {
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects or a generic
      * object
      */
-    public static <T> ClosableDeserializer<Either<T, Object>> avroTypedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, Object>> avroTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, AvroSchema<T>> schemas) {
         return AvroSerializerFactory.typedOrGenericDeserializer(config, schemas);
     }
@@ -160,7 +158,7 @@ public class SerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T extends Message> ClosableSerializer<T> protobufSerializer(SerializerConfig config,
+    public static <T extends Message> Serializer<T> protobufSerializer(SerializerConfig config,
                                                                        ProtobufSchema<T> schema) {
         return ProtobufSerializerFactory.serializer(config, schema);
     }
@@ -177,7 +175,7 @@ public class SerializerFactory {
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #protobufGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T extends GeneratedMessageV3> ClosableDeserializer<T> protobufDeserializer(SerializerConfig config,
+    public static <T extends GeneratedMessageV3> Serializer<T> protobufDeserializer(SerializerConfig config,
                                                                                     ProtobufSchema<T> schema) {
         return ProtobufSerializerFactory.deserializer(config, schema);
     }
@@ -193,7 +191,7 @@ public class SerializerFactory {
      * @param schema Schema container that encapsulates an ProtobufSchema.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<DynamicMessage> protobufGenericDeserializer(SerializerConfig config, 
+    public static Serializer<DynamicMessage> protobufGenericDeserializer(SerializerConfig config, 
                                                                          @Nullable ProtobufSchema<DynamicMessage> schema) {
         return ProtobufSerializerFactory.genericDeserializer(config, schema);
     }
@@ -206,7 +204,7 @@ public class SerializerFactory {
      * @param <T>     Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
-    public static <T extends GeneratedMessageV3> ClosableSerializer<T> protobufMultiTypeSerializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> protobufMultiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         return ProtobufSerializerFactory.multiTypeSerializer(config, schemas);
     }
@@ -220,7 +218,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T extends GeneratedMessageV3> ClosableDeserializer<T> protobufMultiTypeDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<T> protobufMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         return ProtobufSerializerFactory.multiTypeDeserializer(config, schemas);
     }
@@ -234,7 +232,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T extends GeneratedMessageV3> ClosableDeserializer<Either<T, DynamicMessage>> protobufTypedOrGenericDeserializer(
+    public static <T extends GeneratedMessageV3> Serializer<Either<T, DynamicMessage>> protobufTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, ProtobufSchema<T>> schemas) {
         return ProtobufSerializerFactory.typedOrGenericDeserializer(config, schemas);
     }
@@ -255,7 +253,7 @@ public class SerializerFactory {
      * @return A Serializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamWriter} or
      * {@link io.pravega.client.stream.TransactionalEventStreamWriter}.
      */
-    public static <T> ClosableSerializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schema) {
+    public static <T> Serializer<T> jsonSerializer(SerializerConfig config, JSONSchema<T> schema) {
         return JsonSerializerFactory.serializer(config, schema);
     }
 
@@ -271,7 +269,7 @@ public class SerializerFactory {
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #jsonGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> ClosableDeserializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schema) {
+    public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schema) {
         return JsonSerializerFactory.deserializer(config, schema);
     }
 
@@ -284,7 +282,7 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<WithSchema<JsonNode>> jsonGenericDeserializer(SerializerConfig config) {
+    public static Serializer<WithSchema<JsonNode>> jsonGenericDeserializer(SerializerConfig config) {
         Preconditions.checkNotNull(config);
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
@@ -305,7 +303,7 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static ClosableDeserializer<String> jsonStringDeserializer(SerializerConfig config) {
+    public static Serializer<String> jsonStringDeserializer(SerializerConfig config) {
         return JsonSerializerFactory.deserializeAsString(config);
     }
 
@@ -317,7 +315,7 @@ public class SerializerFactory {
      * @param <T>     Base Type of schemas.
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
-    public static <T> ClosableSerializer<T> jsonMultiTypeSerializer(
+    public static <T> Serializer<T> jsonMultiTypeSerializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         return JsonSerializerFactory.multiTypeSerializer(config, schemas);
     }
@@ -331,7 +329,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> ClosableDeserializer<T> jsonMultiTypeDeserializer(
+    public static <T> Serializer<T> jsonMultiTypeDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         return JsonSerializerFactory.multiTypeDeserializer(config, schemas);
     }
@@ -345,7 +343,7 @@ public class SerializerFactory {
      * @param <T>     Base type of schemas.
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
-    public static <T> ClosableDeserializer<Either<T, WithSchema<JsonNode>>> jsonTypedOrGenericDeserializer(
+    public static <T> Serializer<Either<T, WithSchema<JsonNode>>> jsonTypedOrGenericDeserializer(
             SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkNotNull(config);
         Preconditions.checkNotNull(schemas);
@@ -379,7 +377,7 @@ public class SerializerFactory {
      * @param <T>        Type of object to serialize
      * @return Serializer that uses user supplied serialization function for serializing events.
      */
-    public static <T> ClosableSerializer<T> customSerializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
+    public static <T> Serializer<T> customSerializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
         return CustomSerializerFactory.serializer(config, schema, serializer);
     }
 
@@ -393,7 +391,7 @@ public class SerializerFactory {
      * @param <T>          Type of object to deserialize
      * @return Deserializer that uses user supplied deserialization function for deserializing payload into typed events.
      */
-    public static <T> ClosableDeserializer<T> customDeserializer(SerializerConfig config, @Nullable Schema<T> schema,
+    public static <T> Serializer<T> customDeserializer(SerializerConfig config, @Nullable Schema<T> schema,
                                                        CustomDeserializer<T> deserializer) {
         return CustomSerializerFactory.deserializer(config, schema, deserializer);
     }
@@ -412,7 +410,7 @@ public class SerializerFactory {
      * @param config Serializer config
      * @return A multi format serializer which serializes events from all three of Avro, Protobuf and json formats. 
      */
-    public static ClosableSerializer<WithSchema<Object>> serializerWithSchema(SerializerConfig config) {
+    public static Serializer<WithSchema<Object>> serializerWithSchema(SerializerConfig config) {
         return MultiFormatSerializerFactory.serializer(config);
     }
 
@@ -427,7 +425,7 @@ public class SerializerFactory {
      * @param config serializer config
      * @return a deserializer that can deserialize events serialized as protobuf, json or avro into java objects.
      */
-    public static ClosableDeserializer<WithSchema<Object>> deserializerWithSchema(SerializerConfig config) {
+    public static Serializer<WithSchema<Object>> deserializerWithSchema(SerializerConfig config) {
         return MultiFormatSerializerFactory.deserializerWithSchema(config);
     }
 
@@ -441,7 +439,7 @@ public class SerializerFactory {
      * @param config serializer config
      * @return a deserializer that can deserialize events serialized as protobuf, json or avro into java objects.
      */
-    public static ClosableDeserializer<Object> genericDeserializer(SerializerConfig config) {
+    public static Serializer<Object> genericDeserializer(SerializerConfig config) {
         return deserializeAsT(config, NO_TRANSFORM);
     }
 
@@ -452,7 +450,7 @@ public class SerializerFactory {
      * @param config serializer config
      * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
      */
-    public static ClosableDeserializer<String> deserializeAsJsonString(SerializerConfig config) {
+    public static Serializer<String> deserializeAsJsonString(SerializerConfig config) {
         return deserializeAsT(config, JSON_TRANSFORM);
     }
 
@@ -472,7 +470,7 @@ public class SerializerFactory {
      * @param <T> Type of object to get back from deserializer. 
      * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
      */
-    public static <T> ClosableDeserializer<T> deserializeAsT(SerializerConfig config,
+    public static <T> Serializer<T> deserializeAsT(SerializerConfig config,
                                                    BiFunction<SerializationFormat, Object, T> transform) {
         return MultiFormatSerializerFactory.deserializeAsT(config, transform);
     }

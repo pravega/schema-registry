@@ -34,8 +34,8 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
 
     AvroDeserializer(String groupId, SchemaRegistryClient client,
                      AvroSchema<T> schema,
-                     SerializerConfig.Decoders decoder, EncodingCache encodingCache, boolean canCloseClient) {
-        super(groupId, client, schema, false, decoder, encodingCache, true, canCloseClient);
+                     SerializerConfig.Decoders decoder, EncodingCache encodingCache) {
+        super(groupId, client, schema, false, decoder, encodingCache, true);
         Preconditions.checkNotNull(schema);
         this.avroSchema = schema;
         this.knownSchemas = new ConcurrentHashMap<>();
