@@ -1,11 +1,11 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
- *     http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.samples;
 
@@ -171,11 +171,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         restServer = new RestServer(service, serviceConfig);
         restServer.startAsync();
         restServer.awaitRunning();
-        client =  SchemaRegistryClientFactory.withDefaultNamespace(
+        client = SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
         random = new Random();
     }
-    
+
     @Override
     @After
     public void close() throws Exception {
@@ -183,7 +183,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         restServer.awaitTerminated();
         executor.shutdownNow();
     }
-    
+
     @Test
     public void testRestApis() {
         // create stream
@@ -194,7 +194,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         Map<String, VersionInfo> references = client.getSchemaReferences(schemaInfo);
         int preTestCount = references.size();
-        
+
         client.addGroup(groupId, new GroupProperties(SerializationFormat.Avro, Compatibility.allowAny(), true));
         client.addSchema(groupId, schemaInfo);
         client.addSchema(groupId, schemaInfo1);
@@ -217,7 +217,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         references = client.getSchemaReferences(schemaInfo);
         assertEquals(references.size(), preTestCount + 2);
     }
-    
+
     @Test
     public void testAvroSchemaEvolution() {
         // create stream
@@ -225,102 +225,103 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "avroevolution";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Avro;
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Avro;
 
-        AvroSchema<Object> schema1 = AvroSchema.of(SCHEMA1);
-        AvroSchema<Object> schema2 = AvroSchema.of(SCHEMA2);
-        AvroSchema<Object> schema3 = AvroSchema.of(SCHEMA3);
+            AvroSchema<Object> schema1 = AvroSchema.of(SCHEMA1);
+            AvroSchema<Object> schema2 = AvroSchema.of(SCHEMA2);
+            AvroSchema<Object> schema3 = AvroSchema.of(SCHEMA3);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.backward(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.backward(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
 
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        // region writer with schema1
-        Serializer<Object> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
+                // region writer with schema1
+                Serializer<Object> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
 
-        EventStreamWriter<Object> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
-        writer.writeEvent(record).join();
-        // endregion
-        
-        // region writer with schema2
-        serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
+                EventStreamWriter<Object> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
+                writer.writeEvent(record).join();
+                // endregion
 
-        writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
-        writer.writeEvent(record).join();
-        // endregion
-        
-        // region writer with schema3
-        // this should throw exception as schema change is not backwardPolicy compatible.
-        AssertExtensions.assertThrows("", () -> SerializerFactory.avroSerializer(serializerConfig, schema3),
-                ex -> Exceptions.unwrap(ex) instanceof RegistryExceptions.SchemaValidationFailedException);
-        // endregion
+                // region writer with schema2
+                serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg, 
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
-        AvroSchema<Object> readSchema = AvroSchema.of(SCHEMA2);
+                writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
+                writer.writeEvent(record).join();
+                // endregion
 
-        Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                // region writer with schema3
+                // this should throw exception as schema change is not backwardPolicy compatible.
+                AssertExtensions.assertThrows("", () -> SerializerFactory.avroSerializer(serializerConfig, schema3),
+                        ex -> Exceptions.unwrap(ex) instanceof RegistryExceptions.SchemaValidationFailedException);
+                // endregion
 
-        EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        // read two events successfully
-        EventRead<Object> event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
+                AvroSchema<Object> readSchema = AvroSchema.of(SCHEMA2);
 
-        reader.close();
-        // create new reader, this time with incompatible schema3
-        
-        String rg1 = "rg1" + stream;
-        readerGroupManager.createReaderGroup(rg1, 
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
 
-        AvroSchema<Object> readSchemaEx = AvroSchema.of(SCHEMA3);
-        
-        AssertExtensions.assertThrows("",  () -> SerializerFactory.avroGenericDeserializer(serializerConfig, readSchemaEx), 
-                ex -> Exceptions.unwrap(ex) instanceof IllegalArgumentException);
-        reader.close();
-        // endregion
-        
-        // region read into writer schema
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                // read two events successfully
+                EventRead<Object> event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
 
-        reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
+                reader.close();
+                // create new reader, this time with incompatible schema3
 
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
+                String rg1 = "rg1" + stream;
+                readerGroupManager.createReaderGroup(rg1,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        reader.close();
-        readerGroupManager.close();
-        // endregion
-        
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                AvroSchema<Object> readSchemaEx = AvroSchema.of(SCHEMA3);
+
+                AssertExtensions.assertThrows("", () -> SerializerFactory.avroGenericDeserializer(serializerConfig, readSchemaEx),
+                        ex -> Exceptions.unwrap(ex) instanceof IllegalArgumentException);
+                reader.close();
+                // endregion
+
+                // region read into writer schema
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+
+                reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
+
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                reader.close();
+                readerGroupManager.close();
+                // endregion
+
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Test
@@ -386,7 +387,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
         assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
         // endregion
-        
+
         // region writer with codec snappy
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
@@ -407,7 +408,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
         assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodec().getCodecType())));
         // endregion
-        
+
         // region reader
         serializerConfig = SerializerConfig.builder()
                                            .groupId(groupId)
@@ -495,10 +496,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         }
         // endregion
 
-        writer.close();        
-        writer2.close();        
-        writer3.close();        
-        writer4.close();        
+        writer.close();
+        writer2.close();
+        writer3.close();
+        writer4.close();
         reader.close();
         reader2.close();
         readerGroupManager.close();
@@ -537,7 +538,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
-        
+
         // region writer
         Serializer<TestClass> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
         EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
@@ -550,9 +551,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rgx" + stream;
-        readerGroupManager.createReaderGroup(rg, 
+        readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
+
         AvroSchema<TestClass> readSchema1 = AvroSchema.of(TestClass.class);
 
         Serializer<TestClass> deserializer1 = SerializerFactory.avroDeserializer(serializerConfig, readSchema1);
@@ -634,9 +635,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg, 
+        readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
+
         AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
         Serializer<Test1> deserializer = SerializerFactory.avroDeserializer(serializerConfig, readSchema);
@@ -711,9 +712,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg, 
+        readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
+
         Serializer<SpecificRecordBase> deserializer = SerializerFactory.avroMultiTypeDeserializer(serializerConfig, map);
 
         EventStreamReader<SpecificRecordBase> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
@@ -745,7 +746,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         genEvent = reader2.readNextEvent(10000);
         assertNotNull(genEvent.getEvent());
         // endregion
-        
+
         // region read using multiplexed and generic record combination
         String rg3 = "rg3" + stream;
         readerGroupManager.createReaderGroup(rg3,
@@ -756,7 +757,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         map2.put(Test1.class, schema1);
         map2.put(Test2.class, schema2);
 
-        Serializer<Either<SpecificRecordBase, Object>> eitherDeserializer = 
+        Serializer<Either<SpecificRecordBase, Object>> eitherDeserializer =
                 SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map2);
 
         EventStreamReader<Either<SpecificRecordBase, Object>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
@@ -770,7 +771,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(e1.getEvent().getLeft() instanceof Test2);
         e1 = reader3.readNextEvent(10000);
         assertTrue(e1.getEvent().isRight());
-        
+
         reader.close();
         reader2.close();
         reader3.close();
@@ -825,9 +826,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroupName = "rg" + stream;
-        readerGroupManager.createReaderGroup(readerGroupName, 
+        readerGroupManager.createReaderGroup(readerGroupName,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
+
         Serializer<ProtobufTest.Message1> deserializer = SerializerFactory.protobufDeserializer(serializerConfig, schema);
 
         EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
@@ -836,14 +837,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event.getEvent());
         reader.close();
         // endregion
-        
+
         // region generic read
         // 1. try without passing the schema. writer schema will be used to read for encoding header and latest schema will be used for non encoded header
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        ProtobufSchema<DynamicMessage> readerSchema = encodeHeaders ? null : 
+        ProtobufSchema<DynamicMessage> readerSchema = encodeHeaders ? null :
                 ProtobufSchema.from(client.getLatestSchemaVersion(groupId, null).getSchemaInfo());
         Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, readerSchema);
 
@@ -853,7 +854,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event2.getEvent());
 
         reader2.close();
-        
+
         // 2. try with passing the schema. reader schema will be used to read
         String rg3 = "rg3" + encodeHeaders;
         readerGroupManager.createReaderGroup(rg3,
@@ -870,7 +871,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         event2 = reader2.readNextEvent(10000);
         assertNotNull(event2.getEvent());
-        
+
         reader2.close();
         // endregion
 
@@ -940,9 +941,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg, 
+        readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
+
         Serializer<GeneratedMessageV3> deserializer = SerializerFactory.protobufMultiTypeDeserializer(serializerConfig, map);
 
         EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
@@ -973,7 +974,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         genEvent = reader2.readNextEvent(10000);
         assertNotNull(genEvent.getEvent());
         genEvent = reader2.readNextEvent(10000);
-        
+
         reader2.close();
         // endregion
 
@@ -1001,7 +1002,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message2);
         e1 = reader3.readNextEvent(10000);
         assertTrue(e1.getEvent().isRight());
-        
+
         reader3.close();
         readerGroupManager.close();
         //endregion
@@ -1030,7 +1031,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         SerializationFormat serializationFormat = SerializationFormat.Json;
         client.addGroup(groupId, new GroupProperties(serializationFormat,
                 Compatibility.allowAny(), false, ImmutableMap.of()));
-        
+
         JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
 
         SerializerConfig serializerConfig = SerializerConfig.builder()
@@ -1054,9 +1055,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String readerGroupName = "rg" + stream;
-        readerGroupManager.createReaderGroup(readerGroupName, 
+        readerGroupManager.createReaderGroup(readerGroupName,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
-        
+
         Serializer<DerivedUser2> deserializer = SerializerFactory.jsonDeserializer(serializerConfig, schema);
 
         EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
@@ -1065,7 +1066,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         assertNotNull(event.getEvent());
         reader.close();
         // endregion
-        
+
         // region generic read
         String rg2 = "rg2" + stream;
         readerGroupManager.createReaderGroup(rg2,
@@ -1078,11 +1079,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventRead<WithSchema<JsonNode>> event2 = reader2.readNextEvent(10000);
         assertNotNull(event2.getEvent());
         WithSchema<JsonNode> obj = event2.getEvent();
-        
+
         assertEquals(obj.hasJsonSchema(), encodeHeaders);
         if (encodeHeaders) {
             assertNotNull(obj.getJsonSchema());
-        } 
+        }
         reader2.close();
         readerGroupManager.close();
         // endregion
@@ -1132,7 +1133,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         // region read into specific schema
         ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
         String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg, 
+        readerGroupManager.createReaderGroup(rg,
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         Serializer<User> deserializer = SerializerFactory.jsonMultiTypeDeserializer(serializerConfig, map);
@@ -1140,7 +1141,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
         EventRead<User> event = reader.readNextEvent(10000);
-        
+
         assertNotNull(event.getEvent());
         assertTrue(event.getEvent() instanceof DerivedUser2);
         event = reader.readNextEvent(10000);
@@ -1195,7 +1196,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.close();
     }
 
-    @Test 
+    @Test
     @SneakyThrows
     public void testMultiFormatSerializerAndDeserializer() {
         String scope = "multi";
@@ -1232,7 +1233,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                            .build();
         protoWriter.writeEvent(type1).join();
         // endregion
-        
+
         // region write json
         JSONSchema<DerivedUser1> jsonSchema = JSONSchema.of(DerivedUser1.class);
         Serializer<DerivedUser1> serializer3 = SerializerFactory.jsonSerializer(serializerConfig, jsonSchema);
@@ -1250,7 +1251,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
-        
+
         // read 3 events
         EventRead<WithSchema<Object>> event1 = reader.readNextEvent(1000);
         String jsonString = event1.getEvent().getJsonString();
@@ -1265,7 +1266,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         EventStreamWriter<WithSchema<Object>> genericWriter = clientFactory
                 .createEventWriter(stream, genericSerializer, EventWriterConfig.builder().build());
-        
+
         genericWriter.writeEvent(event1.getEvent());
         genericWriter.writeEvent(event2.getEvent());
         genericWriter.writeEvent(event3.getEvent());
@@ -1284,7 +1285,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         streamManager.deleteStream(scope, stream);
         streamManager.close();
     }
-    
+
     @Data
     @AllArgsConstructor
     @NoArgsConstructor
@@ -1310,7 +1311,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .registerSchema(true)
                                                             .registryClient(client)
                                                             .build();
-        
+
         // region write
         Serializer<TestClass> serializer = SerializerFactory.jsonSerializer(serializerConfig, JSONSchema.of(TestClass.class));
 
@@ -1319,7 +1320,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         EventStreamWriter<TestClass> streamWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
         streamWriter.writeEvent(new TestClass("a")).join();
         // endregion
-        
+
         // region read
         Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
         Function<EventRead, String> eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
@@ -1330,22 +1331,22 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
         EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
-        EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L); 
-        String eventContent = eventContentSupplier.apply(eventRead); 
+        EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L);
+        String eventContent = eventContentSupplier.apply(eventRead);
         assertFalse(Strings.isNullOrEmpty(eventContent));
         reader.close();
-        
+
         streamWriter.writeEvent(new TestClass("a")).join();
         Serializer<String> deserializer2 = SerializerFactory.deserializeAsJsonString(serializerConfig);
         EventStreamReader<String> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
-        EventRead<String> eventRead2 = reader2.readNextEvent(1000L); 
+        EventRead<String> eventRead2 = reader2.readNextEvent(1000L);
         assertFalse(Strings.isNullOrEmpty(eventRead2.getEvent()));
         reader2.close();
-        
+
         streamWriter.writeEvent(new TestClass("a")).join();
         Serializer<String> deserializer3 = SerializerFactory.deserializeAsT(serializerConfig, (x, y) -> y.toString());
         EventStreamReader<String> reader3 = clientFactory.createReader("r3", rg, deserializer3, ReaderConfig.builder().build());
-        EventRead<String> eventRead3 = reader3.readNextEvent(1000L); 
+        EventRead<String> eventRead3 = reader3.readNextEvent(1000L);
         assertFalse(Strings.isNullOrEmpty(eventRead3.getEvent()));
     }
 }
