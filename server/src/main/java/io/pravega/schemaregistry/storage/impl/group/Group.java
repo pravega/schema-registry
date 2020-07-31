@@ -55,6 +55,7 @@ import java.util.concurrent.CompletionStage;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -360,13 +361,13 @@ public class Group<V> {
                          });
     }
 
-    public CompletableFuture<VersionInfo> getVersion(SchemaInfo schemaInfo, BigInteger fingerprint) {
+    public CompletableFuture<VersionInfo> getVersion(BigInteger fingerprint, Predicate<SchemaInfo> equality) {
         SchemaFingerprintKey key = new SchemaFingerprintKey(fingerprint);
 
         return groupTable.getEntry(key, SchemaVersionList.class)
                          .thenCompose(record -> {
                              if (record != null) {
-                                 return findVersion(record.getVersions(), schemaInfo);
+                                 return findVersion(record.getVersions(), equality);
                              } else {
                                  return CompletableFuture.completedFuture(null);
                              }
@@ -693,24 +694,14 @@ public class Group<V> {
                          });
     }
 
-    private CompletableFuture<VersionInfo> findVersion(List<VersionInfo> versions, SchemaInfo toFind) {
+    private CompletableFuture<VersionInfo> findVersion(List<VersionInfo> versions, Predicate<SchemaInfo> equality) {
         AtomicReference<VersionInfo> found = new AtomicReference<>();
         Iterator<VersionInfo> iterator = versions.iterator();
         return Futures.loop(() -> iterator.hasNext() && found.get() == null, () -> {
             VersionInfo version = iterator.next();
             return Futures.exceptionallyExpecting(getSchema(version.getId(), true)
                     .thenAccept(schema -> {
-                        // Do note that we store the user supplied schema in its original avatar. While the fingerprint
-                        // is computed on the normalized form. So when we fetch the schemas that have identical fingerprints,
-                        // we will only compare type name and format and declare two schemas equal. 
-                        // We can do this with fair confidence because we use the sha 256 hash for fingerprints. 
-                        // The probability of collision on two non identical byte arrays to produce same fingerprint
-                        // is next to impossible. 
-                        // However, since we also deal with composite schemas (e.g. protobuf file descriptor set or avro union)
-                        // where same schema could include definition for multiple objects and the type name distinguishes
-                        // different entities, we will still need to compare type and format if the schema binary has identical
-                        // fingerprint before we consider two schemas to be identical. 
-                        if (schema.getType().equals(toFind.getType()) && schema.getSerializationFormat().equals(toFind.getSerializationFormat())) {
+                        if (equality.test(schema)) {
                             found.set(version);
                         }
                     }), e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, null);

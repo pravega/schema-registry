@@ -13,8 +13,10 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.storage.impl.group.records.TableRecords;
 import lombok.Data;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 /**
  * Global schemas table to store all schemas and references to groups using those schemas. 
@@ -33,10 +35,13 @@ public interface Schemas<T> {
      * @param schemaInfo schema to add. 
      * @param namespace namespace for the group.
      * @param group group name. 
+     * @param fingerprint sha 256 hash of normalized schema binary
+     * @param equality checks if a schema info object is equal to the supplied schemaInfo. 
      * @return CompletableFuture which completes when schema and corresponding group reference is added to the global 
      * schemas metadata.
      */
-    CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, String namespace, String group);
+    CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, BigInteger fingerprint, Predicate<SchemaInfo> equality, 
+                                      String namespace, String group);
 
     /**
      * Returns names of groups in the given namespace where the schema was attempted to be added. This returns groups where 
@@ -45,11 +50,12 @@ public interface Schemas<T> {
      * The reference is merely suggestive and not absolute truth about the reference. 
      * 
      * @param namespace namespace
-     * @param schemaInfo schema to look up
+     * @param fingerprint sha 256 hash of schema's normalized binary
+     * @param equality checks if a schema info object is equal to the schema whose fingerprint is supplied. 
      * @return CompletableFuture which when completed will hold a list of group names in the namespace where the schema
      * may have been added. 
      */
-    CompletableFuture<List<String>> getGroupsUsing(String namespace, SchemaInfo schemaInfo);
+    CompletableFuture<List<String>> getGroupsUsing(String namespace, BigInteger fingerprint, Predicate<SchemaInfo> equality);
 
     @Data
     class Value<T extends TableRecords.TableValue, V> {

@@ -25,6 +25,7 @@ import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
+import java.util.function.Predicate;
 
 /**
  * Schema Store interface for storing and retrieving and querying schemas. 
@@ -236,27 +237,28 @@ public interface SchemaStore {
      * @param namespace namespace 
      * @param group group 
      * @param schemaInfo schema to add
-     * @param normalized normalized form of schema to add.
      * @param fingerprint 256 bit sha hash of schema binary. 
      *                    Two schema binary representation will be considered identical if their fingerprints match.
+     * @param equality checks if a schema info object is equal to the supplied schemainfo. 
      * @param prop group properties applied at the time of schema addition.
      * @param etag entity tag for the group. 
      * @return Completablefuture that holds version info for the schema that is added.  
      */
-    CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo, SchemaInfo normalized,
-                                             BigInteger fingerprint, GroupProperties prop, Etag etag);
+    CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo, BigInteger fingerprint,
+                                             Predicate<SchemaInfo> equality, GroupProperties prop, Etag etag);
 
     /**
      * Get the version corresponding to the schema.  
      *
      * @param namespace namespace 
      * @param group group 
-     * @param schemaInfo schemainfo
      * @param fingerprint 256 bit sha hash of schema binary. 
      *                    Two schema binary representation will be considered identical if their fingerprints match.
+     * @param equality checks if a schema info object is equal to the schema whose fingerprint is supplied. 
      * @return Completablefuture that holds versioninfo for the schema. 
      */
-    CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo, BigInteger fingerprint);
+    CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, BigInteger fingerprint, 
+                                                    Predicate<SchemaInfo> equality);
 
     /**
      * Get the encoding id corresponding to versioninfo and codectype. It returns Etag for the group if the encoding id
@@ -336,9 +338,10 @@ public interface SchemaStore {
      * Gets list of groups in the given namespace that use the specified schema. 
      * 
      * @param namespace namespace.
-     * @param schemaInfo Schema being referenced. 
+     * @param fingerprint sha 256 hash for the normalized schema binary
+     * @param equality checks if a schema info object is equal to the schema whose fingerprint is supplied. 
      * @return CompletableFuture that holds a List of group ids where the schema may have been added. The group id is 
      * included even if the schema addition was deleted. 
      */
-    CompletableFuture<List<String>> getGroupsUsing(String namespace, SchemaInfo schemaInfo);
+    CompletableFuture<List<String>> getGroupsUsing(String namespace, BigInteger fingerprint, Predicate<SchemaInfo> equality);
 }

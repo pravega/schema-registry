@@ -554,7 +554,7 @@ public class SchemaRegistryServiceTest {
         String groupName = "mygroup";
         List<String> groupNameList = new ArrayList<>();
         groupNameList.add(groupName);
-        doAnswer(x -> CompletableFuture.completedFuture(groupNameList)).when(store).getGroupsUsing(any(), any());
+        doAnswer(x -> CompletableFuture.completedFuture(groupNameList)).when(store).getGroupsUsing(any(), any(), any());
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         Map<String, VersionInfo> map = service.getSchemaReferences(null, schemaInfo).join();
@@ -562,13 +562,12 @@ public class SchemaRegistryServiceTest {
         //GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(
-                store).getGroupsUsing(
-                any(), any());
+                store).getGroupsUsing(any(), any(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.getSchemaReferences(null, schemaInfo).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
         //Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getGroupsUsing(any(), any());
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getGroupsUsing(any(), any(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.getSchemaReferences(null, schemaInfo).join(), e -> e instanceof RuntimeException);
     }
