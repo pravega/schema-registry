@@ -519,7 +519,6 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, validateSchema for {}.", namespace, group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
-        System.out.println("do we come here?");
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
                         if (!prop.getSerializationFormat().equals(SerializationFormat.Any) &&
