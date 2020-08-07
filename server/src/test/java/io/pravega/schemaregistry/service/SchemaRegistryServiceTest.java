@@ -26,6 +26,7 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.exceptions.CodecTypeNotRegisteredException;
+import io.pravega.schemaregistry.exceptions.IncompatibleSchemaException;
 import io.pravega.schemaregistry.exceptions.PreconditionFailedException;
 import io.pravega.schemaregistry.exceptions.SerializationFormatMismatchException;
 import io.pravega.schemaregistry.storage.ContinuationToken;
@@ -206,10 +207,10 @@ public class SchemaRegistryServiceTest {
                             Compatibility.forward()).build());
         }).when(store).getGroupProperties(any(), anyString());
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.custom("custom1"),
+        SchemaInfo schemaInfo = new SchemaInfo("type", SerializationFormat.custom("custom1"),
                 ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("type", 5, 7);
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(any(), anyString(), any(),
                 any(), any());
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
@@ -235,18 +236,22 @@ public class SchemaRegistryServiceTest {
                 GroupProperties.builder().allowMultipleTypes(Boolean.FALSE).properties(
                         ImmutableMap.<String, String>builder().build()).serializationFormat(
                         SerializationFormat.custom("custom1")).compatibility(
-                        Compatibility.forward()).build())).when(store).getGroupProperties(
+                        Compatibility.allowAny()).build())).when(store).getGroupProperties(
                 any(), anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
                 store).getSchemaVersion(any(), anyString(), any());
-        SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
+        schemaData = new byte[1];
+        SchemaInfo schemaInfo1 = new SchemaInfo("type1", SerializationFormat.custom("custom1"),
+                ByteBuffer.wrap(schemaData),
+                ImmutableMap.of());
+        SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo1, versionInfo);
         List<SchemaWithVersion> schemaWithVersionList = new ArrayList<>();
         schemaWithVersionList.add(schemaWithVersion);
         doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(
                 any(), anyString());
-        // get CheckCompatibility to fail
-        versionInfo1 = service.addSchema(null, "mygroup", schemaInfo).join();
+        // CheckCompatibility will fail due to differing types. allowMultipleTypes is false.
+        AssertExtensions.assertThrows("An exception should have been thrown", () -> service.addSchema(null, "mygroup", schemaInfo).join(), e -> e instanceof IncompatibleSchemaException);
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(),
                 any());
