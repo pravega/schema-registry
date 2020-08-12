@@ -519,6 +519,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, validateSchema for {}.", namespace, group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
                         if (!prop.getSerializationFormat().equals(SerializationFormat.Any) &&
@@ -656,7 +657,6 @@ public class SchemaRegistryService {
                                                                                GroupProperties groupProperties) {
         switch (groupProperties.getCompatibility().getType()) {
             case AllowAny:
-                return getSchemasForAllowAnyPolicy(namespace, group, schema, groupProperties);
             case DenyAll:
                 // Deny all is applicable as long as there is at least one schema in the group. 
                 return store.listLatestSchemas(namespace, group);
@@ -671,18 +671,6 @@ public class SchemaRegistryService {
             default:
                 throw new IllegalArgumentException("Unknown Compatibility policy");
         }
-    }
-    
-    private CompletableFuture<List<SchemaWithVersion>> getSchemasForAllowAnyPolicy(String namespace, String group, SchemaInfo schema, GroupProperties groupProperties) {
-        CompletableFuture<List<SchemaWithVersion>> schemasFuture;
-        if (groupProperties.isAllowMultipleTypes()) {
-            schemasFuture = store.getLatestSchemaVersion(namespace, group, schema.getType())
-                    .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
-        } else {
-            schemasFuture = store.getLatestSchemaVersion(namespace, group)
-                    .thenApply(x -> x == null ? Collections.emptyList() : Collections.singletonList(x));
-        }
-        return schemasFuture;
     }
 
     private CompletableFuture<List<SchemaWithVersion>> getSchemasForBackwardAndForwardPolicy(String namespace, String group, SchemaInfo schema, GroupProperties groupProperties) {

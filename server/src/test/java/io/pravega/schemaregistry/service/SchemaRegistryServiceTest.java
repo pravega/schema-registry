@@ -248,7 +248,7 @@ public class SchemaRegistryServiceTest {
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo1, versionInfo);
         List<SchemaWithVersion> schemaWithVersionList = new ArrayList<>();
         schemaWithVersionList.add(schemaWithVersion);
-        doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(
+        doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersionList)).when(store).listLatestSchemas(
                 any(), anyString());
         // CheckCompatibility will fail due to differing types. allowMultipleTypes is false.
         AssertExtensions.assertThrows("An exception should have been thrown", () -> service.addSchema(null, "mygroup", schemaInfo).join(), e -> e instanceof IncompatibleSchemaException);
