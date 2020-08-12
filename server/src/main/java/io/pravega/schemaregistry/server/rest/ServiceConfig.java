@@ -40,7 +40,7 @@ public class ServiceConfig implements ServerConfig {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
         Exceptions.checkArgument(!tlsEnabled || (!Strings.isNullOrEmpty(tlsCertFilePath) &&
-                        !Strings.isNullOrEmpty(serverKeyStoreFilePath)), "keyFilePath", 
+                        !Strings.isNullOrEmpty(serverKeyStoreFilePath) && !Strings.isNullOrEmpty(tlsKeyStorePasswordFilePath)), "keyFilePath", 
                 "If tls is enabled then key file path and key file password path should be non empty");
         this.host = host;
         this.port = port;
