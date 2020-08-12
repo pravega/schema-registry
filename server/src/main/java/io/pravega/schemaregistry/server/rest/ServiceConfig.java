@@ -39,9 +39,14 @@ public class ServiceConfig implements ServerConfig {
                           String tlsKeyStoreFilePath, String tlsKeyStorePasswordFilePath, boolean authEnabled, String userPasswordFilePath) {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
-        Exceptions.checkArgument(!tlsEnabled || (!Strings.isNullOrEmpty(tlsCertFilePath) &&
-                        !Strings.isNullOrEmpty(tlsKeyStoreFilePath) && !Strings.isNullOrEmpty(tlsKeyStorePasswordFilePath)), "keyFilePath", 
-                "If tls is enabled then key file path and key file password path should be non empty");
+        Exceptions.checkArgument(!tlsEnabled || !Strings.isNullOrEmpty(tlsCertFilePath), "keyCertPath", 
+                "If tls is enabled then cert file path should be non empty");
+        Exceptions.checkArgument(!tlsEnabled || !Strings.isNullOrEmpty(tlsCertFilePath), "keyCertPath", 
+                "If tls is enabled then cert file path should be non empty");
+        Exceptions.checkArgument(!tlsEnabled || !Strings.isNullOrEmpty(tlsKeyStoreFilePath), "keyFilePath", 
+                "If tls is enabled then key file path should be non empty");
+        Exceptions.checkArgument(!tlsEnabled || !Strings.isNullOrEmpty(tlsKeyStorePasswordFilePath), "keyPasswordFilePath", 
+                "If tls is enabled then key file password path should be non empty");
         this.host = host;
         this.port = port;
         this.tlsEnabled = tlsEnabled;
