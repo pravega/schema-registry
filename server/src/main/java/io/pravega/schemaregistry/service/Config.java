@@ -219,7 +219,7 @@ public final class Config {
                                    .tlsEnabled(Config.TLS_ENABLED)
                                    .tlsCertFilePath(Config.TLS_CERT_FILE)
                                    .serverKeyStoreFilePath(Config.TLS_KEY_FILE)
-                                   .serverKeyStoreFilePath(Config.TLS_KEY_PASSWORD_FILE)
+                                   .tlsKeyStorePasswordFilePath(Config.TLS_KEY_PASSWORD_FILE)
                                    .build();
     }
 
