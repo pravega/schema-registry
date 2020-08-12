@@ -218,7 +218,7 @@ public final class Config {
                                    .userPasswordFilePath(Config.USER_PASSWORD_FILE)
                                    .tlsEnabled(Config.TLS_ENABLED)
                                    .tlsCertFilePath(Config.TLS_CERT_FILE)
-                                   .serverKeyStoreFilePath(Config.TLS_KEY_FILE)
+                                   .tlsKeyStoreFilePath(Config.TLS_KEY_FILE)
                                    .tlsKeyStorePasswordFilePath(Config.TLS_KEY_PASSWORD_FILE)
                                    .build();
     }

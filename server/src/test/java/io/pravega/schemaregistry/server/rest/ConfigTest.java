@@ -18,19 +18,25 @@ import static org.junit.Assert.assertTrue;
 
 public class ConfigTest {
     @Test
-    public void testConfig() {
+    public void testValidConfig() {
         ServiceConfig config = ServiceConfig.builder().build();
         assertEquals(config.getHost(), "0.0.0.0");
         assertEquals(config.getPort(), 9092);
         assertFalse(config.isAuthEnabled());
         assertFalse(config.isTlsEnabled());
+    }
 
+    @Test
+    public void testTlsConfig() {
+        // invalid config
         AssertExtensions.assertThrows(IllegalArgumentException.class, () -> ServiceConfig.builder().tlsEnabled(true).build());
         AssertExtensions.assertThrows(IllegalArgumentException.class, () -> ServiceConfig.builder().tlsEnabled(true)
                                                                                          .tlsCertFilePath("a").build());
         AssertExtensions.assertThrows(IllegalArgumentException.class, () -> 
-                ServiceConfig.builder().tlsEnabled(true).tlsCertFilePath("a").serverKeyStoreFilePath("a").build());
-        config = ServiceConfig.builder().tlsEnabled(true).tlsCertFilePath("a").serverKeyStoreFilePath("a").tlsKeyStorePasswordFilePath("a").build();
+                ServiceConfig.builder().tlsEnabled(true).tlsCertFilePath("a").tlsKeyStoreFilePath("a").build());
+        
+        // valid config
+        ServiceConfig config = ServiceConfig.builder().tlsEnabled(true).tlsCertFilePath("a").tlsKeyStoreFilePath("a").tlsKeyStorePasswordFilePath("a").build();
         assertTrue(config.isTlsEnabled());
     }
 }
