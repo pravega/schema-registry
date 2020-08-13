@@ -342,6 +342,7 @@ project('serializers') {
 
     jar {
         manifest {}
+        // add zip64=true so that we are able to pack more than 65k files in the jar. 
         zip64=true
 
         from {

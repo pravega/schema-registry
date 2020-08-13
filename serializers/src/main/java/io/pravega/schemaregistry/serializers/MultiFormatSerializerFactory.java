@@ -32,6 +32,7 @@ import io.pravega.schemaregistry.serializer.shared.impl.CustomDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.CustomSerializer;
 import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
 import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -55,14 +56,12 @@ import static io.pravega.schemaregistry.serializer.shared.impl.SerializerFactory
 @Slf4j
 class MultiFormatSerializerFactory {
     // region multi format 
-    static Serializer<WithSchema<Object>> serializer(SerializerConfig config) {
-        Preconditions.checkNotNull(config);
+    static Serializer<WithSchema<Object>> serializer(@NonNull SerializerConfig config) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return serializerInternal(config, Collections.emptyMap());
     }
 
-    static Serializer<WithSchema<Object>> deserializerWithSchema(SerializerConfig config) {
-        Preconditions.checkNotNull(config);
+    static Serializer<WithSchema<Object>> deserializerWithSchema(@NonNull SerializerConfig config) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return deserializerInternal(config, Collections.emptyMap(), NO_TRANSFORM);
     }
@@ -77,24 +76,21 @@ class MultiFormatSerializerFactory {
      * This also takes a transform function which is applied on the deserialized object and should transform the object 
      * into the type T.  
      *
-     * @param config serializer config
+     * @param config    serializer config
      * @param transform a transform function that transforms the deserialized object based on the serialization format 
      *                  into an object of type T. 
      * @param <T> Type of object to get back from deserializer. 
      * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
      */
-    static <T> Serializer<T> deserializeAsT(SerializerConfig config,
-                                            BiFunction<SerializationFormat, Object, T> transform) {
-        Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(transform);
+    static <T> Serializer<T> deserializeAsT(@NonNull SerializerConfig config,
+                                            @NonNull BiFunction<SerializationFormat, Object, T> transform) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return deserializeAsTInternal(config, Collections.emptyMap(), transform);
     }
     // endregion
 
-    private static Serializer<WithSchema<Object>> serializerInternal(SerializerConfig config,
-                                                                     Map<SerializationFormat, CustomSerializer<Object>> customSerializers) {
-        Preconditions.checkNotNull(config);
+    private static Serializer<WithSchema<Object>> serializerInternal(@NonNull SerializerConfig config,
+                                                                     @NonNull Map<SerializationFormat, CustomSerializer<Object>> customSerializers) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         String groupId = config.getGroupId();

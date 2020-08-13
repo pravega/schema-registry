@@ -9,11 +9,11 @@
  */
 package io.pravega.schemaregistry.serializer.shared.impl;
 
-import com.google.common.base.Preconditions;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializer.shared.schemas.Schema;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
@@ -38,10 +38,7 @@ public class CustomSerializerFactory {
      * @param <T>        Type of object to serialize
      * @return Serializer that uses user supplied serialization function for serializing events.
      */
-    public static <T> Serializer<T> serializer(SerializerConfig config, Schema<T> schema, CustomSerializer<T> serializer) {
-        Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(schema);
-        Preconditions.checkNotNull(serializer);
+    public static <T> Serializer<T> serializer(@NonNull SerializerConfig config, @NonNull Schema<T> schema, @NonNull CustomSerializer<T> serializer) {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         return new AbstractSerializer<T>(groupId, schemaRegistryClient,
@@ -63,11 +60,8 @@ public class CustomSerializerFactory {
      * @param <T>          Type of object to deserialize
      * @return Deserializer that uses user supplied deserialization function for deserializing payload into typed events.
      */
-    public static <T> Serializer<T> deserializer(SerializerConfig config, @Nullable Schema<T> schema,
-                                          CustomDeserializer<T> deserializer) {
-        Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(deserializer);
-
+    public static <T> Serializer<T> deserializer(@NonNull SerializerConfig config, @Nullable Schema<T> schema,
+                                                 @NonNull CustomDeserializer<T> deserializer) {
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
