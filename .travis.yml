@@ -1,39 +1,25 @@
-#
-# Copyright (c) 2017 Dell Inc., or its subsidiaries. All Rights Reserved.
-#
-# Licensed under the Apache License, Version 2.0 (the "License");
-# you may not use this file except in compliance with the License.
-# You may obtain a copy of the License at
-#
-#     http://www.apache.org/licenses/LICENSE-2.0
-#
 language: java
 install: true
 jdk:
 - openjdk8
-
 env:
   global:
   - GRADLE_OPTS="-Xms128m"
-
+  - secure: i4EAsk82E2TPPMK+FaLzukJpwKLy0wx0gTT0l/V9iE5H8dc/k/HiAM+7lWZ3GWBdT3REAFejaFHum3lqGuLGIP54aoxdEjnqg0V2jbolNYR+WSBiD1M+wQi/FjN8a0XYDs9CtK261OejdJknJ91sv7ME6bWE7Hnw2NUT3q5pcb6gpP+fhxJmuDVHQOngpsO/LqjI28qsFw/PDtc2uztlWzAN1gtrngvkH1kVmEN7e4JNU+k/gJFEUS3BAfesynr5XFb5jfiuYQuWbFObJl6wzqaasZ+mVhbPmsl2Iyg6BZTflGYbEblFEqKrIYAFKRmPA4c5Hgs2ffN7MmtTJ2o0Wc9pSe1QxXllRJiyHzgLHGzPBbGgEwZq9NNUFCHWjVZukeQa30vSxEvDqgGHHPWYGI5bifeQLbAcL9ItuLYwW2ucL9PBZF2OTuw1s0L6Gm333apSmH+GiiNBnCemmd1Cc4BiAiWpEtbRURm9VgvIRxWTCHrKBmC04RZCx0+x/NqsOu02CjHPDAQdM9RGYLyoPbiCOTVzgVjOSlbqv9MGjh75vrgsxvGHdk1/p+8UsUVBNO8iuII6c3HNmr7QcfPl4Zaa7TKLn+FpXR/EC9p+V4nOd0JmBO2cUORh4T6IJbAzyULgPexpJdIIoyE+V2sG+jnfdVhYFbxUtzpb7XzJ/U8=
+  - secure: YxiQuVSq0SZshvy1GpGy48Cff9+TJa1nntLNN1BDSdncSQn4o9HpamCEqJSRA/Zwi2vu1ebp9idkOZd3V62M+5ajNEnz30Fc0XBeb/GrN3vN4fZPWg+DUANwGsgfuJqCtKbPKj15/idbr6wN4V0h4aAmcxhLTwlztTDTr1V1kChC5SrDcv/kXlHyhXLS/Pg5qHPXzoEL1NhnMBz9K1MmuxdgiIM5gZYzmAHg5RiZggTBb1KzgJzYogVdMQ/2NzPSN0Bzcw2yEZuIalmOOjkUA4FO2G3Hbo6rkTh2hYV2Nj9xGBjswJRxK5OZlxAjlYFf7MMfhH9YEM8p5Xfu1DfijgA+nQ6mYUNGWoBxA6Fqp3r4YmnXxRUsDshEDrS9qEBVmnJ+X/3qYmGVSZC0GRIxSPBgl58TE2n5bSxYG4sB3gJ8146b07sqh/01+G+/AOvtFxZ8x7ok2JkGEAKyoqy1N7WtAcllvMuvEXfvCnEM457+Dz6YLLuTcw3rNcNK6gpRpzYeH1iCRuVm36JkEpxlxFvGzXNK69AoWnq0NpRrXeB0igbuZjeY8Mk/1SBGN8X2hdiBWO0nIov/2p0Pr1i2Judb7qakEdJF4nts8eu6rmgSEk96UJHu8Uaw1ItT+MyE7+fYSEV7KCyyhn899KtGErP79c3lswkCO2ns4g4P714=
 jobs:
   include:
   - stage: build
     if: type IN (push, pull_request)
-    install: ./gradlew assemble
-    script: ./gradlew check
-
+    install: "./gradlew assemble"
+    script: "./gradlew check"
   - stage: snapshot
-    env:
-       - secure: "p2z5caG1u07+eTmCZwvhAcJ93bhG6pXZy3oxygcCsei+6FCJs64MIRgT5Mkbr11SG9locMNCMxsnw/yoxUdCigVQ+LTGXUNSZdBFNfEli8DupV9ZFeq2yMrl7RFFg+Ic+OL6BVIqv5PWderlE4k9PP04cQHQ6Xlb3pbFzUS7SrTGXcvsF3worvGPksKPhY+UVySuaYByVL6U17WvrxQL43DTgTbLP7Mzk3c0uxRmjNjE0kk1HubdOv2b/fHUAlrhWquANHsdViu1AkFhDSDQfFZHqGM2avVh8DLDaMHq4gF+KdIG2MEGocQf0V5p4dgJVNrZjKvgKoW5dn8yf/kyGrg7PcRbom1Smi0Wju423cw4wBtiFuJ6CCCLo5lt9yGwE9ALRHh62v2nO3B3m+HLfwVWk6fKJHVFhxLbM6AmZVgbGD5tFOiI+2EX1Ck65T+eqMUu3Y+Nypo/LiWSkRQldxEhhAz1wUYTuLOXzsuETkVzIdozvRqu3e0WFMjp6UbbpY+ssL9pMPaLa3fvNYildbO8ofsIcfvMLXpZco1n1q2woA8eY2hHFOcRrZ+v0yzACv3eulxVFBncnhYp7YyAHN/rI8uvcmtXyTEplCTo4TXgkgznbsIZmKRlSxeDs61zlfQ+FkiQS1FzLmu4Y5i7D48BFVMwgan0XY5Z5nZXgQQ="
-       - secure: "kZRzkPPZFP6J3PwxiLlnmBlcxAAmqq6m/YDq1BOqj18tVcYKOsnwO0H/qtVqKOchUf3q7lFDi0LRQ0dLSjIqJS1w2g3msV3gJSjQ+0bzi3qz+RlAgKBl2OlX0gh0yofRcC4hVQixJypiRhdtRIPhugR1QRJIclClUA6Z5aJqCM+n1ACgo/0KhIVn5/cQBpnNTclZ9R/QvVLPB8TbCwLoBCy45JQKheLlyEmuGYjqMxS4exM++Z0luBlrsap2NkFVNvh8lVEk1J04b93vxMGTKtTEPBsrPtT0ReRABu1vhK3V19ttmLz8VviHaWomNFeqz6/SE1EkEUORyvVI6FudiXSno9RVbukokpcozmHmmHox5bx9zgnl7Q+dR7ZL45p+5xWpWVosTBcX/mhW0QuQNyk8xayKj65emdy2YqkatvA5ANCxFaqdy9hhFX3All6IGlj4hfuaAVgR/kpCdBxbpbARK8o3m+YxxymtMCqGEan/tW4e65Qux4mtf6rnesBdGDHHa2lH+kVvc5ZghpA79MhlYlUTP2pnjRZKcCO94vs/hmMNhm5ep/gW6gykSAuXmBxuv4K/2HxJvxn2yWRHCT2FEXGYIu2kzwW43jYq3+I4WqmPRCCwO7WNDQwwDqk+F93aZxjGySb6T2OyRhnZrcAGFhMfWNTTSD/RdiWKPDY="
     install: skip
-    script:  ./gradlew publish -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER -PpublishPassword=$BINTRAY_KEY
+    script: "./gradlew publish -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER
+      -PpublishPassword=$BINTRAY_KEY"
 sudo: required
-
 services:
 - docker
-
 cache:
   directories:
   - ".gradle"
