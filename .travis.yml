@@ -14,9 +14,12 @@ jobs:
     install: "./gradlew assemble"
     script: "./gradlew check"
   - stage: snapshot
+    env:
+       - secure: i4EAsk82E2TPPMK+FaLzukJpwKLy0wx0gTT0l/V9iE5H8dc/k/HiAM+7lWZ3GWBdT3REAFejaFHum3lqGuLGIP54aoxdEjnqg0V2jbolNYR+WSBiD1M+wQi/FjN8a0XYDs9CtK261OejdJknJ91sv7ME6bWE7Hnw2NUT3q5pcb6gpP+fhxJmuDVHQOngpsO/LqjI28qsFw/PDtc2uztlWzAN1gtrngvkH1kVmEN7e4JNU+k/gJFEUS3BAfesynr5XFb5jfiuYQuWbFObJl6wzqaasZ+mVhbPmsl2Iyg6BZTflGYbEblFEqKrIYAFKRmPA4c5Hgs2ffN7MmtTJ2o0Wc9pSe1QxXllRJiyHzgLHGzPBbGgEwZq9NNUFCHWjVZukeQa30vSxEvDqgGHHPWYGI5bifeQLbAcL9ItuLYwW2ucL9PBZF2OTuw1s0L6Gm333apSmH+GiiNBnCemmd1Cc4BiAiWpEtbRURm9VgvIRxWTCHrKBmC04RZCx0+x/NqsOu02CjHPDAQdM9RGYLyoPbiCOTVzgVjOSlbqv9MGjh75vrgsxvGHdk1/p+8UsUVBNO8iuII6c3HNmr7QcfPl4Zaa7TKLn+FpXR/EC9p+V4nOd0JmBO2cUORh4T6IJbAzyULgPexpJdIIoyE+V2sG+jnfdVhYFbxUtzpb7XzJ/U8=
+       - secure: YxiQuVSq0SZshvy1GpGy48Cff9+TJa1nntLNN1BDSdncSQn4o9HpamCEqJSRA/Zwi2vu1ebp9idkOZd3V62M+5ajNEnz30Fc0XBeb/GrN3vN4fZPWg+DUANwGsgfuJqCtKbPKj15/idbr6wN4V0h4aAmcxhLTwlztTDTr1V1kChC5SrDcv/kXlHyhXLS/Pg5qHPXzoEL1NhnMBz9K1MmuxdgiIM5gZYzmAHg5RiZggTBb1KzgJzYogVdMQ/2NzPSN0Bzcw2yEZuIalmOOjkUA4FO2G3Hbo6rkTh2hYV2Nj9xGBjswJRxK5OZlxAjlYFf7MMfhH9YEM8p5Xfu1DfijgA+nQ6mYUNGWoBxA6Fqp3r4YmnXxRUsDshEDrS9qEBVmnJ+X/3qYmGVSZC0GRIxSPBgl58TE2n5bSxYG4sB3gJ8146b07sqh/01+G+/AOvtFxZ8x7ok2JkGEAKyoqy1N7WtAcllvMuvEXfvCnEM457+Dz6YLLuTcw3rNcNK6gpRpzYeH1iCRuVm36JkEpxlxFvGzXNK69AoWnq0NpRrXeB0igbuZjeY8Mk/1SBGN8X2hdiBWO0nIov/2p0Pr1i2Judb7qakEdJF4nts8eu6rmgSEk96UJHu8Uaw1ItT+MyE7+fYSEV7KCyyhn899KtGErP79c3lswkCO2ns4g4P714=
     install: skip
-    script: "./gradlew publish -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER
-      -PpublishPassword=$BINTRAY_KEY"
+    script: ./gradlew publish -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER -PpublishPassword=$BINTRAY_KEY
+
 sudo: required
 services:
 - docker
