@@ -3,9 +3,6 @@
         <Package name="io.pravega.schemaregistry.contract.generated" />
     </Match>
     <Match> <!-- generated code -->
-        <Package name="io.pravega.schemaregistry.samples.generated" />
-    </Match>
-    <Match> <!-- generated code -->
         <Package name="io.pravega.schemaregistry.testobjs.generated" />
     </Match>
     <Match> <!-- does not work well with futures -->
