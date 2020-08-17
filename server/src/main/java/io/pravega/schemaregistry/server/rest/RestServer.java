@@ -76,7 +76,7 @@ public class RestServer extends AbstractIdleService {
             log.info("Starting REST server listening on port: {}", this.restServerConfig.getPort());
             if (restServerConfig.isTlsEnabled()) {
                 SSLContextConfigurator contextConfigurator = new SSLContextConfigurator();
-                contextConfigurator.setKeyStoreFile(restServerConfig.getServerKeyStoreFilePath());
+                contextConfigurator.setKeyStoreFile(restServerConfig.getTlsKeyStoreFilePath());
                 contextConfigurator.setKeyStorePass(JKSHelper.loadPasswordFrom(restServerConfig.getTlsKeyStorePasswordFilePath()));
                 httpServer = GrizzlyHttpServerFactory.createHttpServer(baseUri, resourceConfig, true,
                         new SSLEngineConfigurator(contextConfigurator, false, false, false));
