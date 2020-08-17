@@ -34,10 +34,12 @@ import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
+import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.proxy.WebResourceFactory;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
@@ -77,7 +79,13 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final Client client;
     
     SchemaRegistryClientImpl(SchemaRegistryClientConfig config, String namespace) {
-        client = ClientBuilder.newClient(new ClientConfig());
+        if ("https".equalsIgnoreCase(config.getSchemaRegistryUri().getScheme())) {
+            client = ClientBuilder.newClient(new ClientConfig());
+        } else {
+            client = ClientBuilder.newBuilder().sslContext(SslConfigurator.getDefaultContext())
+                                  .withConfig(new ClientConfig()).build();
+        }
+        
         if (config.isAuthEnabled()) {
             client.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
