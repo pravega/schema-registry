@@ -46,11 +46,6 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
-import io.pravega.schemaregistry.samples.generated.ProtobufTest;
-import io.pravega.schemaregistry.samples.generated.Test1;
-import io.pravega.schemaregistry.samples.generated.Test2;
-import io.pravega.schemaregistry.samples.generated.Test3;
-import io.pravega.schemaregistry.samples.generated.Type1;
 import io.pravega.schemaregistry.schemas.AvroSchema;
 import io.pravega.schemaregistry.schemas.JSONSchema;
 import io.pravega.schemaregistry.schemas.ProtobufSchema;
@@ -62,6 +57,10 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
+import io.pravega.schemaregistry.testobjs.generated.ProtobufTest;
+import io.pravega.schemaregistry.testobjs.generated.Test1;
+import io.pravega.schemaregistry.testobjs.generated.Test2;
+import io.pravega.schemaregistry.testobjs.generated.Test3;
 import io.pravega.shared.NameUtils;
 import io.pravega.test.common.AssertExtensions;
 import io.pravega.test.common.TestUtils;
@@ -1214,10 +1213,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .registryClient(client)
                                                             .build();
 
-        AvroSchema<Type1> avro = AvroSchema.of(Type1.class);
-        Serializer<Type1> serializer = SerializerFactory.avroSerializer(serializerConfig, avro);
-        EventStreamWriter<Type1> avroWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        avroWriter.writeEvent(new Type1("a", 1)).join();
+        AvroSchema<Test1> avro = AvroSchema.of(Test1.class);
+        Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, avro);
+        EventStreamWriter<Test1> avroWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+        avroWriter.writeEvent(new Test1("a", 1)).join();
         // endregion
 
         // region proto

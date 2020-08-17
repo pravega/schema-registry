@@ -321,6 +321,7 @@ project('test') {
     sourceSets {
         test.resources.srcDirs += "$rootDir/resources"
         test.java.srcDir project(':server').file("src/test/java")
+        test.java.srcDir project(':serializers').file("src/test/java")
     }
     compileTestJava.dependsOn tasks.getByPath(':server:testClasses')
     dependencies {
