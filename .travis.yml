@@ -6,6 +6,7 @@
 # You may obtain a copy of the License at
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
+#
 language: java
 install: true
 jdk:
@@ -14,31 +15,24 @@ jdk:
 env:
   global:
   - GRADLE_OPTS="-Xms128m"
-
+  - secure: nt4Ta5rI0asqHT4Y3B9JpMYaKdrdMbVVFyN9VZ7vAk1N3jmc/a2sEioIKqhVLtnrI/4GDfbR9hd6y27fnC+4ZsUFkxpglDH3XISqqJyt28saDS4OlpVldPEhV16QIHwANC+AAUiT99dQeNSfmmVnTuJAVLxmBILmmJdG0Rkt+73isZJCLIldtJu+UPNK9OgWXz7nIJV03b5Rw+JsU+PEtiduOZav0hXQvhJ9ojDaIhy2Ac8sKYC4UKTQmsLCQYT4YPgp9zvRnrzAtOQFgnlRKdgudEcLrRymjMwW5BXBn/iuT7MTbyfrWkXgAlG07d/RJ+TU5bh4bo5mYxa+e1dU3lmcr8yYsEYc0lljz9BWfkd7NpmwtbcQf2TcaEoUOBJ/HeaVtrWVrPjLwe8qVXzvnYRfYU6fSIU27Pskswzsf/qi+2OEnO42FTcmuiFEDvJDDrleEHFKZk5XNr/MelAmfJTKx1IUx8aNbga29oqBmvYQMnBqM4BlJ2zv2YBnDUdqk6pBRPR4EXOxxx8XPhePQ8HprypNnxGBUAj2qSIkdyp84PX1GTP5PCw43kbzKfFfG2Bd669EXB2piFPS9f9rPESJ4kCoR8nkfg16R1SJvuGDH984nlwGgGPc0Ku7UzIhsxkeTwEniAKd12zHDTzicz/mUWznok1ntV/ZEyZL5bk=
+  - secure: ZqPiB/lMifutgIrVetJHz7b5+yOp4Fvb+iGdO3gYHvd7pc1o7YFBqMwwyyCKO8A7epo4sjpQXnH6GP84AV85AgwirZwP1KUuefrOtnH5YuFLkIQgajYaD1KcFvjj1kCndV8P7LAQ1rPJJcQF+GYEbn86ru6gyo8FFEfzn7yRUcIL452K8tDyLZ3qJ/BUQefZO9gv5z6tzpwld61X2fHNINfVbwbylRbn6sQn1pLJjAU6T0JZahcsR0uP78tmjdXbFmCfucP06vZgRh5HgrmQFut6D6JzjRDDcOCff03BqZM9yKT7djXvXiYU3l7jzSJzv6YByU3cbPwSMUXYbkAn93tQxzABGnuJRMHSUrdY8Gd4KxXx3HQVUz32iHGWEjqya1Q0FFLDzY9U0/poDP6uV4QjAtTkLg/NMHsw2ssxkq61y2f7YHDRh2hTMHhX2h2cFlz4t9OJqUB6jPCJAS2MfIbITyFv2TRsRZpe3T0kAtx3qmZYJAiMZD8fhC2ESq7Fdoup+NSB7FMazHYbWJXago5Em2Rdeh0tgO5o+ahC5p6LZI1ji5rGV+tGgaXJ+bxqXfr8lzByUasBiKXyB2UlO0h2COaaBgDJjCGu+D5ZUixbz5dRLGxHnwCcGG4bssjqeHZ3tkaZLrR07QrVUyOFU9wCoMmNsi6EsGZvD6yTHKg=
 jobs:
   include:
-    # the secure configurations in env: is for BINTRAY_USER=<USER> and BINTRAY_KEY=<KEY> properties
-    # which will be used for publishing artifacts to snapshot repository
   - stage: build
     if: type IN (push, pull_request)
-    install: ./gradlew assemble
-    script: ./gradlew check
-
-  - stage: javadocs
-    install: echo "Building javadocs"
-    script: ./gradlew javadocs
-
+    install: "./gradlew assemble"
+    script: "./gradlew check"
   - stage: snapshot
     env:
        - secure: nt4Ta5rI0asqHT4Y3B9JpMYaKdrdMbVVFyN9VZ7vAk1N3jmc/a2sEioIKqhVLtnrI/4GDfbR9hd6y27fnC+4ZsUFkxpglDH3XISqqJyt28saDS4OlpVldPEhV16QIHwANC+AAUiT99dQeNSfmmVnTuJAVLxmBILmmJdG0Rkt+73isZJCLIldtJu+UPNK9OgWXz7nIJV03b5Rw+JsU+PEtiduOZav0hXQvhJ9ojDaIhy2Ac8sKYC4UKTQmsLCQYT4YPgp9zvRnrzAtOQFgnlRKdgudEcLrRymjMwW5BXBn/iuT7MTbyfrWkXgAlG07d/RJ+TU5bh4bo5mYxa+e1dU3lmcr8yYsEYc0lljz9BWfkd7NpmwtbcQf2TcaEoUOBJ/HeaVtrWVrPjLwe8qVXzvnYRfYU6fSIU27Pskswzsf/qi+2OEnO42FTcmuiFEDvJDDrleEHFKZk5XNr/MelAmfJTKx1IUx8aNbga29oqBmvYQMnBqM4BlJ2zv2YBnDUdqk6pBRPR4EXOxxx8XPhePQ8HprypNnxGBUAj2qSIkdyp84PX1GTP5PCw43kbzKfFfG2Bd669EXB2piFPS9f9rPESJ4kCoR8nkfg16R1SJvuGDH984nlwGgGPc0Ku7UzIhsxkeTwEniAKd12zHDTzicz/mUWznok1ntV/ZEyZL5bk=
-       - secure: ZqPiB/lMifutgIrVetJHz7b5+yOp4Fvb+iGdO3gYHvd7pc1o7YFBqMwwyyCKO8A7epo4sjpQXnH6GP84AV85AgwirZwP1KUuefrOtnH5YuFLkIQgajYaD1KcFvjj1kCndV8P7LAQ1rPJJcQF+GYEbn86ru6gyo8FFEfzn7yRUcIL452K8tDyLZ3qJ/BUQefZO9gv5z6tzpwld61X2fHNINfVbwbylRbn6sQn1pLJjAU6T0JZahcsR0uP78tmjdXbFmCfucP06vZgRh5HgrmQFut6D6JzjRDDcOCff03BqZM9yKT7djXvXiYU3l7jzSJzv6YByU3cbPwSMUXYbkAn93tQxzABGnuJRMHSUrdY8Gd4KxXx3HQVUz32iHGWEjqya1Q0FFLDzY9U0/poDP6uV4QjAtTkLg/NMHsw2ssxkq61y2f7YHDRh2hTMHhX2h2cFlz4t9OJqUB6jPCJAS2MfIbITyFv2TRsRZpe3T0kAtx3qmZYJAiMZD8fhC2ESq7Fdoup+NSB7FMazHYbWJXago5Em2Rdeh0tgO5o+ahC5p6LZI1ji5rGV+tGgaXJ+bxqXfr8lzByUasBiKXyB2UlO0h2COaaBgDJjCGu+D5ZUixbz5dRLGxHnwCcGG4bssjqeHZ3tkaZLrR07QrVUyOFU9wCoMmNsi6EsGZvD6yTHKg=    install: skip
-    script:  echo USER=$BINTRAY_USER ; echo KEY=$BINTRAY_KEY ; ./gradlew publish -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER -PpublishPassword=$BINTRAY_KEY
-
+       - secure: ZqPiB/lMifutgIrVetJHz7b5+yOp4Fvb+iGdO3gYHvd7pc1o7YFBqMwwyyCKO8A7epo4sjpQXnH6GP84AV85AgwirZwP1KUuefrOtnH5YuFLkIQgajYaD1KcFvjj1kCndV8P7LAQ1rPJJcQF+GYEbn86ru6gyo8FFEfzn7yRUcIL452K8tDyLZ3qJ/BUQefZO9gv5z6tzpwld61X2fHNINfVbwbylRbn6sQn1pLJjAU6T0JZahcsR0uP78tmjdXbFmCfucP06vZgRh5HgrmQFut6D6JzjRDDcOCff03BqZM9yKT7djXvXiYU3l7jzSJzv6YByU3cbPwSMUXYbkAn93tQxzABGnuJRMHSUrdY8Gd4KxXx3HQVUz32iHGWEjqya1Q0FFLDzY9U0/poDP6uV4QjAtTkLg/NMHsw2ssxkq61y2f7YHDRh2hTMHhX2h2cFlz4t9OJqUB6jPCJAS2MfIbITyFv2TRsRZpe3T0kAtx3qmZYJAiMZD8fhC2ESq7Fdoup+NSB7FMazHYbWJXago5Em2Rdeh0tgO5o+ahC5p6LZI1ji5rGV+tGgaXJ+bxqXfr8lzByUasBiKXyB2UlO0h2COaaBgDJjCGu+D5ZUixbz5dRLGxHnwCcGG4bssjqeHZ3tkaZLrR07QrVUyOFU9wCoMmNsi6EsGZvD6yTHKg=
+    install: skip
+    script: "./gradlew publish -PpublishUrl=jcenterSnapshot -PpublishUsername=$BINTRAY_USER
+      -PpublishPassword=$BINTRAY_KEY"
 sudo: required
-
 services:
 - docker
-
 cache:
   directories:
   - ".gradle"
