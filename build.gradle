@@ -317,7 +317,7 @@ project('server') {
     }
 }
 
-project('samples') {
+project('test') {
     sourceSets {
         test.resources.srcDirs += "$rootDir/resources"
         test.java.srcDir project(':server').file("src/test/java")
@@ -340,7 +340,7 @@ project('samples') {
     }
 
     javadoc {
-        title = "Samples"
+        title = "Test"
         dependsOn delombok
         source = delombok.outputDir
         failOnError = true

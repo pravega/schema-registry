@@ -3,10 +3,16 @@
         <Package name="io.pravega.schemaregistry.contract.generated" />
     </Match>
     <Match> <!-- generated code -->
-        <Package name="io.pravega.schemaregistry.samples.generated" />
+        <Package name="io.pravega.schemaregistry.integrationtest.generated" />
     </Match>
     <Match> <!-- generated code -->
         <Package name="io.pravega.schemaregistry.test.integrationtest.generated" />
+    </Match>
+    <Match> <!-- generated code -->
+        <Package name="io.pravega.schemaregistry.samples.generated" />
+    </Match>
+    <Match> <!-- generated code -->
+        <Package name="io.pravega.schemaregistry.test.samples.generated" />
     </Match>
     <Match> <!-- generated code -->
         <Package name="io.pravega.schemaregistry.testobjs.generated" />
