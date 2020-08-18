@@ -72,6 +72,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             .withExpBackoff(100, 2, 10, 1000)
             .retryWhen(x -> Exceptions.unwrap(x) instanceof ConnectionException);
     private static final int GROUP_LIMIT = 100;
+    public static final String HTTPS = "https";
 
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
@@ -80,8 +81,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     
     SchemaRegistryClientImpl(SchemaRegistryClientConfig config, String namespace) {
         ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(new ClientConfig());
-        if ("https".equalsIgnoreCase(config.getSchemaRegistryUri().getScheme())) {
+        if (HTTPS.equalsIgnoreCase(config.getSchemaRegistryUri().getScheme())) {
             clientBuilder = clientBuilder.sslContext(getSSLContext(config));
+            if (!config.isValidateHostName()) {
+                clientBuilder.hostnameVerifier((a, b) -> true);
+            }
         } 
         
         client = clientBuilder.build();
