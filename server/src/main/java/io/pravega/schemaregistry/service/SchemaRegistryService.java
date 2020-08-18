@@ -657,7 +657,6 @@ public class SchemaRegistryService {
                                                                                GroupProperties groupProperties) {
         switch (groupProperties.getCompatibility().getType()) {
             case AllowAny:
-                return CompletableFuture.completedFuture(Collections.emptyList());
             case DenyAll:
                 // Deny all is applicable as long as there is at least one schema in the group. 
                 return store.listLatestSchemas(namespace, group);
