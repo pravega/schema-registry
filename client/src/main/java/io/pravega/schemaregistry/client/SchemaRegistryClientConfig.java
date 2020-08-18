@@ -41,17 +41,18 @@ public class SchemaRegistryClientConfig {
      */
     private final String trustStore;
     /**
-     * If the trust store is a certificate file, typically DER or PEM file.  
-     */
-    private final String certificate;
-    /**
-     * Type of trust store - This should either be a certificate, key store in jks or pkcs12 format. 
+     * Type of key store used as the trust store - e.g. jks, pkcs11, pkcs12, dks etc. If not specified then either 
+     * certificate (if configured) or default java TLS store as specified in system properties would be used. 
      */
     private final String trustStoreType;
     /**
      * Password for the trust store. Defaults to null. 
      */
     private final String trustStorePassword;
+    /**
+     * If the trust store is a certificate file, typically DER or PEM file.  
+     */
+    private final String certificate;
     /**
      * Flag to indicate whether client should perform host name validation in server authentication certificate.
      */
