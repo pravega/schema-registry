@@ -59,8 +59,8 @@ public class SchemaRegistryClientConfig {
     private final boolean validateHostName;
 
     private SchemaRegistryClientConfig(URI schemaRegistryUri, boolean authEnabled, String authMethod, String authToken,
-                                       String trustStore, String certificate, String trustStoreType,
-                                       String trustStorePassword, boolean validateHostName) {
+                                       String trustStore, String trustStoreType, String trustStorePassword, 
+                                       String certificate, boolean validateHostName) {
         this.schemaRegistryUri = schemaRegistryUri;
         this.authEnabled = authEnabled;
         this.authMethod = authMethod;
