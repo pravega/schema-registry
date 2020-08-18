@@ -64,7 +64,15 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.ResourceNotFoundException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.BadArgumentException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.SchemaValidationFailedException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.SerializationMismatchException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.UnauthorizedException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.CodecTypeNotRegisteredException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.MalformedSchemaException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.ConnectionException;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.InternalServerError;
 
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
@@ -101,7 +109,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         this.groupProxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(config.getSchemaRegistryUri()));
         this.schemaProxy = WebResourceFactory.newResource(ApiV1.SchemasApi.class, client.target(config.getSchemaRegistryUri()));
     }
-    
+
     @VisibleForTesting
     SchemaRegistryClientImpl(ApiV1.GroupsApi groupProxy) {
         this(groupProxy, null);
