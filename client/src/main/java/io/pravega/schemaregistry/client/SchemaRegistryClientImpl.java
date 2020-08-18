@@ -12,6 +12,7 @@ package io.pravega.schemaregistry.client;
 import com.google.common.annotations.VisibleForTesting;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
+import io.pravega.common.util.CertificateUtils;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
 import io.pravega.schemaregistry.contract.data.CodecType;
@@ -34,17 +35,24 @@ import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
-import org.glassfish.jersey.SslConfigurator;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.proxy.WebResourceFactory;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Comparator;
@@ -56,15 +64,7 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.ResourceNotFoundException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.BadArgumentException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.SchemaValidationFailedException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.SerializationMismatchException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.UnauthorizedException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.CodecTypeNotRegisteredException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.MalformedSchemaException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.ConnectionException;
-import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.InternalServerError;
+import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.*;
 
 
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
@@ -79,12 +79,12 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final Client client;
     
     SchemaRegistryClientImpl(SchemaRegistryClientConfig config, String namespace) {
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(new ClientConfig());
         if ("https".equalsIgnoreCase(config.getSchemaRegistryUri().getScheme())) {
-            client = ClientBuilder.newClient(new ClientConfig());
-        } else {
-            client = ClientBuilder.newBuilder().sslContext(SslConfigurator.getDefaultContext())
-                                  .withConfig(new ClientConfig()).build();
-        }
+            clientBuilder = clientBuilder.sslContext(getSSLContext(config));
+        } 
+        
+        client = clientBuilder.build();
         
         if (config.isAuthEnabled()) {
             client.register((ClientRequestFilter) context -> {
@@ -96,7 +96,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         this.groupProxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(config.getSchemaRegistryUri()));
         this.schemaProxy = WebResourceFactory.newResource(ApiV1.SchemasApi.class, client.target(config.getSchemaRegistryUri()));
     }
-
+    
     @VisibleForTesting
     SchemaRegistryClientImpl(ApiV1.GroupsApi groupProxy) {
         this(groupProxy, null);
@@ -492,6 +492,34 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public void close() throws Exception {
         if (client != null) {
             client.close();
+        }
+    }
+
+    private SSLContext getSSLContext(SchemaRegistryClientConfig config) {
+        try {
+            KeyStore trustStore;
+            if (config.isSystemPropTls()) {
+                return SSLContext.getDefault();
+            } else if (config.isCertificateTrustStore()) {
+                trustStore = CertificateUtils.createTrustStore(config.getTrustStore());
+            } else {
+                trustStore = KeyStore.getInstance(config.getTrustStoreType());
+                FileInputStream fin = new FileInputStream(config.getTrustStore());
+                String trustStorePassword = config.getTrustStorePassword();
+                if (trustStorePassword != null) {
+                    trustStore.load(fin, trustStorePassword.toCharArray());
+                } else {
+                    trustStore.load(fin, null);
+                }
+            }
+            TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            factory.init(trustStore);
+            SSLContext tlsContext = SSLContext.getInstance("TLS");
+            tlsContext.init(null, factory.getTrustManagers(), null);
+            return tlsContext;
+        } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException |
+                CertificateException | IOException e) {
+            throw new IllegalArgumentException("Failure initializing trust store", e);
         }
     }
 }
