@@ -36,10 +36,6 @@ public class SchemaRegistryClientConfig {
      * Authentication token.
      */
     private final String authToken;
-    /**
-     * If the SSL configuration is to be taken from system properties.   
-     */
-    private final boolean systemPropTls;
     /*
      * Path to trust store for TLS server authentication certificate.
      */
@@ -47,7 +43,7 @@ public class SchemaRegistryClientConfig {
     /**
      * If the trust store is a certificate file, typically DER or PEM file.  
      */
-    private final boolean certificateTrustStore;
+    private final String certificate;
     /**
      * Type of trust store - This should either be a certificate, key store in jks or pkcs12 format. 
      */
@@ -62,15 +58,14 @@ public class SchemaRegistryClientConfig {
     private final boolean validateHostName;
 
     private SchemaRegistryClientConfig(URI schemaRegistryUri, boolean authEnabled, String authMethod, String authToken,
-                                       boolean systemPropTls, String trustStore, boolean certificateTrustStore, String trustStoreType,
+                                       String trustStore, String certificate, String trustStoreType,
                                        String trustStorePassword, boolean validateHostName) {
         this.schemaRegistryUri = schemaRegistryUri;
         this.authEnabled = authEnabled;
         this.authMethod = authMethod;
         this.authToken = authToken;
-        this.systemPropTls = systemPropTls;
         this.trustStore = trustStore;
-        this.certificateTrustStore = certificateTrustStore;
+        this.certificate = certificate;
         this.trustStoreType = trustStoreType;
         this.trustStorePassword = trustStorePassword;
         this.validateHostName = validateHostName;
@@ -79,22 +74,17 @@ public class SchemaRegistryClientConfig {
     public static final class SchemaRegistryClientConfigBuilder {
         private boolean authEnabled = false;
         private boolean validateHostName = false;
-        private boolean systemPropTls = true;
         private String trustStore = null;
         private String trustStoreType = null;
         private String trustStorePassword = null;
-        private boolean certificateTrustStore = false;
+        private String certificate = null;
 
-        public SchemaRegistryClientConfigBuilder certificateTrustStore(String certificateTrustStore) {
-            this.systemPropTls = false;
-            this.certificateTrustStore = true;
-            this.trustStore = certificateTrustStore;
+        public SchemaRegistryClientConfigBuilder certificate(String certificate) {
+            this.certificate = certificate;
             return this;
         }
 
         public SchemaRegistryClientConfigBuilder trustStore(String trustStore, String trustStoreType, String trustStorePassword) {
-            this.systemPropTls = false;
-            this.certificateTrustStore = false;
             this.trustStore = trustStore;
             return this.trustStoreType(trustStoreType)
                        .trustStorePassword(trustStorePassword);

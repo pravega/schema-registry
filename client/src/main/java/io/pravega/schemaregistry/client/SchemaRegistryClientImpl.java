@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.client;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
 import io.pravega.common.util.CertificateUtils;
@@ -35,6 +36,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
+import lombok.SneakyThrows;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.proxy.WebResourceFactory;
 
@@ -89,6 +91,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final Client client;
     
     SchemaRegistryClientImpl(SchemaRegistryClientConfig config, String namespace) {
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(config.getSchemaRegistryUri());
         ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(new ClientConfig());
         if (HTTPS.equalsIgnoreCase(config.getSchemaRegistryUri().getScheme())) {
             clientBuilder = clientBuilder.sslContext(getSSLContext(config));
@@ -96,9 +100,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
                 clientBuilder.hostnameVerifier((a, b) -> true);
             }
         } 
-        
         client = clientBuilder.build();
-        
         if (config.isAuthEnabled()) {
             client.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
@@ -508,15 +510,19 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         }
     }
 
+    @SneakyThrows(IOException.class)
     private SSLContext getSSLContext(SchemaRegistryClientConfig config) {
         try {
+            // If trust store is specified, use it. 
+            // Else check if certificate is provided. 
+            // Else use default SSL context.
             KeyStore trustStore;
-            if (config.isSystemPropTls()) {
-                return SSLContext.getDefault();
-            } else if (config.isCertificateTrustStore()) {
+            if (config.getTrustStore() != null) {
+                trustStore = getTrustStore(config);
+            } else if (config.getCertificate() != null) {
                 trustStore = CertificateUtils.createTrustStore(config.getTrustStore());
             } else {
-                trustStore = getTrustStore(config);
+                return SSLContext.getDefault();
             }
             TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             factory.init(trustStore);
@@ -524,9 +530,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             tlsContext.init(null, factory.getTrustManagers(), null);
             return tlsContext;
         } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException |
-                CertificateException | IOException e) {
+                CertificateException e) {
             throw new IllegalArgumentException("Failure initializing trust store", e);
-        }
+        } 
     }
 
     private KeyStore getTrustStore(SchemaRegistryClientConfig config) throws KeyStoreException, 

@@ -11,38 +11,31 @@ package io.pravega.schemaregistry.client;
 
 import org.junit.Test;
 
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.*;
 
 public class SchemaRegistryClientConfigTest {
     @Test
     public void testSSLConfig() {
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().build();
-        assertTrue(config.isSystemPropTls());
-        assertFalse(config.isCertificateTrustStore());
+        assertNull(config.getCertificate());
         assertNull(config.getTrustStore());
         assertNull(config.getTrustStoreType());
         assertNull(config.getTrustStorePassword());
 
-        config = SchemaRegistryClientConfig.builder().certificateTrustStore("certPath").build();
-        assertFalse(config.isSystemPropTls());
-        assertTrue(config.isCertificateTrustStore());
-        assertEquals(config.getTrustStore(), "certPath");
+        config = SchemaRegistryClientConfig.builder().certificate("certPath").build();
+        assertEquals(config.getCertificate(), "certPath");
+        assertNull(config.getTrustStorePassword());
         assertNull(config.getTrustStoreType());
         assertNull(config.getTrustStorePassword());
 
         config = SchemaRegistryClientConfig.builder().trustStore("trustStorePath", "JKS", null).build();
-        assertFalse(config.isSystemPropTls());
-        assertFalse(config.isCertificateTrustStore());
+        assertNull(config.getCertificate());
         assertEquals(config.getTrustStore(), "trustStorePath");
         assertEquals(config.getTrustStoreType(), "JKS");
         assertNull(config.getTrustStorePassword());
 
         config = SchemaRegistryClientConfig.builder().trustStore("trustStorePath", "JKS", "password").build();
-        assertFalse(config.isSystemPropTls());
-        assertFalse(config.isCertificateTrustStore());
+        assertNull(config.getCertificate());
         assertEquals(config.getTrustStore(), "trustStorePath");
         assertEquals(config.getTrustStoreType(), "JKS");
         assertEquals(config.getTrustStorePassword(), "password");
