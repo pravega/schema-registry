@@ -531,7 +531,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             return tlsContext;
         } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException |
                 CertificateException e) {
-            throw new IllegalArgumentException("Failure initializing trust store", e);
+            throw new IllegalStateException("Failure initializing trust store", e);
         } 
     }
 
