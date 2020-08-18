@@ -72,7 +72,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             .withExpBackoff(100, 2, 10, 1000)
             .retryWhen(x -> Exceptions.unwrap(x) instanceof ConnectionException);
     private static final int GROUP_LIMIT = 100;
-    public static final String HTTPS = "https";
+    private static final String HTTPS = "https";
+    private static final String TLS = "TLS";
 
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
@@ -507,23 +508,31 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             } else if (config.isCertificateTrustStore()) {
                 trustStore = CertificateUtils.createTrustStore(config.getTrustStore());
             } else {
-                trustStore = KeyStore.getInstance(config.getTrustStoreType());
-                FileInputStream fin = new FileInputStream(config.getTrustStore());
-                String trustStorePassword = config.getTrustStorePassword();
-                if (trustStorePassword != null) {
-                    trustStore.load(fin, trustStorePassword.toCharArray());
-                } else {
-                    trustStore.load(fin, null);
-                }
+                trustStore = getTrustStore(config);
             }
             TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
             factory.init(trustStore);
-            SSLContext tlsContext = SSLContext.getInstance("TLS");
+            SSLContext tlsContext = SSLContext.getInstance(TLS);
             tlsContext.init(null, factory.getTrustManagers(), null);
             return tlsContext;
         } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException |
                 CertificateException | IOException e) {
             throw new IllegalArgumentException("Failure initializing trust store", e);
         }
+    }
+
+    private KeyStore getTrustStore(SchemaRegistryClientConfig config) throws KeyStoreException, 
+            IOException, NoSuchAlgorithmException, CertificateException {
+        KeyStore trustStore;
+        trustStore = KeyStore.getInstance(config.getTrustStoreType());
+        try (FileInputStream fin = new FileInputStream(config.getTrustStore())) {
+            String trustStorePassword = config.getTrustStorePassword();
+            if (trustStorePassword != null) {
+                trustStore.load(fin, trustStorePassword.toCharArray());
+            } else {
+                trustStore.load(fin, null);
+            }
+        }
+        return trustStore;
     }
 }
