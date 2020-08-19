@@ -424,6 +424,10 @@ project('test') {
         test.resources.srcDirs += "$rootDir/resources"
         test.java.srcDir project(':server').file("src/test/java")
         test.java.srcDir project(':serializers').file("src/test/java")
+        test.java.srcDir project(':serializers:shared').file("src/test/java")
+        test.java.srcDir project(':serializers:protobuf').file("src/test/java")
+        test.java.srcDir project(':serializers:json').file("src/test/java")
+        test.java.srcDir project(':serializers:avro').file("src/test/java")
     }
     compileTestJava.dependsOn tasks.getByPath(':server:testClasses')
     dependencies {
@@ -432,6 +436,10 @@ project('test') {
         compile project(':client')
         compile project(':server') 
         compile project(':serializers')
+        compile project(':serializers:protobuf')
+        compile project(':serializers:avro')
+        compile project(':serializers:json')
+        compile project(':serializers:shared')
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
         }

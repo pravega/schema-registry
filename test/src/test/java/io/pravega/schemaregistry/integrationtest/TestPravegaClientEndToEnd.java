@@ -21,7 +21,7 @@ import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.admin.impl.ReaderGroupManagerImpl;
 import io.pravega.client.admin.impl.StreamManagerImpl;
-import io.pravega.client.netty.impl.ConnectionFactoryImpl;
+import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
 import io.pravega.client.stream.EventRead;
 import io.pravega.client.stream.EventStreamReader;
 import io.pravega.client.stream.EventStreamWriter;
@@ -36,8 +36,6 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
-import io.pravega.schemaregistry.codec.Codec;
-import io.pravega.schemaregistry.codec.Codecs;
 import io.pravega.schemaregistry.common.Either;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -46,10 +44,19 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 import io.pravega.schemaregistry.pravegastandalone.PravegaStandaloneUtils;
-import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.serializers.SerializerConfig;
+import io.pravega.schemaregistry.serializer.avro.impl.AvroSerializerFactory;
+import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
+import io.pravega.schemaregistry.serializer.avro.testobjs.generated.Test1;
+import io.pravega.schemaregistry.serializer.avro.testobjs.generated.Test2;
+import io.pravega.schemaregistry.serializer.avro.testobjs.generated.Test3;
+import io.pravega.schemaregistry.serializer.json.impl.JsonSerializerFactory;
+import io.pravega.schemaregistry.serializer.json.schemas.JSONSchema;
+import io.pravega.schemaregistry.serializer.protobuf.generated.ProtobufTest;
+import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufSerializerFactory;
+import io.pravega.schemaregistry.serializer.protobuf.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializer.shared.codec.Codec;
+import io.pravega.schemaregistry.serializer.shared.codec.Codecs;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 import io.pravega.schemaregistry.serializers.SerializerFactory;
 import io.pravega.schemaregistry.serializers.WithSchema;
 import io.pravega.schemaregistry.server.rest.RestServer;
@@ -57,10 +64,6 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.SchemaStoreFactory;
-import io.pravega.schemaregistry.testobjs.generated.ProtobufTest;
-import io.pravega.schemaregistry.testobjs.generated.Test1;
-import io.pravega.schemaregistry.testobjs.generated.Test2;
-import io.pravega.schemaregistry.testobjs.generated.Test3;
 import io.pravega.shared.NameUtils;
 import io.pravega.test.common.AssertExtensions;
 import io.pravega.test.common.TestUtils;
@@ -97,10 +100,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
-import static org.junit.Assert.assertTrue;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.*;
 
 @Slf4j
 public class TestPravegaClientEndToEnd implements AutoCloseable {
@@ -244,7 +244,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
             try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
                 // region writer with schema1
-                Serializer<Object> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
+                Serializer<Object> serializer = AvroSerializerFactory.serializer(serializerConfig, schema1);
 
                 EventStreamWriter<Object> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
                 GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
@@ -252,7 +252,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 // endregion
 
                 // region writer with schema2
-                serializer = SerializerFactory.avroSerializer(serializerConfig, schema2);
+                serializer = AvroSerializerFactory.serializer(serializerConfig, schema2);
 
                 writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
                 record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
@@ -261,19 +261,19 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 // region writer with schema3
                 // this should throw exception as schema change is not backwardPolicy compatible.
-                AssertExtensions.assertThrows("", () -> SerializerFactory.avroSerializer(serializerConfig, schema3),
+                AssertExtensions.assertThrows("", () -> AvroSerializerFactory.serializer(serializerConfig, schema3),
                         ex -> Exceptions.unwrap(ex) instanceof RegistryExceptions.SchemaValidationFailedException);
                 // endregion
 
                 // region read into specific schema
-                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
                 String rg = "rg" + stream;
                 readerGroupManager.createReaderGroup(rg,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 AvroSchema<Object> readSchema = AvroSchema.of(SCHEMA2);
 
-                Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                Serializer<Object> deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, readSchema);
 
                 EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
@@ -292,7 +292,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 AvroSchema<Object> readSchemaEx = AvroSchema.of(SCHEMA3);
 
-                AssertExtensions.assertThrows("", () -> SerializerFactory.avroGenericDeserializer(serializerConfig, readSchemaEx),
+                AssertExtensions.assertThrows("", () -> AvroSerializerFactory.genericDeserializer(serializerConfig, readSchemaEx),
                         ex -> Exceptions.unwrap(ex) instanceof IllegalArgumentException);
                 reader.close();
                 // endregion
@@ -302,7 +302,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 readerGroupManager.createReaderGroup(rg2,
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-                deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
                 reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
@@ -329,183 +329,184 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "avrocodec";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Avro;
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Avro;
 
-        AvroSchema<Object> schema1 = AvroSchema.of(SCHEMA1);
-        AvroSchema<Object> schema2 = AvroSchema.of(SCHEMA2);
-        AvroSchema<Test1> schema3 = AvroSchema.of(Test1.class);
+            AvroSchema<Object> schema1 = AvroSchema.of(SCHEMA1);
+            AvroSchema<Object> schema2 = AvroSchema.of(SCHEMA2);
+            AvroSchema<Test1> schema3 = AvroSchema.of(Test1.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.backward(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registerCodec(true)
-                                                            .registryClient(client)
-                                                            .build();
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.backward(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registerCodec(true)
+                                                                .registryClient(client)
+                                                                .build();
 
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        // region writer with schema1
-        Serializer<Object> serializer = SerializerFactory.avroSerializer(serializerConfig, schema1);
+                // region writer with schema1
+                Serializer<Object> serializer = AvroSerializerFactory.serializer(serializerConfig, schema1);
 
-        EventStreamWriter<Object> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
-        writer.writeEvent(record).join();
-        // endregion
+                EventStreamWriter<Object> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                GenericRecord record = new GenericRecordBuilder(SCHEMA1).set("a", "test").build();
+                writer.writeEvent(record).join();
+                // endregion
 
-        // region writer with schema2
-        Serializer<Object> serializer2 = SerializerFactory.avroSerializer(serializerConfig, schema2);
+                // region writer with schema2
+                Serializer<Object> serializer2 = AvroSerializerFactory.serializer(serializerConfig, schema2);
 
-        writer = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
-        record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
-        writer.writeEvent(record).join();
-        // endregion
+                writer = clientFactory.createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
+                record = new GenericRecordBuilder(SCHEMA2).set("a", "test").set("b", "value").build();
+                writer.writeEvent(record).join();
+                // endregion
 
-        // region writer with codec gzip 
-        serializerConfig = SerializerConfig.builder()
-                                           .groupId(groupId)
-                                           .registerSchema(true)
-                                           .registerCodec(true)
-                                           .encoder(Codecs.GzipCompressor.getCodec())
-                                           .registryClient(client)
-                                           .build();
+                // region writer with codec gzip 
+                serializerConfig = SerializerConfig.builder()
+                                                   .groupId(groupId)
+                                                   .registerSchema(true)
+                                                   .registerCodec(true)
+                                                   .encoder(Codecs.GzipCompressor.getCodec())
+                                                   .registryClient(client)
+                                                   .build();
 
-        Serializer<Test1> serializer3 = SerializerFactory.avroSerializer(serializerConfig, schema3);
-        EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
-        String bigString = generateBigString(1);
-        writer3.writeEvent(new Test1(bigString, 1)).join();
+                Serializer<Test1> serializer3 = AvroSerializerFactory.serializer(serializerConfig, schema3);
+                EventStreamWriter<Test1> writer3 = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
+                String bigString = generateBigString(1);
+                writer3.writeEvent(new Test1(bigString, 1)).join();
 
-        List<CodecType> list = client.getCodecTypes(groupId);
-        assertEquals(2, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
-        // endregion
+                List<CodecType> list = client.getCodecTypes(groupId);
+                assertEquals(2, list.size());
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
+                // endregion
 
-        // region writer with codec snappy
-        serializerConfig = SerializerConfig.builder()
-                                           .groupId(groupId)
-                                           .registerSchema(true)
-                                           .registerCodec(true)
-                                           .encoder(Codecs.SnappyCompressor.getCodec())
-                                           .registryClient(client)
-                                           .build();
+                // region writer with codec snappy
+                serializerConfig = SerializerConfig.builder()
+                                                   .groupId(groupId)
+                                                   .registerSchema(true)
+                                                   .registerCodec(true)
+                                                   .encoder(Codecs.SnappyCompressor.getCodec())
+                                                   .registryClient(client)
+                                                   .build();
 
-        Serializer<Test1> serializer4 = SerializerFactory.avroSerializer(serializerConfig, schema3);
-        EventStreamWriter<Test1> writer4 = clientFactory.createEventWriter(stream, serializer4, EventWriterConfig.builder().build());
-        String bigString2 = generateBigString(200);
-        writer4.writeEvent(new Test1(bigString2, 1)).join();
+                Serializer<Test1> serializer4 = AvroSerializerFactory.serializer(serializerConfig, schema3);
+                EventStreamWriter<Test1> writer4 = clientFactory.createEventWriter(stream, serializer4, EventWriterConfig.builder().build());
+                String bigString2 = generateBigString(200);
+                writer4.writeEvent(new Test1(bigString2, 1)).join();
 
-        list = client.getCodecTypes(groupId);
-        assertEquals(3, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodec().getCodecType())));
-        // endregion
+                list = client.getCodecTypes(groupId);
+                assertEquals(3, list.size());
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodec().getCodecType())));
+                // endregion
 
-        // region reader
-        serializerConfig = SerializerConfig.builder()
-                                           .groupId(groupId)
-                                           .registryClient(client)
-                                           .build();
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream + System.currentTimeMillis();
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region reader
+                serializerConfig = SerializerConfig.builder()
+                                                   .groupId(groupId)
+                                                   .registryClient(client)
+                                                   .build();
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream + System.currentTimeMillis();
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
-        EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        EventRead<Object> event = reader.readNextEvent(10000);
-        while (event.isCheckpoint() || event.getEvent() != null) {
-            Object e = event.getEvent();
-            event = reader.readNextEvent(10000);
+                EventRead<Object> event = reader.readNextEvent(10000);
+                while (event.isCheckpoint() || event.getEvent() != null) {
+                    Object e = event.getEvent();
+                    event = reader.readNextEvent(10000);
+                }
+                // endregion
+
+                // region writer with custom codec
+                CodecType mycodec = new CodecType("mycodec");
+                Codec myCodec = new Codec() {
+                    @Override
+                    public String getName() {
+                        return mycodec.getName();
+                    }
+
+                    @Override
+                    public CodecType getCodecType() {
+                        return mycodec;
+                    }
+
+                    @SneakyThrows
+                    @Override
+                    public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
+                        bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
+                    }
+
+                    @SneakyThrows
+                    @Override
+                    public ByteBuffer decode(ByteBuffer data, Map<String, String> properties) {
+                        return data;
+                    }
+                };
+                serializerConfig = SerializerConfig.builder()
+                                                   .groupId(groupId)
+                                                   .registerSchema(true)
+                                                   .registerCodec(true)
+                                                   .encoder(myCodec)
+                                                   .registryClient(client)
+                                                   .build();
+
+                Serializer<Test1> serializer5 = AvroSerializerFactory.serializer(serializerConfig, schema3);
+                EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer5, EventWriterConfig.builder().build());
+                String bigString3 = generateBigString(300);
+                writer2.writeEvent(new Test1(bigString3, 1)).join();
+                // endregion 
+
+                list = client.getCodecTypes(groupId);
+                assertEquals(4, list.size());
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
+                assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodec().getCodecType())));
+                assertTrue(list.stream().anyMatch(x -> x.equals(mycodec)));
+                reader.close();
+
+                // region new reader with additional codec
+                // add new decoder for custom serialization
+                SerializerConfig serializerConfig2 = SerializerConfig.builder()
+                                                                     .groupId(groupId)
+                                                                     .decoder(myCodec.getName(), myCodec)
+                                                                     .registryClient(client)
+                                                                     .build();
+
+                Serializer<Object> deserializer2 = AvroSerializerFactory.genericDeserializer(serializerConfig2, null);
+
+                EventStreamReader<Object> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
+
+                event = reader2.readNextEvent(10000);
+                while (event.isCheckpoint() || event.getEvent() != null) {
+                    Object e = event.getEvent();
+                    event = reader2.readNextEvent(10000);
+                }
+                // endregion
+
+                writer.close();
+                writer2.close();
+                writer3.close();
+                writer4.close();
+                reader.close();
+                reader2.close();
+                readerGroupManager.close();
+
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
         }
-        // endregion
-
-        // region writer with custom codec
-        CodecType mycodec = new CodecType("mycodec");
-        Codec myCodec = new Codec() {
-            @Override
-            public String getName() {
-                return mycodec.getName();
-            }
-
-            @Override
-            public CodecType getCodecType() {
-                return mycodec;
-            }
-
-            @SneakyThrows
-            @Override
-            public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
-                bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
-            }
-
-            @SneakyThrows
-            @Override
-            public ByteBuffer decode(ByteBuffer data, Map<String, String> properties) {
-                return data;
-            }
-        };
-        serializerConfig = SerializerConfig.builder()
-                                           .groupId(groupId)
-                                           .registerSchema(true)
-                                           .registerCodec(true)
-                                           .encoder(myCodec)
-                                           .registryClient(client)
-                                           .build();
-
-        Serializer<Test1> serializer5 = SerializerFactory.avroSerializer(serializerConfig, schema3);
-        EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer5, EventWriterConfig.builder().build());
-        String bigString3 = generateBigString(300);
-        writer2.writeEvent(new Test1(bigString3, 1)).join();
-        // endregion 
-
-        list = client.getCodecTypes(groupId);
-        assertEquals(4, list.size());
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.None.getCodec().getCodecType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.GzipCompressor.getCodec().getCodecType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(Codecs.SnappyCompressor.getCodec().getCodecType())));
-        assertTrue(list.stream().anyMatch(x -> x.equals(mycodec)));
-        reader.close();
-
-        // region new reader with additional codec
-        // add new decoder for custom serialization
-        SerializerConfig serializerConfig2 = SerializerConfig.builder()
-                                                             .groupId(groupId)
-                                                             .decoder(myCodec.getName(), myCodec)
-                                                             .registryClient(client)
-                                                             .build();
-
-        Serializer<Object> deserializer2 = SerializerFactory.avroGenericDeserializer(serializerConfig2, null);
-
-        EventStreamReader<Object> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
-
-        event = reader2.readNextEvent(10000);
-        while (event.isCheckpoint() || event.getEvent() != null) {
-            Object e = event.getEvent();
-            event = reader2.readNextEvent(10000);
-        }
-        // endregion
-
-        writer.close();
-        writer2.close();
-        writer3.close();
-        writer4.close();
-        reader.close();
-        reader2.close();
-        readerGroupManager.close();
-
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
     }
 
     private String generateBigString(int sizeInKb) {
@@ -521,82 +522,83 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "avroreflect";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Avro;
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Avro;
 
-        AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
+            AvroSchema<TestClass> schema = AvroSchema.of(TestClass.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.backward(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.backward(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
 
-        // region writer
-        Serializer<TestClass> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            // region writer
+            Serializer<TestClass> serializer = AvroSerializerFactory.serializer(serializerConfig, schema);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new TestClass("test")).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<TestClass> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(new TestClass("test")).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rgx" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rgx" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        AvroSchema<TestClass> readSchema1 = AvroSchema.of(TestClass.class);
+                AvroSchema<TestClass> readSchema1 = AvroSchema.of(TestClass.class);
 
-        Serializer<TestClass> deserializer1 = SerializerFactory.avroDeserializer(serializerConfig, readSchema1);
+                Serializer<TestClass> deserializer1 = AvroSerializerFactory.deserializer(serializerConfig, readSchema1);
 
-        EventStreamReader<TestClass> reader1 = clientFactory.createReader("r1", rg, deserializer1, ReaderConfig.builder().build());
+                EventStreamReader<TestClass> reader1 = clientFactory.createReader("r1", rg, deserializer1, ReaderConfig.builder().build());
 
-        EventRead<TestClass> event1 = reader1.readNextEvent(10000);
-        assertNotNull(event1.getEvent());
-        reader1.close();
-        // endregion
-        // region read into specific schema
-        readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                EventRead<TestClass> event1 = reader1.readNextEvent(10000);
+                assertNotNull(event1.getEvent());
+                reader1.close();
+                // endregion
+                // region read into specific schema
+                readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        AvroSchema<Object> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
+                AvroSchema<Object> readSchema = AvroSchema.of(ReflectData.get().getSchema(TestClass.class));
 
-        Serializer<Object> deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, readSchema);
+                Serializer<Object> deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, readSchema);
 
-        EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        EventRead<Object> event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        reader.close();
-        // endregion
-        // region read into writer schema
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                EventRead<Object> event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                reader.close();
+                // endregion
+                // region read into writer schema
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        deserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                deserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
-        reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
+                reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        reader.close();
-        readerGroupManager.close();
-        // endregion
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                reader.close();
+                readerGroupManager.close();
+                // endregion
 
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Test
@@ -606,66 +608,67 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "avrogenerated";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Avro;
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Avro;
 
-        AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
+            AvroSchema<Test1> schema = AvroSchema.of(Test1.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.backward(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
-        // region writer
-        Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, schema);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.backward(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
+            // region writer
+            Serializer<Test1> serializer = AvroSerializerFactory.serializer(serializerConfig, schema);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 1000)).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<Test1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(new Test1("test", 1000)).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
+                AvroSchema<Test1> readSchema = AvroSchema.of(Test1.class);
 
-        Serializer<Test1> deserializer = SerializerFactory.avroDeserializer(serializerConfig, readSchema);
+                Serializer<Test1> deserializer = AvroSerializerFactory.deserializer(serializerConfig, readSchema);
 
-        EventStreamReader<Test1> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<Test1> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        EventRead<Test1> event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        assertEquals("test", event.getEvent().getName().toString());
-        assertEquals(1000, event.getEvent().getField1());
-        reader.close();
-        // endregion
-        // region read into writer schema
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                EventRead<Test1> event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                assertEquals("test", event.getEvent().getName().toString());
+                assertEquals(1000, event.getEvent().getField1());
+                reader.close();
+                // endregion
+                // region read into writer schema
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<Object> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> genericDeserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
-        EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<Object> event2 = reader2.readNextEvent(10000);
-        assertNotNull(event2.getEvent());
-        readerGroupManager.close();
-        // endregion
+                EventRead<Object> event2 = reader2.readNextEvent(10000);
+                assertNotNull(event2.getEvent());
+                readerGroupManager.close();
+                // endregion
 
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Test
@@ -675,111 +678,112 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "avromultiplexed";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Avro;
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Avro;
 
-        AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Test1.class);
-        AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Test2.class);
-        AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofSpecificRecord(Test3.class);
+            AvroSchema<SpecificRecordBase> schema1 = AvroSchema.ofSpecificRecord(Test1.class);
+            AvroSchema<SpecificRecordBase> schema2 = AvroSchema.ofSpecificRecord(Test2.class);
+            AvroSchema<SpecificRecordBase> schema3 = AvroSchema.ofSpecificRecord(Test3.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.backward(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
-        // region writer
-        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
-        map.put(Test1.class, schema1);
-        map.put(Test2.class, schema2);
-        map.put(Test3.class, schema3);
-        Serializer<SpecificRecordBase> serializer = SerializerFactory.avroMultiTypeSerializer(serializerConfig, map);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.backward(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
+            // region writer
+            Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map = new HashMap<>();
+            map.put(Test1.class, schema1);
+            map.put(Test2.class, schema2);
+            map.put(Test3.class, schema3);
+            Serializer<SpecificRecordBase> serializer = SerializerFactory.avroMultiTypeSerializer(serializerConfig, map);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<SpecificRecordBase> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new Test1("test", 0)).join();
-        writer.writeEvent(new Test2("test", 0, "test")).join();
-        writer.writeEvent(new Test3("test", 0, "test", "test")).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<SpecificRecordBase> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(new Test1("test", 0)).join();
+                writer.writeEvent(new Test2("test", 0, "test")).join();
+                writer.writeEvent(new Test3("test", 0, "test", "test")).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<SpecificRecordBase> deserializer = SerializerFactory.avroMultiTypeDeserializer(serializerConfig, map);
+                Serializer<SpecificRecordBase> deserializer = SerializerFactory.avroMultiTypeDeserializer(serializerConfig, map);
 
-        EventStreamReader<SpecificRecordBase> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<SpecificRecordBase> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        EventRead<SpecificRecordBase> event1 = reader.readNextEvent(10000);
-        assertNotNull(event1.getEvent());
-        assertTrue(event1.getEvent() instanceof Test1);
-        EventRead<SpecificRecordBase> event2 = reader.readNextEvent(10000);
-        assertNotNull(event2.getEvent());
-        assertTrue(event2.getEvent() instanceof Test2);
-        EventRead<SpecificRecordBase> event3 = reader.readNextEvent(10000);
-        assertNotNull(event3.getEvent());
-        assertTrue(event3.getEvent() instanceof Test3);
+                EventRead<SpecificRecordBase> event1 = reader.readNextEvent(10000);
+                assertNotNull(event1.getEvent());
+                assertTrue(event1.getEvent() instanceof Test1);
+                EventRead<SpecificRecordBase> event2 = reader.readNextEvent(10000);
+                assertNotNull(event2.getEvent());
+                assertTrue(event2.getEvent() instanceof Test2);
+                EventRead<SpecificRecordBase> event3 = reader.readNextEvent(10000);
+                assertNotNull(event3.getEvent());
+                assertTrue(event3.getEvent() instanceof Test3);
 
-        // endregion
-        // region read into writer schema
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // endregion
+                // region read into writer schema
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<Object> genericDeserializer = SerializerFactory.avroGenericDeserializer(serializerConfig, null);
+                Serializer<Object> genericDeserializer = AvroSerializerFactory.genericDeserializer(serializerConfig, null);
 
-        EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<Object> genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        // endregion
+                EventRead<Object> genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                // endregion
 
-        // region read using multiplexed and generic record combination
-        String rg3 = "rg3" + stream;
-        readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read using multiplexed and generic record combination
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map2 = new HashMap<>();
-        // add only two schemas
-        map2.put(Test1.class, schema1);
-        map2.put(Test2.class, schema2);
+                Map<Class<? extends SpecificRecordBase>, AvroSchema<SpecificRecordBase>> map2 = new HashMap<>();
+                // add only two schemas
+                map2.put(Test1.class, schema1);
+                map2.put(Test2.class, schema2);
 
-        Serializer<Either<SpecificRecordBase, Object>> eitherDeserializer =
-                SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map2);
+                Serializer<Either<SpecificRecordBase, Object>> eitherDeserializer =
+                        SerializerFactory.avroTypedOrGenericDeserializer(serializerConfig, map2);
 
-        EventStreamReader<Either<SpecificRecordBase, Object>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Either<SpecificRecordBase, Object>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-        EventRead<Either<SpecificRecordBase, Object>> e1 = reader3.readNextEvent(10000);
-        assertNotNull(e1.getEvent());
-        assertTrue(e1.getEvent().isLeft());
-        assertTrue(e1.getEvent().getLeft() instanceof Test1);
-        e1 = reader3.readNextEvent(10000);
-        assertTrue(e1.getEvent().isLeft());
-        assertTrue(e1.getEvent().getLeft() instanceof Test2);
-        e1 = reader3.readNextEvent(10000);
-        assertTrue(e1.getEvent().isRight());
+                EventRead<Either<SpecificRecordBase, Object>> e1 = reader3.readNextEvent(10000);
+                assertNotNull(e1.getEvent());
+                assertTrue(e1.getEvent().isLeft());
+                assertTrue(e1.getEvent().getLeft() instanceof Test1);
+                e1 = reader3.readNextEvent(10000);
+                assertTrue(e1.getEvent().isLeft());
+                assertTrue(e1.getEvent().getLeft() instanceof Test2);
+                e1 = reader3.readNextEvent(10000);
+                assertTrue(e1.getEvent().isRight());
 
-        reader.close();
-        reader2.close();
-        reader3.close();
-        readerGroupManager.close();
-        //endregion
+                reader.close();
+                reader2.close();
+                reader3.close();
+                readerGroupManager.close();
+                //endregion
 
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Test
@@ -794,105 +798,106 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "protobuf" + encodeHeaders;
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Protobuf;
-        client.addGroup(groupId, new GroupProperties(serializationFormat,
-                Compatibility.allowAny(), false, ImmutableMap.of()));
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Protobuf;
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
+                    Compatibility.allowAny(), false, ImmutableMap.of()));
 
-        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
+            ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.allowAny(),
-                                                                    false)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .writeEncodingHeader(encodeHeaders)
-                                                            .build();
-        // region writer
-        Serializer<ProtobufTest.Message1> serializer = SerializerFactory.protobufSerializer(serializerConfig, schema);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.allowAny(),
+                                                                        false)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .writeEncodingHeader(encodeHeaders)
+                                                                .build();
+            // region writer
+            Serializer<ProtobufTest.Message1> serializer = ProtobufSerializerFactory.serializer(serializerConfig, schema);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<ProtobufTest.Message1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<ProtobufTest.Message1> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String readerGroupName = "rg" + stream;
-        readerGroupManager.createReaderGroup(readerGroupName,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String readerGroupName = "rg" + stream;
+                readerGroupManager.createReaderGroup(readerGroupName,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<ProtobufTest.Message1> deserializer = SerializerFactory.protobufDeserializer(serializerConfig, schema);
+                Serializer<ProtobufTest.Message1> deserializer = ProtobufSerializerFactory.deserializer(serializerConfig, schema);
 
-        EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
-        EventRead<ProtobufTest.Message1> event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        reader.close();
-        // endregion
+                EventRead<ProtobufTest.Message1> event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                reader.close();
+                // endregion
 
-        // region generic read
-        // 1. try without passing the schema. writer schema will be used to read for encoding header and latest schema will be used for non encoded header
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region generic read
+                // 1. try without passing the schema. writer schema will be used to read for encoding header and latest schema will be used for non encoded header
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        ProtobufSchema<DynamicMessage> readerSchema = encodeHeaders ? null :
-                ProtobufSchema.from(client.getLatestSchemaVersion(groupId, null).getSchemaInfo());
-        Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, readerSchema);
+                ProtobufSchema<DynamicMessage> readerSchema = encodeHeaders ? null :
+                        ProtobufSchema.from(client.getLatestSchemaVersion(groupId, null).getSchemaInfo());
+                Serializer<DynamicMessage> genericDeserializer = ProtobufSerializerFactory.genericDeserializer(serializerConfig, readerSchema);
 
-        EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<DynamicMessage> event2 = reader2.readNextEvent(10000);
-        assertNotNull(event2.getEvent());
+                EventRead<DynamicMessage> event2 = reader2.readNextEvent(10000);
+                assertNotNull(event2.getEvent());
 
-        reader2.close();
+                reader2.close();
 
-        // 2. try with passing the schema. reader schema will be used to read
-        String rg3 = "rg3" + encodeHeaders;
-        readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // 2. try with passing the schema. reader schema will be used to read
+                String rg3 = "rg3" + encodeHeaders;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
-        byte[] schemaBytes = Files.readAllBytes(path);
-        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+                Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
+                byte[] schemaBytes = Files.readAllBytes(path);
+                DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
-        ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
-        genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, schema2);
+                ProtobufSchema<DynamicMessage> schema2 = ProtobufSchema.of(ProtobufTest.Message1.getDescriptor().getFullName(), descriptorSet);
+                genericDeserializer = ProtobufSerializerFactory.genericDeserializer(serializerConfig, schema2);
 
-        reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
+                reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
-        event2 = reader2.readNextEvent(10000);
-        assertNotNull(event2.getEvent());
+                event2 = reader2.readNextEvent(10000);
+                assertNotNull(event2.getEvent());
 
-        reader2.close();
-        // endregion
+                reader2.close();
+                // endregion
 
-        if (encodeHeaders) {
-            String rg4 = "rg4" + System.currentTimeMillis();
-            readerGroupManager.createReaderGroup(rg4,
-                    ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                if (encodeHeaders) {
+                    String rg4 = "rg4" + System.currentTimeMillis();
+                    readerGroupManager.createReaderGroup(rg4,
+                            ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-            Serializer<String> jsonDes = SerializerFactory.deserializeAsJsonString(serializerConfig);
+                    Serializer<String> jsonDes = SerializerFactory.deserializeAsJsonString(serializerConfig);
 
-            EventStreamReader<String> jsonReader = clientFactory.createReader("r1", rg4, jsonDes, ReaderConfig.builder().build());
+                    EventStreamReader<String> jsonReader = clientFactory.createReader("r1", rg4, jsonDes, ReaderConfig.builder().build());
 
-            EventRead<String> jsonEvent = jsonReader.readNextEvent(10000);
-            assertNotNull(jsonEvent.getEvent());
+                    EventRead<String> jsonEvent = jsonReader.readNextEvent(10000);
+                    assertNotNull(jsonEvent.getEvent());
 
-            jsonReader.close();
+                    jsonReader.close();
+                }
+                readerGroupManager.close();
+
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
         }
-        readerGroupManager.close();
-
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
     }
 
     @Test
@@ -902,113 +907,114 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "protomultiplexed";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Protobuf;
-        client.addGroup(groupId, new GroupProperties(serializationFormat,
-                Compatibility.allowAny(), true));
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Protobuf;
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
+                    Compatibility.allowAny(), true));
 
-        ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class);
-        ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class);
-        ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class);
+            ProtobufSchema<GeneratedMessageV3> schema1 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message1.class);
+            ProtobufSchema<GeneratedMessageV3> schema2 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message2.class);
+            ProtobufSchema<GeneratedMessageV3> schema3 = ProtobufSchema.ofGeneratedMessageV3(ProtobufTest.Message3.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.allowAny(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
-        // region writer
-        Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
-        map.put(ProtobufTest.Message1.class, schema1);
-        map.put(ProtobufTest.Message2.class, schema2);
-        map.put(ProtobufTest.Message3.class, schema3);
-        Serializer<GeneratedMessageV3> serializer = SerializerFactory.protobufMultiTypeSerializer(serializerConfig, map);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.allowAny(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
+            // region writer
+            Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map = new HashMap<>();
+            map.put(ProtobufTest.Message1.class, schema1);
+            map.put(ProtobufTest.Message2.class, schema2);
+            map.put(ProtobufTest.Message3.class, schema3);
+            Serializer<GeneratedMessageV3> serializer = SerializerFactory.protobufMultiTypeSerializer(serializerConfig, map);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<GeneratedMessageV3> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
-        writer.writeEvent(ProtobufTest.Message2.newBuilder().setName("test").setField1(0).build()).join();
-        writer.writeEvent(ProtobufTest.Message3.newBuilder().setName("test").setField1(0).setField2(1).build()).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<GeneratedMessageV3> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(ProtobufTest.Message1.newBuilder().setName("test").setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val1).build()).build()).join();
+                writer.writeEvent(ProtobufTest.Message2.newBuilder().setName("test").setField1(0).build()).join();
+                writer.writeEvent(ProtobufTest.Message3.newBuilder().setName("test").setField1(0).setField2(1).build()).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<GeneratedMessageV3> deserializer = SerializerFactory.protobufMultiTypeDeserializer(serializerConfig, map);
+                Serializer<GeneratedMessageV3> deserializer = SerializerFactory.protobufMultiTypeDeserializer(serializerConfig, map);
 
-        EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        EventRead<GeneratedMessageV3> event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof ProtobufTest.Message1);
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof ProtobufTest.Message2);
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof ProtobufTest.Message3);
+                EventRead<GeneratedMessageV3> event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                assertTrue(event.getEvent() instanceof ProtobufTest.Message1);
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                assertTrue(event.getEvent() instanceof ProtobufTest.Message2);
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                assertTrue(event.getEvent() instanceof ProtobufTest.Message3);
 
-        reader.close();
-        // endregion
-        // region read into writer schema
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                reader.close();
+                // endregion
+                // region read into writer schema
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<DynamicMessage> genericDeserializer = SerializerFactory.protobufGenericDeserializer(serializerConfig, null);
+                Serializer<DynamicMessage> genericDeserializer = ProtobufSerializerFactory.genericDeserializer(serializerConfig, null);
 
-        EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<DynamicMessage> genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        genEvent = reader2.readNextEvent(10000);
+                EventRead<DynamicMessage> genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                genEvent = reader2.readNextEvent(10000);
 
-        reader2.close();
-        // endregion
+                reader2.close();
+                // endregion
 
-        // region read using multiplexed and generic record combination
-        String rg3 = "rg3" + stream;
-        readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read using multiplexed and generic record combination
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map2 = new HashMap<>();
-        // add only two schemas
-        map2.put(ProtobufTest.Message1.class, schema1);
-        map2.put(ProtobufTest.Message2.class, schema2);
+                Map<Class<? extends GeneratedMessageV3>, ProtobufSchema<GeneratedMessageV3>> map2 = new HashMap<>();
+                // add only two schemas
+                map2.put(ProtobufTest.Message1.class, schema1);
+                map2.put(ProtobufTest.Message2.class, schema2);
 
-        Serializer<Either<GeneratedMessageV3, DynamicMessage>> eitherDeserializer =
-                SerializerFactory.protobufTypedOrGenericDeserializer(serializerConfig, map2);
+                Serializer<Either<GeneratedMessageV3, DynamicMessage>> eitherDeserializer =
+                        SerializerFactory.protobufTypedOrGenericDeserializer(serializerConfig, map2);
 
-        EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-        EventRead<Either<GeneratedMessageV3, DynamicMessage>> e1 = reader3.readNextEvent(10000);
-        assertNotNull(e1.getEvent());
-        assertTrue(e1.getEvent().isLeft());
-        assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message1);
-        e1 = reader3.readNextEvent(10000);
-        assertTrue(e1.getEvent().isLeft());
-        assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message2);
-        e1 = reader3.readNextEvent(10000);
-        assertTrue(e1.getEvent().isRight());
+                EventRead<Either<GeneratedMessageV3, DynamicMessage>> e1 = reader3.readNextEvent(10000);
+                assertNotNull(e1.getEvent());
+                assertTrue(e1.getEvent().isLeft());
+                assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message1);
+                e1 = reader3.readNextEvent(10000);
+                assertTrue(e1.getEvent().isLeft());
+                assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message2);
+                e1 = reader3.readNextEvent(10000);
+                assertTrue(e1.getEvent().isRight());
 
-        reader3.close();
-        readerGroupManager.close();
-        //endregion
+                reader3.close();
+                readerGroupManager.close();
+                //endregion
 
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Test
@@ -1023,73 +1029,86 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "json" + encodeHeaders;
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Json;
-        client.addGroup(groupId, new GroupProperties(serializationFormat,
-                Compatibility.allowAny(), false, ImmutableMap.of()));
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Json;
+            client.addGroup(groupId, new GroupProperties(serializationFormat,
+                    Compatibility.allowAny(), false, ImmutableMap.of()));
 
-        JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
+            JSONSchema<DerivedUser2> schema = JSONSchema.of(DerivedUser2.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.allowAny(),
-                                                                    false)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .writeEncodingHeader(encodeHeaders)
-                                                            .build();
-        // region writer
-        Serializer<DerivedUser2> serializer = SerializerFactory.jsonSerializer(serializerConfig, schema);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.allowAny(),
+                                                                        false)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .writeEncodingHeader(encodeHeaders)
+                                                                .build();
+            // region writer
+            Serializer<DerivedUser2> serializer = JsonSerializerFactory.serializer(serializerConfig, schema);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<DerivedUser2> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new DerivedUser2("name", new Address("street", "city"), 30, "user2")).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<DerivedUser2> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(new DerivedUser2("name", new Address("street", "city"), 30, "user2")).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String readerGroupName = "rg" + stream;
-        readerGroupManager.createReaderGroup(readerGroupName,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String readerGroupName = "rg" + stream;
+                readerGroupManager.createReaderGroup(readerGroupName,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<DerivedUser2> deserializer = SerializerFactory.jsonDeserializer(serializerConfig, schema);
+                Serializer<DerivedUser2> deserializer = JsonSerializerFactory.deserializer(serializerConfig, schema);
 
-        EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
-        EventRead<DerivedUser2> event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        reader.close();
-        // endregion
+                EventRead<DerivedUser2> event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                reader.close();
+                // endregion
 
-        // region generic read
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region generic read
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<JsonNode> genericDeserializer = JsonSerializerFactory.genericDeserializer(serializerConfig);
 
-        EventStreamReader<WithSchema<JsonNode>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<JsonNode> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<WithSchema<JsonNode>> event2 = reader2.readNextEvent(10000);
-        assertNotNull(event2.getEvent());
-        WithSchema<JsonNode> obj = event2.getEvent();
+                EventRead<JsonNode> event2 = reader2.readNextEvent(10000);
+                assertNotNull(event2.getEvent());
+                reader2.close();
 
-        assertEquals(obj.hasJsonSchema(), encodeHeaders);
-        if (encodeHeaders) {
-            assertNotNull(obj.getJsonSchema());
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+
+                Serializer<WithSchema<JsonNode>> genericDeserializer2 = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+
+                EventStreamReader<WithSchema<JsonNode>> reader3 = clientFactory.createReader("r1", rg3, genericDeserializer2, ReaderConfig.builder().build());
+
+                EventRead<WithSchema<JsonNode>> event3 = reader3.readNextEvent(10000);
+                assertNotNull(event3.getEvent());
+                WithSchema<JsonNode> obj = event3.getEvent();
+
+                assertEquals(obj.hasJsonSchema(), encodeHeaders);
+                if (encodeHeaders) {
+                    assertNotNull(obj.getJsonSchema());
+                }
+                reader3.close();
+                readerGroupManager.close();
+                // endregion
+
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
         }
-        reader2.close();
-        readerGroupManager.close();
-        // endregion
-
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
     }
 
     @Test
@@ -1099,99 +1118,100 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String stream = "jsonmultiplexed";
         String groupId = NameUtils.getScopedStreamName(scope, stream);
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
-        SerializationFormat serializationFormat = SerializationFormat.Json;
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+            SerializationFormat serializationFormat = SerializationFormat.Json;
 
-        JSONSchema<User> schema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
-        JSONSchema<User> schema2 = JSONSchema.ofBaseType(DerivedUser2.class, User.class);
+            JSONSchema<User> schema1 = JSONSchema.ofBaseType(DerivedUser1.class, User.class);
+            JSONSchema<User> schema2 = JSONSchema.ofBaseType(DerivedUser2.class, User.class);
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(serializationFormat,
-                                                                    Compatibility.allowAny(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
-        // region writer
-        Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();
-        map.put(DerivedUser1.class, schema1);
-        map.put(DerivedUser2.class, schema2);
-        Serializer<User> serializer = SerializerFactory.jsonMultiTypeSerializer(serializerConfig, map);
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .groupId(groupId)
+                                                                .createGroup(serializationFormat,
+                                                                        Compatibility.allowAny(),
+                                                                        true)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
+            // region writer
+            Map<Class<? extends User>, JSONSchema<User>> map = new HashMap<>();
+            map.put(DerivedUser1.class, schema1);
+            map.put(DerivedUser2.class, schema2);
+            Serializer<User> serializer = SerializerFactory.jsonMultiTypeSerializer(serializerConfig, map);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<User> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        writer.writeEvent(new DerivedUser2()).join();
-        writer.writeEvent(new DerivedUser1()).join();
-        writer.close();
-        // endregion
+                EventStreamWriter<User> writer = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                writer.writeEvent(new DerivedUser2()).join();
+                writer.writeEvent(new DerivedUser1()).join();
+                writer.close();
+                // endregion
 
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<User> deserializer = SerializerFactory.jsonMultiTypeDeserializer(serializerConfig, map);
+                Serializer<User> deserializer = SerializerFactory.jsonMultiTypeDeserializer(serializerConfig, map);
 
-        EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        EventRead<User> event = reader.readNextEvent(10000);
+                EventRead<User> event = reader.readNextEvent(10000);
 
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof DerivedUser2);
-        event = reader.readNextEvent(10000);
-        assertNotNull(event.getEvent());
-        assertTrue(event.getEvent() instanceof DerivedUser1);
-        reader.close();
-        // endregion
+                assertNotNull(event.getEvent());
+                assertTrue(event.getEvent() instanceof DerivedUser2);
+                event = reader.readNextEvent(10000);
+                assertNotNull(event.getEvent());
+                assertTrue(event.getEvent() instanceof DerivedUser1);
+                reader.close();
+                // endregion
 
-        // region read into writer schema
-        String rg2 = "rg2" + stream;
-        readerGroupManager.createReaderGroup(rg2,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read into writer schema
+                String rg2 = "rg2" + stream;
+                readerGroupManager.createReaderGroup(rg2,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Serializer<WithSchema<JsonNode>> genericDeserializer = SerializerFactory.jsonGenericDeserializer(serializerConfig);
+                Serializer<JsonNode> genericDeserializer = JsonSerializerFactory.genericDeserializer(serializerConfig);
 
-        EventStreamReader<WithSchema<JsonNode>> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<JsonNode> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-        EventRead<WithSchema<JsonNode>> genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        genEvent = reader2.readNextEvent(10000);
-        assertNotNull(genEvent.getEvent());
-        reader2.close();
-        // endregion
+                EventRead<JsonNode> genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                genEvent = reader2.readNextEvent(10000);
+                assertNotNull(genEvent.getEvent());
+                reader2.close();
+                // endregion
 
-        // region read using multiplexed and generic record combination
-        String rg3 = "rg3" + stream;
-        readerGroupManager.createReaderGroup(rg3,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // region read using multiplexed and generic record combination
+                String rg3 = "rg3" + stream;
+                readerGroupManager.createReaderGroup(rg3,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        Map<Class<? extends User>, JSONSchema<User>> map2 = new HashMap<>();
-        // add only one schema
-        map2.put(DerivedUser1.class, schema1);
+                Map<Class<? extends User>, JSONSchema<User>> map2 = new HashMap<>();
+                // add only one schema
+                map2.put(DerivedUser1.class, schema1);
 
-        Serializer<Either<User, WithSchema<JsonNode>>> eitherDeserializer =
-                SerializerFactory.jsonTypedOrGenericDeserializer(serializerConfig, map2);
+                Serializer<Either<User, WithSchema<JsonNode>>> eitherDeserializer =
+                        SerializerFactory.jsonTypedOrGenericDeserializer(serializerConfig, map2);
 
-        EventStreamReader<Either<User, WithSchema<JsonNode>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
+                EventStreamReader<Either<User, WithSchema<JsonNode>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-        EventRead<Either<User, WithSchema<JsonNode>>> e1 = reader3.readNextEvent(10000);
-        assertNotNull(e1.getEvent());
-        assertTrue(e1.getEvent().isRight());
-        e1 = reader3.readNextEvent(10000);
-        assertTrue(e1.getEvent().isLeft());
-        assertTrue(e1.getEvent().getLeft() instanceof DerivedUser1);
-        reader3.close();
-        readerGroupManager.close();
-        //endregion
+                EventRead<Either<User, WithSchema<JsonNode>>> e1 = reader3.readNextEvent(10000);
+                assertNotNull(e1.getEvent());
+                assertTrue(e1.getEvent().isRight());
+                e1 = reader3.readNextEvent(10000);
+                assertTrue(e1.getEvent().isLeft());
+                assertTrue(e1.getEvent().getLeft() instanceof DerivedUser1);
+                reader3.close();
+                readerGroupManager.close();
+                //endregion
 
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Test
@@ -1200,88 +1220,89 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String scope = "multi";
         String stream = "multi";
         String groupId = "multi";
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
-        // region avro
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .groupId(groupId)
-                                                            .createGroup(SerializationFormat.Any, Compatibility.allowAny(), true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
+                // region avro
+                SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                    .groupId(groupId)
+                                                                    .createGroup(SerializationFormat.Any, Compatibility.allowAny(), true)
+                                                                    .registerSchema(true)
+                                                                    .registryClient(client)
+                                                                    .build();
 
-        AvroSchema<Test1> avro = AvroSchema.of(Test1.class);
-        Serializer<Test1> serializer = SerializerFactory.avroSerializer(serializerConfig, avro);
-        EventStreamWriter<Test1> avroWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        avroWriter.writeEvent(new Test1("a", 1)).join();
-        // endregion
+                AvroSchema<Test1> avro = AvroSchema.of(Test1.class);
+                Serializer<Test1> serializer = AvroSerializerFactory.serializer(serializerConfig, avro);
+                EventStreamWriter<Test1> avroWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                avroWriter.writeEvent(new Test1("a", 1)).join();
+                // endregion
 
-        // region proto
-        ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
-        Serializer<ProtobufTest.Message1> serializer2 = SerializerFactory.protobufSerializer(serializerConfig, schema);
+                // region proto
+                ProtobufSchema<ProtobufTest.Message1> schema = ProtobufSchema.of(ProtobufTest.Message1.class);
+                Serializer<ProtobufTest.Message1> serializer2 = ProtobufSerializerFactory.serializer(serializerConfig, schema);
 
-        EventStreamWriter<ProtobufTest.Message1> protoWriter = clientFactory
-                .createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
+                EventStreamWriter<ProtobufTest.Message1> protoWriter = clientFactory
+                        .createEventWriter(stream, serializer2, EventWriterConfig.builder().build());
 
-        ProtobufTest.Message1 type1 = ProtobufTest.Message1.newBuilder().setName("test")
-                                                           .setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val3).build())
-                                                           .build();
-        protoWriter.writeEvent(type1).join();
-        // endregion
+                ProtobufTest.Message1 type1 = ProtobufTest.Message1.newBuilder().setName("test")
+                                                                   .setInternal(ProtobufTest.InternalMessage.newBuilder().setValue(ProtobufTest.InternalMessage.Values.val3).build())
+                                                                   .build();
+                protoWriter.writeEvent(type1).join();
+                // endregion
 
-        // region write json
-        JSONSchema<DerivedUser1> jsonSchema = JSONSchema.of(DerivedUser1.class);
-        Serializer<DerivedUser1> serializer3 = SerializerFactory.jsonSerializer(serializerConfig, jsonSchema);
-        // endregion
+                // region write json
+                JSONSchema<DerivedUser1> jsonSchema = JSONSchema.of(DerivedUser1.class);
+                Serializer<DerivedUser1> serializer3 = JsonSerializerFactory.serializer(serializerConfig, jsonSchema);
+                // endregion
 
-        EventStreamWriter<DerivedUser1> jsonWriter = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
-        jsonWriter.writeEvent(new DerivedUser1("json", new Address("a", "b"), 1, "users")).join();
+                EventStreamWriter<DerivedUser1> jsonWriter = clientFactory.createEventWriter(stream, serializer3, EventWriterConfig.builder().build());
+                jsonWriter.writeEvent(new DerivedUser1("json", new Address("a", "b"), 1, "users")).join();
 
-        // read using multiformat deserializer
-        Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
-        // region read into specific schema
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream + System.currentTimeMillis();
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                // read using multiformat deserializer
+                Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
+                // region read into specific schema
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream + System.currentTimeMillis();
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
+                EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-        // read 3 events
-        EventRead<WithSchema<Object>> event1 = reader.readNextEvent(1000);
-        String jsonString = event1.getEvent().getJsonString();
-        assertTrue(event1.getEvent().getObject() instanceof GenericRecord);
-        EventRead<WithSchema<Object>> event2 = reader.readNextEvent(1000);
-        assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
-        EventRead<WithSchema<Object>> event3 = reader.readNextEvent(1000);
-        assertTrue(event3.getEvent().getObject() instanceof JsonNode);
+                // read 3 events
+                EventRead<WithSchema<Object>> event1 = reader.readNextEvent(1000);
+                String jsonString = event1.getEvent().getJsonString();
+                assertTrue(event1.getEvent().getObject() instanceof GenericRecord);
+                EventRead<WithSchema<Object>> event2 = reader.readNextEvent(1000);
+                assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
+                EventRead<WithSchema<Object>> event3 = reader.readNextEvent(1000);
+                assertTrue(event3.getEvent().getObject() instanceof JsonNode);
 
-        // write using genericserializer
-        Serializer<WithSchema<Object>> genericSerializer = SerializerFactory.serializerWithSchema(serializerConfig);
+                // write using genericserializer
+                Serializer<WithSchema<Object>> genericSerializer = SerializerFactory.serializerWithSchema(serializerConfig);
 
-        EventStreamWriter<WithSchema<Object>> genericWriter = clientFactory
-                .createEventWriter(stream, genericSerializer, EventWriterConfig.builder().build());
+                EventStreamWriter<WithSchema<Object>> genericWriter = clientFactory
+                        .createEventWriter(stream, genericSerializer, EventWriterConfig.builder().build());
 
-        genericWriter.writeEvent(event1.getEvent());
-        genericWriter.writeEvent(event2.getEvent());
-        genericWriter.writeEvent(event3.getEvent());
-        // endregion
+                genericWriter.writeEvent(event1.getEvent());
+                genericWriter.writeEvent(event2.getEvent());
+                genericWriter.writeEvent(event3.getEvent());
+                // endregion
 
-        // read these events back
-        event1 = reader.readNextEvent(1000);
-        assertTrue(event1.getEvent().getObject() instanceof GenericRecord);
-        event2 = reader.readNextEvent(1000);
-        assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
-        event3 = reader.readNextEvent(1000);
-        assertTrue(event3.getEvent().getObject() instanceof JsonNode);
+                // read these events back
+                event1 = reader.readNextEvent(1000);
+                assertTrue(event1.getEvent().getObject() instanceof GenericRecord);
+                event2 = reader.readNextEvent(1000);
+                assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
+                event3 = reader.readNextEvent(1000);
+                assertTrue(event3.getEvent().getObject() instanceof JsonNode);
 
-        client.removeGroup(groupId);
-        streamManager.sealStream(scope, stream);
-        streamManager.deleteStream(scope, stream);
-        streamManager.close();
+                client.removeGroup(groupId);
+                streamManager.sealStream(scope, stream);
+                streamManager.deleteStream(scope, stream);
+            }
+        }
     }
 
     @Data
@@ -1296,56 +1317,59 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         String scope = "withSchema";
         String stream = "withSchema";
 
-        StreamManager streamManager = new StreamManagerImpl(clientConfig);
-        streamManager.createScope(scope);
-        streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
+        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
+            streamManager.createScope(scope);
+            streamManager.createStream(scope, stream, StreamConfiguration.builder().scalingPolicy(ScalingPolicy.fixed(1)).build());
 
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .namespace(scope)
-                                                            .groupId(stream)
-                                                            .createGroup(SerializationFormat.Json,
-                                                                    Compatibility.allowAny(),
-                                                                    false)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
+            SerializerConfig serializerConfig = SerializerConfig.builder()
+                                                                .namespace(scope)
+                                                                .groupId(stream)
+                                                                .createGroup(SerializationFormat.Json,
+                                                                        Compatibility.allowAny(),
+                                                                        false)
+                                                                .registerSchema(true)
+                                                                .registryClient(client)
+                                                                .build();
 
-        // region write
-        Serializer<TestClass> serializer = SerializerFactory.jsonSerializer(serializerConfig, JSONSchema.of(TestClass.class));
+            // region write
+            Serializer<TestClass> serializer = JsonSerializerFactory.serializer(serializerConfig, JSONSchema.of(TestClass.class));
 
-        EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig);
+            try (EventStreamClientFactory clientFactory = EventStreamClientFactory.withScope(scope, clientConfig)) {
 
-        EventStreamWriter<TestClass> streamWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
-        streamWriter.writeEvent(new TestClass("a")).join();
-        // endregion
+                EventStreamWriter<TestClass> streamWriter = clientFactory.createEventWriter(stream, serializer, EventWriterConfig.builder().build());
+                streamWriter.writeEvent(new TestClass("a")).join();
+                // endregion
 
-        // region read
-        Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
-        Function<EventRead, String> eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
+                // region read
+                Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
+                Function<EventRead, String> eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
 
-        ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, new ConnectionFactoryImpl(clientConfig));
-        String rg = "rg" + stream;
-        readerGroupManager.createReaderGroup(rg,
-                ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, 
+                        new SocketConnectionFactoryImpl(clientConfig));
+                String rg = "rg" + stream;
+                readerGroupManager.createReaderGroup(rg,
+                        ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
-        EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
-        EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L);
-        String eventContent = eventContentSupplier.apply(eventRead);
-        assertFalse(Strings.isNullOrEmpty(eventContent));
-        reader.close();
+                EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
+                EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L);
+                String eventContent = eventContentSupplier.apply(eventRead);
+                assertFalse(Strings.isNullOrEmpty(eventContent));
+                reader.close();
 
-        streamWriter.writeEvent(new TestClass("a")).join();
-        Serializer<String> deserializer2 = SerializerFactory.deserializeAsJsonString(serializerConfig);
-        EventStreamReader<String> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
-        EventRead<String> eventRead2 = reader2.readNextEvent(1000L);
-        assertFalse(Strings.isNullOrEmpty(eventRead2.getEvent()));
-        reader2.close();
+                streamWriter.writeEvent(new TestClass("a")).join();
+                Serializer<String> deserializer2 = SerializerFactory.deserializeAsJsonString(serializerConfig);
+                EventStreamReader<String> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
+                EventRead<String> eventRead2 = reader2.readNextEvent(1000L);
+                assertFalse(Strings.isNullOrEmpty(eventRead2.getEvent()));
+                reader2.close();
 
-        streamWriter.writeEvent(new TestClass("a")).join();
-        Serializer<String> deserializer3 = SerializerFactory.deserializeAsT(serializerConfig, (x, y) -> y.toString());
-        EventStreamReader<String> reader3 = clientFactory.createReader("r3", rg, deserializer3, ReaderConfig.builder().build());
-        EventRead<String> eventRead3 = reader3.readNextEvent(1000L);
-        assertFalse(Strings.isNullOrEmpty(eventRead3.getEvent()));
+                streamWriter.writeEvent(new TestClass("a")).join();
+                Serializer<String> deserializer3 = SerializerFactory.deserializeAsT(serializerConfig, (x, y) -> y.toString());
+                EventStreamReader<String> reader3 = clientFactory.createReader("r3", rg, deserializer3, ReaderConfig.builder().build());
+                EventRead<String> eventRead3 = reader3.readNextEvent(1000L);
+                assertFalse(Strings.isNullOrEmpty(eventRead3.getEvent()));
+            }
+        }
     }
 }
 

@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.integrationtest;
@@ -16,7 +16,6 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.client.exceptions.RegistryExceptions;
-import io.pravega.schemaregistry.codec.Codecs;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
 import io.pravega.schemaregistry.contract.data.GroupHistoryRecord;
@@ -29,6 +28,7 @@ import io.pravega.schemaregistry.server.rest.RestServer;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.service.SchemaRegistryService;
+import io.pravega.schemaregistry.serializer.shared.codec.Codecs;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.test.common.AssertExtensions;
 import io.pravega.test.common.TestUtils;
@@ -166,7 +166,7 @@ public abstract class TestEndToEnd {
         assertFalse(client.updateCompatibility(group, Compatibility.fullTransitive(), Compatibility.forward()));
 
         assertTrue(client.updateCompatibility(group, Compatibility.fullTransitive(), null));
-        
+
         assertTrue(client.updateCompatibility(group, Compatibility.backward(), Compatibility.fullTransitive()));
 
         assertFalse(client.updateCompatibility(group, Compatibility.backward(), Compatibility.fullTransitive()));
@@ -176,8 +176,8 @@ public abstract class TestEndToEnd {
         SchemaInfo schemaInfo3 = new SchemaInfo(myTest, SerializationFormat.Avro,
                 ByteBuffer.wrap(schema3.toString().getBytes(Charsets.UTF_8)), ImmutableMap.of());
 
-        AssertExtensions.assertThrows("", () -> client.addSchema(group, schemaInfo3), 
-            e -> Exceptions.unwrap(e) instanceof RegistryExceptions.SchemaValidationFailedException);
+        AssertExtensions.assertThrows("", () -> client.addSchema(group, schemaInfo3),
+                e -> Exceptions.unwrap(e) instanceof RegistryExceptions.SchemaValidationFailedException);
 
         String myTest2 = "MyTest2";
         SchemaInfo schemaInfo4 = new SchemaInfo(myTest2, SerializationFormat.Avro,
@@ -226,8 +226,39 @@ public abstract class TestEndToEnd {
         VersionInfo version4 = client.addSchema(group, schemaInfo2);
         assertEquals(version4.getId(), 3);
         assertEquals(version4.getVersion(), 2);
-        
+
         client.removeGroup(group);
+    }
+
+    @Test
+    public void testLargeSchemas() {
+        SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(
+                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
+
+        String group = "group";
+
+        // recreate group with different properties
+        SerializationFormat custom = SerializationFormat.custom("a");
+        client.addGroup(group, new GroupProperties(custom,
+                Compatibility.allowAny(),
+                true));
+
+        // generate a schema of 8 mb in size
+        byte[] array = new byte[8 * 1024 * 1024];
+        RANDOM.nextBytes(array);
+
+        SchemaInfo s = new SchemaInfo("x", custom,
+                ByteBuffer.wrap(array), ImmutableMap.of());
+
+        VersionInfo v = client.addSchema(group, s);
+        assertEquals(v.getId(), 0);
+        assertEquals(v.getVersion(), 0);
+        assertEquals(v.getType(), "x");
+
+        assertEquals(client.getSchemaReferences(s).size(), 1);
+        assertEquals(client.getSchemas(group).get(0).getSchemaInfo(), s);
+        assertEquals(client.getGroupHistory(group).get(0).getSchemaInfo(), s);
+        assertEquals(v, client.getVersionForSchema(group, s));
     }
 
     abstract SchemaStore getStore();
