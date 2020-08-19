@@ -17,7 +17,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.netty.impl.ConnectionFactoryImpl;
+import io.pravega.client.connection.impl.ConnectionPoolImpl;
+import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
 import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.impl.IteratorStateImpl;
 import io.pravega.client.tables.impl.TableSegmentEntry;
@@ -91,9 +92,10 @@ public class TableStore extends AbstractService {
     private final Cache<String, String> tokenCache;
 
     public TableStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
-        ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
+        SocketConnectionFactoryImpl connectionFactory = new SocketConnectionFactoryImpl(clientConfig);
+        ConnectionPoolImpl connectionPool = new ConnectionPoolImpl(clientConfig, connectionFactory);
         hostStore = new HostStoreImpl(clientConfig, executor);
-        segmentHelper = new SegmentHelper(connectionFactory, hostStore);
+        segmentHelper = new SegmentHelper(connectionPool, hostStore, executor);
         this.executor = executor;
         this.tokenSupplier = x -> {
             String[] splits = x.split("/");
