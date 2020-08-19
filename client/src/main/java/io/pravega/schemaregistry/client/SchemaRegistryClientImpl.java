@@ -520,7 +520,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             if (config.getTrustStore() != null) {
                 trustStore = getTrustStore(config);
             } else if (config.getCertificate() != null) {
-                trustStore = CertificateUtils.createTrustStore(config.getTrustStore());
+                trustStore = CertificateUtils.createTrustStore(config.getCertificate());
             } else {
                 return SSLContext.getDefault();
             }
