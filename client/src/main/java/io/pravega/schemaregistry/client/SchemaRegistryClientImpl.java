@@ -14,6 +14,7 @@ import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
 import io.pravega.common.util.CertificateUtils;
+import io.pravega.keycloak.org.apache.http.conn.ssl.DefaultHostnameVerifier;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
 import io.pravega.schemaregistry.contract.data.CodecType;
@@ -98,6 +99,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             clientBuilder = clientBuilder.sslContext(getSSLContext(config));
             if (!config.isValidateHostName()) {
                 clientBuilder.hostnameVerifier((a, b) -> true);
+            } else {
+                clientBuilder.hostnameVerifier(new DefaultHostnameVerifier());
             }
         } 
         client = clientBuilder.build();
