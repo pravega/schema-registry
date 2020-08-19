@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.serializers;
 
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
+import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
 import org.apache.commons.lang3.NotImplementedException;
 
 import java.nio.ByteBuffer;

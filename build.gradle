@@ -215,17 +215,117 @@ def getProjectVersion() {
     return ver
 }
 
-project('serializers') {
+project('serializers:shared') {
     dependencies {
         compile project(':common')
         compile project(':client')
-        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
-        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
-        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
         compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
-        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+    }
+
+    javadoc {
+        title = "Serializers shared"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+}
+
+project('serializers:avro') {
+    dependencies {
+        compile project(':serializers:shared')
+        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+    }
+
+    javadoc {
+        title = "Serializers avro"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+
+    jar {
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+}
+
+project('serializers:protobuf') {
+    dependencies {
+        compile project(':serializers:shared')
+        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+    }
+
+    javadoc {
+        title = "Serializers protobuf"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+
+    jar {
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+}
+
+project('serializers:json') {
+    dependencies {
+        compile project(':serializers:shared')
         compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+    }
+
+    javadoc {
+        title = "Serializers json"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+
+    jar {
+        from {
+            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+        }
+    }
+}
+
+project('serializers') {
+    dependencies {
+        compile project(':serializers:avro')
+        compile project(':serializers:protobuf')
+        compile project(':serializers:json')
+        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
+        testCompile files(project(':serializers:avro').sourceSets.test.output)
+        testCompile files(project(':serializers:protobuf').sourceSets.test.output)
+        testCompile files(project(':serializers:json').sourceSets.test.output)
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -242,6 +342,8 @@ project('serializers') {
 
     jar {
         manifest {}
+        // add zip64=true so that we are able to pack more than 65k files in the jar. 
+        zip64=true
 
         from {
             configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
@@ -393,6 +495,10 @@ task publishAllJars() {
     dependsOn ':common:publish'
     dependsOn ':contract:publish'
     dependsOn ':server:publish'
+    dependsOn ':serializers:shared:publish'
+    dependsOn ':serializers:avro:publish'
+    dependsOn ':serializers:json:publish'
+    dependsOn ':serializers:protobuf:publish'
     dependsOn ':serializers:publish'
 }
 
