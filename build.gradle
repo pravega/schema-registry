@@ -419,6 +419,47 @@ project('server') {
     }
 }
 
+project('test') {
+    sourceSets {
+        test.resources.srcDirs += "$rootDir/resources"
+        test.java.srcDir project(':server').file("src/test/java")
+        test.java.srcDir project(':serializers').file("src/test/java")
+        test.java.srcDir project(':serializers:shared').file("src/test/java")
+        test.java.srcDir project(':serializers:protobuf').file("src/test/java")
+        test.java.srcDir project(':serializers:json').file("src/test/java")
+        test.java.srcDir project(':serializers:avro').file("src/test/java")
+    }
+    compileTestJava.dependsOn tasks.getByPath(':server:testClasses')
+    dependencies {
+        compile project(':common')
+        compile project(':contract')
+        compile project(':client')
+        compile project(':server') 
+        compile project(':serializers')
+        compile project(':serializers:protobuf')
+        compile project(':serializers:avro')
+        compile project(':serializers:json')
+        compile project(':serializers:shared')
+        testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
+            exclude group: 'javax.ws.rs', module: 'jsr311-api'
+        }
+        testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
+        testCompile files(project(':server').sourceSets.test.output.classesDir)
+        testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
+    }
+
+    javadoc {
+        title = "Test"
+        dependsOn delombok
+        source = delombok.outputDir
+        failOnError = true
+        exclude "**/impl/**";
+        options.addBooleanOption("Xdoclint:all,-reference", true)
+    }
+}
+
 apply plugin: 'distribution'
 distributions {
     main {

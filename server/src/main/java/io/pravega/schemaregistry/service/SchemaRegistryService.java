@@ -751,7 +751,7 @@ public class SchemaRegistryService {
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         // Verify that the type matches the type in schemas it will be validated against.
-        if (!schemasWithVersion.stream().allMatch(x -> x.getSchemaInfo().getType().equals(schema.getType()))) {
+        if (!groupProperties.isAllowMultipleTypes() && !schemasWithVersion.stream().allMatch(x -> x.getSchemaInfo().getType().equals(schema.getType()))) {
             return false;
         }
         switch (groupProperties.getCompatibility().getType()) {
