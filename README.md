@@ -6,7 +6,7 @@ It provides RESTful interface to store and manage schemas under schema groups. U
 
 Along with providing a storage layer for schema, the service also stores and manages additional encoding information in form of codec information. Codecs could correspond to different compression or encryption used while encoding the serialized data at rest. The service generates unique identifiers for schemas and codec information pairs that users may use to tag their data with. 
 
-Useful . 
+Please find relevant documentation and usage samples at following links:
 - [Design Proposal](https://github.com/pravega/schema-registry/wiki/PDP-1:-Schema-Registry)
 - [REST API documentation](https://github.com/pravega/schema-registry/wiki/REST-documentation)
 - [Installation Guide](https://github.com/pravega/schema-registry/wiki/Installation-Guide)
