@@ -41,9 +41,11 @@ spec:
               protocol: TCP
           livenessProbe:
             initialDelaySeconds: 2
-            httpGet:
-              path: /ping
-              port: rest
+            exec:
+              command:
+                - sh
+                - -c
+                - netstat -ltn 2> /dev/null | grep {{ .Values.service.port }} || ss -ltn 2> /dev/null | grep {{ .Values.service.port }}
           {{- if or .Values.authentication.enabled .Values.tls.enabled }}
           volumeMounts:
           {{- if .Values.authentication.enabled }}
