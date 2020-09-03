@@ -13,6 +13,9 @@ import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
+import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -33,7 +36,7 @@ class MultiFormatWithSchemaDeserializer<T> extends AbstractDeserializer<WithSche
     }
 
     @Override
-    protected WithSchema<T> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) throws IOException {
+    public final WithSchema<T> deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) throws IOException {
         Preconditions.checkNotNull(writerSchema);
         Object obj = genericDeserializers.get(writerSchema.getSerializationFormat()).deserialize(inputStream, writerSchema, readerSchema);
         if (obj instanceof WithSchema) {

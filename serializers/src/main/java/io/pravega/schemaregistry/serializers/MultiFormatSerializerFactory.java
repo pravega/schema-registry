@@ -13,13 +13,26 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.base.Preconditions;
 import com.google.protobuf.DynamicMessage;
 import io.pravega.client.stream.Serializer;
+import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
+import io.pravega.schemaregistry.serializer.avro.impl.AvroGenericDeserializer;
+import io.pravega.schemaregistry.serializer.avro.impl.AvroSerializer;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
-import io.pravega.schemaregistry.schemas.AvroSchema;
-import io.pravega.schemaregistry.schemas.JSONSchema;
-import io.pravega.schemaregistry.schemas.ProtobufSchema;
-import io.pravega.schemaregistry.schemas.Schema;
+import io.pravega.schemaregistry.serializer.json.schemas.JSONSchema;
+import io.pravega.schemaregistry.serializer.json.impl.JsonGenericDeserializer;
+import io.pravega.schemaregistry.serializer.json.impl.JsonSerializer;
+import io.pravega.schemaregistry.serializer.protobuf.schemas.ProtobufSchema;
+import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufGenericDeserializer;
+import io.pravega.schemaregistry.serializer.protobuf.impl.ProtobufSerializer;
+import io.pravega.schemaregistry.serializer.shared.schemas.Schema;
+import io.pravega.schemaregistry.serializer.shared.impl.AbstractDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
+import io.pravega.schemaregistry.serializer.shared.impl.CustomDeserializer;
+import io.pravega.schemaregistry.serializer.shared.impl.CustomSerializer;
+import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
+import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -31,9 +44,9 @@ import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForDeserializer;
-import static io.pravega.schemaregistry.serializers.SerializerFactoryHelper.initForSerializer;
 import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
+import static io.pravega.schemaregistry.serializer.shared.impl.SerializerFactoryHelper.initForDeserializer;
+import static io.pravega.schemaregistry.serializer.shared.impl.SerializerFactoryHelper.initForSerializer;
 
 /**
  * Internal Factory class for multi format serializers and deserializers. 
@@ -43,14 +56,12 @@ import static io.pravega.schemaregistry.serializers.WithSchema.NO_TRANSFORM;
 @Slf4j
 class MultiFormatSerializerFactory {
     // region multi format 
-    static Serializer<WithSchema<Object>> serializer(SerializerConfig config) {
-        Preconditions.checkNotNull(config);
+    static Serializer<WithSchema<Object>> serializer(@NonNull SerializerConfig config) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return serializerInternal(config, Collections.emptyMap());
     }
 
-    static Serializer<WithSchema<Object>> deserializerWithSchema(SerializerConfig config) {
-        Preconditions.checkNotNull(config);
+    static Serializer<WithSchema<Object>> deserializerWithSchema(@NonNull SerializerConfig config) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return deserializerInternal(config, Collections.emptyMap(), NO_TRANSFORM);
     }
@@ -65,24 +76,21 @@ class MultiFormatSerializerFactory {
      * This also takes a transform function which is applied on the deserialized object and should transform the object 
      * into the type T.  
      *
-     * @param config serializer config
+     * @param config    serializer config
      * @param transform a transform function that transforms the deserialized object based on the serialization format 
      *                  into an object of type T. 
      * @param <T> Type of object to get back from deserializer. 
      * @return a deserializer that can deserialize protobuf, json or avro events into java objects.
      */
-    static <T> Serializer<T> deserializeAsT(SerializerConfig config,
-                                            BiFunction<SerializationFormat, Object, T> transform) {
-        Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(transform);
+    static <T> Serializer<T> deserializeAsT(@NonNull SerializerConfig config,
+                                            @NonNull BiFunction<SerializationFormat, Object, T> transform) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         return deserializeAsTInternal(config, Collections.emptyMap(), transform);
     }
     // endregion
 
-    private static Serializer<WithSchema<Object>> serializerInternal(SerializerConfig config,
-                                                                     Map<SerializationFormat, CustomSerializer<Object>> customSerializers) {
-        Preconditions.checkNotNull(config);
+    private static Serializer<WithSchema<Object>> serializerInternal(@NonNull SerializerConfig config,
+                                                                     @NonNull Map<SerializationFormat, CustomSerializer<Object>> customSerializers) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         SchemaRegistryClient schemaRegistryClient = initForSerializer(config);
         String groupId = config.getGroupId();
@@ -116,7 +124,7 @@ class MultiFormatSerializerFactory {
             map.put(key, new AbstractDeserializer<Object>(groupId, schemaRegistryClient, null, false, 
                     config.getDecoders(), encodingCache, config.isWriteEncodingHeader()) {
                 @Override
-                protected Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+                public final Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                     return value.deserialize(inputStream, writerSchema, readerSchema);
                 }
             });
@@ -148,7 +156,7 @@ class MultiFormatSerializerFactory {
             map.put(key, new AbstractDeserializer<Object>(groupId, schemaRegistryClient, null, false, 
                     config.getDecoders(), encodingCache, config.isWriteEncodingHeader()) {
                 @Override
-                protected Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
+                public final Object deserialize(InputStream inputStream, SchemaInfo writerSchema, SchemaInfo readerSchema) {
                     return value.deserialize(inputStream, writerSchema, readerSchema);
                 }
             });

@@ -17,7 +17,9 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.netty.impl.ConnectionFactoryImpl;
+import io.pravega.client.connection.impl.ConnectionPoolImpl;
+import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
+import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.impl.IteratorStateImpl;
 import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;
@@ -90,9 +92,10 @@ public class TableStore extends AbstractService {
     private final Cache<String, String> tokenCache;
 
     public TableStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
-        ConnectionFactoryImpl connectionFactory = new ConnectionFactoryImpl(clientConfig);
+        SocketConnectionFactoryImpl connectionFactory = new SocketConnectionFactoryImpl(clientConfig);
+        ConnectionPoolImpl connectionPool = new ConnectionPoolImpl(clientConfig, connectionFactory);
         hostStore = new HostStoreImpl(clientConfig, executor);
-        segmentHelper = new SegmentHelper(connectionFactory, hostStore);
+        segmentHelper = new SegmentHelper(connectionPool, hostStore, executor);
         this.executor = executor;
         this.tokenSupplier = x -> {
             String[] splits = x.split("/");
@@ -321,9 +324,8 @@ public class TableStore extends AbstractService {
                     try {
                         List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(getArray(x.getKey())))
                                               .collect(Collectors.toList());
-                        ByteBuf byteBuf = Unpooled.wrappedBuffer(result.getState().toBytes());
                         log.trace("get keys paginated on table {} returned items {}", tableName, items);
-                        return new ResultPage<>(items, byteBuf);
+                        return new ResultPage<>(items, getNextToken(continuationToken, result));
                     } finally {
                         releaseKeys(result.getItems());
                     }
@@ -346,11 +348,16 @@ public class TableStore extends AbstractService {
                         }).collect(Collectors.toList());
 
                         log.trace("get keys paginated on table {} returned number of items {}", tableName, items.size());
-                        return new ResultPage<>(items, Unpooled.wrappedBuffer(result.getState().toBytes()));
+                        return new ResultPage<>(items, getNextToken(continuationToken, result));
                     } finally {
                         releaseEntries(result.getItems());
                     }
                 });
+    }
+
+    private ByteBuf getNextToken(ByteBuf continuationToken, IteratorItem<?> result) {
+        return result.getItems().isEmpty() && result.getState().isEmpty() ?
+                continuationToken : Unpooled.wrappedBuffer(result.getState().toBytes());
     }
 
     private <T> Supplier<CompletableFuture<T>> exceptionalCallback(Supplier<CompletableFuture<T>> future, Supplier<String> errorMessageSupplier,

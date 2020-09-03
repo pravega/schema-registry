@@ -662,7 +662,6 @@ public class SchemaRegistryService {
                                                                                GroupProperties groupProperties) {
         switch (groupProperties.getCompatibility().getType()) {
             case AllowAny:
-                return CompletableFuture.completedFuture(Collections.emptyList());
             case DenyAll:
                 // Deny all is applicable as long as there is at least one schema in the group. 
                 return store.listLatestSchemas(namespace, group);
@@ -757,7 +756,7 @@ public class SchemaRegistryService {
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         // Verify that the type matches the type in schemas it will be validated against.
-        if (!schemasWithVersion.stream().allMatch(x -> x.getSchemaInfo().getType().equals(schema.getType()))) {
+        if (!groupProperties.isAllowMultipleTypes() && !schemasWithVersion.stream().allMatch(x -> x.getSchemaInfo().getType().equals(schema.getType()))) {
             return false;
         }
         switch (groupProperties.getCompatibility().getType()) {
