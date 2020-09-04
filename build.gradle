@@ -1,6 +1,6 @@
 import com.github.spotbugs.SpotBugsTask
 import org.gradle.internal.jvm.Jvm
-
+import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
  *
@@ -20,11 +20,13 @@ buildscript {
     // log the current JVM version.
     println "Build JVM Version is : " + Jvm.current()
     repositories {
+        jcenter()
         maven {
             url "https://plugins.gradle.org/m2/"
         }
     }
     dependencies {
+        classpath group: 'com.github.jengelman.gradle.plugins', name:'shadow', version: shadowGradlePlugin
         classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
         classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
         classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
@@ -317,6 +319,8 @@ project('serializers:json') {
 }
 
 project('serializers') {
+    apply plugin: 'java'
+    apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:avro')
         compile project(':serializers:protobuf')
@@ -349,6 +353,15 @@ project('serializers') {
             configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
         }
     }
+    shadowJar {
+        //classifier = 'tests'
+        //from sourceSets.test.output
+        //configurations = [project.configurations.testRuntime]
+        relocate 'org.apache.avro', 'shaded.org.apache.avro'
+        classifier = null
+        mergeServiceFiles()
+    }
+    
 }
 
 project('server') {
@@ -491,6 +504,8 @@ distributions {
     serializers {
         baseName = "schema-registry-serializers"
         contents {
+            //from shadowJar
+            from { project(":serializers").configurations.shadow }
             from { project(":serializers").configurations.runtime }
             from { project(":serializers").configurations.runtime.allArtifacts.files }
             from 'LICENSE'
