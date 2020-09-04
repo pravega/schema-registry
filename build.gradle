@@ -379,6 +379,18 @@ project('serializers') {
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
+    
+    shadowJar {
+        //classifier = 'tests'
+        //from sourceSets.test.output
+        //configurations = [project.configurations.testRuntime]
+        zip64 true
+        relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
+        classifier ='all'
+        mergeServiceFiles()
+    }
+    
+    tasks.build.dependsOn tasks.shadowJar
 
     shadowJar {
         zip64 true
