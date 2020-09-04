@@ -334,6 +334,18 @@ project('serializers') {
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
+    
+    shadowJar {
+        //classifier = 'tests'
+        //from sourceSets.test.output
+        //configurations = [project.configurations.testRuntime]
+        zip64 true
+        relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
+        classifier ='all'
+        mergeServiceFiles()
+    }
+    
+    tasks.build.dependsOn tasks.shadowJar
 
     javadoc {
         title = "Serializers"
@@ -343,25 +355,6 @@ project('serializers') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-
-    jar {
-        manifest {}
-        // add zip64=true so that we are able to pack more than 65k files in the jar. 
-        zip64=true
-
-        from {
-            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-    }
-    shadowJar {
-        //classifier = 'tests'
-        //from sourceSets.test.output
-        //configurations = [project.configurations.testRuntime]
-        relocate 'org.apache.avro', 'shaded.org.apache.avro'
-        classifier = null
-        mergeServiceFiles()
-    }
-    
 }
 
 project('server') {
