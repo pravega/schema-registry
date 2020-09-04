@@ -50,7 +50,7 @@ Detailed instructions can be found [here](https://github.com/pravega/schema-regi
 ```
 helm install <release-name> charts/schema-registry
 ```
-The charts can be configured to change the number of replicas, supply TLS configuration, controller uri and other schema regsitry configurations. 
+The charts can be configured to change the number of replicas, supply TLS configuration, controller uri and other schema registry configurations. 
 
 ## Development
 -----------
