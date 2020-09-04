@@ -163,6 +163,8 @@ public abstract class TestEndToEnd {
         assertEquals(version2.getId(), 1);
         assertEquals(version2.getType(), myTest);
 
+        assertTrue(client.updateCompatibility(group, Compatibility.backwardTillAndForwardOne(version1), null));
+        
         assertFalse(client.updateCompatibility(group, Compatibility.fullTransitive(), Compatibility.forward()));
 
         assertTrue(client.updateCompatibility(group, Compatibility.fullTransitive(), null));
