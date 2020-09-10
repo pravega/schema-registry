@@ -12,7 +12,6 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  *
  */
 
-apply plugin: 'org.ajoberstar.grgit'
 
 // Apply the java plugin to add support for Java
 buildscript {
@@ -34,6 +33,12 @@ buildscript {
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
     }
 }
+
+plugins {
+    id 'maven-publish'
+}
+
+apply plugin: 'org.ajoberstar.grgit'
 
 allprojects {
     apply plugin: 'idea'
@@ -107,7 +112,6 @@ allprojects {
     }
     version = getProjectVersion()
     group = "io.pravega.schemaregistry"
-
     configurations.all {
         resolutionStrategy {
             force "com.google.guava:guava:" + guavaVersion
@@ -239,6 +243,8 @@ project('serializers:shared') {
 }
 
 project('serializers:avro') {
+    apply plugin: 'com.github.johnrengelman.shadow'
+    //apply plugin: 'maven'
     dependencies {
         compile project(':serializers:shared')
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
@@ -248,6 +254,27 @@ project('serializers:avro') {
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
 
+    shadowJar {
+        zip64 true
+        relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
+        relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
+        relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
+        relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
+        relocate 'javax.servlet' , 'io.pravega.schemaregistry.shaded.javax.servlet'
+        relocate 'io.swagger' , 'io.pravega.schemaregistry.shaded.io.swagger'
+        relocate 'org.glassfish.jersey.containers' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.containers'
+        relocate 'org.glassfish.jersey.inject' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.inject'
+        relocate 'org.glassfish.jersey.media' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.media'
+        relocate 'org.glassfish.jaxb' , 'io.pravega.schemaregistry.shaded.org.glassfish.jaxb'
+        relocate 'javax.xml.bind' , 'io.pravega.schemaregistry.shaded.javax.xml.bind'
+        relocate 'com.google.guava' , 'io.pravega.schemaregistry.shaded.com.google.guava'
+        relocate 'commons-io' , 'io.pravega.schemaregistry.shaded.commons-io'
+        classifier ='all'
+        mergeServiceFiles()
+    }
+    
+    tasks.build.dependsOn tasks.shadowJar
+
     javadoc {
         title = "Serializers avro"
         dependsOn delombok
@@ -256,15 +283,12 @@ project('serializers:avro') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-
-    jar {
-        from {
-            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-    }
+    
 }
 
 project('serializers:protobuf') {
+    apply plugin: 'com.github.johnrengelman.shadow'
+    //apply plugin: 'maven'
     dependencies {
         compile project(':serializers:shared')
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
@@ -275,6 +299,27 @@ project('serializers:protobuf') {
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
 
+    shadowJar {
+        zip64 true
+        relocate 'com.google.protobuf' , 'io.pravega.schemaregistry.shaded.com.google.protobuf'
+        relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
+        relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
+        relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
+        relocate 'javax.servlet' , 'io.pravega.schemaregistry.shaded.javax.servlet'
+        relocate 'io.swagger' , 'io.pravega.schemaregistry.shaded.io.swagger'
+        relocate 'org.glassfish.jersey.containers' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.containers'
+        relocate 'org.glassfish.jersey.inject' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.inject'
+        relocate 'org.glassfish.jersey.media' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.media'
+        relocate 'org.glassfish.jaxb' , 'io.pravega.schemaregistry.shaded.org.glassfish.jaxb'
+        relocate 'javax.xml.bind' , 'io.pravega.schemaregistry.shaded.javax.xml.bind'
+        relocate 'com.google.guava' , 'io.pravega.schemaregistry.shaded.com.google.guava'
+        relocate 'commons-io' , 'io.pravega.schemaregistry.shaded.commons-io'
+        classifier ='all'
+        mergeServiceFiles()
+    }
+
+    tasks.build.dependsOn tasks.shadowJar
+
     javadoc {
         title = "Serializers protobuf"
         dependsOn delombok
@@ -283,15 +328,12 @@ project('serializers:protobuf') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-
-    jar {
-        from {
-            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-    }
+    
 }
 
 project('serializers:json') {
+    apply plugin: 'com.github.johnrengelman.shadow'
+    //apply plugin: 'maven'
     dependencies {
         compile project(':serializers:shared')
         compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
@@ -302,6 +344,28 @@ project('serializers:json') {
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
     }
 
+    shadowJar {
+        zip64 true
+        relocate 'com.github.everit-org.json-schema' , 'io.pravega.schemaregistry.shaded.com.github.everit-org.json-schema'
+        relocate 'com.fasterxml.jackson.module' , 'io.pravega.schemaregistry.shaded.com.fasterxml.jackson.module'
+        relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
+        relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
+        relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
+        relocate 'javax.servlet' , 'io.pravega.schemaregistry.shaded.javax.servlet'
+        relocate 'io.swagger' , 'io.pravega.schemaregistry.shaded.io.swagger'
+        relocate 'org.glassfish.jersey.containers' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.containers'
+        relocate 'org.glassfish.jersey.inject' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.inject'
+        relocate 'org.glassfish.jersey.media' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.media'
+        relocate 'org.glassfish.jaxb' , 'io.pravega.schemaregistry.shaded.org.glassfish.jaxb'
+        relocate 'javax.xml.bind' , 'io.pravega.schemaregistry.shaded.javax.xml.bind'
+        relocate 'com.google.guava' , 'io.pravega.schemaregistry.shaded.com.google.guava'
+        relocate 'commons-io' , 'io.pravega.schemaregistry.shaded.commons-io'
+        classifier ='all'
+        mergeServiceFiles()
+    }
+
+    tasks.build.dependsOn tasks.shadowJar
+
     javadoc {
         title = "Serializers json"
         dependsOn delombok
@@ -310,17 +374,12 @@ project('serializers:json') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-
-    jar {
-        from {
-            configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
-        }
-    }
+    
 }
 
 project('serializers') {
-    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
+    //apply plugin: 'maven'
     dependencies {
         compile project(':serializers:avro')
         compile project(':serializers:protobuf')
@@ -336,11 +395,23 @@ project('serializers') {
     }
     
     shadowJar {
-        //classifier = 'tests'
-        //from sourceSets.test.output
-        //configurations = [project.configurations.testRuntime]
         zip64 true
+        relocate 'com.google.protobuf' , 'io.pravega.schemaregistry.shaded.com.google.protobuf'
         relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
+        relocate 'com.github.everit-org.json-schema' , 'io.pravega.schemaregistry.shaded.com.github.everit-org.json-schema'
+        relocate 'com.fasterxml.jackson.module' , 'io.pravega.schemaregistry.shaded.com.fasterxml.jackson.module'
+        relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
+        relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
+        relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
+        relocate 'javax.servlet' , 'io.pravega.schemaregistry.shaded.javax.servlet'
+        relocate 'io.swagger' , 'io.pravega.schemaregistry.shaded.io.swagger'
+        relocate 'org.glassfish.jersey.containers' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.containers'
+        relocate 'org.glassfish.jersey.inject' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.inject'
+        relocate 'org.glassfish.jersey.media' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.media'
+        relocate 'org.glassfish.jaxb' , 'io.pravega.schemaregistry.shaded.org.glassfish.jaxb'
+        relocate 'javax.xml.bind' , 'io.pravega.schemaregistry.shaded.javax.xml.bind'
+        relocate 'com.google.guava' , 'io.pravega.schemaregistry.shaded.com.google.guava'
+        relocate 'commons-io' , 'io.pravega.schemaregistry.shaded.commons-io'
         classifier ='all'
         mergeServiceFiles()
     }
@@ -355,6 +426,7 @@ project('serializers') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
+    
 }
 
 project('server') {
