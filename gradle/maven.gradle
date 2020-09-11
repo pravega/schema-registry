@@ -29,6 +29,9 @@ plugins.withId('maven') {
                             }
                         }
                     }
+                    else if (publishUrl == "localFileRepo") {
+                        repository(url : "file://${buildDir}/release")
+                    }
                     else {
                         repository(url: publishUrl) {
                             // Only configure credentials if they are provided (allows publishing to the filesystem)
