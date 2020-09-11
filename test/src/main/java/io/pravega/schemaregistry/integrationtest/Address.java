@@ -6,18 +6,17 @@
  * You may obtain a copy of the License at
  *
  *     http://www.apache.org/licenses/LICENSE-2.0
- *
  */
-rootProject.name = 'schema-registry'
+package io.pravega.schemaregistry.integrationtest;
 
-include 'client',
-        'common',
-        'contract',
-        'server',
-        'auth',
-        'serializers:shared',
-        'serializers:protobuf',
-        'serializers:json',
-        'serializers:avro',
-        'serializers',
-        'test'
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@AllArgsConstructor
+@NoArgsConstructor
+public class Address {
+    private String streetAddress;
+    private String city; 
+}

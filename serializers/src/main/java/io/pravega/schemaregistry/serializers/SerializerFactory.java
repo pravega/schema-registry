@@ -35,6 +35,7 @@ import io.pravega.schemaregistry.serializer.shared.impl.CustomSerializerFactory;
 import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
 import io.pravega.schemaregistry.serializer.shared.impl.MultiplexedAndGenericDeserializer;
 import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericRecord;
 
@@ -265,11 +266,11 @@ public class SerializerFactory {
      * It does not implement {@link Serializer#serialize(Object)}.
      *
      * @param config     Serializer Config used for instantiating a new serializer.
-     * @param schema Schema container that encapsulates an JSONSchema
+     * @param schema     Schema container that encapsulates an JSONSchema
      * @param <T>        Type of event. The typed event should be an avro generated class. For generic type use {@link #jsonGenericDeserializer}
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static <T> Serializer<T> jsonDeserializer(SerializerConfig config, JSONSchema<T> schema) {
+    public static <T> Serializer<T> jsonDeserializer(@NonNull SerializerConfig config, @Nullable JSONSchema<T> schema) {
         return JsonSerializerFactory.deserializer(config, schema);
     }
 
@@ -282,8 +283,7 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<WithSchema<JsonNode>> jsonGenericDeserializer(SerializerConfig config) {
-        Preconditions.checkNotNull(config);
+    public static Serializer<WithSchema<JsonNode>> jsonGenericDeserializer(@NonNull SerializerConfig config) {
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);
 
         String groupId = config.getGroupId();
@@ -303,7 +303,7 @@ public class SerializerFactory {
      * @param config Serializer Config used for instantiating a new serializer.
      * @return A deserializer Implementation that can be used in {@link io.pravega.client.stream.EventStreamReader}.
      */
-    public static Serializer<String> jsonStringDeserializer(SerializerConfig config) {
+    public static Serializer<String> jsonStringDeserializer(@NonNull SerializerConfig config) {
         return JsonSerializerFactory.deserializeAsString(config);
     }
 
@@ -316,7 +316,7 @@ public class SerializerFactory {
      * @return a Serializer which can serialize events of different types for which schemas are supplied.
      */
     public static <T> Serializer<T> jsonMultiTypeSerializer(
-            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
+            @NonNull SerializerConfig config, @NonNull Map<Class<? extends T>, JSONSchema<T>> schemas) {
         return JsonSerializerFactory.multiTypeSerializer(config, schemas);
     }
 
@@ -330,7 +330,7 @@ public class SerializerFactory {
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
     public static <T> Serializer<T> jsonMultiTypeDeserializer(
-            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
+            @NonNull SerializerConfig config, @NonNull Map<Class<? extends T>, JSONSchema<T>> schemas) {
         return JsonSerializerFactory.multiTypeDeserializer(config, schemas);
     }
 
@@ -344,9 +344,7 @@ public class SerializerFactory {
      * @return a Deserializer which can deserialize events of different types in the stream into typed objects.
      */
     public static <T> Serializer<Either<T, WithSchema<JsonNode>>> jsonTypedOrGenericDeserializer(
-            SerializerConfig config, Map<Class<? extends T>, JSONSchema<T>> schemas) {
-        Preconditions.checkNotNull(config);
-        Preconditions.checkNotNull(schemas);
+            @NonNull SerializerConfig config, @NonNull Map<Class<? extends T>, JSONSchema<T>> schemas) {
         Preconditions.checkArgument(config.isWriteEncodingHeader(), "Events should be tagged with encoding ids.");
         String groupId = config.getGroupId();
         SchemaRegistryClient schemaRegistryClient = initForDeserializer(config);

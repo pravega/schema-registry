@@ -240,7 +240,7 @@ project('serializers:avro') {
     dependencies {
         compile project(':serializers:shared')
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
-        testCompile files(project(':serializers:shared').sourceSets.test.output)
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -267,7 +267,7 @@ project('serializers:protobuf') {
         compile project(':serializers:shared')
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
-        testCompile files(project(':serializers:shared').sourceSets.test.output)
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -294,7 +294,7 @@ project('serializers:json') {
         compile project(':serializers:shared')
         compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
-        testCompile files(project(':serializers:shared').sourceSets.test.output)
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -322,7 +322,7 @@ project('serializers') {
         compile project(':serializers:protobuf')
         compile project(':serializers:json')
         compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
-        testCompile files(project(':serializers:shared').sourceSets.test.output)
+        testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile files(project(':serializers:avro').sourceSets.test.output)
         testCompile files(project(':serializers:protobuf').sourceSets.test.output)
         testCompile files(project(':serializers:json').sourceSets.test.output)
@@ -342,6 +342,7 @@ project('serializers') {
 
     jar {
         manifest {}
+        // add zip64=true so that we are able to pack more than 65k files in the jar. 
         zip64=true
 
         from {
@@ -418,10 +419,15 @@ project('server') {
     }
 }
 
-project('samples') {
+project('test') {
     sourceSets {
         test.resources.srcDirs += "$rootDir/resources"
         test.java.srcDir project(':server').file("src/test/java")
+        test.java.srcDir project(':serializers').file("src/test/java")
+        test.java.srcDir project(':serializers:shared').file("src/test/java")
+        test.java.srcDir project(':serializers:protobuf').file("src/test/java")
+        test.java.srcDir project(':serializers:json').file("src/test/java")
+        test.java.srcDir project(':serializers:avro').file("src/test/java")
     }
     compileTestJava.dependsOn tasks.getByPath(':server:testClasses')
     dependencies {
@@ -430,6 +436,10 @@ project('samples') {
         compile project(':client')
         compile project(':server') 
         compile project(':serializers')
+        compile project(':serializers:protobuf')
+        compile project(':serializers:avro')
+        compile project(':serializers:json')
+        compile project(':serializers:shared')
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
         }
@@ -441,7 +451,7 @@ project('samples') {
     }
 
     javadoc {
-        title = "Samples"
+        title = "Test"
         dependsOn delombok
         source = delombok.outputDir
         failOnError = true
@@ -451,7 +461,6 @@ project('samples') {
 }
 
 apply plugin: 'distribution'
-
 distributions {
     main {
         baseName = "schema-registry"

@@ -44,8 +44,8 @@ public class SerializerFactoryHelper {
             SchemaRegistryClientConfig left = config.getRegistryConfigOrClient().getLeft();
             if (left.isAuthEnabled() && Strings.isNullOrEmpty(left.getAuthMethod())) {
                 Credentials creds = ClientConfig.builder().build().getCredentials();
-                left = SchemaRegistryClientConfig.builder().schemaRegistryUri(left.getSchemaRegistryUri()).authEnabled(left.isAuthEnabled())
-                                                 .authMethod(creds.getAuthenticationType()).authToken(creds.getAuthenticationToken())
+                left = SchemaRegistryClientConfig.builder().schemaRegistryUri(left.getSchemaRegistryUri())
+                                                 .authentication(creds.getAuthenticationType(), creds.getAuthenticationToken())
                                                  .build();
             }
             return SchemaRegistryClientFactory.withNamespace(config.getNamespace(), left);
