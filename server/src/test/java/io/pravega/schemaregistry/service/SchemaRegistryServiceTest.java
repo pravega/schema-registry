@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.service;
 
+import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import io.pravega.common.Exceptions;
@@ -32,6 +33,7 @@ import io.pravega.schemaregistry.exceptions.SerializationFormatMismatchException
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.Etag;
 import io.pravega.schemaregistry.storage.SchemaStore;
+import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.InMemoryGroupTable;
 import io.pravega.test.common.AssertExtensions;
@@ -49,6 +51,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -210,11 +213,11 @@ public class SchemaRegistryServiceTest {
         SchemaInfo schemaInfo = new SchemaInfo("type", SerializationFormat.custom("custom1"),
                 ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("type", 5, 7);
-        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(any(), anyString(), any(),
-                any(), any());
+        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(any(), anyString(), any(), any(),
+                any(), any(), any());
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
-                any());
+                any(), any());
         VersionInfo versionInfo1 = service.addSchema(null, "mygroup", schemaInfo).join();
         assertEquals(7, versionInfo1.getId());
         // SerializationFormatMismatch Exception
@@ -226,7 +229,7 @@ public class SchemaRegistryServiceTest {
                 any(), anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                store).getSchemaVersion(any(), anyString(), any());
+                store).getSchemaVersion(any(), anyString(), any(), any());
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> service.addSchema(null, "mygroup", schemaInfo).join(),
                 e -> e instanceof SerializationFormatMismatchException);
@@ -240,7 +243,7 @@ public class SchemaRegistryServiceTest {
                 any(), anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                store).getSchemaVersion(any(), anyString(), any());
+                store).getSchemaVersion(any(), anyString(), any(), any());
         schemaData = new byte[1];
         SchemaInfo schemaInfo1 = new SchemaInfo("type1", SerializationFormat.custom("custom1"),
                 ByteBuffer.wrap(schemaData),
@@ -253,7 +256,7 @@ public class SchemaRegistryServiceTest {
         // CheckCompatibility will fail due to differing types. allowMultipleTypes is false.
         AssertExtensions.assertThrows("An exception should have been thrown", () -> service.addSchema(null, "mygroup", schemaInfo).join(), e -> e instanceof IncompatibleSchemaException);
         // Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> service.addSchema(null, "mygroup", schemaInfo).join(), e -> e instanceof RuntimeException);
@@ -407,7 +410,7 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetSchemaVersion() {
         VersionInfo versionInfo = new VersionInfo("objectTYpe", 5, 7);
-        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
@@ -419,12 +422,12 @@ public class SchemaRegistryServiceTest {
         //GroupNotFoundException
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(
-                store).getSchemaVersion(any(), anyString(), any());
+                store).getSchemaVersion(any(), anyString(), any(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.getSchemaVersion(null, "mygroup", schemaInfo).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
         //Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.getSchemaVersion(null, "mygroup", schemaInfo).join(), e -> e instanceof RuntimeException);
@@ -557,7 +560,7 @@ public class SchemaRegistryServiceTest {
         List<String> groupNameList = new ArrayList<>();
         groupNameList.add(groupName);
         doAnswer(x -> CompletableFuture.completedFuture(groupNameList)).when(store).getGroupsUsing(any(), any());
-        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
+        doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         Map<String, VersionInfo> map = service.getSchemaReferences(null, schemaInfo).join();
         assertTrue(map.get(groupName).equals(versionInfo));
@@ -649,5 +652,59 @@ public class SchemaRegistryServiceTest {
         AssertExtensions.assertThrows("An Exception should have been thrown",
                 () -> service.deleteSchema(null, groupName, schemaName, version).join(),
                 e -> e instanceof RuntimeException);
+    }
+    
+    @Test
+    public void testSchemaNormalization() {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "g";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(false).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Json)
+                               .compatibility(Compatibility.allowAny()).build()).join();
+        
+        String jsonSchemaString = "{" +
+                "\"title\": \"Person\", " +
+                "\"type\": \"object\", " +
+                "\"properties\": { " +
+                "\"name\": {" +
+                "\"type\": \"string\"" +
+                "}," +
+                "\"age\": {" +
+                "\"type\": \"integer\", \"minimum\": 0" +
+                "}" +
+                "}" +
+                "}";
+        String jsonSchemaString2 = "{" +
+                "\"title\": \"Person\", " +
+                "\"type\": \"object\", " +
+                "\"properties\": { " +
+                "\"age\": {" +
+                "\"type\": \"integer\", \"minimum\": 0" +
+                "}," +
+                "\"name\": {" +
+                "\"type\": \"string\"" +
+                "}" +
+                "}" +
+                "}";
+        SchemaInfo original = SchemaInfo.builder().type("person").serializationFormat(SerializationFormat.Json)
+                                      .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
+                                      .properties(ImmutableMap.of()).build();
+        VersionInfo v = service.addSchema(namespace, group, original).join();
+        SchemaInfo schema = service.getSchema(namespace, group, v.getId()).join();
+        assertEquals(schema, original);
+
+        // check with different order
+        SchemaInfo secondOrder = SchemaInfo.builder().type("person").serializationFormat(SerializationFormat.Json)
+                                          .schemaData(ByteBuffer.wrap(jsonSchemaString2.getBytes(Charsets.UTF_8)))
+                                          .properties(ImmutableMap.of()).build();
+        VersionInfo v2 = service.addSchema(namespace, group, secondOrder).join();
+        // add should have been idempotent
+        assertEquals(v2, v);
+
+        schema = service.getSchema(namespace, group, v.getId()).join();
+        assertNotEquals(schema, secondOrder);
     }
 }

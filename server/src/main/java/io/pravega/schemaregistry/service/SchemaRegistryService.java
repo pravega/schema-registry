@@ -45,7 +45,6 @@ import io.pravega.schemaregistry.rules.CompatibilityCheckerFactory;
 import io.pravega.schemaregistry.storage.ContinuationToken;
 import io.pravega.schemaregistry.storage.SchemaStore;
 import io.pravega.schemaregistry.storage.StoreExceptions;
-import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.everit.json.schema.loader.SchemaLoader;
@@ -58,7 +57,6 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -266,6 +264,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("addSchema called for group {} {}. schema {}", namespace, group, schemaInfo.getType());
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         // 1. get group policy
         // 2. get checker for serialization format.
         // validate schema against group compatibility policy on schema
@@ -275,27 +274,23 @@ public class SchemaRegistryService {
                      .thenCompose(etag ->
                              store.getGroupProperties(namespace, group)
                                   .thenCompose(prop -> {
-                                      NormalizedForm normalizedForm = normalizeSchemaBinary(schemaInfo);
-                                      BigInteger fingerprint = normalizedForm.getFingerprint();
-                                      return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, 
-                                              fingerprint, normalizedForm::compareNormalized),
+                                      return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, schema, getFingerprint(schema)),
                                               e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                                               () -> { // Schema doesnt exist. Validate and add it
-                                                  return validateSchema(namespace, group, schemaInfo, prop.getCompatibility())
+                                                  return validateSchema(namespace, group, schema, prop.getCompatibility())
                                                           .thenCompose(valid -> {
                                                               if (!valid) {
-                                                                  throw new IncompatibleSchemaException(
-                                                                          String.format("%s is incompatible", schemaInfo.getType()));
+                                                                  throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
                                                               }
                                                               // we will compute the fingerprint from normalized form.
-                                                              return store.addSchema(namespace, group, schemaInfo, 
-                                                                      fingerprint, normalizedForm::compareNormalized, prop, etag);
+                                                              return store.addSchema(namespace, group, schemaInfo, schema,
+                                                                      getFingerprint(schema), prop, etag);
                                                           });
                                               });
                                   })), executor)
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.debug("Group {} {}, schema {} added successfully.", namespace, group, schemaInfo.getType());
+                            log.debug("Group {} {}, schema {} added successfully.", namespace, group, schema.getType());
                         } else {
                             log.warn("Group {} {}, schema {} add failed with error", namespace, group, e);
                         }
@@ -499,9 +494,9 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, getSchemaVersion for {}.", namespace, group, schemaInfo.getType());
-        NormalizedForm normalizedForm = normalizeSchemaBinary(schemaInfo);
-        BigInteger fingerprint = normalizedForm.getFingerprint();
-        return store.getSchemaVersion(namespace, group, fingerprint, normalizedForm::compareNormalized)
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+
+        return store.getSchemaVersion(namespace, group, schema, getFingerprint(schema))
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.debug("Group {} {}, version = {}.", namespace, group, r);
@@ -528,19 +523,20 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, validateSchema for {}.", namespace, group, schemaInfo.getType());
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
                         if (!prop.getSerializationFormat().equals(SerializationFormat.Any) &&
-                                !schemaInfo.getSerializationFormat().equals(prop.getSerializationFormat())) {
-                            throw new SerializationFormatMismatchException(schemaInfo.getSerializationFormat().name());
+                                !schema.getSerializationFormat().equals(prop.getSerializationFormat())) {
+                            throw new SerializationFormatMismatchException(schema.getSerializationFormat().name());
                         }
 
                         GroupProperties toApply = new GroupProperties(prop.getSerializationFormat(), 
                                 compatibility == null ? prop.getCompatibility() : compatibility,
                                 prop.isAllowMultipleTypes(), prop.getProperties());
-                        return getSchemasForValidation(namespace, group, schemaInfo, toApply)
-                                .thenApply(schemas -> checkCompatibility(schemaInfo, toApply, schemas));
+                        return getSchemasForValidation(namespace, group, schema, toApply)
+                                .thenApply(schemas -> checkCompatibility(schema, toApply, schemas));
                     })
                     .whenComplete((r, e) -> {
                         if (e == null) {
@@ -564,9 +560,10 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, canRead for {}.", namespace, group, schemaInfo.getType());
 
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         return store.getGroupProperties(namespace, group)
-                    .thenCompose(prop -> getSchemasForValidation(namespace, group, schemaInfo, prop)
-                            .thenApply(schemasWithVersion -> canReadChecker(schemaInfo, prop, schemasWithVersion)))
+                    .thenCompose(prop -> getSchemasForValidation(namespace, group, schema, prop)
+                            .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)))
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.debug("Group {} {}, canRead response = {}.", namespace, group, r);
@@ -812,10 +809,9 @@ public class SchemaRegistryService {
         }
     }
 
-    private static NormalizedForm normalizeSchemaBinary(SchemaInfo schemaInfo) {
+    private SchemaInfo normalizeSchemaBinary(SchemaInfo schemaInfo) {
         // validates and the schema binary. 
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
-        Object parsedSchema = null;
         boolean isValid = true;
         String invalidityCause = "";
         try {
@@ -827,7 +823,7 @@ public class SchemaRegistryService {
                     String name = tokens[0];
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(
                             schemaInfo.getSchemaData());
-                    parsedSchema = fileDescriptorSet;
+
                     isValid = fileDescriptorSet
                             .getFileList().stream()
                             .anyMatch(x -> {
@@ -848,7 +844,7 @@ public class SchemaRegistryService {
                 case Avro:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
-                    parsedSchema = schema;
+
                     isValid = schema.getFullName().equals(schemaInfo.getType());
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
@@ -863,28 +859,28 @@ public class SchemaRegistryService {
                     // in alphabetical order. This ensures that identical schemas with different order of fields are 
                     // treated to be equal. 
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
-                    parsedSchema = jsonNode;
                     Object obj = OBJECT_MAPPER.treeToValue(jsonNode, Object.class);
                     schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(obj).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
+                    break;
                 case Custom:
+                    break;
                 default:
-                    parsedSchema = schemaInfo.getSchemaData();
                     break;
             }
         } catch (IOException | RuntimeException e) {
+            log.debug("unable to parse schema {}", e.getMessage());
             isValid = false;
             invalidityCause = "Unable to parse schema";
         }
         if (!isValid) {
             throw new IllegalArgumentException(invalidityCause);
         }
-        return new NormalizedForm(new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(),
-                schemaBinary, schemaInfo.getProperties()), parsedSchema);
+        return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
     }
 
-    private static void validateJsonSchema(String schemaString) {
+    private void validateJsonSchema(String schemaString) {
         try {
             // 1. try draft 3
             // jackson JsonSchema only supports json draft 3. If the schema definition is not compatible with draft 3, 
@@ -901,7 +897,7 @@ public class SchemaRegistryService {
      * 
      * @param schemaString Schema string to validate
      */
-    private static void validateJsonSchema4Onward(String schemaString) {
+    private void validateJsonSchema4Onward(String schemaString) {
         JSONObject rawSchema = new JSONObject(new JSONTokener(schemaString));
         // It will check if the schema has "id" then it is definitely version 4.
         // if $schema draft is specified, the schemaloader will automatically use the correct specification version
@@ -972,51 +968,20 @@ public class SchemaRegistryService {
      * @return Map of group id to version that identifies the schema in the group.
      */
     public CompletableFuture<Map<String, VersionInfo>> getSchemaReferences(String namespace, SchemaInfo schemaInfo) {
-        NormalizedForm normalizedForm = normalizeSchemaBinary(schemaInfo);
-        BigInteger fingerprint = normalizedForm.getFingerprint();
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
-        return store.getGroupsUsing(namespace, fingerprint, normalizedForm::compareNormalized)
+        return store.getGroupsUsing(namespace, schema)
                     .thenCompose(groups -> Futures.allOfWithResults(
-                            groups.stream().collect(Collectors.toMap(x -> x, x -> {
-                                return Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, fingerprint, 
-                                        normalizedForm::compareNormalized),
-                                        e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, EMPTY_VERSION);
-                            })))
+                            groups.stream().collect(Collectors.toMap(x -> x, x ->
+                                    Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, schema, getFingerprint(schema)),
+                                            e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, EMPTY_VERSION))))
                                                   .thenApply(result -> {
                                                       return result.entrySet().stream().filter(x -> !x.getValue().equals(EMPTY_VERSION))
                                                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                                                   }));
     }
-    
-    @Data
-    static class NormalizedForm {
-        private final SchemaInfo normalized;
-        private final Object parsedSchema;
-        private final BigInteger fingerprint;
-        private NormalizedForm(SchemaInfo schemaInfo, Object parsedSchema) {
-            this.normalized = schemaInfo;
-            this.parsedSchema = parsedSchema;
-            this.fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
-        }
 
-        boolean compareNormalized(SchemaInfo schemaInfo) {
-            Preconditions.checkNotNull(schemaInfo, "Supply non null Schemainfo.");
-            return schemaInfo.getType().equals(normalized.getType()) &&
-                    schemaInfo.getSerializationFormat().equals(normalized.getSerializationFormat()) &&
-                    compareParsedSchemas(schemaInfo);
-        }
-
-        private boolean compareParsedSchemas(SchemaInfo schemaInfo) {
-            switch (schemaInfo.getSerializationFormat()) {
-                case Avro:
-                case Protobuf:
-                case Json:
-                    return normalizeSchemaBinary(schemaInfo).parsedSchema.equals(this.parsedSchema);
-                case Any:
-                case Custom:
-                default:
-                    return Arrays.equals(schemaInfo.getSchemaData().array(), this.normalized.getSchemaData().array());
-            }
-        }
+    private BigInteger getFingerprint(SchemaInfo schemaInfo) {
+        return HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
     }
 }

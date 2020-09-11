@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableMap;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.ByteArraySegment;
+import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -23,9 +24,9 @@ import io.pravega.schemaregistry.common.ChunkUtil;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.val;
 
-import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -33,7 +34,6 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
@@ -60,21 +60,21 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
     }
 
     @Override
-    public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, BigInteger fingerprint, Predicate<SchemaInfo> equality, 
-                                             String nameSpace, String group) {
+    public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
         String namespace = nameSpace == null ? "" : nameSpace;
         // 1. check if schema exists -- get fingerprint -- get all schemas in the fingerprint list.. 
         // 2. if it doesnt exist, generate a new id and add it to id and fingerprint list and add schema id entry atomically. 
         // (this can fail with write conflict if multiple concurrent attempts are made. keep retrying). 
         // 3. add the group name to the schema id groups list. get and set.  
-        SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
+        SchemaFingerprintKey fingerprintKey = new
+                SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData().array()));
         return withCreateSchemasTableIfAbsent(() -> Futures.exceptionallyExpecting(tableStore.getEntry(SCHEMAS,
                 KEY_SERIALIZER.toBytes(fingerprintKey),
                 x -> fromBytes(SchemaFingerprintKey.class, x, SchemaIdList.class)),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                 null)
                       .thenCompose(fingerprintEntry -> {
-                          return findSchemaId(fingerprintEntry, equality)
+                          return findSchemaId(schemaInfo, fingerprintEntry)
                                   .thenCompose(schemaId -> {
                                       if (schemaId == null) {
                                           return addNewSchemaRecord(schemaInfo, fingerprintKey, fingerprintEntry);
@@ -136,7 +136,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                          .thenApply(v -> id);
     }
 
-    private CompletableFuture<String> findSchemaId(VersionedRecord<SchemaIdList> fingerprintEntry, Predicate<SchemaInfo> equality) {
+    private CompletableFuture<String> findSchemaId(SchemaInfo schemaInfo, VersionedRecord<SchemaIdList> fingerprintEntry) {
         CompletableFuture<String> future;
         if (fingerprintEntry != null) {
             // findSchema
@@ -150,7 +150,9 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                         return schemaRecordFuture.thenCompose(si -> getSchemaInfo(x, si.getRecord()));
                     }))).thenApply(schemas -> schemas.entrySet().stream().filter(x -> {
                 SchemaInfo schema = x.getValue();
-                return equality.test(schema);
+                return schema.getType().equals(schemaInfo.getType())
+                        && schema.getSerializationFormat().equals(schemaInfo.getSerializationFormat())
+                        && Arrays.equals(schema.getSchemaData().array(), schemaInfo.getSchemaData().array());
             }).map(Map.Entry::getKey).findAny().orElse(null));
         } else {
             future = CompletableFuture.completedFuture(null);
@@ -179,15 +181,16 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
     }
 
     @Override
-    public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, BigInteger fingerprint, Predicate<SchemaInfo> equality) {
+    public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, SchemaInfo schemaInfo) {
         String namespace = nameSpace == null ? "" : nameSpace;
-        SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
+        SchemaFingerprintKey fingerprintKey = new
+                SchemaFingerprintKey(HashUtil.getFingerprint(schemaInfo.getSchemaData().array()));
         return withCreateSchemasTableIfAbsent(() -> Futures.exceptionallyExpecting(tableStore.getEntry(SCHEMAS,
                 KEY_SERIALIZER.toBytes(fingerprintKey),
                 x -> fromBytes(SchemaFingerprintKey.class, x, SchemaIdList.class)),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
                 null)
-                      .thenCompose(fingerprintEntry -> findSchemaId(fingerprintEntry, equality))
+                      .thenCompose(fingerprintEntry -> findSchemaId(schemaInfo, fingerprintEntry))
                       .thenCompose(schemaId -> {
                           if (schemaId == null) {
                               return CompletableFuture.completedFuture(Collections.emptyList());

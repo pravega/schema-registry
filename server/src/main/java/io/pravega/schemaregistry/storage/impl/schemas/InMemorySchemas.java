@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.storage.impl.schemas;
 
+import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
 import lombok.Data;
@@ -23,7 +24,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaFingerprintKey;
@@ -43,12 +43,12 @@ public class InMemorySchemas implements Schemas<Integer> {
 
     @Synchronized
     @Override
-    public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, BigInteger fingerprint, Predicate<SchemaInfo> equality, 
-                                             String nameSpace, String group) {
+    public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
         String namespace = nameSpace == null ? "" : nameSpace;
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
-        String schemaId = fingerprintValue == null ? null : findSchemaId(fingerprintValue, equality);
+        String schemaId = fingerprintValue == null ? null : findSchemaId(schemaInfo, fingerprintValue);
 
         // add schema and fingerprint
         if (schemaId == null) {
@@ -86,24 +86,26 @@ public class InMemorySchemas implements Schemas<Integer> {
     }
 
     @Synchronized
-    private String findSchemaId(Value fingerprintValue, Predicate<SchemaInfo> equality) {
+    private String findSchemaId(SchemaInfo schemaInfo, Value fingerprintValue) {
         String schemaId;
         SchemaIdList list = (SchemaIdList) fingerprintValue.getValue();
         schemaId = list.getSchemaIds().stream().filter(x -> {
             SchemaIdKey schemaIdKey = new SchemaIdKey(x);
             SchemaInfo schema = ((SchemaRecord) schemas.get(schemaIdKey).getValue()).getSchemaInfo();
-            return equality.test(schema);
+            return schema.getType().equals(schemaInfo.getType())
+                    && schema.getSerializationFormat().equals(schemaInfo.getSerializationFormat());
         }).findAny().orElse(null);
         return schemaId;
     }
 
     @Synchronized
     @Override
-    public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, BigInteger fingerprint, Predicate<SchemaInfo> equality) {
+    public CompletableFuture<List<String>> getGroupsUsing(String nameSpace, SchemaInfo schemaInfo) {
         String namespace = nameSpace == null ? "" : nameSpace;
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         SchemaFingerprintKey fingerprintKey = new SchemaFingerprintKey(fingerprint);
         Value fingerprintValue = schemas.get(fingerprintKey);
-        String schemaId = fingerprintValue == null ? null : findSchemaId(fingerprintValue, equality);
+        String schemaId = fingerprintValue == null ? null : findSchemaId(schemaInfo, fingerprintValue);
         if (schemaId == null) {
             return CompletableFuture.completedFuture(Collections.emptyList());
         } else {
