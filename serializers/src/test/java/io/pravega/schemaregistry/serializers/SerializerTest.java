@@ -33,6 +33,7 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.ArgumentMatchers.eq;
@@ -98,5 +99,42 @@ public class SerializerTest {
         serializedJson.position(0);
         jsonString = jsonStringDeserializer.deserialize(serializedJson);
         assertNotNull(jsonString);
+    }
+    
+    @Test
+    public void testDeserializer() {
+        SchemaRegistryClient client = mock(SchemaRegistryClient.class);
+        doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
+                .when(client).getGroupProperties(anyString());
+        VersionInfo versionInfo = new VersionInfo("proto", 0, 0);
+        ProtobufSchema<ProtobufTest.Message2> schema = ProtobufSchema.of(ProtobufTest.Message2.class);
+
+        doAnswer(x -> versionInfo).when(client).getVersionForSchema(anyString(), eq(schema.getSchemaInfo()));
+        doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), eq(versionInfo), any());
+        doAnswer(x -> new EncodingInfo(versionInfo, schema.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
+        doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
+
+        SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
+
+        Serializer<ProtobufTest.Message2> serializer = SerializerFactory.protobufSerializer(config, schema);
+        ProtobufTest.Message2 message = ProtobufTest.Message2.newBuilder().setName("name").setField1(1).build();
+        ByteBuffer serializedProto = serializer.serialize(message);
+        
+        Serializer<ProtobufTest.Message2> deserializer = SerializerFactory.protobufDeserializer(config, schema);
+
+        // with array backed buffer with non zero array offset
+        byte[] b = new byte[serializedProto.remaining() + 100];
+
+        int remaining = serializedProto.remaining();
+        serializedProto.get(b, 10, remaining);
+        ByteBuffer buf = ByteBuffer.wrap(b, 10, remaining).slice();
+        ProtobufTest.Message2 deserialized = deserializer.deserialize(buf);
+        assertEquals(deserialized, message);
+
+        serializedProto.rewind();
+        ByteBuffer buffer = ByteBuffer.allocateDirect(remaining);
+        buffer.put(serializedProto);
+        deserialized = deserializer.deserialize(buf);
+        assertEquals(deserialized, message);
     }
 }

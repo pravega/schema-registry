@@ -82,7 +82,7 @@ public abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
         if (this.encodeHeader) {
             ByteBuffer decoded;
             if (skipHeaders) {
-                data.position(start + HEADER_SIZE);
+                data.position(HEADER_SIZE);
                 decoded = data;
                 writerSchema = null;
             } else {
@@ -93,8 +93,17 @@ public abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
                 decoded = decoders.decode(encodingInfo.getCodecType(), data);
             }
 
-            inputStream = new ByteArrayInputStream(decoded.array(), 
-                    decoded.arrayOffset() + decoded.position(), decoded.remaining());
+            byte[] b;
+            if (decoded.hasArray()) {
+                b = decoded.array();
+                start = decoded.arrayOffset() + decoded.position();
+            } else {
+                b = new byte[decoded.remaining()];
+                decoded.get(b);
+                start = decoded.position();
+            }
+
+            inputStream = new ByteArrayInputStream(b, start, decoded.remaining());
             // pass writer schema for schema to be read into
             readerSchema = schemaInfo == null ? writerSchema : schemaInfo;
         } else {
