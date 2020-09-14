@@ -12,6 +12,7 @@ import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
  *
  */
 
+apply plugin: 'org.ajoberstar.grgit'
 
 // Apply the java plugin to add support for Java
 buildscript {
@@ -33,12 +34,6 @@ buildscript {
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
     }
 }
-
-plugins {
-    id 'maven-publish'
-}
-
-apply plugin: 'org.ajoberstar.grgit'
 
 allprojects {
     apply plugin: 'idea'
@@ -112,6 +107,7 @@ allprojects {
     }
     version = getProjectVersion()
     group = "io.pravega.schemaregistry"
+
     configurations.all {
         resolutionStrategy {
             force "com.google.guava:guava:" + guavaVersion
@@ -243,8 +239,8 @@ project('serializers:shared') {
 }
 
 project('serializers:avro') {
+    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    //apply plugin: 'maven'
     dependencies {
         compile project(':serializers:shared')
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
@@ -274,7 +270,7 @@ project('serializers:avro') {
     }
     
     tasks.build.dependsOn tasks.shadowJar
-
+    artifacts { archives shadowJar }
     javadoc {
         title = "Serializers avro"
         dependsOn delombok
@@ -283,12 +279,12 @@ project('serializers:avro') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-    
 }
 
 project('serializers:protobuf') {
+    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    //apply plugin: 'maven'
+    
     dependencies {
         compile project(':serializers:shared')
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
@@ -319,7 +315,7 @@ project('serializers:protobuf') {
     }
 
     tasks.build.dependsOn tasks.shadowJar
-
+    artifacts { archives shadowJar }
     javadoc {
         title = "Serializers protobuf"
         dependsOn delombok
@@ -328,12 +324,11 @@ project('serializers:protobuf') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-    
 }
 
 project('serializers:json') {
+    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    //apply plugin: 'maven'
     dependencies {
         compile project(':serializers:shared')
         compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
@@ -363,7 +358,7 @@ project('serializers:json') {
         classifier ='all'
         mergeServiceFiles()
     }
-
+    artifacts { archives shadowJar }
     tasks.build.dependsOn tasks.shadowJar
 
     javadoc {
@@ -374,12 +369,12 @@ project('serializers:json') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-    
 }
 
 project('serializers') {
+    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    //apply plugin: 'maven'
+    
     dependencies {
         compile project(':serializers:avro')
         compile project(':serializers:protobuf')
@@ -417,7 +412,7 @@ project('serializers') {
     }
     
     tasks.build.dependsOn tasks.shadowJar
-
+    artifacts { archives shadowJar }
     javadoc {
         title = "Serializers"
         dependsOn delombok
@@ -426,7 +421,6 @@ project('serializers') {
         exclude "**/impl/**";
         options.addBooleanOption("Xdoclint:all,-reference", true)
     }
-    
 }
 
 project('server') {

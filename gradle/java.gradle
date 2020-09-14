@@ -48,11 +48,6 @@ plugins.withId('java') {
         from generateJavadoc
     }
     artifacts { archives javadocJar }
-    
-    task allJar(type: Jar){
-        classifier = 'all'
-    }
-    artifacts { archives allJar }
 
     task testJar(type: Jar) {
         classifier = 'tests'
