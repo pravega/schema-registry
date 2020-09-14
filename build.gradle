@@ -239,7 +239,6 @@ project('serializers:shared') {
 }
 
 project('serializers:avro') {
-    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:shared')
@@ -251,6 +250,7 @@ project('serializers:avro') {
     }
 
     shadowJar {
+        // Add zip64=true so that we are able to pack more than 65k files in the jar.
         zip64 true
         relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
         relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
@@ -282,9 +282,7 @@ project('serializers:avro') {
 }
 
 project('serializers:protobuf') {
-    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    
     dependencies {
         compile project(':serializers:shared')
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
@@ -327,7 +325,6 @@ project('serializers:protobuf') {
 }
 
 project('serializers:json') {
-    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:shared')
@@ -372,9 +369,7 @@ project('serializers:json') {
 }
 
 project('serializers') {
-    apply plugin: 'java'
     apply plugin: 'com.github.johnrengelman.shadow'
-    
     dependencies {
         compile project(':serializers:avro')
         compile project(':serializers:protobuf')
@@ -563,8 +558,6 @@ distributions {
     serializers {
         baseName = "schema-registry-serializers"
         contents {
-            //from shadowJar
-            from { project(":serializers").configurations.shadow }
             from { project(":serializers").configurations.runtime }
             from { project(":serializers").configurations.runtime.allArtifacts.files }
             from 'LICENSE'
