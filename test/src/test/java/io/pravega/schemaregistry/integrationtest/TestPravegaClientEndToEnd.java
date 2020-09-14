@@ -1422,7 +1422,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         table.get("k", key1).join();
     }
 
-    class KVSerializer<T extends GeneratedMessageV3> implements Serializer<T> {
+    private static class KVSerializer<T extends GeneratedMessageV3> implements Serializer<T> {
         Serializer<T> serializer;
         Serializer<T> deserializer;
 

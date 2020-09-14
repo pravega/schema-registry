@@ -80,32 +80,32 @@ public abstract class AbstractDeserializer<T> extends BaseDeserializer<T> {
         SchemaInfo writerSchema;
         SchemaInfo readerSchema;
         if (this.encodeHeader) {
-            ByteBuffer decoded;
+            ByteBuffer decodedBytes;
             if (skipHeaders) {
                 data.position(HEADER_SIZE);
-                decoded = data;
+                decodedBytes = data;
                 writerSchema = null;
             } else {
                 byte protocol = data.get();
                 EncodingId encodingId = new EncodingId(data.getInt());
                 EncodingInfo encodingInfo = encodingCache.getGroupEncodingInfo(encodingId);
                 writerSchema = encodingInfo.getSchemaInfo();
-                decoded = decoders.decode(encodingInfo.getCodecType(), data);
+                decodedBytes = decoders.decode(encodingInfo.getCodecType(), data);
             }
 
             byte[] b;
-            if (decoded.hasArray()) {
-                b = decoded.array();
-                start = decoded.arrayOffset() + decoded.position();
+            if (decodedBytes.hasArray()) {
+                b = decodedBytes.array();
+                start = decodedBytes.arrayOffset() + decodedBytes.position();
             } else {
-                b = new byte[decoded.remaining()];
-                decoded.get(b);
-                start = decoded.position();
+                b = new byte[decodedBytes.remaining()];
+                decodedBytes.get(b);
+                start = decodedBytes.position();
             }
 
-            inputStream = new ByteArrayInputStream(b, start, decoded.remaining());
+            inputStream = new ByteArrayInputStream(b, start, decodedBytes.remaining());
             // pass writer schema for schema to be read into
-            readerSchema = schemaInfo == null ? writerSchema : schemaInfo;
+            readerSchema = schemaInfo != null ? schemaInfo : writerSchema;
         } else {
             byte[] b;
             if (data.hasArray()) {
