@@ -75,8 +75,9 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
         io.pravega.schemaregistry.contract.data.Compatibility decoded;
-        if(compatibility.getPolicy() == null)
+        if (compatibility.getPolicy() == null) {
             throw new IllegalArgumentException("Unknown compatibility type");
+        }
         switch (compatibility.getPolicy()) {
             case ALLOWANY:
                 decoded = io.pravega.schemaregistry.contract.data.Compatibility.allowAny();
