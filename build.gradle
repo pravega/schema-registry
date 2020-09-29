@@ -252,7 +252,6 @@ project('serializers:avro') {
     shadowJar {
         // Add zip64=true so that we are able to pack more than 65k files in the jar.
         zip64 true
-        relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
         relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
         relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
         relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
@@ -295,7 +294,6 @@ project('serializers:protobuf') {
 
     shadowJar {
         zip64 true
-        relocate 'com.google.protobuf' , 'io.pravega.schemaregistry.shaded.com.google.protobuf'
         relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
         relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
         relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
@@ -338,8 +336,6 @@ project('serializers:json') {
 
     shadowJar {
         zip64 true
-        relocate 'com.github.everit-org.json-schema' , 'io.pravega.schemaregistry.shaded.com.github.everit-org.json-schema'
-        relocate 'com.fasterxml.jackson.module' , 'io.pravega.schemaregistry.shaded.com.fasterxml.jackson.module'
         relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
         relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
         relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
@@ -386,10 +382,6 @@ project('serializers') {
     
     shadowJar {
         zip64 true
-        relocate 'com.google.protobuf' , 'io.pravega.schemaregistry.shaded.com.google.protobuf'
-        relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
-        relocate 'com.github.everit-org.json-schema' , 'io.pravega.schemaregistry.shaded.com.github.everit-org.json-schema'
-        relocate 'com.fasterxml.jackson.module' , 'io.pravega.schemaregistry.shaded.com.fasterxml.jackson.module'
         relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
         relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
         relocate 'org.glassfish.jersey.core' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.core'
