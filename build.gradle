@@ -106,7 +106,7 @@ allprojects {
         }
     }
     version = getProjectVersion()
-    group = "io.pravega.schemaregistry"
+    group = "io.pravega"
 
     configurations.all {
         resolutionStrategy {
