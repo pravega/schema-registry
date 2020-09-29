@@ -83,7 +83,7 @@ plugins.withId('maven') {
     install {
         repositories {
             mavenInstaller {
-                pom.artifactId = project.path.replaceFirst(':', '').replace(':', '-')
+                pom.artifactId = 'schemaregistry-' + project.path.replaceFirst(':', '').replace(':', '-')
             }
         }
     }
