@@ -24,6 +24,7 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.common.FuturesUtility;
+import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.common.NameUtil;
 import io.pravega.schemaregistry.contract.data.BackwardAndForward;
 import io.pravega.schemaregistry.contract.data.CodecType;
@@ -53,6 +54,7 @@ import org.json.JSONTokener;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.AbstractMap;
 import java.util.Collections;
@@ -267,22 +269,25 @@ public class SchemaRegistryService {
         // 2. get checker for serialization format.
         // validate schema against group compatibility policy on schema
         // 3. conditionally update the schema
-        return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
-                                         .thenCompose(etag ->
-                                                 store.getGroupProperties(namespace, group)
-                                                      .thenCompose(prop -> {
-                                                          return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, schema),
-                                                                  e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
-                                                                  () -> { // Schema doesnt exist. Validate and add it
-                                                                      return validateSchema(namespace, group, schema, prop.getCompatibility())
-                                                                              .thenCompose(valid -> {
-                                                                                  if (!valid) {
-                                                                                      throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
-                                                                                  }
-                                                                                  return store.addSchema(namespace, group, schema, prop, etag);
-                                                                              });
-                                                                  });
-                                                      })), executor)
+        return RETRY.runAsync(() ->
+                store.getGroupEtag(namespace, group)
+                     .thenCompose(etag ->
+                             store.getGroupProperties(namespace, group)
+                                  .thenCompose(prop -> {
+                                      return Futures.exceptionallyComposeExpecting(store.getSchemaVersion(namespace, group, schema, getFingerprint(schema)),
+                                              e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException,
+                                              () -> { // Schema doesnt exist. Validate and add it
+                                                  return validateSchema(namespace, group, schema, prop.getCompatibility())
+                                                          .thenCompose(valid -> {
+                                                              if (!valid) {
+                                                                  throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
+                                                              }
+                                                              // we will compute the fingerprint from normalized form.
+                                                              return store.addSchema(namespace, group, schemaInfo, schema,
+                                                                      getFingerprint(schema), prop, etag);
+                                                          });
+                                              });
+                                  })), executor)
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.debug("Group {} {}, schema {} added successfully.", namespace, group, schema.getType());
@@ -491,7 +496,7 @@ public class SchemaRegistryService {
         log.debug("Group {} {}, getSchemaVersion for {}.", namespace, group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
-        return store.getSchemaVersion(namespace, group, schema)
+        return store.getSchemaVersion(namespace, group, schema, getFingerprint(schema))
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.debug("Group {} {}, version = {}.", namespace, group, r);
@@ -751,7 +756,7 @@ public class SchemaRegistryService {
         CompatibilityChecker checker = CompatibilityCheckerFactory.getCompatibilityChecker(schema.getSerializationFormat());
 
         // Verify that the type matches the type in schemas it will be validated against.
-        if (!schemasWithVersion.stream().allMatch(x -> x.getSchemaInfo().getType().equals(schema.getType()))) {
+        if (!groupProperties.isAllowMultipleTypes() && !schemasWithVersion.stream().allMatch(x -> x.getSchemaInfo().getType().equals(schema.getType()))) {
             return false;
         }
         switch (groupProperties.getCompatibility().getType()) {
@@ -854,7 +859,8 @@ public class SchemaRegistryService {
                     // in alphabetical order. This ensures that identical schemas with different order of fields are 
                     // treated to be equal. 
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
-                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(jsonNode).getBytes(Charsets.UTF_8));
+                    Object obj = OBJECT_MAPPER.treeToValue(jsonNode, Object.class);
+                    schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(obj).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
@@ -967,11 +973,15 @@ public class SchemaRegistryService {
         return store.getGroupsUsing(namespace, schema)
                     .thenCompose(groups -> Futures.allOfWithResults(
                             groups.stream().collect(Collectors.toMap(x -> x, x ->
-                                    Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, schema),
+                                    Futures.exceptionallyExpecting(store.getSchemaVersion(namespace, x, schema, getFingerprint(schema)),
                                             e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException, EMPTY_VERSION))))
                                                   .thenApply(result -> {
                                                       return result.entrySet().stream().filter(x -> !x.getValue().equals(EMPTY_VERSION))
                                                                    .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
                                                   }));
+    }
+
+    private BigInteger getFingerprint(SchemaInfo schemaInfo) {
+        return HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
     }
 }

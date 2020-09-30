@@ -76,6 +76,5 @@ tls:
   ## tls is enabled
   secret:
   certFile:
-  trustStore:
   keyFile:
   keyPasswordFile:

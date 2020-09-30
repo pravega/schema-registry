@@ -13,9 +13,9 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.Unpooled;
 import io.pravega.auth.AuthenticationException;
+import io.pravega.client.connection.impl.ConnectionPoolImpl;
+import io.pravega.client.connection.impl.RawClient;
 import io.pravega.client.control.impl.ModelHelper;
-import io.pravega.client.netty.impl.ConnectionFactory;
-import io.pravega.client.netty.impl.RawClient;
 import io.pravega.client.stream.impl.ConnectionClosedException;
 import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.IteratorState;
@@ -79,10 +79,10 @@ public class WireCommandClient implements AutoCloseable {
 
     @Getter(AccessLevel.PACKAGE)
     private final HostStore hostStore;
-    private final ConnectionFactory connectionFactory;
+    private final ConnectionPoolImpl connectionPool;
 
-    WireCommandClient(final ConnectionFactory clientCF, HostStore hostStore) {
-        this.connectionFactory = clientCF;
+    WireCommandClient(final ConnectionPoolImpl connectionPool, HostStore hostStore) {
+        this.connectionPool = connectionPool;
         this.hostStore = hostStore;
     }
 
@@ -105,7 +105,7 @@ public class WireCommandClient implements AutoCloseable {
                 .thenCompose(uri -> {
                     final WireCommandType type = WireCommandType.CREATE_TABLE_SEGMENT;
 
-                    RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+                    RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
                     final long requestId = connection.getFlow().asLong();
 
                     return sendRequest(connection, requestId, new WireCommands.CreateTableSegment(requestId, tableName, false, delegationToken))
@@ -130,7 +130,7 @@ public class WireCommandClient implements AutoCloseable {
                 .thenCompose(uri -> {
                     final WireCommandType type = WireCommandType.DELETE_TABLE_SEGMENT;
 
-                    RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+                    RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
                     final long requestId = connection.getFlow().asLong();
 
                     return sendRequest(connection, requestId, new WireCommands.DeleteTableSegment(requestId, tableName, mustBeEmpty, delegationToken))
@@ -160,7 +160,7 @@ public class WireCommandClient implements AutoCloseable {
                 return new AbstractMap.SimpleImmutableEntry<>(key, value);
             }).collect(Collectors.toList());
 
-            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
             final long requestId = connection.getFlow().asLong();
             WireCommands.UpdateTableEntries request = new WireCommands.UpdateTableEntries(requestId, tableName, delegationToken,
                     new WireCommands.TableEntries(wireCommandEntries), WireCommands.NULL_TABLE_SEGMENT_OFFSET);
@@ -194,7 +194,7 @@ public class WireCommandClient implements AutoCloseable {
             final WireCommandType type = WireCommandType.REMOVE_TABLE_KEYS;
             List<WireCommands.TableKey> keyList = keys.stream().map(this::convertToWireCommand).collect(Collectors.toList());
 
-            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
             final long requestId = connection.getFlow().asLong();
 
             WireCommands.RemoveTableKeys request = new WireCommands.RemoveTableKeys(
@@ -226,7 +226,7 @@ public class WireCommandClient implements AutoCloseable {
                     .stream().map(k -> new WireCommands.TableKey(k.getKey(), k.getVersion().getSegmentVersion()))
                     .collect(Collectors.toList());
 
-            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
             final long requestId = connection.getFlow().asLong();
 
             WireCommands.ReadTable request = new WireCommands.ReadTable(requestId, tableName, delegationToken, keyList);
@@ -257,7 +257,7 @@ public class WireCommandClient implements AutoCloseable {
 
         return getTableUri(tableName).thenCompose(uri -> {
             final WireCommandType type = WireCommandType.READ_TABLE_KEYS;
-            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
             final long requestId = connection.getFlow().asLong();
 
             final IteratorStateImpl token = (state == null) ? IteratorStateImpl.EMPTY : state;
@@ -294,7 +294,7 @@ public class WireCommandClient implements AutoCloseable {
 
         return getTableUri(tableName).thenCompose(uri -> {
             final WireCommandType type = WireCommandType.READ_TABLE_ENTRIES;
-            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionFactory);
+            RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
             final long requestId = connection.getFlow().asLong();
 
             final IteratorStateImpl token = (state == null) ? IteratorStateImpl.EMPTY : state;

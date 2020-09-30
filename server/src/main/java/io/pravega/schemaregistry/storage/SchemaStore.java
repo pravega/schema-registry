@@ -22,6 +22,7 @@ import io.pravega.schemaregistry.contract.data.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.data.VersionInfo;
 
 import javax.annotation.Nullable;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
@@ -235,11 +236,15 @@ public interface SchemaStore {
      * @param namespace namespace 
      * @param group group 
      * @param schemaInfo schema to add
+     * @param normalized normalized form of schema to add.
+     * @param fingerprint 256 bit sha hash of schema binary. 
+     *                    Two schema binary representation will be considered identical if their fingerprints match.
      * @param prop group properties applied at the time of schema addition.
      * @param etag entity tag for the group. 
      * @return Completablefuture that holds version info for the schema that is added.  
      */
-    CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo, GroupProperties prop, Etag etag);
+    CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo, SchemaInfo normalized,
+                                             BigInteger fingerprint, GroupProperties prop, Etag etag);
 
     /**
      * Get the version corresponding to the schema.  
@@ -247,9 +252,11 @@ public interface SchemaStore {
      * @param namespace namespace 
      * @param group group 
      * @param schemaInfo schemainfo
+     * @param fingerprint 256 bit sha hash of schema binary. 
+     *                    Two schema binary representation will be considered identical if their fingerprints match.
      * @return Completablefuture that holds versioninfo for the schema. 
      */
-    CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo);
+    CompletableFuture<VersionInfo> getSchemaVersion(String namespace, String group, SchemaInfo schemaInfo, BigInteger fingerprint);
 
     /**
      * Get the encoding id corresponding to versioninfo and codectype. It returns Etag for the group if the encoding id

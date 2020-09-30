@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.storage.impl.group;
 
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.common.Either;
+import io.pravega.schemaregistry.common.HashUtil;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
 import io.pravega.schemaregistry.contract.data.EncodingId;
@@ -29,6 +30,7 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
@@ -111,9 +113,9 @@ public class GroupTest {
                 ImmutableMap.of());
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
-        inMemoryGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo1, HashUtil.getFingerprint(schemaInfo1.getSchemaData().array()), groupProperties, eTag).join();
         schemaWithVersionList = inMemoryGroup.getLatestSchemas().join();
         assertEquals(2, schemaWithVersionList.size());
         assertEquals(anygroup, schemaWithVersionList.get(0).getSchemaInfo().getType());
@@ -132,7 +134,7 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         List<TableRecords.TableValue> tableValueListEtag = inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.Etag).map(
                 x -> x.getValue().getValue()).collect(
@@ -189,9 +191,9 @@ public class GroupTest {
                 ImmutableMap.of());
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
-        inMemoryGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo1, HashUtil.getFingerprint(schemaInfo1.getSchemaData().array()), groupProperties, eTag).join();
         List<SchemaWithVersion> schemaWithVersionListWithToken = inMemoryGroup.getSchemas().join();
         assertEquals(2, schemaWithVersionListWithToken.size());
         assertEquals(SerializationFormat.Custom,
@@ -236,11 +238,11 @@ public class GroupTest {
                 ImmutableMap.of());
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
-        inMemoryGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
-        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo1).join();
+        inMemoryGroup.addSchema(schemaInfo1, HashUtil.getFingerprint(schemaInfo1.getSchemaData().array()), groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array())).join();
+        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo1, HashUtil.getFingerprint(schemaInfo1.getSchemaData().array())).join();
         List<TableRecords.TableValue> tableValueListVersionInfo =
                 inMemoryGroupTable.getTable().entrySet().stream().filter(
                 x -> x.getKey() instanceof TableRecords.SchemaIdKey).map(
@@ -278,8 +280,9 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
         inMemoryGroup.addCodecType(new CodecType("gzip")).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         EncodingId encodingId = inMemoryGroup.createEncodingId(versionInfo, "gzip", eTag).join();
@@ -288,8 +291,9 @@ public class GroupTest {
         schemaData = new byte[5];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
+        versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         EncodingId encodingId1 = inMemoryGroup.createEncodingId(versionInfo, "snappy", eTag).join();
         List<TableRecords.TableValue> encodingInfoRecordList = inMemoryGroupTable.getTable().entrySet().stream().filter(
@@ -316,8 +320,9 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
         inMemoryGroup.addCodecType(new CodecType("gzip")).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         EncodingId encodingId = inMemoryGroup.createEncodingId(versionInfo, "gzip", eTag).join();
@@ -343,8 +348,9 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
         schemaWithVersion = inMemoryGroup.getLatestSchemaVersion().join();
         assertEquals(versionInfo, schemaWithVersion.getVersionInfo());
         assertEquals(anygroup, schemaWithVersion.getSchemaInfo().getType());
@@ -354,8 +360,9 @@ public class GroupTest {
         schemaData = new byte[5];
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo1, groupProperties, eTag).join();
-        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo1).join();
+        BigInteger fingerprint1 = HashUtil.getFingerprint(schemaInfo1.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo1, fingerprint1, groupProperties, eTag).join();
+        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo1, fingerprint1).join();
         // null
         schemaWithVersion = inMemoryGroup.getLatestSchemaVersion("anygroup2").join();
         assertNull(schemaWithVersion);
@@ -406,12 +413,12 @@ public class GroupTest {
         byte[] schemaData = new byte[3];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         schemaData = new byte[5];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         List<GroupHistoryRecord> groupHistoryRecords = inMemoryGroup.getHistory().join();
         assertEquals(2, groupHistoryRecords.size());
         assertEquals(anygroup, groupHistoryRecords.get(0).getSchemaInfo().getType());
@@ -421,7 +428,7 @@ public class GroupTest {
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Avro, ByteBuffer.wrap(schemaData1),
                 ImmutableMap.of());
         eTag = inMemoryGroup.getCurrentEtag().join();
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         groupHistoryRecords = inMemoryGroup.getHistory(anygroup1).join();
         assertEquals(2, groupHistoryRecords.size());
         assertTrue(Arrays.equals(ByteBuffer.wrap(schemaData).array(),
@@ -471,8 +478,8 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array())).join();
         inMemoryGroup.addCodecType(new CodecType("gzip")).join();
         Either<EncodingId, Etag> idEtagEither = inMemoryGroup.getEncodingId(versionInfo, "gzip").join();
         assertTrue(idEtagEither.isRight());
@@ -484,8 +491,8 @@ public class GroupTest {
         schemaData = new byte[5];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag);
-        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag);
+        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array())).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         EncodingId encodingId1 = inMemoryGroup.createEncodingId(versionInfo1, "snappy", eTag).join();
         idEtagEither = inMemoryGroup.getEncodingId(versionInfo, "gzip").join();
@@ -508,13 +515,13 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         schemaData = new byte[5];
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag);
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag);
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array())).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         inMemoryGroup.deleteSchema(versionInfo.getId(), eTag).join();
         List<TableRecords.TableValue> deletedOrdinalList = inMemoryGroupTable.getTable().entrySet().stream().filter(
@@ -542,8 +549,9 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
         SchemaInfo schemaInfo1 = inMemoryGroup.getSchema(versionInfo.getId()).join();
         assertEquals(schemaInfo, schemaInfo1);
         List<TableRecords.TableValue> schemaRecordValues = inMemoryGroupTable.getTable().entrySet().stream().filter(
@@ -569,8 +577,9 @@ public class GroupTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, groupProperties, eTag).join();
-        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo).join();
+        BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
+        inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
+        VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
         SchemaInfo schemaInfo1 = inMemoryGroup.getSchema(versionInfo.getType(), versionInfo.getVersion()).join();
         assertEquals(schemaInfo, schemaInfo1);
         // testing with 2 schemas
@@ -578,8 +587,8 @@ public class GroupTest {
         schemaData = new byte[5];
         SchemaInfo schemaInfo2 = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo2, groupProperties, eTag);
-        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo2).join();
+        inMemoryGroup.addSchema(schemaInfo2, HashUtil.getFingerprint(schemaInfo2.getSchemaData().array()), groupProperties, eTag);
+        VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo2, HashUtil.getFingerprint(schemaInfo2.getSchemaData().array())).join();
         SchemaInfo schemaInfo3 = inMemoryGroup.getSchema(versionInfo1.getType(), versionInfo1.getVersion()).join();
         assertEquals(schemaInfo2, schemaInfo3);
         // testing with incorrect input data - getVersionOrdianal will fail

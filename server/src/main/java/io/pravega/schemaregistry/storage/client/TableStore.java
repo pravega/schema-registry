@@ -17,7 +17,8 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.util.ReferenceCountUtil;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.netty.impl.ConnectionFactoryImpl;
+import io.pravega.client.connection.impl.ConnectionPoolImpl;
+import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
 import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.impl.IteratorStateImpl;
 import io.pravega.client.tables.impl.TableSegmentEntry;
@@ -86,8 +87,8 @@ public class TableStore extends AbstractService {
     private final Cache<String, String> tokenCache;
 
     public TableStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
-        this(new WireCommandClient(new ConnectionFactoryImpl(clientConfig), new HostStore(clientConfig, executor)), 
-                executor);
+        this(new WireCommandClient(new ConnectionPoolImpl(clientConfig, new SocketConnectionFactoryImpl(clientConfig)), 
+                        new HostStore(clientConfig, executor)), executor);
     }
     
     TableStore(WireCommandClient wireCommandClient, ScheduledExecutorService executor) {

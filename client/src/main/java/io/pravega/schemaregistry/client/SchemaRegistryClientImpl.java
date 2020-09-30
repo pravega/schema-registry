@@ -10,8 +10,10 @@
 package io.pravega.schemaregistry.client;
 
 import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
+import io.pravega.common.util.CertificateUtils;
 import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
 import io.pravega.schemaregistry.contract.data.CodecType;
@@ -34,15 +36,25 @@ import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
+import lombok.SneakyThrows;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.proxy.WebResourceFactory;
 
 import javax.annotation.Nullable;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManagerFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.security.KeyManagementException;
+import java.security.KeyStore;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.CertificateException;
 import java.util.AbstractMap;
 import java.util.Collection;
 import java.util.Comparator;
@@ -70,6 +82,8 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             .withExpBackoff(100, 2, 10, 1000)
             .retryWhen(x -> Exceptions.unwrap(x) instanceof ConnectionException);
     private static final int GROUP_LIMIT = 100;
+    private static final String HTTPS = "https";
+    private static final String TLS = "TLS";
 
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
@@ -77,7 +91,17 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private final Client client;
     
     SchemaRegistryClientImpl(SchemaRegistryClientConfig config, String namespace) {
-        client = ClientBuilder.newClient(new ClientConfig());
+        Preconditions.checkNotNull(config);
+        Preconditions.checkNotNull(config.getSchemaRegistryUri());
+        ClientBuilder clientBuilder = ClientBuilder.newBuilder().withConfig(new ClientConfig());
+        if (HTTPS.equalsIgnoreCase(config.getSchemaRegistryUri().getScheme())) {
+            clientBuilder = clientBuilder.sslContext(getSSLContext(config));
+            if (!config.isValidateHostName()) {
+                // host name verification is done by default. To disable it we will add an always true verifier
+                clientBuilder.hostnameVerifier((a, b) -> true);
+            } 
+        } 
+        client = clientBuilder.build();
         if (config.isAuthEnabled()) {
             client.register((ClientRequestFilter) context -> {
                 context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
@@ -485,5 +509,45 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
         if (client != null) {
             client.close();
         }
+    }
+
+    @SneakyThrows(IOException.class)
+    private SSLContext getSSLContext(SchemaRegistryClientConfig config) {
+        try {
+            // If trust store is specified, use it. 
+            // Else check if certificate is provided. 
+            // Else use default SSL context.
+            KeyStore trustStore;
+            if (config.getTrustStore() != null) {
+                trustStore = getTrustStore(config);
+            } else if (config.getCertificate() != null) {
+                trustStore = CertificateUtils.createTrustStore(config.getCertificate());
+            } else {
+                return SSLContext.getDefault();
+            }
+            TrustManagerFactory factory = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm());
+            factory.init(trustStore);
+            SSLContext tlsContext = SSLContext.getInstance(TLS);
+            tlsContext.init(null, factory.getTrustManagers(), null);
+            return tlsContext;
+        } catch (KeyManagementException | KeyStoreException | NoSuchAlgorithmException |
+                CertificateException e) {
+            throw new IllegalStateException("Failure initializing trust store", e);
+        } 
+    }
+
+    private KeyStore getTrustStore(SchemaRegistryClientConfig config) throws KeyStoreException, 
+            IOException, NoSuchAlgorithmException, CertificateException {
+        KeyStore trustStore;
+        trustStore = KeyStore.getInstance(config.getTrustStoreType());
+        try (FileInputStream fin = new FileInputStream(config.getTrustStore())) {
+            String trustStorePassword = config.getTrustStorePassword();
+            if (trustStorePassword != null) {
+                trustStore.load(fin, trustStorePassword.toCharArray());
+            } else {
+                trustStore.load(fin, null);
+            }
+        }
+        return trustStore;
     }
 }
