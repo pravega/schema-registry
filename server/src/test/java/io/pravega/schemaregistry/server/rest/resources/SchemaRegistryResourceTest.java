@@ -147,6 +147,13 @@ public class SchemaRegistryResourceTest extends JerseyTest {
         response = target(GROUPS).request().async().post(
                 Entity.entity(createGroupRequest, MediaType.APPLICATION_JSON)).get();
         assertEquals(409, response.getStatus());
+        //IllegalArgumentException
+        doAnswer(x ->
+                Futures.failedFuture(new IllegalArgumentException())
+        ).when(service).createGroup(any(), anyString(), any());
+        response = target(GROUPS).request().async().post(
+                Entity.entity(createGroupRequest, MediaType.APPLICATION_JSON)).get();
+        assertEquals(400, response.getStatus());
         // Runtime Exception
         doAnswer(x ->
                 Futures.failedFuture(new RuntimeException())
