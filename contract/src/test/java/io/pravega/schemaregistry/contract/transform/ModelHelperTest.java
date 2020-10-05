@@ -235,7 +235,6 @@ public class ModelHelperTest {
         encoded = convert(ModelHelper.encode(compatibility), Compatibility.class);
         decoded = ModelHelper.decode(encoded);
         assertEquals(compatibility, decoded);
-        
     }
     
     private <T> T convert(T t, Class<T> tClass) throws IOException {
