@@ -10,8 +10,8 @@
 package io.pravega.schemaregistry.storage.client;
 
 import io.netty.buffer.Unpooled;
+import io.pravega.client.connection.impl.ConnectionPool;
 import io.pravega.client.control.impl.ControllerImpl;
-import io.pravega.client.netty.impl.ConnectionFactory;
 import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.IteratorState;
 import io.pravega.client.tables.impl.IteratorStateImpl;
@@ -50,7 +50,7 @@ public class WireCommandMock {
         final Object lock = new Object();
         final Map<String, Map<ByteBuffer, TableSegmentEntry>> mapOfTables = new HashMap<>();
         final Map<String, Map<ByteBuffer, Long>> mapOfTablesPosition = new HashMap<>();
-        WireCommandClient helper = spy(new WireCommandClient(mock(ConnectionFactory.class), mock(HostStore.class)));
+        WireCommandClient helper = spy(new WireCommandClient(mock(ConnectionPool.class), mock(HostStore.class)));
 
         HostStore hoststore = mock(HostStore.class);
         
@@ -287,7 +287,6 @@ public class WireCommandMock {
             }, executor);
         }).when(helper).readTableEntries(anyString(), anyInt(), any(), anyString());
         // endregion
-        
         
         return helper;
     }

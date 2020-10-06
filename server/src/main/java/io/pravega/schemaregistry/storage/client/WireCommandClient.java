@@ -13,7 +13,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.netty.buffer.Unpooled;
 import io.pravega.auth.AuthenticationException;
-import io.pravega.client.connection.impl.ConnectionPoolImpl;
+import io.pravega.client.connection.impl.ConnectionPool;
 import io.pravega.client.connection.impl.RawClient;
 import io.pravega.client.control.impl.ModelHelper;
 import io.pravega.client.stream.impl.ConnectionClosedException;
@@ -79,9 +79,9 @@ public class WireCommandClient implements AutoCloseable {
 
     @Getter(AccessLevel.PACKAGE)
     private final HostStore hostStore;
-    private final ConnectionPoolImpl connectionPool;
+    private final ConnectionPool connectionPool;
 
-    WireCommandClient(final ConnectionPoolImpl connectionPool, HostStore hostStore) {
+    WireCommandClient(final ConnectionPool connectionPool, HostStore hostStore) {
         this.connectionPool = connectionPool;
         this.hostStore = hostStore;
     }
