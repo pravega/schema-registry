@@ -14,6 +14,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.serializer.shared.codec.Encoder;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializer.shared.impl.AbstractSerializer;
+import org.apache.avro.Schema;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.generic.IndexedRecord;
 import org.apache.avro.io.BinaryEncoder;
@@ -26,7 +27,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 public class AvroSerializer<T> extends AbstractSerializer<T> {
-    private final org.apache.avro.Schema avroSchema;
     private final SpecificDatumWriter<T> specificDatumWriter;
     private final GenericDatumWriter<T> genericDatumWriter;
     private final ReflectDatumWriter<T> reflectDatumWriter;
@@ -34,7 +34,7 @@ public class AvroSerializer<T> extends AbstractSerializer<T> {
     public AvroSerializer(String groupId, SchemaRegistryClient client, AvroSchema<T> schema,
                    Encoder encoder, boolean registerSchema) {
         super(groupId, client, schema, encoder, registerSchema, true);
-        this.avroSchema = schema.getSchema();
+        Schema avroSchema = schema.getSchema();
         this.specificDatumWriter = new SpecificDatumWriter<>(avroSchema);
         this.genericDatumWriter = new GenericDatumWriter<>(avroSchema);
         this.reflectDatumWriter = new ReflectDatumWriter<>(avroSchema);
@@ -44,12 +44,10 @@ public class AvroSerializer<T> extends AbstractSerializer<T> {
     protected void serialize(T var, SchemaInfo schemaInfo, OutputStream outputStream) throws IOException {
         BinaryEncoder encoder = EncoderFactory.get().binaryEncoder(outputStream, null);
 
-        if (IndexedRecord.class.isAssignableFrom(var.getClass())) {
-            if (SpecificRecord.class.isAssignableFrom(var.getClass())) {
-                specificDatumWriter.write(var, encoder);
-            } else {
-                genericDatumWriter.write(var, encoder);
-            }
+        if (SpecificRecord.class.isAssignableFrom(var.getClass())) {
+            specificDatumWriter.write(var, encoder);
+        } else if (IndexedRecord.class.isAssignableFrom(var.getClass())) {
+            genericDatumWriter.write(var, encoder);
         } else {
             reflectDatumWriter.write(var, encoder);
         }
