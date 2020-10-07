@@ -27,6 +27,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo;
 import io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion;
 import io.pravega.schemaregistry.contract.generated.rest.model.SerializationFormat;
 import io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo;
+import io.pravega.test.common.AssertExtensions;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -97,6 +98,10 @@ public class ModelHelperTest {
 
         io.pravega.schemaregistry.contract.data.EncodingId encodingId = ModelHelper.decode(new EncodingId().encodingId(1));
         assertEquals(encodingId.getId(), 1);
+        
+        // to test the exception thrown for incorrect policy input
+        Compatibility compatibility1 = new Compatibility().policy(Compatibility.PolicyEnum.fromValue("None"));
+        AssertExtensions.assertThrows("An error should have been thrown", () -> ModelHelper.decode(compatibility1), e -> e instanceof IllegalArgumentException);
     }
 
     @Test
