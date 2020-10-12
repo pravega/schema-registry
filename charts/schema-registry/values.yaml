@@ -15,8 +15,8 @@
 replicas: 2
 
 image:
-  repository: pravega/schema-registry
-  tag: 0.0.1
+  repository: pravega/schemaregistry
+  tag: 0.1.0
   pullPolicy: IfNotPresent
 
 ## Service account name and whether to create it.
@@ -28,6 +28,24 @@ serviceAccount:
 service:
   type: LoadBalancer
   port: 9092
+
+initContainer: {}
+  # name:
+  # image:
+  #   repository:
+  #   tag:
+  #   pullPolicy: IfNotPresent
+  # command: []
+  # resources: {}
+  # volume:
+  #   name:
+  #   mountPath:
+
+container: {}
+  # command: []
+  # volume:
+  #   name:
+  #   mountPath:
 
 ## Ingress configuration.
 ingress:
