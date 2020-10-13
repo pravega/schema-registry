@@ -13,7 +13,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
-import io.pravega.controller.server.rpc.auth.PasswordAuthHandler;
+import io.pravega.controller.server.security.auth.handler.impl.PasswordAuthHandler;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 
