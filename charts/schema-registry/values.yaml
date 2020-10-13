@@ -30,7 +30,7 @@ service:
   port: 9092
 
 initContainer: {}
-  # name:
+  # name: ""
   # image:
   #   repository:
   #   tag:
@@ -38,14 +38,16 @@ initContainer: {}
   # command: []
   # resources: {}
   # volume:
-  #   name:
-  #   mountPath:
+  #   name: ""
+  #   mountPath: ""
 
 container: {}
-  # command:
+  ## just provide the command to be executed within the entrypoint
+  ## e.g. "cp /additional_libs/* /opt/someprogram/libs & ls /opt/someprogram/libs & sleep 10000"
+  # command: ""
   # volume:
-  #   name:
-  #   mountPath:
+  #   name: ""
+  #   mountPath: ""
 
 ## Ingress configuration.
 ingress:
