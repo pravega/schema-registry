@@ -42,7 +42,7 @@ initContainer: {}
   #   mountPath:
 
 container: {}
-  # command: []
+  # command:
   # volume:
   #   name:
   #   mountPath:
