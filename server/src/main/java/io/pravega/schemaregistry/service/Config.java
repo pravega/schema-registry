@@ -93,9 +93,9 @@ public final class Config {
 
     private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("security.auth.enable", false);
     private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("security.pwdAuthHandler.accountsDb.location", "");
-    private static final Property<String> PROPERTY_DOMAIN_RESOURCE_QUALIFIER = Property.named("security.auth.resource.qualifier.domain", "prn");
-    private static final Property<String> PROPERTY_NAMESPACE_RESOURCE_QUALIFIER = Property.named("security.auth.resource.qualifier.namespace", "namespace");
-    private static final Property<String> PROPERTY_GROUP_RESOURCE_QUALIFIER = Property.named("security.auth.resource.qualifier.group", "group");
+    private static final Property<String> PROPERTY_DOMAIN_RESOURCE_QUALIFIER = Property.named("security.auth.resource.identifier.domain", "prn");
+    private static final Property<String> PROPERTY_NAMESPACE_RESOURCE_QUALIFIER = Property.named("security.auth.resource.identifier.namespace", "namespace");
+    private static final Property<String> PROPERTY_GROUP_RESOURCE_QUALIFIER = Property.named("security.auth.resource.identifier.group", "group");
     private static final Property<Boolean> PROPERTY_DISABLE_BASIC_AUTHENTICATION = Property.named("security.auth.method.basic.disable", false);
 
     private static final String COMPONENT_CODE = "schemaRegistry";

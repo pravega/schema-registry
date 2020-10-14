@@ -32,7 +32,9 @@ data:
   "DISABLE_BASIC_AUTH": "{{ .Values.authentication.disableBasicAuthentication }}"
   {{- end }}
   {{- if .Values.authentication.authorizationResourceQualifier }}
-  "AUTHORIZATION_RESOURCE_QUALIFIER": "{{ .Values.authentication.authorizationResourceQualifier }}"
+  "AUTHORIZATION_DOMAIN_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authResourceDomain }}"
+  "AUTHORIZATION_NAMESPACE_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authResourceNamespace }}"
+  "AUTHORIZATION_GROUP_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authorizationResourceGroup }}"
   {{- end }}
   {{- if .Values.tls.enabled }}
   "TLS_CERT_FILE": "/etc/secret-volume/{{ .Values.tls.certFile }}"
