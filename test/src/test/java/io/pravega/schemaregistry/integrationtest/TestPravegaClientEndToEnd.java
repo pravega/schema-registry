@@ -283,9 +283,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
                 // read two events successfully
-                EventRead<Object> event = reader.readNextEvent(10000);
+                EventRead<Object> event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
 
                 reader.close();
@@ -311,10 +311,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
 
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 reader.close();
                 readerGroupManager.close();
@@ -426,10 +426,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<Object> event = reader.readNextEvent(10000);
+                EventRead<Object> event = reader.readNextEvent(10000L);
                 while (event.isCheckpoint() || event.getEvent() != null) {
                     Object e = event.getEvent();
-                    event = reader.readNextEvent(10000);
+                    event = reader.readNextEvent(10000L);
                 }
                 // endregion
 
@@ -492,10 +492,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Object> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
 
-                event = reader2.readNextEvent(10000);
+                event = reader2.readNextEvent(10000L);
                 while (event.isCheckpoint() || event.getEvent() != null) {
                     Object e = event.getEvent();
-                    event = reader2.readNextEvent(10000);
+                    event = reader2.readNextEvent(10000L);
                 }
                 // endregion
 
@@ -564,7 +564,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<TestClass> reader1 = clientFactory.createReader("r1", rg, deserializer1, ReaderConfig.builder().build());
 
-                EventRead<TestClass> event1 = reader1.readNextEvent(10000);
+                EventRead<TestClass> event1 = reader1.readNextEvent(10000L);
                 assertNotNull(event1.getEvent());
                 reader1.close();
                 // endregion
@@ -580,7 +580,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Object> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<Object> event = reader.readNextEvent(10000);
+                EventRead<Object> event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 reader.close();
                 // endregion
@@ -593,7 +593,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 reader = clientFactory.createReader("r1", rg2, deserializer, ReaderConfig.builder().build());
 
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 reader.close();
                 readerGroupManager.close();
@@ -649,7 +649,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Test1> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<Test1> event = reader.readNextEvent(10000);
+                EventRead<Test1> event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 assertEquals("test", event.getEvent().getName().toString());
                 assertEquals(1000, event.getEvent().getField1());
@@ -664,7 +664,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Object> event2 = reader2.readNextEvent(10000);
+                EventRead<Object> event2 = reader2.readNextEvent(10000L);
                 assertNotNull(event2.getEvent());
                 readerGroupManager.close();
                 // endregion
@@ -725,13 +725,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<SpecificRecordBase> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<SpecificRecordBase> event1 = reader.readNextEvent(10000);
+                EventRead<SpecificRecordBase> event1 = reader.readNextEvent(10000L);
                 assertNotNull(event1.getEvent());
                 assertTrue(event1.getEvent() instanceof Test1);
-                EventRead<SpecificRecordBase> event2 = reader.readNextEvent(10000);
+                EventRead<SpecificRecordBase> event2 = reader.readNextEvent(10000L);
                 assertNotNull(event2.getEvent());
                 assertTrue(event2.getEvent() instanceof Test2);
-                EventRead<SpecificRecordBase> event3 = reader.readNextEvent(10000);
+                EventRead<SpecificRecordBase> event3 = reader.readNextEvent(10000L);
                 assertNotNull(event3.getEvent());
                 assertTrue(event3.getEvent() instanceof Test3);
 
@@ -745,11 +745,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Object> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Object> genEvent = reader2.readNextEvent(10000);
+                EventRead<Object> genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
-                genEvent = reader2.readNextEvent(10000);
+                genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
-                genEvent = reader2.readNextEvent(10000);
+                genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
                 // endregion
 
@@ -768,14 +768,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Either<SpecificRecordBase, Object>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Either<SpecificRecordBase, Object>> e1 = reader3.readNextEvent(10000);
+                EventRead<Either<SpecificRecordBase, Object>> e1 = reader3.readNextEvent(10000L);
                 assertNotNull(e1.getEvent());
                 assertTrue(e1.getEvent().isLeft());
                 assertTrue(e1.getEvent().getLeft() instanceof Test1);
-                e1 = reader3.readNextEvent(10000);
+                e1 = reader3.readNextEvent(10000L);
                 assertTrue(e1.getEvent().isLeft());
                 assertTrue(e1.getEvent().getLeft() instanceof Test2);
-                e1 = reader3.readNextEvent(10000);
+                e1 = reader3.readNextEvent(10000L);
                 assertTrue(e1.getEvent().isRight());
 
                 reader.close();
@@ -840,7 +840,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<ProtobufTest.Message1> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
-                EventRead<ProtobufTest.Message1> event = reader.readNextEvent(10000);
+                EventRead<ProtobufTest.Message1> event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 reader.close();
                 // endregion
@@ -857,7 +857,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<DynamicMessage> event2 = reader2.readNextEvent(10000);
+                EventRead<DynamicMessage> event2 = reader2.readNextEvent(10000L);
                 assertNotNull(event2.getEvent());
 
                 reader2.close();
@@ -876,7 +876,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 reader2 = clientFactory.createReader("r1", rg3, genericDeserializer, ReaderConfig.builder().build());
 
-                event2 = reader2.readNextEvent(10000);
+                event2 = reader2.readNextEvent(10000L);
                 assertNotNull(event2.getEvent());
 
                 reader2.close();
@@ -891,7 +891,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                     EventStreamReader<String> jsonReader = clientFactory.createReader("r1", rg4, jsonDes, ReaderConfig.builder().build());
 
-                    EventRead<String> jsonEvent = jsonReader.readNextEvent(10000);
+                    EventRead<String> jsonEvent = jsonReader.readNextEvent(10000L);
                     assertNotNull(jsonEvent.getEvent());
 
                     jsonReader.close();
@@ -956,13 +956,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<GeneratedMessageV3> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<GeneratedMessageV3> event = reader.readNextEvent(10000);
+                EventRead<GeneratedMessageV3> event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 assertTrue(event.getEvent() instanceof ProtobufTest.Message1);
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 assertTrue(event.getEvent() instanceof ProtobufTest.Message2);
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 assertTrue(event.getEvent() instanceof ProtobufTest.Message3);
 
@@ -977,11 +977,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<DynamicMessage> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<DynamicMessage> genEvent = reader2.readNextEvent(10000);
+                EventRead<DynamicMessage> genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
-                genEvent = reader2.readNextEvent(10000);
+                genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
-                genEvent = reader2.readNextEvent(10000);
+                genEvent = reader2.readNextEvent(10000L);
 
                 reader2.close();
                 // endregion
@@ -1001,14 +1001,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Either<GeneratedMessageV3, DynamicMessage>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Either<GeneratedMessageV3, DynamicMessage>> e1 = reader3.readNextEvent(10000);
+                EventRead<Either<GeneratedMessageV3, DynamicMessage>> e1 = reader3.readNextEvent(10000L);
                 assertNotNull(e1.getEvent());
                 assertTrue(e1.getEvent().isLeft());
                 assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message1);
-                e1 = reader3.readNextEvent(10000);
+                e1 = reader3.readNextEvent(10000L);
                 assertTrue(e1.getEvent().isLeft());
                 assertTrue(e1.getEvent().getLeft() instanceof ProtobufTest.Message2);
-                e1 = reader3.readNextEvent(10000);
+                e1 = reader3.readNextEvent(10000L);
                 assertTrue(e1.getEvent().isRight());
 
                 reader3.close();
@@ -1071,7 +1071,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<DerivedUser2> reader = clientFactory.createReader("r1", readerGroupName, deserializer, ReaderConfig.builder().build());
 
-                EventRead<DerivedUser2> event = reader.readNextEvent(10000);
+                EventRead<DerivedUser2> event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 reader.close();
                 // endregion
@@ -1085,7 +1085,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<JsonNode> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<JsonNode> event2 = reader2.readNextEvent(10000);
+                EventRead<JsonNode> event2 = reader2.readNextEvent(10000L);
                 assertNotNull(event2.getEvent());
                 reader2.close();
 
@@ -1097,7 +1097,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<WithSchema<JsonNode>> reader3 = clientFactory.createReader("r1", rg3, genericDeserializer2, ReaderConfig.builder().build());
 
-                EventRead<WithSchema<JsonNode>> event3 = reader3.readNextEvent(10000);
+                EventRead<WithSchema<JsonNode>> event3 = reader3.readNextEvent(10000L);
                 assertNotNull(event3.getEvent());
                 WithSchema<JsonNode> obj = event3.getEvent();
 
@@ -1162,11 +1162,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<User> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
-                EventRead<User> event = reader.readNextEvent(10000);
+                EventRead<User> event = reader.readNextEvent(10000L);
 
                 assertNotNull(event.getEvent());
                 assertTrue(event.getEvent() instanceof DerivedUser2);
-                event = reader.readNextEvent(10000);
+                event = reader.readNextEvent(10000L);
                 assertNotNull(event.getEvent());
                 assertTrue(event.getEvent() instanceof DerivedUser1);
                 reader.close();
@@ -1181,9 +1181,9 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<JsonNode> reader2 = clientFactory.createReader("r1", rg2, genericDeserializer, ReaderConfig.builder().build());
 
-                EventRead<JsonNode> genEvent = reader2.readNextEvent(10000);
+                EventRead<JsonNode> genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
-                genEvent = reader2.readNextEvent(10000);
+                genEvent = reader2.readNextEvent(10000L);
                 assertNotNull(genEvent.getEvent());
                 reader2.close();
                 // endregion
@@ -1202,10 +1202,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
                 EventStreamReader<Either<User, WithSchema<JsonNode>>> reader3 = clientFactory.createReader("r1", rg3, eitherDeserializer, ReaderConfig.builder().build());
 
-                EventRead<Either<User, WithSchema<JsonNode>>> e1 = reader3.readNextEvent(10000);
+                EventRead<Either<User, WithSchema<JsonNode>>> e1 = reader3.readNextEvent(10000L);
                 assertNotNull(e1.getEvent());
                 assertTrue(e1.getEvent().isRight());
-                e1 = reader3.readNextEvent(10000);
+                e1 = reader3.readNextEvent(10000L);
                 assertTrue(e1.getEvent().isLeft());
                 assertTrue(e1.getEvent().getLeft() instanceof DerivedUser1);
                 reader3.close();
@@ -1276,12 +1276,12 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r1", rg, deserializer, ReaderConfig.builder().build());
 
                 // read 3 events
-                EventRead<WithSchema<Object>> event1 = reader.readNextEvent(1000);
+                EventRead<WithSchema<Object>> event1 = reader.readNextEvent(10000L);
                 String jsonString = event1.getEvent().getJsonString();
                 assertTrue(event1.getEvent().getObject() instanceof GenericRecord);
-                EventRead<WithSchema<Object>> event2 = reader.readNextEvent(1000);
+                EventRead<WithSchema<Object>> event2 = reader.readNextEvent(10000L);
                 assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
-                EventRead<WithSchema<Object>> event3 = reader.readNextEvent(1000);
+                EventRead<WithSchema<Object>> event3 = reader.readNextEvent(10000L);
                 assertTrue(event3.getEvent().getObject() instanceof JsonNode);
 
                 // write using genericserializer
@@ -1296,11 +1296,11 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 // endregion
 
                 // read these events back
-                event1 = reader.readNextEvent(1000);
+                event1 = reader.readNextEvent(10000L);
                 assertTrue(event1.getEvent().getObject() instanceof GenericRecord);
-                event2 = reader.readNextEvent(1000);
+                event2 = reader.readNextEvent(10000L);
                 assertTrue(event2.getEvent().getObject() instanceof DynamicMessage);
-                event3 = reader.readNextEvent(1000);
+                event3 = reader.readNextEvent(10000L);
                 assertTrue(event3.getEvent().getObject() instanceof JsonNode);
 
                 client.removeGroup(groupId);
@@ -1356,7 +1356,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                         ReaderGroupConfig.builder().stream(NameUtils.getScopedStreamName(scope, stream)).disableAutomaticCheckpoints().build());
 
                 EventStreamReader<WithSchema<Object>> reader = clientFactory.createReader("r", rg, deserializer, ReaderConfig.builder().build());
-                EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(1000L);
+                EventRead<WithSchema<Object>> eventRead = reader.readNextEvent(10000L);
                 String eventContent = eventContentSupplier.apply(eventRead);
                 assertFalse(Strings.isNullOrEmpty(eventContent));
                 reader.close();
@@ -1364,14 +1364,14 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 streamWriter.writeEvent(new TestClass("a")).join();
                 Serializer<String> deserializer2 = SerializerFactory.deserializeAsJsonString(serializerConfig);
                 EventStreamReader<String> reader2 = clientFactory.createReader("r2", rg, deserializer2, ReaderConfig.builder().build());
-                EventRead<String> eventRead2 = reader2.readNextEvent(1000L);
+                EventRead<String> eventRead2 = reader2.readNextEvent(10000L);
                 assertFalse(Strings.isNullOrEmpty(eventRead2.getEvent()));
                 reader2.close();
 
                 streamWriter.writeEvent(new TestClass("a")).join();
                 Serializer<String> deserializer3 = SerializerFactory.deserializeAsT(serializerConfig, (x, y) -> y.toString());
                 EventStreamReader<String> reader3 = clientFactory.createReader("r3", rg, deserializer3, ReaderConfig.builder().build());
-                EventRead<String> eventRead3 = reader3.readNextEvent(1000L);
+                EventRead<String> eventRead3 = reader3.readNextEvent(10000L);
                 assertFalse(Strings.isNullOrEmpty(eventRead3.getEvent()));
             }
         }
