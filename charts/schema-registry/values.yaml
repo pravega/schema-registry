@@ -35,19 +35,19 @@ initContainer: {}
   #   repository:
   #   tag:
   #   pullPolicy: IfNotPresent
+  ## provide a list containing the command that needs to be executed within the init container
+  ## e.g. ["/bin/sh", "-c", "cp /data/* /target"]
   # command: []
   # resources: {}
   # volume:
-  #   name: ""
-  #   mountPath: ""
+  #   mountPath: /target
 
 container: {}
   ## just provide the command to be executed within the entrypoint
-  ## e.g. "cp /additional_libs/* /opt/someprogram/libs & ls /opt/someprogram/libs & sleep 10000"
+  ## e.g. "cp /additional_libs/* /opt/schema-registry/lib/ & ls /opt/schema-registry/libs"
   # command: ""
   # volume:
-  #   name: ""
-  #   mountPath: ""
+  #   mountPath: /additional_libs
 
 ## Ingress configuration.
 ingress:

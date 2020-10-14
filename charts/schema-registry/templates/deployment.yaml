@@ -59,7 +59,7 @@ spec:
             readOnly: true
           {{- end }}
           {{- if and .Values.container .Values.container.volume }}
-          - name: {{ .Values.container.volume.name }}
+          - name: transfer-data
             mountPath: {{ .Values.container.volume.mountPath }}
           {{- end }}
           {{- end }}
@@ -76,7 +76,7 @@ spec:
           {{- end }}
           {{- if .Values.initContainer.volume }}
           volumeMounts:
-          - name: {{ .Values.initContainer.volume.name }}
+          - name: transfer-data
             mountPath: {{ .Values.initContainer.volume.mountPath }}
           {{- end }}
       {{- end }}
@@ -93,7 +93,7 @@ spec:
           secretName: {{ .Values.tls.secret }}
       {{- end }}
       {{- if and .Values.container .Values.container.volume }}
-      - name: {{ .Values.container.volume.name }}
+      - name: transfer-data
         emptyDir: {}
       {{- end }}
       {{- end }}
