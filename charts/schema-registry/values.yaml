@@ -87,8 +87,10 @@ authentication:
   ## authentication is enabled
   passwordAuthSecret:
   userPasswordFile:
-  authorizationResourceQualifier: ""
   disableBasicAuthentication: false
+  authResourceDomain: "prn"
+  authNamespaceResourceIdentifier: "namespace"
+  authGroupResourceIdentifier: "group"
 
 tls:
   enabled: false

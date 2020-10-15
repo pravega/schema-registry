@@ -194,7 +194,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
         assertEquals(list.getContinuationToken(), ContinuationToken.fromString("token").toString());
     }
 
-    @Test
+    @Test(timeout = 10000)
     public void groupSchemas() throws ExecutionException, InterruptedException {
         doAnswer(x -> CompletableFuture.completedFuture(true)).when(service).canRead(any(), any(), any());
         SchemaInfo schemaInfo = new SchemaInfo()
@@ -206,6 +206,7 @@ public class SchemaRegistryAuthTest extends JerseyTest {
                         AuthHelper.getAuthorizationHeader("Basic", Base64.getEncoder().encodeToString((SYSTEM_ADMIN + ":" + PASSWORD).getBytes(Charsets.UTF_8))))
                                                      .async().post(Entity.entity(schemaInfo, MediaType.APPLICATION_JSON));
         Response response = future.get();
+        assertEquals(response.getStatus(), 200);
         assertTrue(response.readEntity(CanRead.class).isCompatible());
 
         future = target("v1/groups").path("mygroup").path("schemas/versions/canRead").request().header(HttpHeaders.AUTHORIZATION,
@@ -235,14 +236,14 @@ public class SchemaRegistryAuthTest extends JerseyTest {
 
             try (FileWriter writer = new FileWriter(authFile.getAbsolutePath())) {
                 String defaultPassword = passwordEncryptor.encryptPassword(PASSWORD);
-                writer.write(credentialsAndAclAsString(SYSTEM_ADMIN, defaultPassword, "*,READ_UPDATE;"));
-                writer.write(credentialsAndAclAsString(SYSTEM_READER, defaultPassword, "/*,READ"));
-                writer.write(credentialsAndAclAsString(GROUP1_ADMIN, defaultPassword, "/group1,READ_UPDATE"));
-                writer.write(credentialsAndAclAsString(GROUP1_USER, defaultPassword, "/group1,READ"));
-                writer.write(credentialsAndAclAsString(GROUP2_USER, defaultPassword, "/group2,READ"));
-                writer.write(credentialsAndAclAsString(GROUP_1_2_USER, defaultPassword, "/group1,READ;/group2,READ;/group11,READ;/group12,READ"));
-                writer.write(credentialsAndAclAsString(NAMESPACE_USER, defaultPassword, "namespace/group1,READ_UPDATE"));
-                writer.write(credentialsAndAclAsString(NAMESPACE_ADMIN, defaultPassword, "namespace/*,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(SYSTEM_ADMIN, defaultPassword, "prn::*,READ_UPDATE;"));
+                writer.write(credentialsAndAclAsString(SYSTEM_READER, defaultPassword, "prn::/namespace:*,READ"));
+                writer.write(credentialsAndAclAsString(GROUP1_ADMIN, defaultPassword, "prn::/namespace:/group:group1,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(GROUP1_USER, defaultPassword, "prn::/namespace:/group:group1,READ"));
+                writer.write(credentialsAndAclAsString(GROUP2_USER, defaultPassword, "prn::/namespace:/group:group2,READ"));
+                writer.write(credentialsAndAclAsString(GROUP_1_2_USER, defaultPassword, "prn::/namespace:/group:group1,READ;prn::/namespace:/group:group2,READ;prn::/namespace:/group:group11,READ;prn::/namespace:/group:group12,READ"));
+                writer.write(credentialsAndAclAsString(NAMESPACE_USER, defaultPassword, "prn::/namespace:namespace/group:group1,READ_UPDATE"));
+                writer.write(credentialsAndAclAsString(NAMESPACE_ADMIN, defaultPassword, "prn::/namespace:namespace/*,READ_UPDATE"));
             }
             return authFile;
         } catch (IOException | NoSuchAlgorithmException | InvalidKeySpecException e) {
