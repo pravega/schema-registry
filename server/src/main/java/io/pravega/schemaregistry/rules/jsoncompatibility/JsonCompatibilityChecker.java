@@ -12,8 +12,11 @@ import java.io.IOException;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.*;
+
 public class JsonCompatibilityChecker implements CompatibilityChecker {
     private static List<String> characteristics = Arrays.asList("properties", "dependencies", "required", "additionalProperties");
+    JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
 
     @Override
     public boolean canRead(SchemaInfo readUsing, List<SchemaInfo> writtenUsing) {
@@ -71,6 +74,27 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
 
         // compute compatibility
 
+    }
+    
+    protected BreakingChanges checkNodeType(JsonNode toCheck, JsonNode toCheckAgainst) {
+        String nodeType = jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(jsonCompatibilityCheckerUtils.getTypeValue(toCheckAgainst)) ? jsonCompatibilityCheckerUtils.getTypeValue(toCheck) : "mismatch";
+        switch (nodeType) {
+            case "object" :
+                break;
+            case "number" :
+                break;
+            case "string" :
+                break;
+            case "array" :
+                break;
+            case "boolean" :
+                break;
+            case "null":
+                break;
+            case "mismatch" :
+                break;
+        }
+        return null;
     }
 
     private ArrayList<PossibleDifferences> getDifferences(JsonNode toCheck, JsonNode toCheckAgainst){
