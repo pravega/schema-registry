@@ -73,7 +73,7 @@ public class PropertiesComparator {
                 return BreakingChanges.MIN_PROPERTIES_LIMIT_INCREASED;
         }
         // maxProperties
-        if(toCheck.get("maxProperties") != null && toCheckAgainst.get("maxProperties") != null)
+        if(toCheck.get("maxProperties") != null && toCheckAgainst.get("maxProperties") == null)
             return BreakingChanges.MAX_PROPERTIES_ADDED;
         else if(toCheck.get("maxProperties") != null && toCheckAgainst.get("maxProperties") != null) {
             if(toCheck.get("maxProperties").intValue() < toCheckAgainst.get("maxProperties").intValue())
