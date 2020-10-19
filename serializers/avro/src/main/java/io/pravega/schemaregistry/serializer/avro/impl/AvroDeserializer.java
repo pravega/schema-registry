@@ -19,6 +19,7 @@ import io.pravega.schemaregistry.serializer.shared.impl.EncodingCache;
 import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
 import org.apache.avro.Schema;
 import org.apache.avro.io.BinaryDecoder;
+import org.apache.avro.io.DatumReader;
 import org.apache.avro.io.DecoderFactory;
 import org.apache.avro.reflect.ReflectDatumReader;
 import org.apache.avro.specific.SpecificDatumReader;
@@ -26,41 +27,47 @@ import org.apache.avro.specific.SpecificRecordBase;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 
 class AvroDeserializer<T> extends AbstractDeserializer<T> {
-    private final AvroSchema<T> avroSchema;
-    private final ConcurrentHashMap<SchemaInfo, Schema> knownSchemas;
+    private final ConcurrentHashMap<ByteBuffer, DatumReader<T>> knownSchemas;
+    private final boolean specific;
+    private final Schema readerSchema;
 
     AvroDeserializer(String groupId, SchemaRegistryClient client,
                      AvroSchema<T> schema,
                      SerializerConfig.Decoders decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache, true);
         Preconditions.checkNotNull(schema);
-        this.avroSchema = schema;
         this.knownSchemas = new ConcurrentHashMap<>();
+        specific = SpecificRecordBase.class.isAssignableFrom(schema.getTClass());
+        readerSchema = schema.getSchema();
+        ByteBuffer schemaData = schema.getSchemaInfo().getSchemaData();
+        createDatumReader(schemaData, readerSchema);
     }
 
     @Override
     public final T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Schema writerSchema;
-        if (knownSchemas.containsKey(writerSchemaInfo)) {
-            writerSchema = knownSchemas.get(writerSchemaInfo);
-        } else {
+        DatumReader<T> datumReader  = knownSchemas.get(writerSchemaInfo.getSchemaData());
+        if (datumReader == null) {
             String schemaString = new String(writerSchemaInfo.getSchemaData().array(), Charsets.UTF_8);
-            writerSchema = new Schema.Parser().parse(schemaString);
-            knownSchemas.put(writerSchemaInfo, writerSchema);
+            Schema writerSchema = new Schema.Parser().parse(schemaString);
+            datumReader = createDatumReader(writerSchemaInfo.getSchemaData(), writerSchema);
         }
-        Schema readerSchema = avroSchema.getSchema();
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
-        
-        if (SpecificRecordBase.class.isAssignableFrom(avroSchema.getTClass())) {
-            SpecificDatumReader<T> datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
-            return datumReader.read(null, decoder);
+        return datumReader.read(null, decoder);
+    }
+
+    private DatumReader<T> createDatumReader(ByteBuffer schemaData, Schema writerSchema) {
+        DatumReader<T> datumReader;
+        if (specific) {
+            datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
         } else {
-            ReflectDatumReader<T> datumReader = new ReflectDatumReader<>(writerSchema, readerSchema);
-            return datumReader.read(null, decoder);
+            datumReader = new ReflectDatumReader<>(writerSchema, readerSchema);
         }
+        knownSchemas.putIfAbsent(schemaData, datumReader);
+        return datumReader;
     }
 }
