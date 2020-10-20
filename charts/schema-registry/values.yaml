@@ -44,7 +44,7 @@ initContainer: {}
 
 container: {}
   ## just provide the command to be executed within the entrypoint
-  ## e.g. "cp /additional_libs/* /opt/schema-registry/lib/ & ls /opt/schema-registry/libs"
+  ## e.g. "cp /additional_libs/* /opt/schema-registry/lib/"
   # command: ""
   # volume:
   #   mountPath: /additional_libs
