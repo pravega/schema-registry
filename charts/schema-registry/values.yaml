@@ -15,8 +15,8 @@
 replicas: 2
 
 image:
-  repository: pravega/schema-registry
-  tag: 0.0.1
+  repository: pravega/schemaregistry
+  tag: 0.1.0
   pullPolicy: IfNotPresent
 
 ## Service account name and whether to create it.
@@ -28,6 +28,26 @@ serviceAccount:
 service:
   type: LoadBalancer
   port: 9092
+
+initContainer: {}
+  # name: ""
+  # image:
+  #   repository:
+  #   tag:
+  #   pullPolicy: IfNotPresent
+  ## provide a list containing the command that needs to be executed within the init container
+  ## e.g. ["/bin/sh", "-c", "cp /data/* /target"]
+  # command: []
+  # resources: {}
+  # volume:
+  #   mountPath: /target
+
+container: {}
+  ## just provide the command to be executed within the entrypoint
+  ## e.g. "cp /additional_libs/* /opt/schema-registry/lib/"
+  # command: ""
+  # volume:
+  #   mountPath: /additional_libs
 
 ## Ingress configuration.
 ingress:

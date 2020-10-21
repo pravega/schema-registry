@@ -49,14 +49,16 @@ The following table lists the configurable parameters of the schema registry cha
 | Parameter | Description | Default |
 | ----- | ----------- | ------ |
 | `replicas` | Number of replicas | `2` |
-| `image.repository` | Repository for schema registry image | `pravega/schema-registry` |
-| `image.tag` | Tag for schema registry image | `0.0.1` |
+| `image.repository` | Repository for schema registry image | `pravega/schemaregistry` |
+| `image.tag` | Tag for schema registry image | `0.1.0` |
 | `image.pullPolicy` | Pull policy for schema registry image | `IfNotPresent` |
 | `serviceAccount.create` | Whether to create a service account | `true` |
 | `serviceAccount.name` | Name of the service account | `schema-registry` |
 | `serviceAccount.annotations` | Annotations to be added to the service account | |
 | `service.type` | Schema registry service type | `LoadBalancer` |
 | `service.port` | Schema registry service port | `9092` |
+| `initContainer` | Configuration for the init container | `{}` |
+| `container` | Additional configuration for the schema registry container, to be provided if an init container has been configured | `{}` |
 | `ingress.enabled` | Whether to expose as an ingress resource | `false` |
 | `ingress.path` | Path for the ingress | `/` |
 | `ingress.annotations` | Annotations for the ingress | `{}` |

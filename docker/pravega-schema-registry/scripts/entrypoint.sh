@@ -21,4 +21,8 @@ if [ ${WAIT_FOR} ];then
     ${SCRIPTS_DIR}/wait_for
 fi
 
+if [[ -n "$PRE_START_CMD" ]];then
+    $PRE_START_CMD
+fi
+
 exec /opt/schema-registry/bin/schema-registry
