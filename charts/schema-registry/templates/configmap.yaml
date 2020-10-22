@@ -41,3 +41,8 @@ data:
   "TLS_KEY_FILE": "/etc/secret-volume/{{ .Values.tls.keyFile }}"
   "TLS_KEY_PASSWORD_FILE": "/etc/secret-volume/{{ .Values.tls.keyPasswordFile }}"
   {{- end }}
+  {{- if and .Values.container .Values.container.command }}
+  "PRE_START_CMD": "{{ .Values.container.command }}"
+  {{- else }}
+  "PRE_START_CMD": ""
+  {{- end }}
