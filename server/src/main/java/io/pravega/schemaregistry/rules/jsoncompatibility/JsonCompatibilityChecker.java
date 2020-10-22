@@ -15,7 +15,8 @@ import java.util.stream.Collectors;
 import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.*;
 
 public class JsonCompatibilityChecker implements CompatibilityChecker {
-    private static List<String> characteristics = Arrays.asList("properties", "dependencies", "required", "additionalProperties");
+    private static List<String> characteristics = Arrays.asList("properties", "dependencies", "required",
+            "additionalProperties");
     JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
 
     @Override
@@ -56,6 +57,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         REQUIRED_VALUE_ADDED,
         REQUIRED_VALUE_REMOVED
     }
+
     Queue<String> path = new ArrayDeque<>();
 
     public void relay(SchemaInfo toValidate, SchemaInfo toValidateAgainst) throws IOException {
@@ -63,11 +65,11 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         JsonNode toCheck = objectMapper.readTree(toValidate.getSchemaData().array());
         JsonNode toCheckAgainst = objectMapper.readTree(toValidateAgainst.getSchemaData().array());
         ArrayList<PossibleDifferences> ans = getDifferences(toCheck, toCheckAgainst);
-        if(!ans.isEmpty()){
+        if (!ans.isEmpty()) {
             System.out.println("Invalid");
             //temp print statement
             System.out.println(ans);
-        }else{
+        } else {
             System.out.println("Valid");
         }
         // toCheckAgainst
@@ -75,68 +77,70 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         // compute compatibility
 
     }
-    
+
     protected BreakingChanges checkNodeType(JsonNode toCheck, JsonNode toCheckAgainst) {
-        String nodeType = jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(jsonCompatibilityCheckerUtils.getTypeValue(toCheckAgainst)) ? jsonCompatibilityCheckerUtils.getTypeValue(toCheck) : "mismatch";
+        String nodeType = jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(
+                jsonCompatibilityCheckerUtils.getTypeValue(
+                        toCheckAgainst)) ? jsonCompatibilityCheckerUtils.getTypeValue(toCheck) : "mismatch";
         switch (nodeType) {
-            case "object" :
+            case "object":
                 break;
-            case "number" :
+            case "number":
                 break;
-            case "string" :
+            case "string":
                 break;
-            case "array" :
+            case "array":
                 break;
-            case "boolean" :
+            case "boolean":
                 break;
             case "null":
                 break;
-            case "mismatch" :
+            case "mismatch":
                 break;
         }
         return null;
     }
 
-    private ArrayList<PossibleDifferences> getDifferences(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> getDifferences(JsonNode toCheck, JsonNode toCheckAgainst) {
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         //cover cases when either are null
-        if(checkOrdinaryObject(toCheck, toCheckAgainst)){
-            differences.addAll(getOrdinaryObjectProperties(toCheck,toCheckAgainst));
+        if (checkOrdinaryObject(toCheck, toCheckAgainst)) {
+            differences.addAll(getOrdinaryObjectProperties(toCheck, toCheckAgainst));
             return differences;
         }
         //check for properties
         ArrayList<PossibleDifferences> propDifferences = compareProperties(toCheck, toCheckAgainst);
-        if(!propDifferences.isEmpty())
+        if (!propDifferences.isEmpty())
             differences.addAll(propDifferences);
         //check for required
         ArrayList<PossibleDifferences> reqDifferences = compareRequired(toCheck, toCheckAgainst);
-        if(!reqDifferences.isEmpty())
+        if (!reqDifferences.isEmpty())
             differences.addAll(reqDifferences);
         //check for dependencies
         ArrayList<PossibleDifferences> dependencyDifferences = compareDependencies(toCheck, toCheckAgainst);
-        if(!dependencyDifferences.isEmpty())
+        if (!dependencyDifferences.isEmpty())
             differences.addAll(dependencyDifferences);
         //when both are values
-        if(toCheck.isValueNode() && toCheckAgainst.isValueNode()){
-            if(!toCheck.asText().equals(toCheckAgainst.asText())){
+        if (toCheck.isValueNode() && toCheckAgainst.isValueNode()) {
+            if (!toCheck.asText().equals(toCheckAgainst.asText())) {
                 differences.add(PossibleDifferences.VARIABLE_TYPE_CHANGED);
             }
         }
         //when both are arrays
-        if(toCheck.isArray() && toCheckAgainst.isArray())
+        if (toCheck.isArray() && toCheckAgainst.isArray())
             differences.addAll(getArrayDifferences(toCheck, toCheckAgainst));
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> getArrayDifferences(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> getArrayDifferences(JsonNode toCheck, JsonNode toCheckAgainst) {
         HashSet<JsonNode> toCheckCollection = new HashSet<>();
         HashSet<JsonNode> toCheckAgainstCollection = new HashSet<>();
         ArrayNode arrayNodeToCheck = (ArrayNode) toCheck;
         ArrayNode arrayNodeToCheckAgainst = (ArrayNode) toCheckAgainst;
-        for(int i=0;i<arrayNodeToCheck.size();i++){
+        for (int i = 0; i < arrayNodeToCheck.size(); i++) {
             toCheckCollection.add(arrayNodeToCheck.get(i));
         }
-        for(int i=0;i<arrayNodeToCheckAgainst.size();i++){
+        for (int i = 0; i < arrayNodeToCheckAgainst.size(); i++) {
             toCheckAgainstCollection.add(arrayNodeToCheckAgainst.get(i));
         }
         ArrayList<PossibleDifferences> differences = new ArrayList<>(
@@ -148,29 +152,27 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> compareProperties(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> compareProperties(JsonNode toCheck, JsonNode toCheckAgainst) {
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         toCheck = toCheck.get("properties");
         toCheckAgainst = toCheckAgainst.get("properties");
-        if(toCheck == null && toCheckAgainst!=null){
+        if (toCheck == null && toCheckAgainst != null) {
             differences.add(PossibleDifferences.PROPERTIES_REMOVED);
             return differences;
-        }
-        else if(toCheck!=null && toCheckAgainst==null){
+        } else if (toCheck != null && toCheckAgainst == null) {
             differences.add(PossibleDifferences.PROPERTIES_ADDED);
             return differences;
-        }
-        else if(toCheck==null && toCheckAgainst==null) return differences;
+        } else if (toCheck == null && toCheckAgainst == null) return differences;
         Iterator<String> keys = Iterators.concat(toCheck.fieldNames(), toCheckAgainst.fieldNames());
-        while(keys.hasNext()){
+        while (keys.hasNext()) {
             String key = keys.next();
             //System.out.println(key);
-            if(toCheck.get(key)==null && toCheckAgainst.get(key)!=null)
+            if (toCheck.get(key) == null && toCheckAgainst.get(key) != null)
                 differences.add(PossibleDifferences.PROPERTY_REMOVED);
-            else if(toCheck.get(key)!=null&&toCheckAgainst.get(key)==null)
+            else if (toCheck.get(key) != null && toCheckAgainst.get(key) == null)
                 differences.add(PossibleDifferences.PROPERTY_ADDED);
-            else{
-                if(!toCheck.get(key).equals(toCheckAgainst.get(key))) {
+            else {
+                if (!toCheck.get(key).equals(toCheckAgainst.get(key))) {
                     differences.addAll(getDifferences(toCheck.get(key), toCheckAgainst.get(key)));
                     differences.add(PossibleDifferences.PROPERTY_CHANGED);
                 }
@@ -179,74 +181,77 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> compareRequired(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> compareRequired(JsonNode toCheck, JsonNode toCheckAgainst) {
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         toCheck = toCheck.get("required");
         toCheckAgainst = toCheckAgainst.get("required");
-        if(toCheck==null && toCheckAgainst==null) return differences;
-        else if(toCheck!=null && toCheckAgainst==null){
+        if (toCheck == null && toCheckAgainst == null) return differences;
+        else if (toCheck != null && toCheckAgainst == null) {
             differences.add(PossibleDifferences.REQUIREMENTS_ADDED);
             return differences;
-        }
-        else if(toCheck==null && toCheckAgainst!=null){
+        } else if (toCheck == null && toCheckAgainst != null) {
             differences.add(PossibleDifferences.REQUIREMENTS_REMOVED);
             return differences;
         }
         ArrayList<PossibleDifferences> differencesReq = getArrayDifferences(toCheck, toCheckAgainst);
-        for(PossibleDifferences possibleDifference : differencesReq){
-            switch (possibleDifference){
-                case ARRAY_ELEMENT_ADDED: differences.add(PossibleDifferences.REQUIRED_VALUE_ADDED);
+        for (PossibleDifferences possibleDifference : differencesReq) {
+            switch (possibleDifference) {
+                case ARRAY_ELEMENT_ADDED:
+                    differences.add(PossibleDifferences.REQUIRED_VALUE_ADDED);
                     break;
-                case ARRAY_ELEMENT_REMOVED: differences.add(PossibleDifferences.REQUIRED_VALUE_REMOVED);
+                case ARRAY_ELEMENT_REMOVED:
+                    differences.add(PossibleDifferences.REQUIRED_VALUE_REMOVED);
                     break;
             }
         }
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> compareDependencies(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> compareDependencies(JsonNode toCheck, JsonNode toCheckAgainst) {
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         toCheck = toCheck.get("dependencies");
         toCheckAgainst = toCheckAgainst.get("dependencies");
-        if(toCheck==null && toCheckAgainst==null)
+        if (toCheck == null && toCheckAgainst == null)
             return differences;
-        else if(toCheck==null && toCheckAgainst!=null){
+        else if (toCheck == null && toCheckAgainst != null) {
             differences.add(PossibleDifferences.DEPENDENCIES_REMOVED);
             return differences;
-        }
-        else if(toCheck!=null && toCheck==null){
+        } else if (toCheck != null && toCheck == null) {
             differences.add(PossibleDifferences.DEPENDENCIES_ADDED);
             return differences;
         }
         String testKeyToCheck = toCheck.fieldNames().next();
         String testKeyToCheckAgainst = toCheckAgainst.fieldNames().next();
-        if(toCheck.get(testKeyToCheck).isArray() && toCheckAgainst.get(testKeyToCheckAgainst).isArray())
+        if (toCheck.get(testKeyToCheck).isArray() && toCheckAgainst.get(testKeyToCheckAgainst).isArray())
             differences.addAll(propertyDependencies(toCheck, toCheckAgainst));
-        else if(toCheck.get(testKeyToCheck).isObject() && toCheckAgainst.get(testKeyToCheckAgainst).isObject())
+        else if (toCheck.get(testKeyToCheck).isObject() && toCheckAgainst.get(testKeyToCheckAgainst).isObject())
             differences.addAll(schemaDependencies(toCheck, toCheckAgainst));
         else
             System.err.println("dependency format mismatch");
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> propertyDependencies(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> propertyDependencies(JsonNode toCheck, JsonNode toCheckAgainst) {
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         Iterator<String> keys = Iterators.concat(toCheck.fieldNames(), toCheckAgainst.fieldNames());
-        while(keys.hasNext()){
+        while (keys.hasNext()) {
             String key = keys.next();
             System.out.println(key);
-            if(toCheck.get(key)==null && toCheckAgainst.get(key)!=null)
+            if (toCheck.get(key) == null && toCheckAgainst.get(key) != null)
                 differences.add(PossibleDifferences.DEPENDENCY_KEY_REMOVED);
-            else if(toCheck.get(key)!=null && toCheckAgainst.get(key)==null)
+            else if (toCheck.get(key) != null && toCheckAgainst.get(key) == null)
                 differences.add(PossibleDifferences.DEPENDENCY_KEY_ADDED);
-            else{
-                if(!toCheck.get(key).equals(toCheckAgainst.get(key))){
-                    ArrayList<PossibleDifferences> elementDifferences = getArrayDifferences(toCheck.get(key), toCheckAgainst.get(key));
-                    for(PossibleDifferences possibleDifference: elementDifferences){
-                        switch (possibleDifference){
-                            case ARRAY_ELEMENT_ADDED: differences.add(PossibleDifferences.DEPENDENCY_VALUE_ADDED);
+            else {
+                if (!toCheck.get(key).equals(toCheckAgainst.get(key))) {
+                    ArrayList<PossibleDifferences> elementDifferences = getArrayDifferences(toCheck.get(key),
+                            toCheckAgainst.get(key));
+                    for (PossibleDifferences possibleDifference : elementDifferences) {
+                        switch (possibleDifference) {
+                            case ARRAY_ELEMENT_ADDED:
+                                differences.add(PossibleDifferences.DEPENDENCY_VALUE_ADDED);
                                 break;
-                            case ARRAY_ELEMENT_REMOVED: differences.add(PossibleDifferences.DEPENDENCY_VALUE_REMOVED);
+                            case ARRAY_ELEMENT_REMOVED:
+                                differences.add(PossibleDifferences.DEPENDENCY_VALUE_REMOVED);
                                 break;
                         }
                     }
@@ -256,24 +261,25 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> schemaDependencies(JsonNode toCheck, JsonNode toCheckAgainst){
-        //treating schema dependencies and differences between them as schemas and differences between schemas respectively
+    private ArrayList<PossibleDifferences> schemaDependencies(JsonNode toCheck, JsonNode toCheckAgainst) {
+        //treating schema dependencies and differences between them as schemas and differences between schemas 
+        // respectively
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         differences.addAll(getDifferences(toCheck, toCheckAgainst));
         return differences;
     }
 
-    private ArrayList<PossibleDifferences> getOrdinaryObjectProperties(JsonNode toCheck, JsonNode toCheckAgainst){
+    private ArrayList<PossibleDifferences> getOrdinaryObjectProperties(JsonNode toCheck, JsonNode toCheckAgainst) {
         ArrayList<PossibleDifferences> differences = new ArrayList<>();
         Iterator<String> keys = Iterators.concat(toCheck.fieldNames(), toCheckAgainst.fieldNames());
-        while(keys.hasNext()){
+        while (keys.hasNext()) {
             String key = keys.next();
-            if(toCheck.get(key)==null && toCheckAgainst.get(key)!=null)
+            if (toCheck.get(key) == null && toCheckAgainst.get(key) != null)
                 differences.add(PossibleDifferences.VARIABLE_ADDED);
-            else if(toCheck.get(key)!=null&&toCheckAgainst.get(key)==null)
+            else if (toCheck.get(key) != null && toCheckAgainst.get(key) == null)
                 differences.add(PossibleDifferences.VARIABLE_DELETED);
-            else{
-                if(!toCheck.get(key).equals(toCheckAgainst.get(key))) {
+            else {
+                if (!toCheck.get(key).equals(toCheckAgainst.get(key))) {
                     differences.addAll(getDifferences(toCheck.get(key), toCheckAgainst.get(key)));
                 }
             }
@@ -281,12 +287,12 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         return differences;
     }
 
-    private boolean checkOrdinaryObject(JsonNode toCheck, JsonNode toCheckAgainst){
-        for(String field : characteristics) {
+    private boolean checkOrdinaryObject(JsonNode toCheck, JsonNode toCheckAgainst) {
+        for (String field : characteristics) {
             if (toCheck.has(field) || toCheckAgainst.has(field))
                 return false;
         }
-        if(toCheck.isValueNode() && toCheckAgainst.isValueNode())
+        if (toCheck.isValueNode() && toCheckAgainst.isValueNode())
             return false;
         return true;
     }

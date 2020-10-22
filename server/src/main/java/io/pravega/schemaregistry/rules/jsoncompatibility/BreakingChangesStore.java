@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class BreakingChangesStore {
-    //include only those changes that lead to incompatibility
+    //includes only those changes that lead to incompatibility
     protected enum BreakingChanges {
         // strings
         MAX_LENGTH_ADDED,
@@ -28,14 +28,15 @@ public class BreakingChangesStore {
         MULTIPLE_OF_EXPANDED,
         TYPE_NARROWED,
         //ARRAYS
-        MAX_ITEMS_ADDED,
-        MAX_ITEMS_DECREASED,
-        MIN_ITEMS_ADDED,
-        MIN_ITEMS_INCREASED,
-        UNIQUE_ITEMS_ADDED,
-        ADDITIONAL_ITEMS_REMOVED,
-        ADDITIONAL_ITEMS_NARROWED,
-        ITEMS_REMOVED_NOT_COVERED_BY_PARTIALLY_OPEN_CONTENT_MODEL,
+        ARRAY_MAX_ITEMS_CONDITION_ADDED,
+        ARRAY_MAX_ITEMS_VALUE_DECREASED,
+        ARRAY_MIN_ITEMS_CONDITION_ADDED,
+        ARRAY_MIN_ITEMS_VALUE_INCREASED,
+        ARRAY_UNIQUE_ITEMS_CONDITION_ENABLED,
+        ARRAY_ADDITIONAL_ITEMS_DISABLED,
+        ARRAY_ADDITIONAL_ITEMS_SCOPE_DECREASED,
+        ARRAY_SIMPLE_BODY_CHECK_ELEMENT_REMOVED,
+        ARRAY_SIMPLE_BODY_CHECK_ELEMENT_ADDED,
         ITEM_REMOVED_NOT_COVERED_BY_PARTIALLY_OPEN_CONTENT_MODEL,
         ITEM_REMOVED_FROM_CLOSED_CONTENT_MODEL,
         ITEM_ADDED_TO_OPEN_CONTENT_MODEL,
