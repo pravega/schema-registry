@@ -39,7 +39,6 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         return false;
     }
 
-    
 
     public boolean canReadChecker(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
@@ -53,13 +52,13 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
             return null;
         }).collect(
                 Collectors.toList());
-        return toCheckAgainst.stream().map(x -> checkNodeType(toCheck, x)).anyMatch(x -> x!= null);
+        return toCheckAgainst.stream().map(x -> checkNodeType(toCheck, x)).anyMatch(x -> x != null);
     }
 
     protected BreakingChanges checkNodeType(JsonNode toCheck, JsonNode toCheckAgainst) {
-        if(toCheck.has("enum") || toCheckAgainst.has("enum")) {
+        if (toCheck.has("enum") || toCheckAgainst.has("enum")) {
             BreakingChanges enumChanges = enumComparator.enumComparator(toCheck, toCheckAgainst);
-            if(enumChanges != null)
+            if (enumChanges != null)
                 return enumChanges;
         }
         String nodeType = jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(
@@ -80,9 +79,19 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
             case "null":
                 break;
             case "mismatch":
-                break;
+                return analyzeMismatch(toCheck, toCheckAgainst);
         }
         return null;
     }
-    
+
+    private BreakingChanges analyzeMismatch(JsonNode toCheck, JsonNode toCheckAgainst) {
+        if ((jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(
+                "number") || jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(
+                "integer")) && jsonCompatibilityCheckerUtils.getTypeValue(toCheckAgainst).equals(
+                "number") || jsonCompatibilityCheckerUtils.getTypeValue(toCheckAgainst).equals("integer"))
+            return numberComparator.compareNumbers(toCheck, toCheckAgainst);
+        else 
+            return BreakingChanges.DATA_TYPE_MISMATCH;
+    }
+
 }

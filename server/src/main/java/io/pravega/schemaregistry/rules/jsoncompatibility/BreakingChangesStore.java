@@ -7,6 +7,8 @@ import java.util.List;
 public class BreakingChangesStore {
     //includes only those changes that lead to incompatibility
     protected enum BreakingChanges {
+        // data type mismatch
+        DATA_TYPE_MISMATCH,
         // strings
         STRING_TYPE_MAX_LENGTH_ADDED,
         STRING_TYPE_MAX_LENGTH_VALUE_DECREASED,
