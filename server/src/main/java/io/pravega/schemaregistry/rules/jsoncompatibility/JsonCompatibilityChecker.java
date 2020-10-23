@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.*;
 
 public class JsonCompatibilityChecker implements CompatibilityChecker {
+    EnumComparator enumComparator = new EnumComparator();
     private static List<String> characteristics = Arrays.asList("properties", "dependencies", "required",
             "additionalProperties");
     JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
@@ -79,6 +80,11 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
     }
 
     protected BreakingChanges checkNodeType(JsonNode toCheck, JsonNode toCheckAgainst) {
+        if(toCheck.has("enum") || toCheckAgainst.has("enum")) {
+            BreakingChanges enumChanges = enumComparator.enumComparator(toCheck, toCheckAgainst);
+            if(enumChanges != null)
+                return enumChanges;
+        }
         String nodeType = jsonCompatibilityCheckerUtils.getTypeValue(toCheck).equals(
                 jsonCompatibilityCheckerUtils.getTypeValue(
                         toCheckAgainst)) ? jsonCompatibilityCheckerUtils.getTypeValue(toCheck) : "mismatch";

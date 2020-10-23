@@ -34,4 +34,22 @@ public class JsonCompatibilityCheckerUtils {
         }
         return false;
     }
+    
+    public boolean arrayComparisionOnlyRemoval(ArrayNode toCheck, ArrayNode toCheckAgainst) {
+        // every element in toCheck array must be in toCheckAgainst
+        for(int i=0;i<toCheck.size();i++) {
+            if(!toCheckAgainst.has(toCheck.get(i).asText()))
+                return false;
+        }
+        return true;
+    }
+    
+    public boolean arrayComparisionOnlyAddition(ArrayNode toCheck, ArrayNode toCheckAgainst) {
+        // every element in toCheckAgainst array must be in toCheck.
+        for(int i=0;i<toCheckAgainst.size();i++) {
+            if(!toCheck.has(toCheckAgainst.get(i).asText()))
+                return false;
+        }
+        return true;
+    }
 }

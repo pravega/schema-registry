@@ -1,6 +1,7 @@
 package io.pravega.schemaregistry.rules.jsoncompatibility;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.google.common.collect.Iterators;
 
 import java.util.Iterator;
@@ -8,7 +9,7 @@ import java.util.Iterator;
 import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.*;
 
 public class DependenciesComparator {
-    ArrayTypeComparator arrayTypeComparator = new ArrayTypeComparator();
+    JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
     PropertiesComparator propertiesComparator = new PropertiesComparator();
     public BreakingChanges checkDependencies(JsonNode toCheck, JsonNode toCheckAgainst) {
         if(toCheck.get("dependencies") != null && toCheckAgainst.get("dependencies") == null)
@@ -30,9 +31,9 @@ public class DependenciesComparator {
                else if (toCheck.get("dependencies").get(field) != null && toCheckAgainst.get("dependencies").get(field) != null) {
                    if(dependencyTypeIsArray) {
                        // check the value returned by the array comparator
-                       if(arrayTypeComparator.compareArrays(toCheck.get("dependencies").get(field),
-                               toCheckAgainst.get("dependencies").get(field)) != null)
-                           return BreakingChanges.DEPENDENCY_ARRAY_ELEMENTS_CHANGED;
+                       if(!jsonCompatibilityCheckerUtils.arrayComparisionOnlyRemoval((ArrayNode) toCheck.get("dependencies").get(field),
+                               (ArrayNode) toCheckAgainst.get("dependencies").get(field)))
+                           return BreakingChanges.DEPENDENCY_ARRAY_ELEMENTS_NON_REMOVAL;
                    }
                    else {
                        if(propertiesComparator.checkProperties(toCheck.get("dependencies").get(field),
