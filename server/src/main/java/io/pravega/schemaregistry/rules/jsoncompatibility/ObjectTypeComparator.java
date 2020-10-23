@@ -9,9 +9,13 @@ public class ObjectTypeComparator {
     public BreakingChanges checkAspects(JsonNode toCheck, JsonNode toCheckAgainst) {
         // will check for properties,dependencies, required, additional properties by calling required classes.
         PropertiesComparator propertiesComparator = new PropertiesComparator();
+        DependenciesComparator dependenciesComparator = new DependenciesComparator();
         BreakingChanges propertiesDifference = propertiesComparator.checkProperties(toCheck, toCheckAgainst);    
         if (propertiesDifference != null)
             return propertiesDifference;
+        BreakingChanges dependenciesDifference = dependenciesComparator.checkDependencies(toCheck, toCheckAgainst);
+        if(dependenciesDifference != null)
+            return dependenciesDifference;
         return null;
     }
     
