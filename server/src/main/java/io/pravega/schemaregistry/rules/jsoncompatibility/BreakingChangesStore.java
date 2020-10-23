@@ -8,12 +8,12 @@ public class BreakingChangesStore {
     //includes only those changes that lead to incompatibility
     protected enum BreakingChanges {
         // strings
-        MAX_LENGTH_ADDED,
-        MAX_LENGTH_DECREASED,
-        MIN_LENGTH_ADDED,
-        MIN_LENGTH_INCREASED,
-        PATTERN_ADDED,
-        PATTERN_CHANGED,
+        STRING_TYPE_MAX_LENGTH_ADDED,
+        STRING_TYPE_MAX_LENGTH_VALUE_DECREASED,
+        STRING_TYPE_MIN_LENGTH_ADDED,
+        STRING_TYPE_MIN_LENGTH_VALUE_INCREASED,
+        STRING_TYPE_PATTERN_ADDED,
+        STRING_TYPE_PATTERN_MODIFIED,
         // NUMBERS
         NUMBER_TYPE_MAXIMUM_VALUE_ADDED,
         NUMBER_TYPE_MAXIMUM_VALUE_DECREASED,
