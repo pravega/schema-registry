@@ -86,6 +86,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
             case "object":
                 break;
             case "number":
+            case "integer":
                 break;
             case "string":
                 break;

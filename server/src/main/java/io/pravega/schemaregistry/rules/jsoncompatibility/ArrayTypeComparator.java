@@ -21,6 +21,10 @@ public class ArrayTypeComparator {
             BreakingChanges additionalItemsChanges = additionalItems(toCheck, toCheckAgainst);
             if (additionalItemsChanges != null)
                 return additionalItemsChanges;
+            BreakingChanges itemsValidationChanges = itemValidation(toCheck, toCheckAgainst);
+            if(itemsValidationChanges != null)
+                return itemsValidationChanges;
+            //TO DO: Add contains and tupleValidation
         }
         return null;
     }
@@ -86,6 +90,10 @@ public class ArrayTypeComparator {
             }
         }
         return null;
+    }
+    
+    private BreakingChanges itemValidation(JsonNode toCheck, JsonNode toCheckAgainst) {
+        return jsonCompatibilityChecker.checkNodeType(toCheck.get("items"), toCheckAgainst.get("items"));
     }
     
     private boolean isDynamicArray(JsonNode node) {
