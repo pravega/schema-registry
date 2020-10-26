@@ -9,8 +9,10 @@
  */
 package io.pravega.schemaregistry.serializer.avro.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -31,7 +33,7 @@ import java.nio.ByteBuffer;
 import java.util.concurrent.ConcurrentHashMap;
 
 class AvroDeserializer<T> extends AbstractDeserializer<T> {
-    private final ConcurrentHashMap<ByteBuffer, DatumReader<T>> knownSchemas;
+    private final ConcurrentHashMap<ByteBuffer, DatumReader<T>> knownSchemaReaders;
     private final boolean specific;
     private final Schema readerSchema;
 
@@ -40,34 +42,43 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
                      SerializerConfig.Decoders decoder, EncodingCache encodingCache) {
         super(groupId, client, schema, false, decoder, encodingCache, true);
         Preconditions.checkNotNull(schema);
-        this.knownSchemas = new ConcurrentHashMap<>();
+        this.knownSchemaReaders = new ConcurrentHashMap<>();
         specific = SpecificRecordBase.class.isAssignableFrom(schema.getTClass());
         readerSchema = schema.getSchema();
         ByteBuffer schemaData = schema.getSchemaInfo().getSchemaData();
-        createDatumReader(schemaData, readerSchema);
+        knownSchemaReaders.put(schemaData, createDatumReader(readerSchema, specific));
     }
 
     @Override
     public final T deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkNotNull(writerSchemaInfo);
-        DatumReader<T> datumReader  = knownSchemas.get(writerSchemaInfo.getSchemaData());
-        if (datumReader == null) {
+        final ByteBuffer writerSchemaData = writerSchemaInfo.getSchemaData();
+        DatumReader<T> datumReader = knownSchemaReaders.computeIfAbsent(writerSchemaData, key -> {
             String schemaString = new String(writerSchemaInfo.getSchemaData().array(), Charsets.UTF_8);
             Schema writerSchema = new Schema.Parser().parse(schemaString);
-            datumReader = createDatumReader(writerSchemaInfo.getSchemaData(), writerSchema);
-        }
+            return createDatumReader(writerSchema, specific);
+        });
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         return datumReader.read(null, decoder);
     }
 
-    private DatumReader<T> createDatumReader(ByteBuffer schemaData, Schema writerSchema) {
+    private DatumReader<T> createDatumReader(Schema writerSchema, boolean specific) {
         DatumReader<T> datumReader;
         if (specific) {
             datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
         } else {
             datumReader = new ReflectDatumReader<>(writerSchema, readerSchema);
         }
-        knownSchemas.putIfAbsent(schemaData, datumReader);
         return datumReader;
+    }
+
+    /**
+     * Do not use
+     * Creates an immutable copy of inner knownSchemaReaders {@link ConcurrentHashMap}
+     * @return {@link ImmutableMap}
+     */
+    @VisibleForTesting
+    public ImmutableMap<ByteBuffer, DatumReader<T>>  getKnownSchemaReaders() {
+        return ImmutableMap.copyOf(knownSchemaReaders);
     }
 }
