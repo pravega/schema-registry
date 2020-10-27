@@ -21,6 +21,11 @@ public class JsonCompatibilityCheckerUtils {
     public boolean hasDynamicPropertySet(JsonNode node) {
         if(node.get("additionalProperties")==null && node.get("patternProperties")==null)
             return true;
+        else if(node.get("additionalProperties").isBoolean() && node.get("patternProperties") == null) {
+            if(node.get("additionalProperties").asText() == "true") {
+                return true;
+            }
+        }
         return false;
     }
     
@@ -33,8 +38,10 @@ public class JsonCompatibilityCheckerUtils {
     public boolean isInRequired(String toSearch, JsonNode toSearchIn) {
         if(toSearchIn.get("required") != null) {
             ArrayNode arrayToSearch = (ArrayNode) toSearchIn.get("required");
-            if(arrayToSearch.has(toSearch))
-                return true;
+            for(int i=0;i<arrayToSearch.size();i++) {
+                if(arrayToSearch.get(i).asText().equals(toSearch))
+                    return true;
+            }
         }
         return false;
     }
@@ -42,7 +49,15 @@ public class JsonCompatibilityCheckerUtils {
     public boolean arrayComparisionOnlyRemoval(ArrayNode toCheck, ArrayNode toCheckAgainst) {
         // every element in toCheck array must be in toCheckAgainst
         for(int i=0;i<toCheck.size();i++) {
-            if(!toCheckAgainst.has(toCheck.get(i).asText()))
+            int flag =0;
+            String toSearch = toCheck.get(i).asText();
+            for(int j=0;j<toCheckAgainst.size();j++) {
+                if(toSearch.equals(toCheckAgainst.get(i).asText())) {
+                    flag = 1;
+                    break;
+                }
+            }
+            if(flag==0)
                 return false;
         }
         return true;
@@ -51,7 +66,15 @@ public class JsonCompatibilityCheckerUtils {
     public boolean arrayComparisionOnlyAddition(ArrayNode toCheck, ArrayNode toCheckAgainst) {
         // every element in toCheckAgainst array must be in toCheck.
         for(int i=0;i<toCheckAgainst.size();i++) {
-            if(!toCheck.has(toCheckAgainst.get(i).asText()))
+            int flag =0;
+            String toSearch = toCheckAgainst.get(i).asText();
+            for(int j=0;j<toCheck.size();j++) {
+                if(toSearch.equals(toCheck.get(j).asText())) {
+                    flag = 1;
+                    break;
+                }
+            }
+            if(flag==0)
                 return false;
         }
         return true;
