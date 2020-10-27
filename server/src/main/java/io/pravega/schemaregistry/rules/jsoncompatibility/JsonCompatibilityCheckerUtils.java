@@ -3,13 +3,17 @@ package io.pravega.schemaregistry.rules.jsoncompatibility;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+import java.util.Iterator;
+
 public class JsonCompatibilityCheckerUtils {
     
     public String getTypeValue(JsonNode node) {
         String value = null;
-        while(node.fieldNames().hasNext()) {
+        Iterator<String> fieldNames = node.fieldNames();
+        while(fieldNames.hasNext()) {
             if (node.fieldNames().next().equals("type"))
                 value = node.get("type").textValue();
+                break;
         }
         return value;
     }

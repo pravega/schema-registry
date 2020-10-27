@@ -40,7 +40,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
     }
 
 
-    public boolean canReadChecker(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) throws IOException {
+    private boolean canReadChecker(SchemaInfo toValidate, List<SchemaInfo> toValidateAgainst) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         JsonNode toCheck = objectMapper.readTree(toValidate.getSchemaData().array());
         List<JsonNode> toCheckAgainst = toValidateAgainst.stream().map(x -> {
