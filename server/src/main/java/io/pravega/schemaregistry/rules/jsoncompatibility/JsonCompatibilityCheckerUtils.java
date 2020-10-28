@@ -52,7 +52,7 @@ public class JsonCompatibilityCheckerUtils {
             int flag =0;
             String toSearch = toCheck.get(i).asText();
             for(int j=0;j<toCheckAgainst.size();j++) {
-                if(toSearch.equals(toCheckAgainst.get(i).asText())) {
+                if(toSearch.equals(toCheckAgainst.get(j).asText())) {
                     flag = 1;
                     break;
                 }

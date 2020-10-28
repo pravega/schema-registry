@@ -12,12 +12,20 @@ import java.util.stream.Collectors;
 import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.BreakingChanges;
 
 public class JsonCompatibilityChecker implements CompatibilityChecker {
-    EnumComparator enumComparator = new EnumComparator();
-    JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
-    ObjectTypeComparator objectTypeComparator = new ObjectTypeComparator();
-    NumberComparator numberComparator = new NumberComparator();
-    StringComparator stringComparator = new StringComparator();
-    ArrayTypeComparator arrayTypeComparator = new ArrayTypeComparator();
+    EnumComparator enumComparator;
+    JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils;
+    ObjectTypeComparator objectTypeComparator;
+    NumberComparator numberComparator;
+    StringComparator stringComparator;
+    ArrayTypeComparator arrayTypeComparator;
+    public JsonCompatibilityChecker() {
+        this.enumComparator = new EnumComparator();
+        this.jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
+        this.objectTypeComparator = new ObjectTypeComparator();
+        this.numberComparator = new NumberComparator();
+        this.stringComparator = new StringComparator();
+        this.arrayTypeComparator = new ArrayTypeComparator();
+    }
 
     @Override
     public boolean canRead(SchemaInfo readUsing, List<SchemaInfo> writtenUsing) {
@@ -73,6 +81,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
             case "string":
                 return stringComparator.stringComparator(toCheck, toCheckAgainst);
             case "array":
+                arrayTypeComparator.setJsonTypeComparator();
                 return arrayTypeComparator.compareArrays(toCheck, toCheckAgainst);
             case "boolean":
                 break;

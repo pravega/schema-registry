@@ -2,13 +2,17 @@ package io.pravega.schemaregistry.rules.jsoncompatibility;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.collect.Iterators;
+import io.pravega.schemaregistry.rules.CompatibilityChecker;
 
 import java.util.Iterator;
 
 import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.BreakingChanges;
 
 public class ArrayTypeComparator {
-    JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
+    JsonCompatibilityChecker jsonCompatibilityChecker;
+    public void setJsonTypeComparator() {
+        this.jsonCompatibilityChecker = new JsonCompatibilityChecker();
+    }
     public BreakingChanges compareArrays(JsonNode toCheck, JsonNode toCheckAgainst) {
         if (toCheck.isArray() && toCheckAgainst.isArray())
             return arraySimpleBodyComparision(toCheck, toCheckAgainst);
