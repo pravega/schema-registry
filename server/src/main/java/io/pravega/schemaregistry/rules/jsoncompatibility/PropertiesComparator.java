@@ -7,8 +7,11 @@ import io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.Br
 import java.util.Iterator;
 
 public class PropertiesComparator {
-    JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
+    JsonCompatibilityChecker jsonCompatibilityChecker;
     JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
+    public void setJsonCompatibilityChecker() {
+        this.jsonCompatibilityChecker = new JsonCompatibilityChecker();
+    }
     public BreakingChanges checkProperties(JsonNode toCheck, JsonNode toCheckAgainst) {
         Iterator<String> propertyFields = Iterators.concat(toCheck.get("properties").fieldNames(), toCheckAgainst.get("properties").fieldNames());
         while(propertyFields.hasNext()) {
