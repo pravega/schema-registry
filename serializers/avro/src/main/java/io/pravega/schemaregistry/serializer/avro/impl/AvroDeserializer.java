@@ -9,10 +9,8 @@
  */
 package io.pravega.schemaregistry.serializer.avro.impl;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
-import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -72,13 +70,4 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
         return datumReader;
     }
 
-    /**
-     * Do not use
-     * Creates an immutable copy of inner knownSchemaReaders {@link ConcurrentHashMap}
-     * @return {@link ImmutableMap}
-     */
-    @VisibleForTesting
-    public ImmutableMap<ByteBuffer, DatumReader<T>>  getKnownSchemaReaders() {
-        return ImmutableMap.copyOf(knownSchemaReaders);
-    }
 }
