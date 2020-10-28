@@ -1,10 +1,10 @@
 /**
  * Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
- * 
+ *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *     http://www.apache.org/licenses/LICENSE-2.0
  */
 package io.pravega.schemaregistry.server.rest.auth;
@@ -15,6 +15,7 @@ import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
 import io.pravega.controller.server.security.auth.handler.impl.PasswordAuthHandler;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.schemaregistry.service.Config;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.SecurityContext;
@@ -42,6 +43,9 @@ public class AuthHandlerManager {
             if (serverConfig.isAuthEnabled()) {
                 ServiceLoader<AuthHandler> loader = ServiceLoader.load(AuthHandler.class);
                 for (AuthHandler handler : loader) {
+                    if (handler.getHandlerName().equals("Basic") && Config.DISABLE_BASIC_AUTHENTICATION) {
+                        continue;
+                    }
                     if (handler instanceof PasswordAuthHandler && !(handler instanceof BasicAuthHandler)) {
                         continue;
                     }
@@ -60,13 +64,13 @@ public class AuthHandlerManager {
 
     /**
      * Get auth context for the credentials. It extracts method and token from the credentials
-     * and loads the auth handler corresponding to the method. 
+     * and loads the auth handler corresponding to the method.
      * Subsequently, authentication and authorization can be called on the context which will use the auth handler
-     * and then token from the credentials to authenticate and authorize. 
-     * 
-     * @param credentials Credentials to use. 
+     * and then token from the credentials to authenticate and authorize.
+     *
+     * @param credentials Credentials to use.
      * @return Context object that can be used to perform authentication and authorization for supplied credentials
-     * @throws AuthenticationException if the handler is not registered. 
+     * @throws AuthenticationException if the handler is not registered.
      */
     public AuthContext getContext(String credentials) throws AuthenticationException {
         AuthHandler handler;
@@ -84,13 +88,13 @@ public class AuthHandlerManager {
 
     /**
      * Get auth context for the credentials. It extracts method and token from the credentials
-     * and loads the auth handler corresponding to the method. 
+     * and loads the auth handler corresponding to the method.
      * Subsequently, authentication and authorization can be called on the context which will use the auth handler
-     * and then token from the credentials to authenticate and authorize. 
-     * 
-     * @param securityContext Security Context. 
+     * and then token from the credentials to authenticate and authorize.
+     *
+     * @param securityContext Security Context.
      * @return Context object that can be used to perform authentication and authorization for supplied credentials
-     * @throws AuthenticationException if the handler 
+     * @throws AuthenticationException if the handler
      */
     public AuthContext getContext(SecurityContext securityContext) throws AuthenticationException {
         AuthHandler handler = handlerMap.get(securityContext.getAuthenticationScheme());
@@ -101,7 +105,7 @@ public class AuthHandlerManager {
 
         return new AuthContext(handler, securityContext.getUserPrincipal());
     }
-    
+
     /**
      * This method is not only visible for testing, but also intended to be used solely for testing. It allows tests
      * to inject and register custom auth handlers. Also, this method is idempotent.

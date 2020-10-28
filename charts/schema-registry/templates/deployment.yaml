@@ -46,9 +46,9 @@ spec:
                 - sh
                 - -c
                 - netstat -ltn 2> /dev/null | grep {{ .Values.service.port }} || ss -ltn 2> /dev/null | grep {{ .Values.service.port }}
-          {{- if or .Values.authentication.enabled .Values.tls.enabled (and .Values.container .Values.container.volume) }}
+          {{- if or (and .Values.authentication.enabled (not .Values.authentication.disableBasicAuthentication)) .Values.tls.enabled (and .Values.container .Values.container.volume) }}
           volumeMounts:
-          {{- if .Values.authentication.enabled }}
+          {{- if and .Values.authentication.enabled (not .Values.authentication.disableBasicAuthentication) }}
           - name: auth-passwd-secret
             mountPath: /etc/auth-passwd-volume
             readOnly: true
@@ -80,9 +80,9 @@ spec:
             mountPath: {{ .Values.initContainer.volume.mountPath }}
           {{- end }}
       {{- end }}
-      {{- if or .Values.authentication.enabled .Values.tls.enabled (and .Values.initContainer .Values.initContainer.volume) }}
+      {{- if or (and .Values.authentication.enabled (not .Values.authentication.disableBasicAuthentication)) .Values.tls.enabled (and .Values.initContainer .Values.initContainer.volume) }}
       volumes:
-      {{- if .Values.authentication.enabled }}
+      {{- if and .Values.authentication.enabled (not .Values.authentication.disableBasicAuthentication) }}
       - name: auth-passwd-secret
         secret:
           secretName: {{ .Values.authentication.passwordAuthSecret }}
