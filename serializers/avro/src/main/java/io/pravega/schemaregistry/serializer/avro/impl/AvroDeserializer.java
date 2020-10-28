@@ -9,8 +9,10 @@
  */
 package io.pravega.schemaregistry.serializer.avro.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
@@ -60,7 +62,8 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
         return datumReader.read(null, decoder);
     }
 
-    private DatumReader<T> createDatumReader(Schema writerSchema, boolean specific) {
+    @VisibleForTesting
+     DatumReader<T> createDatumReader(Schema writerSchema, boolean specific) {
         DatumReader<T> datumReader;
         if (specific) {
             datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);
@@ -70,4 +73,8 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
         return datumReader;
     }
 
+    @VisibleForTesting
+    ImmutableMap<ByteBuffer, DatumReader<T>> getKnownSchemaReaders() {
+        return ImmutableMap.copyOf(knownSchemaReaders);
+    }
 }

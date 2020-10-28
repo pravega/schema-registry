@@ -1,0 +1,89 @@
+{
+  "type": "record",
+  "namespace": "io.openmessaging.benchmark.driver.pravega.schema.generated.avro",
+  "name": "User",
+  "fields": [
+    {
+      "name": "userId",
+      "type": "string"
+    },
+    {
+      "name": "name",
+      "type": "string"
+    },
+    {
+          "name": "biography",
+          "type": ["null", "string"],
+          "default": null
+    },
+    {
+      "name": "eventTimestamp",
+      "type": ["null", "long"],
+      "default": null
+    },
+    {
+       "name": "keyValues",
+	   "type": ["null", {
+	       "type": "array",
+		   "items": {
+			 "name": "KeyValue",
+			 "type": "record",
+			 "fields": [
+			   {"name":"name", "type":"string"},
+			   {"name":"value", "type":"string"}
+			 ]
+		   }
+	   }]
+    },
+	{
+       "name": "keyValues2",
+	   "type": ["null", {
+	       "type": "array",
+		   "items": {
+			 "name": "KeyValue2",
+			 "type": "record",
+			 "fields": [
+			   {"name":"name", "type":"string"},
+			   {"name":"value", "type":"string"}
+			 ]
+		   }
+	   }]
+    },
+	{
+       "name": "keyValues3",
+	   "type": ["null", {
+	       "type": "array",
+		   "items": {
+			 "name": "KeyValue3",
+			 "type": "record",
+			 "fields": [
+			   {"name":"name", "type":"string"},
+			   {"name":"value", "type":"string"}
+			 ]
+		   }
+	   }]
+    },
+    {
+      "name": "address",
+      "type": {
+        "name" : "AddressEntry",
+        "type" : "record",
+        "fields": [
+          {
+            "name": "streetAddress",
+            "type": "string"
+          },
+          {
+            "name": "postalCode",
+            "type": ["null", "int"],
+            "default": null
+          },
+          {
+            "name": "city",
+            "type": "string"
+          }
+        ]
+      }
+    }
+  ]
+}

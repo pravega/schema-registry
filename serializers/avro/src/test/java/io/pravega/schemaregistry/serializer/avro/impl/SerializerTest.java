@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializer.avro.impl;
 
+import com.google.common.collect.ImmutableMap;
 import io.pravega.client.stream.Serializer;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
