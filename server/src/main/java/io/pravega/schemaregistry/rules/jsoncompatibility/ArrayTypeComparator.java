@@ -92,16 +92,18 @@ public class ArrayTypeComparator {
             else if (toCheck.get("additionalItems").isObject()) {
                 if(toCheckAgainst.get("additionalItems").isObject()) {
                     if(jsonCompatibilityChecker.checkNodeType(toCheck.get("additionalItems"), toCheckAgainst.get("additionalItems")) != null)
-                        return BreakingChanges.ARRAY_ADDITIONAL_ITEMS_SCOPE_DECREASED;
-                    else if (toCheckAgainst.get("additionalItems").isBoolean() && toCheckAgainst.get("additionalItems").asText() == "true")
-                        return BreakingChanges.ARRAY_ADDITIONAL_ITEMS_SCOPE_DECREASED;
+                        return BreakingChanges.ARRAY_ADDITIONAL_ITEMS_SCOPE_INCOMPATIBLE_CHANGE;
                 }
+                else if(toCheckAgainst.get("additionalItems").isBoolean() && toCheckAgainst.get("additionalItems").asText() == "true")
+                    return BreakingChanges.ARRAY_ADDITIONAL_ITEMS_SCOPE_DECREASED;
             }
         }
         return null;
     }
     
     private BreakingChanges itemValidation(JsonNode toCheck, JsonNode toCheckAgainst) {
+        if(!toCheck.has("items") && !toCheckAgainst.has("items"))
+            return null;
         return jsonCompatibilityChecker.checkNodeType(toCheck.get("items"), toCheckAgainst.get("items"));
     }
     
