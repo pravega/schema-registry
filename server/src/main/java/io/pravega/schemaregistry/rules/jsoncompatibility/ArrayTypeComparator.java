@@ -46,9 +46,14 @@ public class ArrayTypeComparator {
     }
 
     private BreakingChanges checkUniqueItems(JsonNode toCheck, JsonNode toCheckAgainst) {
-        if (toCheck.get("uniqueItems").isBoolean() && toCheck.get("uniqueItems").asText() == "true") {
-            if (toCheckAgainst.get("uniqueItems") == null)
-                return BreakingChanges.ARRAY_UNIQUE_ITEMS_CONDITION_ENABLED;
+        if(toCheck.has("uniqueItems")) {
+            if (toCheck.get("uniqueItems").isBoolean() && toCheck.get("uniqueItems").asText() == "true") {
+                if (toCheckAgainst.get("uniqueItems") == null)
+                    return BreakingChanges.ARRAY_UNIQUE_ITEMS_CONDITION_ENABLED;
+                else if (toCheckAgainst.get("uniqueItems").isBoolean() && toCheckAgainst.get(
+                        "uniqueItems").asText().equals("false"))
+                    return BreakingChanges.ARRAY_UNIQUE_ITEMS_CONDITION_ENABLED;
+            }
         }
         return null;
     }
