@@ -10,7 +10,6 @@
 package io.pravega.schemaregistry.serializer.avro.impl;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
@@ -46,7 +45,7 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
         specific = SpecificRecordBase.class.isAssignableFrom(schema.getTClass());
         readerSchema = schema.getSchema();
         ByteBuffer schemaData = schema.getSchemaInfo().getSchemaData();
-        knownSchemaReaders.put(schemaData, createDatumReader(readerSchema, specific));
+        knownSchemaReaders.put(schemaData, createDatumReader(readerSchema, readerSchema, specific));
     }
 
     @Override
@@ -54,16 +53,15 @@ class AvroDeserializer<T> extends AbstractDeserializer<T> {
         Preconditions.checkNotNull(writerSchemaInfo);
         final ByteBuffer writerSchemaData = writerSchemaInfo.getSchemaData();
         DatumReader<T> datumReader = knownSchemaReaders.computeIfAbsent(writerSchemaData, key -> {
-            String schemaString = new String(writerSchemaInfo.getSchemaData().array(), Charsets.UTF_8);
-            Schema writerSchema = new Schema.Parser().parse(schemaString);
-            return createDatumReader(writerSchema, specific);
+            Schema writerSchema = AvroSchema.from(writerSchemaInfo).getSchema();
+            return createDatumReader(writerSchema, this.readerSchema, specific);
         });
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         return datumReader.read(null, decoder);
     }
 
     @VisibleForTesting
-     DatumReader<T> createDatumReader(Schema writerSchema, boolean specific) {
+     DatumReader<T> createDatumReader(Schema writerSchema, Schema readerSchema, boolean specific) {
         DatumReader<T> datumReader;
         if (specific) {
             datumReader = new SpecificDatumReader<>(writerSchema, readerSchema);

@@ -9,7 +9,9 @@
  */
 package io.pravega.schemaregistry.serializer.avro.impl;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import com.google.common.collect.ImmutableMap;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.serializer.avro.schemas.AvroSchema;
@@ -38,7 +40,6 @@ public class AvroGenericDeserializer extends AbstractDeserializer<Object> {
     @Override
     public final Object deserialize(InputStream inputStream, SchemaInfo writerSchemaInfo, SchemaInfo readerSchemaInfo) throws IOException {
         Preconditions.checkNotNull(writerSchemaInfo);
-        Preconditions.checkNotNull(readerSchemaInfo);
         final Pair<SchemaInfo, SchemaInfo> keyPair = Pair.of(writerSchemaInfo, readerSchemaInfo);
         GenericDatumReader<Object> genericDatumReader = knownSchemaReaders.computeIfAbsent(keyPair, key -> {
             Schema writerSchema = AvroSchema.from(writerSchemaInfo).getSchema();
@@ -47,5 +48,10 @@ public class AvroGenericDeserializer extends AbstractDeserializer<Object> {
         });
         BinaryDecoder decoder = DecoderFactory.get().binaryDecoder(inputStream, null);
         return genericDatumReader.read(null, decoder);
+    }
+
+    @VisibleForTesting
+    ImmutableMap<Pair<SchemaInfo, SchemaInfo>, GenericDatumReader<Object>> getKnownSchemaReaders() {
+        return ImmutableMap.copyOf(knownSchemaReaders);
     }
 }
