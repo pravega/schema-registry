@@ -12,7 +12,6 @@ import io.pravega.schemaregistry.serializer.avro.testobjs.generated.avro.Address
 import io.pravega.schemaregistry.serializer.avro.testobjs.generated.avro.User;
 import io.pravega.schemaregistry.serializer.shared.codec.Codecs;
 import io.pravega.schemaregistry.serializer.shared.impl.SerializerConfig;
-import io.pravega.schemaregistry.serializers.SerializerFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.io.DatumReader;
 import org.junit.Assert;
@@ -42,9 +41,9 @@ public class AvroDeserializerTest {
         doAnswer(x -> new EncodingInfo(versionInfo1, schema.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(0)));
         SerializerConfig serializerConfig = SerializerConfig.builder().registryClient(client).groupId("avroUser1")
                 .createGroup(SerializationFormat.Avro).registerSchema(true).build();
-        this.serializer = SerializerFactory
-                .avroSerializer(serializerConfig, schema);
-        this.avroDeserializer = Mockito.spy((AvroDeserializer<User>)SerializerFactory.avroDeserializer(
+        this.serializer = AvroSerializerFactory
+                .serializer(serializerConfig, schema);
+        this.avroDeserializer = Mockito.spy((AvroDeserializer<User>)AvroSerializerFactory.deserializer(
                 serializerConfig, schema));
     }
 
