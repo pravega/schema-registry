@@ -103,7 +103,7 @@ public class PropertiesComparator {
             BreakingChanges additionalPropertiesBreakingChanges = jsonCompatibilityChecker.checkNodeType(
                     toCheck.get("additionalProperties"), toCheckAgainst.get("additionalProperties"));
             if (additionalPropertiesBreakingChanges != null)
-                return additionalPropertiesBreakingChanges;
+                return BreakingChanges.ADDITIONAL_PROPERTIES_NON_COMPATIBLE_CHANGE;
         }
         return null;
     }
