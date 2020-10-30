@@ -54,11 +54,12 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(y.getBytes()),
                 ImmutableMap.of());
         toValidateAgainst.add(schemaInfo1);
-        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        //Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        System.out.println(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
     }
 
     @Test
-    public void testPrintNodes() throws IOException {
+    public void testPrintNodes() {
         JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
         String x = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -175,7 +176,7 @@ public class JsonCompatibilityCheckerTest {
         toValidateAgainstList.add(toValidateAgainst);
         toValidateAgainstList.add(toValidateAgainst1);
         toValidateAgainstList.add(toValidateAgainst2);
-        jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList);
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
     }
 
     @Test
@@ -212,6 +213,20 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo toValidateAgainst1 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         toValidateAgainstList.add(toValidateAgainst1);
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
+        x2 = "{\n" +
+                "\"type\": \"object\",\n" +
+                "\"properties\": {\n" +
+                "\"name\": { \"type\": \"string\" },\n" +
+                "\"email\": { \"type\": \"string\" },\n" +
+                "\"address\": { \"type\": \"string\" },\n" +
+                "\"telephone\": { \"type\": \"string\" }\n" +
+                "},\n" +
+                "\"required\": [\"email\", \"email\", \"address\"]\n" +
+                "}\n";
+        SchemaInfo toValidateAgainst2 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
+                ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
+        
     }
 }
 	

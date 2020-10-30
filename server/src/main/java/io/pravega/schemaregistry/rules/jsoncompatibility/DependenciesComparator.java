@@ -12,6 +12,7 @@ public class DependenciesComparator {
     JsonCompatibilityCheckerUtils jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
     PropertiesComparator propertiesComparator = new PropertiesComparator();
     public BreakingChanges checkDependencies(JsonNode toCheck, JsonNode toCheckAgainst) {
+        propertiesComparator.setJsonCompatibilityChecker();
         if(toCheck.get("dependencies") != null && toCheckAgainst.get("dependencies") == null)
             return BreakingChanges.DEPENDENCY_SECTION_ADDED;
         else if(toCheck.get("dependencies") == null && toCheckAgainst.get("dependencies") == null)

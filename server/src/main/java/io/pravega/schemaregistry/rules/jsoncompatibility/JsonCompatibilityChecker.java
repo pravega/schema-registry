@@ -30,7 +30,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
     @Override
     public boolean canRead(SchemaInfo readUsing, List<SchemaInfo> writtenUsing) {
         try {
-            canReadChecker(readUsing, writtenUsing);
+            return canReadChecker(readUsing, writtenUsing);
         } catch (IOException e) {
             e.printStackTrace();
         }
