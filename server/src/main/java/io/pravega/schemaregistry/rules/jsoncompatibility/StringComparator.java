@@ -29,7 +29,7 @@ public class StringComparator {
     }
     
     private BreakingChanges maxLengthComparator(JsonNode toCheck, JsonNode toCheckAgainst) {
-        if(toCheck.get("maxLength") != null && toCheckAgainst.get("minLength") == null)
+        if(toCheck.get("maxLength") != null && toCheckAgainst.get("maxLength") == null)
             return BreakingChanges.STRING_TYPE_MAX_LENGTH_ADDED;
         else if(toCheck.get("maxLength") != null && toCheckAgainst.get("maxLength") != null) {
             int toCheckMaxLength = toCheck.get("maxLength").asInt();
@@ -41,7 +41,7 @@ public class StringComparator {
     }
     
     private BreakingChanges patternComparator(JsonNode toCheck, JsonNode toCheckAgainst) {
-        if(toCheck.get("pattern") != null && toCheckAgainst.get("patternProperties") == null)
+        if(toCheck.get("pattern") != null && toCheckAgainst.get("pattern") == null)
             return BreakingChanges.STRING_TYPE_PATTERN_ADDED;
         else if (toCheck.get("pattern") != null && toCheckAgainst.get("pattern") != null) {
             if(!toCheck.get("pattern").asText().equals(toCheckAgainst.get("pattern").asText()))
