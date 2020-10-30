@@ -60,7 +60,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
             return null;
         }).collect(
                 Collectors.toList());
-        return toCheckAgainst.stream().map(x -> checkNodeType(toCheck, x)).anyMatch(x -> x != null);
+        return !toCheckAgainst.stream().map(x -> checkNodeType(toCheck, x)).anyMatch(x -> x != null);
     }
 
     protected BreakingChanges checkNodeType(JsonNode toCheck, JsonNode toCheckAgainst) {

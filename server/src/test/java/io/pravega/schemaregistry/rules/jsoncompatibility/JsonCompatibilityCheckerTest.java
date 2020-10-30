@@ -54,12 +54,11 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(y.getBytes()),
                 ImmutableMap.of());
         toValidateAgainst.add(schemaInfo1);
-        //Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
-        System.out.println(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
     }
 
     @Test
-    public void testPrintNodes() {
+    public void testDependencies() {
         JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
         String x = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -90,38 +89,44 @@ public class JsonCompatibilityCheckerTest {
                 "\"billing_address\": { \"type\": \"string\" }\n" +
                 "},\n" +
                 "\"required\": [\"billing_address\"]\n" +
-                "}\n" +
-                "}\n" +
-                "}\n";
-        String z = "{\n" +
-                "\"type\": \"object\",\n" +
-                "\"properties\": {\n" +
-                "\"first_name\": { \"type\": \"string\" },\n" +
-                "\"last_name\": { \"type\": \"string\" },\n" +
-                "\"birthday\": { \"type\": \"string\", \"format\": \"date\" },\n" +
-                "\"address\": {\n" +
-                "\"type\": \"object\",\n" +
-                "\"properties\": {\n" +
-                "\"street_address\": { \"type\": \"string\" },\n" +
-                "\"city\": { \"type\": \"string\" },\n" +
-                "\"state\": { \"type\": \"string\" },\n" +
-                "\"country\": { \"type\" : \"string\" }\n" +
                 "},\n" +
-                "\"required\": [\"city\"]\n" +
-                "}\n" +
+                "\"name\": {\n" +
+                "\"properties\": {\n" +
+                "\"salutation\": { \"type\": \"string\" }\n" +
                 "},\n" +
-                "\"required\": [\"first_name\"]\n" +
+                "\"required\": [\"salutation\"]\n" +
+                "}\n" +
+                "}\n" +
                 "}\n";
         SchemaInfo toValidate = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(x.getBytes()),
                 ImmutableMap.of());
         SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(y.getBytes()),
                 ImmutableMap.of());
+        List<SchemaInfo> toValidateAgainst = new ArrayList<>();
+        toValidateAgainst.add(toValidate);
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        toValidateAgainst.add(schemaInfo1);
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        String z = "{\n" +
+                "\"type\": \"object\",\n" +
+                "\"properties\": {\n" +
+                "\"name\": { \"type\": \"string\" },\n" +
+                "\"credit_card\": { \"type\": \"number\" }\n" +
+                "},\n" +
+                "\"required\": [\"name\"],\n" +
+                "\"dependencies\": {\n" +
+                "\"credit_card\": {\n" +
+                "\"properties\": {\n" +
+                "\"billing_address\": { \"type\": \"number\" }\n" +
+                "},\n" +
+                "\"required\": [\"billing_address\"]\n" +
+                "}\n" +
+                "}\n" +
+                "}\n";
         SchemaInfo schemaInfo11 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(z.getBytes()), ImmutableMap.of());
-        List<SchemaInfo> toValidateAgainst = new ArrayList<>();
-        toValidateAgainst.add(schemaInfo1);
         toValidateAgainst.add(schemaInfo11);
-        jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst);
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
     }
 
     @Test
@@ -149,7 +154,8 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo toValidateAgainst = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         List<SchemaInfo> toValidateAgainstList = new ArrayList<>();
-
+        toValidateAgainstList.add(toValidateAgainst);
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
         //different properties
         x2 = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -161,7 +167,8 @@ public class JsonCompatibilityCheckerTest {
                 "}\n";
         SchemaInfo toValidateAgainst1 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
-
+        toValidateAgainstList.add(toValidateAgainst1);
+        Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
         //different property values 
         x2 = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -173,10 +180,8 @@ public class JsonCompatibilityCheckerTest {
                 "}\n";
         SchemaInfo toValidateAgainst2 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
-        toValidateAgainstList.add(toValidateAgainst);
-        toValidateAgainstList.add(toValidateAgainst1);
         toValidateAgainstList.add(toValidateAgainst2);
-        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
+        Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
     }
 
     @Test
@@ -199,6 +204,7 @@ public class JsonCompatibilityCheckerTest {
                 ByteBuffer.wrap(x1.getBytes()), ImmutableMap.of());
         List<SchemaInfo> toValidateAgainstList = new ArrayList<>();
         toValidateAgainstList.add(toValidateAgainst);
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
         //remove required array element
         String x2 = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -208,12 +214,12 @@ public class JsonCompatibilityCheckerTest {
                 "\"address\": { \"type\": \"string\" },\n" +
                 "\"telephone\": { \"type\": \"string\" }\n" +
                 "},\n" +
-                "\"required\": [\"email\"]\n" +
+                "\"required\": [\"name\", \"email\", \"address\"]\n" +
                 "}\n";
         SchemaInfo toValidateAgainst1 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         toValidateAgainstList.add(toValidateAgainst1);
-        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
         x2 = "{\n" +
                 "\"type\": \"object\",\n" +
                 "\"properties\": {\n" +
@@ -222,11 +228,13 @@ public class JsonCompatibilityCheckerTest {
                 "\"address\": { \"type\": \"string\" },\n" +
                 "\"telephone\": { \"type\": \"string\" }\n" +
                 "},\n" +
-                "\"required\": [\"email\", \"email\", \"address\"]\n" +
+                "\"required\": [\"address\"]\n" +
                 "}\n";
         SchemaInfo toValidateAgainst2 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
-        
+        toValidateAgainstList.clear();
+        toValidateAgainstList.add(toValidateAgainst2);
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
     }
 }
 	
