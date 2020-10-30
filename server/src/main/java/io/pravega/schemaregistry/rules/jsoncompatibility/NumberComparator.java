@@ -91,7 +91,7 @@ public class NumberComparator {
     }
     
     private BreakingChanges typeChanged(JsonNode toCheck, JsonNode toCheckAgainst) {
-        if(toCheck.get("type").asText() == "integer" && toCheckAgainst.get("type").asText() == "number")
+        if(toCheck.get("type").asText().equals("integer") && toCheckAgainst.get("type").asText().equals("number"))
             return BreakingChanges.NUMBER_TYPE_CHANGED_FROM_NUMBER_TO_INTEGER;
         return null;
     }
