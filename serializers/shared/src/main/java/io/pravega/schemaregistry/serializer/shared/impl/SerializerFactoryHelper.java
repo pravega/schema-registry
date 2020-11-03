@@ -9,9 +9,9 @@
  */
 package io.pravega.schemaregistry.serializer.shared.impl;
 
-import com.google.common.base.Strings;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.impl.Credentials;
+import io.pravega.schemaregistry.common.CredentialProvider;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -39,13 +39,23 @@ public class SerializerFactoryHelper {
 
     private static SchemaRegistryClient getSchemaRegistryClient(SerializerConfig config) {
         if (config.getRegistryConfigOrClient().isLeft()) {
-            // if auth is enabled and creds are not supplied, reuse the credentials from pravega client config which may
+            // if auth is enabled and creds are not supplied, reuse the credentialProvider from pravega client config which may
             // be loaded from system properties. 
             SchemaRegistryClientConfig left = config.getRegistryConfigOrClient().getLeft();
-            if (left.isAuthEnabled() && Strings.isNullOrEmpty(left.getAuthMethod())) {
+            if (left.isAuthEnabled() && left.getCredentialProvider() == null) {
                 Credentials creds = ClientConfig.builder().build().getCredentials();
                 left = SchemaRegistryClientConfig.builder().schemaRegistryUri(left.getSchemaRegistryUri())
-                                                 .authentication(creds.getAuthenticationType(), creds.getAuthenticationToken())
+                                                 .credentialProvider(new CredentialProvider() {
+                                                     @Override
+                                                     public String getMethod() {
+                                                         return creds.getAuthenticationType();
+                                                     }
+
+                                                     @Override
+                                                     public String getToken() {
+                                                         return creds.getAuthenticationToken();
+                                                     }
+                                                 })
                                                  .build();
             }
             return SchemaRegistryClientFactory.withNamespace(config.getNamespace(), left);

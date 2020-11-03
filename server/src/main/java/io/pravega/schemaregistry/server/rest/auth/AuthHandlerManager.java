@@ -64,7 +64,7 @@ public class AuthHandlerManager {
      * Subsequently, authentication and authorization can be called on the context which will use the auth handler
      * and then token from the credentials to authenticate and authorize. 
      * 
-     * @param credentials Credentials to use. 
+     * @param credentials CredentialProvider to use. 
      * @return Context object that can be used to perform authentication and authorization for supplied credentials
      * @throws AuthenticationException if the handler is not registered. 
      */

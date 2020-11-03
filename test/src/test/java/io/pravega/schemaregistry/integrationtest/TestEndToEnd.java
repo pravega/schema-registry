@@ -59,7 +59,7 @@ public abstract class TestEndToEnd {
     @Rule
     public Timeout globalTimeout = new Timeout(3, TimeUnit.MINUTES);
 
-    ScheduledExecutorService executor;
+    protected ScheduledExecutorService executor;
 
     private final Schema schema1 = SchemaBuilder
             .record("MyTest")
@@ -107,8 +107,7 @@ public abstract class TestEndToEnd {
     
     @Before
     public void setUp() {
-        executor = Executors.newScheduledThreadPool(10);
-        ScheduledExecutorService executor = Executors.newScheduledThreadPool(Config.THREAD_POOL_SIZE);
+        executor = Executors.newScheduledThreadPool(Config.THREAD_POOL_SIZE);
 
         port = TestUtils.getAvailableListenPort();
         ServiceConfig serviceConfig = ServiceConfig.builder().port(port).build();
@@ -130,8 +129,7 @@ public abstract class TestEndToEnd {
     
     @Test
     public void testEndToEnd() {
-        SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(
-                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
+        SchemaRegistryClient client = getClient();
         
         String group = "group";
 
@@ -234,8 +232,7 @@ public abstract class TestEndToEnd {
 
     @Test
     public void testLargeSchemas() {
-        SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(
-                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
+        SchemaRegistryClient client = getClient();
 
         String group = "group";
 
@@ -264,5 +261,10 @@ public abstract class TestEndToEnd {
     }
 
     abstract SchemaStore getStore();
+    
+    protected SchemaRegistryClient getClient() {
+        return SchemaRegistryClientFactory.withDefaultNamespace(
+                SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
+    }
 }
 

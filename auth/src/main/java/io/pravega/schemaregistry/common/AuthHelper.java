@@ -35,7 +35,7 @@ public class AuthHelper {
      * @throws AuthenticationException throws authentication exception for malformed credentials. 
      */
     public static String[] extractMethodAndToken(String credentials) throws AuthenticationException {
-        Preconditions.checkNotNull(credentials, "Credentials cannot be null");
+        Preconditions.checkNotNull(credentials, "CredentialProvider cannot be null");
         String[] parts = credentials.split("\\s+", 2);
         if (parts.length != 2) {
             throw new AuthenticationException("Malformed request");

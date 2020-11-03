@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.client;
 
+import io.pravega.schemaregistry.common.CredentialProvider;
 import lombok.Builder;
 import lombok.Data;
 
@@ -29,13 +30,9 @@ public class SchemaRegistryClientConfig {
      */
     private final boolean authEnabled;
     /**
-     * Authentication method.
+     * CredentialProvider to be used for authentication and authorization. 
      */
-    private final String authMethod;
-    /**
-     * Authentication token.
-     */
-    private final String authToken;
+    private final CredentialProvider credentialProvider;
     /*
      * Path to trust store for TLS server authentication certificate.
      */
@@ -58,13 +55,12 @@ public class SchemaRegistryClientConfig {
      */
     private final boolean validateHostName;
 
-    private SchemaRegistryClientConfig(URI schemaRegistryUri, boolean authEnabled, String authMethod, String authToken,
+    private SchemaRegistryClientConfig(URI schemaRegistryUri, boolean authEnabled, CredentialProvider credentialProvider,
                                        String trustStore, String trustStoreType, String trustStorePassword, 
                                        String certificate, boolean validateHostName) {
         this.schemaRegistryUri = schemaRegistryUri;
         this.authEnabled = authEnabled;
-        this.authMethod = authMethod;
-        this.authToken = authToken;
+        this.credentialProvider = credentialProvider;
         this.trustStore = trustStore;
         this.certificate = certificate;
         this.trustStoreType = trustStoreType;
@@ -103,22 +99,16 @@ public class SchemaRegistryClientConfig {
 
         public SchemaRegistryClientConfigBuilder authentication(String authMethod, String authToken) {
             return this.authEnabled()
-                       .authMethod(authMethod)
-                       .authToken(authToken);
+                       .credentialProvider(new CredentialProvider.DefaultCredentialProvider(authMethod, authToken));
+        }
+
+        public SchemaRegistryClientConfigBuilder authentication(CredentialProvider credentialProvider) {
+            return this.authEnabled()
+                       .credentialProvider(credentialProvider);
         }
 
         private SchemaRegistryClientConfigBuilder authEnabled() {
             this.authEnabled = true;
-            return this;
-        }
-
-        private SchemaRegistryClientConfigBuilder authMethod(String authMethod) {
-            this.authMethod = authMethod;
-            return this;
-        }
-
-        private SchemaRegistryClientConfigBuilder authToken(String authToken) {
-            this.authToken = authToken;
             return this;
         }
     }
