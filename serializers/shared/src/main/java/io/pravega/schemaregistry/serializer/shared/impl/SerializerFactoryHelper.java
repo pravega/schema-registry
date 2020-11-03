@@ -39,7 +39,7 @@ public class SerializerFactoryHelper {
 
     private static SchemaRegistryClient getSchemaRegistryClient(SerializerConfig config) {
         if (config.getRegistryConfigOrClient().isLeft()) {
-            // if auth is enabled and creds are not supplied, reuse the credentialProvider from pravega client config which may
+            // if auth is enabled and creds are not supplied, reuse the credentials from pravega client config which may
             // be loaded from system properties. 
             SchemaRegistryClientConfig left = config.getRegistryConfigOrClient().getLeft();
             if (left.isAuthEnabled() && left.getCredentialProvider() == null) {

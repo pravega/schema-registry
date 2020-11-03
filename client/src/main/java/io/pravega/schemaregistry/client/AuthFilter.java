@@ -8,6 +8,10 @@ import javax.ws.rs.client.ClientRequestContext;
 import javax.ws.rs.client.ClientRequestFilter;
 import javax.ws.rs.core.HttpHeaders;
 
+/**
+ * Authentication filter for the client. This intercepts requests and adds authentication/authorization header 
+ * to the request. The credentials to add are retrieved from credential provider.
+ */
 @AllArgsConstructor
 public class AuthFilter implements ClientRequestFilter {
     private final CredentialProvider credentialProvider;
