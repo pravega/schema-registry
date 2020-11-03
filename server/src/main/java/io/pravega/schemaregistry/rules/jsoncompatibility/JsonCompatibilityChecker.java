@@ -6,6 +6,7 @@ import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.rules.CompatibilityChecker;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,6 +19,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
     NumberComparator numberComparator;
     StringComparator stringComparator;
     ArrayTypeComparator arrayTypeComparator;
+
     public JsonCompatibilityChecker() {
         this.enumComparator = new EnumComparator();
         this.jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
@@ -39,12 +41,13 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
 
     @Override
     public boolean canBeRead(SchemaInfo writtenUsing, List<SchemaInfo> readUsing) {
-        return false;
+        return readUsing.stream().map(x -> canRead(x, Collections.singletonList(writtenUsing))).allMatch(x -> x.equals(true));
     }
 
     @Override
     public boolean canMutuallyRead(SchemaInfo schema, List<SchemaInfo> schemaList) {
-        return false;
+        return schemaList.stream().map(x -> canRead(schema, Collections.singletonList(x)) && canBeRead(x,
+                Collections.singletonList(schema))).allMatch(x -> x.equals(true));
     }
 
 
@@ -99,7 +102,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
                 "integer")) && jsonCompatibilityCheckerUtils.getTypeValue(toCheckAgainst).equals(
                 "number") || jsonCompatibilityCheckerUtils.getTypeValue(toCheckAgainst).equals("integer"))
             return numberComparator.compareNumbers(toCheck, toCheckAgainst);
-        else 
+        else
             return BreakingChanges.DATA_TYPE_MISMATCH;
     }
 

@@ -27,7 +27,7 @@ public class PropertiesComparator {
                 if (!jsonCompatibilityCheckerUtils.hasStaticPropertySet(
                         toCheck) && !jsonCompatibilityCheckerUtils.hasDynamicPropertySet(toCheck)) {
                     // assume that pattern properties always matches
-                    // TO DO: add regex check for pattern properties
+                    // TODO: add regex check for pattern properties
                     BreakingChanges breakingChanges = jsonCompatibilityChecker.checkNodeType(
                             toCheck.get("additionalProperties"),
                             toCheckAgainst.get("properties").get(propertyField));
@@ -48,7 +48,7 @@ public class PropertiesComparator {
                 if (!jsonCompatibilityCheckerUtils.hasStaticPropertySet(
                         toCheckAgainst) && !jsonCompatibilityCheckerUtils.hasDynamicPropertySet(toCheckAgainst)) {
                     // assume that pattern properties always matches
-                    // TO DO: add regex check for pattern properties
+                    // TODO: add regex check for pattern properties
                     BreakingChanges breakingChanges = jsonCompatibilityChecker.checkNodeType(
                             toCheck.get("properties").get(propertyField),
                             toCheckAgainst.get("additionalProperties"));

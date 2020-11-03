@@ -9,12 +9,13 @@ import org.junit.Test;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JsonCompatibilityCheckerTest {
 
     @Test
-    public void testCanRead() {
+    public void testEqualCase() {
         JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
         String x = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -54,7 +55,14 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(y.getBytes()),
                 ImmutableMap.of());
         toValidateAgainst.add(schemaInfo1);
-        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        boolean canRead = jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst);
+        Assert.assertTrue(canRead);
+        //CanBeRead
+        boolean canBeRead = toValidateAgainst.stream().map(p -> jsonCompatibilityChecker.canBeRead(p,
+                Collections.singletonList(toValidate))).allMatch(p -> p.equals(true));
+        Assert.assertTrue(canBeRead);
+        // canMutuallyRead
+        Assert.assertTrue(canRead && canBeRead);
     }
 
     @Test
