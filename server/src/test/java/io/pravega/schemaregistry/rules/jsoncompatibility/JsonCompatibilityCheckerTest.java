@@ -55,14 +55,9 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(y.getBytes()),
                 ImmutableMap.of());
         toValidateAgainst.add(schemaInfo1);
-        boolean canRead = jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst);
-        Assert.assertTrue(canRead);
+        Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
         //CanBeRead
-        boolean canBeRead = toValidateAgainst.stream().map(p -> jsonCompatibilityChecker.canBeRead(p,
-                Collections.singletonList(toValidate))).allMatch(p -> p.equals(true));
-        Assert.assertTrue(canBeRead);
-        // canMutuallyRead
-        Assert.assertTrue(canRead && canBeRead);
+        Assert.assertTrue(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
     }
 
     @Test
@@ -113,8 +108,11 @@ public class JsonCompatibilityCheckerTest {
         List<SchemaInfo> toValidateAgainst = new ArrayList<>();
         toValidateAgainst.add(toValidate);
         Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        // canBeRead
+        Assert.assertTrue(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
         toValidateAgainst.add(schemaInfo1);
         Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
         String z = "{\n" +
                 "\"type\": \"object\",\n" +
                 "\"properties\": {\n" +
@@ -134,6 +132,7 @@ public class JsonCompatibilityCheckerTest {
         SchemaInfo schemaInfo11 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(z.getBytes()), ImmutableMap.of());
         toValidateAgainst.add(schemaInfo11);
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
         Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainst));
     }
 
@@ -164,6 +163,7 @@ public class JsonCompatibilityCheckerTest {
         List<SchemaInfo> toValidateAgainstList = new ArrayList<>();
         toValidateAgainstList.add(toValidateAgainst);
         Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertTrue(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
         //different properties
         x2 = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -177,6 +177,7 @@ public class JsonCompatibilityCheckerTest {
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         toValidateAgainstList.add(toValidateAgainst1);
         Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
         //different property values 
         x2 = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -190,6 +191,7 @@ public class JsonCompatibilityCheckerTest {
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         toValidateAgainstList.add(toValidateAgainst2);
         Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
     }
 
     @Test
@@ -213,6 +215,7 @@ public class JsonCompatibilityCheckerTest {
         List<SchemaInfo> toValidateAgainstList = new ArrayList<>();
         toValidateAgainstList.add(toValidateAgainst);
         Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertTrue(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
         //remove required array element
         String x2 = "{\n" +
                 "\"type\": \"object\",\n" +
@@ -228,6 +231,7 @@ public class JsonCompatibilityCheckerTest {
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         toValidateAgainstList.add(toValidateAgainst1);
         Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
         x2 = "{\n" +
                 "\"type\": \"object\",\n" +
                 "\"properties\": {\n" +
@@ -236,13 +240,14 @@ public class JsonCompatibilityCheckerTest {
                 "\"address\": { \"type\": \"string\" },\n" +
                 "\"telephone\": { \"type\": \"string\" }\n" +
                 "},\n" +
-                "\"required\": [\"address\"]\n" +
+                "\"required\": [\"name\"]\n" +
                 "}\n";
         SchemaInfo toValidateAgainst2 = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
                 ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
         toValidateAgainstList.clear();
         toValidateAgainstList.add(toValidateAgainst2);
-        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
+        Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertTrue(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
     }
 }
 	
