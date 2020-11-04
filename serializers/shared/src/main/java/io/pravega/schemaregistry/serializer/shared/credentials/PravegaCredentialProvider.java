@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.serializer.shared.credentials;
 
+import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.impl.Credentials;
 import io.pravega.schemaregistry.common.CredentialProvider;
 import lombok.AllArgsConstructor;
@@ -19,6 +20,11 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class PravegaCredentialProvider implements CredentialProvider {
     private final Credentials credentials;
+
+    public PravegaCredentialProvider() {
+        credentials = ClientConfig.builder().build().getCredentials();
+    }
+
     @Override
     public String getMethod() {
         return credentials.getAuthenticationType();
