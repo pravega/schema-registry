@@ -26,8 +26,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Rule;
-import org.junit.rules.Timeout;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -37,16 +35,12 @@ import java.security.NoSuchAlgorithmException;
 import java.security.spec.InvalidKeySpecException;
 import java.util.Base64;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class TestEndToEndWithAuth extends TestInMemoryEndToEnd {
     private final static String SYSTEM_ADMIN = "admin";
     private final static String PASSWORD = "1111_aaaa";
 
-    @Rule
-    public Timeout globalTimeout = new Timeout(3, TimeUnit.MINUTES);
-    
     protected int port;
     private RestServer restServer;
     private File authFile;

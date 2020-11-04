@@ -17,19 +17,13 @@ import io.pravega.schemaregistry.common.CredentialProvider;
 import io.pravega.test.common.AssertExtensions;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.shaded.com.google.common.base.Charsets;
-import org.junit.Rule;
 import org.junit.Test;
-import org.junit.rules.Timeout;
 
 import java.net.URI;
 import java.util.Base64;
-import java.util.concurrent.TimeUnit;
 
 @Slf4j
 public class TestEndToEndWithFailingAuth extends TestEndToEndWithAuth {
-    @Rule
-    public Timeout globalTimeout = new Timeout(3, TimeUnit.MINUTES);
-    
     @Override
     public SchemaRegistryClient getClient() {
         return SchemaRegistryClientFactory.withDefaultNamespace(

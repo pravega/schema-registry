@@ -225,6 +225,7 @@ project('serializers:shared') {
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     javadoc {
@@ -248,6 +249,7 @@ project('serializers:avro') {
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     shadowJar {
@@ -293,6 +295,7 @@ project('serializers:protobuf') {
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     shadowJar {
@@ -337,6 +340,7 @@ project('serializers:json') {
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     shadowJar {
@@ -385,6 +389,7 @@ project('serializers') {
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
+        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
     
     shadowJar {
