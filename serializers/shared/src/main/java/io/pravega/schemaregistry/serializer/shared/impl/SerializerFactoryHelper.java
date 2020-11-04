@@ -10,8 +10,6 @@
 package io.pravega.schemaregistry.serializer.shared.impl;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.client.stream.impl.Credentials;
-import io.pravega.schemaregistry.common.CredentialProvider;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
