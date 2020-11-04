@@ -16,6 +16,7 @@ import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.serializer.shared.credentials.PravegaCredentialProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -43,19 +44,8 @@ public class SerializerFactoryHelper {
             // be loaded from system properties. 
             SchemaRegistryClientConfig left = config.getRegistryConfigOrClient().getLeft();
             if (left.isAuthEnabled() && left.getCredentialProvider() == null) {
-                Credentials creds = ClientConfig.builder().build().getCredentials();
                 left = SchemaRegistryClientConfig.builder().schemaRegistryUri(left.getSchemaRegistryUri())
-                                                 .credentialProvider(new CredentialProvider() {
-                                                     @Override
-                                                     public String getMethod() {
-                                                         return creds.getAuthenticationType();
-                                                     }
-
-                                                     @Override
-                                                     public String getToken() {
-                                                         return creds.getAuthenticationToken();
-                                                     }
-                                                 })
+                                                 .credentialProvider(new PravegaCredentialProvider(ClientConfig.builder().build().getCredentials()))
                                                  .build();
             }
             return SchemaRegistryClientFactory.withNamespace(config.getNamespace(), left);
