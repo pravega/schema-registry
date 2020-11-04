@@ -11,28 +11,14 @@ package io.pravega.schemaregistry.client;
 
 import com.google.common.collect.Lists;
 import io.pravega.schemaregistry.common.CredentialProvider;
-import io.pravega.schemaregistry.contract.data.GroupProperties;
-import io.pravega.schemaregistry.contract.generated.rest.model.ListGroupsResponse;
 import io.pravega.test.common.AssertExtensions;
 import org.junit.Test;
 
 import javax.ws.rs.ProcessingException;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.Invocation;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.GenericType;
-import javax.ws.rs.core.Response;
-
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static org.junit.Assert.assertEquals;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
 
 public class SchemaRegistryClientAuthTest {
     
