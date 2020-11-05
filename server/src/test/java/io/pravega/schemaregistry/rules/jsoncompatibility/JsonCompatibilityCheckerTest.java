@@ -249,5 +249,39 @@ public class JsonCompatibilityCheckerTest {
         Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
         Assert.assertTrue(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
     }
+    
+    @Test
+    public void testDynamicProperties() {
+        JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
+        String x1 = "{\n" +
+                "\"type\": \"object\",\n" +
+                "\"properties\": {\n" +
+                "\"name\": { \"type\": \"string\" },\n" +
+                "\"email\": { \"type\": \"string\" },\n" +
+                "\"address\": { \"type\": \"string\" },\n" +
+                "\"telephone\": { \"type\": \"string\" }\n" +
+                "},\n" +
+                "\"additionalProperties\": { \"type\": \"string\" }\n" +
+                "}\n";
+        String x2 =  "{\n" +
+                "\"type\": \"object\",\n" +
+                "\"properties\": {\n" +
+                "\"name\": { \"type\": \"string\" },\n" +
+                "\"email\": { \"type\": \"string\" },\n" +
+                "\"address\": { \"type\": \"string\" },\n" +
+                "\"telephone\": { \"type\": \"string\" },\n" +
+                "\"SSN\": { \"type\": \"number\" }\n" +
+                "},\n" +
+                "\"additionalProperties\": { \"type\": \"string\" }\n" +
+                "}\n";
+        SchemaInfo toValidate = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(x1.getBytes()),
+                ImmutableMap.of());
+        SchemaInfo toValidateAgainst = new SchemaInfo("toValidateAgainst", SerializationFormat.Json,
+                ByteBuffer.wrap(x2.getBytes()), ImmutableMap.of());
+        List<SchemaInfo> toValidateAgainstList = new ArrayList<>();
+        toValidateAgainstList.add(toValidateAgainst);
+        Assert.assertFalse(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainstList));
+        Assert.assertFalse(jsonCompatibilityChecker.canBeRead(toValidate, toValidateAgainstList));
+    }
 }
 	
