@@ -9,13 +9,11 @@
  */
 package io.pravega.schemaregistry.serializer.shared.impl;
 
-import com.google.common.base.Strings;
-import io.pravega.client.ClientConfig;
-import io.pravega.client.stream.impl.Credentials;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
 import io.pravega.schemaregistry.contract.data.CodecType;
+import io.pravega.schemaregistry.serializer.shared.credentials.PravegaCredentialProvider;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.List;
@@ -42,10 +40,9 @@ public class SerializerFactoryHelper {
             // if auth is enabled and creds are not supplied, reuse the credentials from pravega client config which may
             // be loaded from system properties. 
             SchemaRegistryClientConfig left = config.getRegistryConfigOrClient().getLeft();
-            if (left.isAuthEnabled() && Strings.isNullOrEmpty(left.getAuthMethod())) {
-                Credentials creds = ClientConfig.builder().build().getCredentials();
+            if (left.isAuthEnabled() && left.getCredentialProvider() == null) {
                 left = SchemaRegistryClientConfig.builder().schemaRegistryUri(left.getSchemaRegistryUri())
-                                                 .authentication(creds.getAuthenticationType(), creds.getAuthenticationToken())
+                                                 .credentialProvider(new PravegaCredentialProvider())
                                                  .build();
             }
             return SchemaRegistryClientFactory.withNamespace(config.getNamespace(), left);

@@ -14,7 +14,6 @@ import com.google.common.base.Preconditions;
 import io.pravega.common.Exceptions;
 import io.pravega.common.util.Retry;
 import io.pravega.common.util.CertificateUtils;
-import io.pravega.schemaregistry.common.AuthHelper;
 import io.pravega.schemaregistry.common.ContinuationTokenIterator;
 import io.pravega.schemaregistry.contract.data.CodecType;
 import io.pravega.schemaregistry.contract.data.Compatibility;
@@ -45,8 +44,6 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import javax.ws.rs.client.Client;
 import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.ClientRequestFilter;
-import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.Response;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -76,7 +73,6 @@ import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.Mal
 import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.ConnectionException;
 import static io.pravega.schemaregistry.client.exceptions.RegistryExceptions.InternalServerError;
 
-
 public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry
             .withExpBackoff(100, 2, 10, 1000)
@@ -99,14 +95,11 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
             if (!config.isValidateHostName()) {
                 // host name verification is done by default. To disable it we will add an always true verifier
                 clientBuilder.hostnameVerifier((a, b) -> true);
-            } 
-        } 
-        client = clientBuilder.build();
+            }
+        }
+        this.client = clientBuilder.build();
         if (config.isAuthEnabled()) {
-            client.register((ClientRequestFilter) context -> {
-                context.getHeaders().add(HttpHeaders.AUTHORIZATION, 
-                        AuthHelper.getAuthorizationHeader(config.getAuthMethod(), config.getAuthToken()));
-            });
+            this.client.register(new AuthFilter(config.getCredentialProvider()));
         }
         this.namespace = namespace;
         this.groupProxy = WebResourceFactory.newResource(ApiV1.GroupsApi.class, client.target(config.getSchemaRegistryUri()));
