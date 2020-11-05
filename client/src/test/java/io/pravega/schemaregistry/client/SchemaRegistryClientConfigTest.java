@@ -59,7 +59,7 @@ public class SchemaRegistryClientConfigTest {
             }
         }).build();
         assertTrue(config.isAuthEnabled());
-        assertEquals(config.getCredentialProvider().getMethod(), "method");
-        assertEquals(config.getCredentialProvider().getToken(), "token");
+        assertEquals("method", config.getCredentialProvider().getMethod());
+        assertEquals("token", config.getCredentialProvider().getToken());
     }
 }

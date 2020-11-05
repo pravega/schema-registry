@@ -24,7 +24,7 @@ public class SchemaRegistryClientAuthTest {
     
     @Test
     @SuppressWarnings("unchecked")
-    public void testGroup() {
+    public void testAuthFilter() {
         URI schemaRegistryUri = URI.create("http://localhost:9092");
 
         AtomicLong methodCounter = new AtomicLong(0);
@@ -33,7 +33,7 @@ public class SchemaRegistryClientAuthTest {
                                                                       .authentication(new CredentialProvider() {
                                                                           @Override
                                                                           public String getMethod() {
-                                                                              methodCounter.incrementAndGet();
+                                                                              methodCounter.getAndIncrement();
                                                                               return "MyMethod";
                                                                           }
 
@@ -47,8 +47,8 @@ public class SchemaRegistryClientAuthTest {
                                                                       .build();
 
         SchemaRegistryClient client = SchemaRegistryClientFactory.withDefaultNamespace(config);
-        // verify that the group request actually contained the auth header
 
+        // verify that the group request actually contained the auth header
         // Note: the call to server will fail as there is no server listening. We are merely verifying that our
         // request filter is invoked before sending the request to the server. 
         AssertExtensions.assertThrows("", () -> Lists.newArrayList(client.listGroups()), 
@@ -56,9 +56,11 @@ public class SchemaRegistryClientAuthTest {
         // verify that our credential provider is invoked
         assertEquals(1, methodCounter.get());
         assertEquals(1, tokenCounter.get());
+
         // verify that subsequent calls increment the counters. 
         AssertExtensions.assertThrows("", () -> Lists.newArrayList(client.listGroups()),
                 e -> e instanceof ProcessingException);
+
         // verify that our credential provider is invoked
         assertEquals(2, methodCounter.get());
         assertEquals(2, tokenCounter.get());

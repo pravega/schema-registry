@@ -12,14 +12,23 @@ package io.pravega.schemaregistry.serializer.shared.credentials;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.stream.impl.Credentials;
 import io.pravega.schemaregistry.common.CredentialProvider;
-import lombok.AllArgsConstructor;
 
 /**
- * Credential provider that is a wrapper over and uses pravega credentials to authenticate to schema registry.  
+ * Credential provider that is a wrapper over and uses pravega credentials to authenticate to schema registry.
+ * This is to be used if users want to use the same credentials to authenticate to schema registry 
+ * that they have used in pravega client.
+ * This can be achieved in one of two ways - 
+ * 1. instantiate this class with Pravega client config and this will extract credentials from the client config. 
+ * 2. instantiate this class without any credentials and it will extract credentials from the environment
+ * by creating a default clientconfig which loads the credentials from the environment variables or system properies. 
+ * Refer to {@link ClientConfig} to see how credentials are loaded from the environment. 
  */
-@AllArgsConstructor
 public class PravegaCredentialProvider implements CredentialProvider {
     private final Credentials credentials;
+
+    public PravegaCredentialProvider(ClientConfig pravegaClientConfig) {
+        this.credentials = pravegaClientConfig.getCredentials();
+    }
 
     public PravegaCredentialProvider() {
         credentials = ClientConfig.builder().build().getCredentials();

@@ -129,7 +129,7 @@ public abstract class TestEndToEnd {
     
     @Test
     public void testEndToEnd() {
-        SchemaRegistryClient client = getClient();
+        SchemaRegistryClient client = newClient();
         
         String group = "group";
 
@@ -232,7 +232,7 @@ public abstract class TestEndToEnd {
 
     @Test
     public void testLargeSchemas() {
-        SchemaRegistryClient client = getClient();
+        SchemaRegistryClient client = newClient();
 
         String group = "group";
 
@@ -262,7 +262,7 @@ public abstract class TestEndToEnd {
 
     abstract SchemaStore getStore();
     
-    protected SchemaRegistryClient getClient() {
+    protected SchemaRegistryClient newClient() {
         return SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port)).build());
     }

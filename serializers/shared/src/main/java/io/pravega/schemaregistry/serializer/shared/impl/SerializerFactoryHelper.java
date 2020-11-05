@@ -9,7 +9,6 @@
  */
 package io.pravega.schemaregistry.serializer.shared.impl;
 
-import io.pravega.client.ClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
 import io.pravega.schemaregistry.client.SchemaRegistryClientFactory;
@@ -43,7 +42,7 @@ public class SerializerFactoryHelper {
             SchemaRegistryClientConfig left = config.getRegistryConfigOrClient().getLeft();
             if (left.isAuthEnabled() && left.getCredentialProvider() == null) {
                 left = SchemaRegistryClientConfig.builder().schemaRegistryUri(left.getSchemaRegistryUri())
-                                                 .credentialProvider(new PravegaCredentialProvider(ClientConfig.builder().build().getCredentials()))
+                                                 .credentialProvider(new PravegaCredentialProvider())
                                                  .build();
             }
             return SchemaRegistryClientFactory.withNamespace(config.getNamespace(), left);

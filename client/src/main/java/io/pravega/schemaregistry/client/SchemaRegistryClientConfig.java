@@ -25,31 +25,38 @@ public class SchemaRegistryClientConfig {
      * URI for connecting with registry client.
      */
     private final URI schemaRegistryUri;
+    
     /**
      * Flag to indicate if authentication is enabled.
      */
     private final boolean authEnabled;
+    
     /**
      * CredentialProvider to be used for authentication and authorization. 
      */
     private final CredentialProvider credentialProvider;
+    
     /*
      * Path to trust store for TLS server authentication certificate.
      */
     private final String trustStore;
+    
     /**
      * Type of key store used as the trust store - e.g. jks, pkcs11, pkcs12, dks etc. If not specified then either 
      * certificate (if configured) or default java TLS store as specified in system properties would be used. 
      */
     private final String trustStoreType;
+    
     /**
      * Password for the trust store. Defaults to null. 
      */
     private final String trustStorePassword;
+    
     /**
      * If the trust store is a certificate file, typically DER or PEM file.  
      */
     private final String certificate;
+    
     /**
      * Flag to indicate whether client should perform host name validation in server authentication certificate.
      */

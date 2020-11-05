@@ -74,7 +74,7 @@ public class TestEndToEndWithAuth extends TestInMemoryEndToEnd {
     }
 
     @Override
-    public SchemaRegistryClient getClient() {
+    public SchemaRegistryClient newClient() {
         return SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port))
                                           .authentication(new CredentialProvider.DefaultCredentialProvider("Basic", 
@@ -98,11 +98,6 @@ public class TestEndToEndWithAuth extends TestInMemoryEndToEnd {
     }
 
     private String credentialsAndAclAsString(String username, String password, String acl) {
-        Preconditions.checkArgument(!Strings.isNullOrEmpty(username)
-                && !Strings.isNullOrEmpty(password)
-                && acl != null
-                && !acl.startsWith(":"));
-
         // This will return a string that looks like this:"<username>:<pasword>:acl\n"
         return String.format("%s:%s:%s%n", username, password, acl);
     }

@@ -25,7 +25,7 @@ import java.util.Base64;
 @Slf4j
 public class TestEndToEndWithFailingAuth extends TestEndToEndWithAuth {
     @Override
-    public SchemaRegistryClient getClient() {
+    public SchemaRegistryClient newClient() {
         return SchemaRegistryClientFactory.withDefaultNamespace(
                 SchemaRegistryClientConfig.builder().schemaRegistryUri(URI.create("http://localhost:" + port))
                                           .authentication(new CredentialProvider.DefaultCredentialProvider("Basic", 
@@ -36,14 +36,14 @@ public class TestEndToEndWithFailingAuth extends TestEndToEndWithAuth {
     @Override
     @Test
     public void testEndToEnd() {
-        AssertExtensions.assertThrows("", super::testEndToEnd,
+        AssertExtensions.assertThrows("expected unauthorized exception", super::testEndToEnd,
             e -> e instanceof RegistryExceptions.UnauthorizedException);
     }
 
     @Override
     @Test
     public void testLargeSchemas() {
-        AssertExtensions.assertThrows("", super::testLargeSchemas,
+        AssertExtensions.assertThrows("expected unauthorized exception", super::testLargeSchemas,
             e -> e instanceof RegistryExceptions.UnauthorizedException);
     }
 }
