@@ -15,6 +15,7 @@ import io.pravega.test.common.AssertExtensions;
 import org.junit.Test;
 
 import javax.ws.rs.ProcessingException;
+import java.net.ConnectException;
 import java.net.URI;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -51,15 +52,15 @@ public class SchemaRegistryClientAuthTest {
         // verify that the group request actually contained the auth header
         // Note: the call to server will fail as there is no server listening. We are merely verifying that our
         // request filter is invoked before sending the request to the server. 
-        AssertExtensions.assertThrows("", () -> Lists.newArrayList(client.listGroups()), 
-            e -> e instanceof ProcessingException);
+        AssertExtensions.assertThrows("Expect connection exception", () -> Lists.newArrayList(client.listGroups()), 
+            e -> e instanceof ProcessingException && e.getCause() instanceof ConnectException);
         // verify that our credential provider is invoked
         assertEquals(1, methodCounter.get());
         assertEquals(1, tokenCounter.get());
 
         // verify that subsequent calls increment the counters. 
-        AssertExtensions.assertThrows("", () -> Lists.newArrayList(client.listGroups()),
-                e -> e instanceof ProcessingException);
+        AssertExtensions.assertThrows("Expect connection exception", () -> Lists.newArrayList(client.listGroups()),
+                e -> e instanceof ProcessingException && e.getCause() instanceof ConnectException);
 
         // verify that our credential provider is invoked
         assertEquals(2, methodCounter.get());
