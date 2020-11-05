@@ -220,12 +220,11 @@ project('serializers:shared') {
     dependencies {
         compile project(':common')
         compile project(':client')
-        compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
         compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
-        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     javadoc {
@@ -243,13 +242,10 @@ project('serializers:avro') {
     dependencies {
         compile project(':serializers:shared')
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
-        compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
-        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     shadowJar {
@@ -289,13 +285,10 @@ project('serializers:protobuf') {
         compile project(':serializers:shared')
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
-        compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
-        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     shadowJar {
@@ -334,13 +327,10 @@ project('serializers:json') {
         compile project(':serializers:shared')
         compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
-        compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
-        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
 
     shadowJar {
@@ -380,8 +370,6 @@ project('serializers') {
         compile project(':serializers:protobuf')
         compile project(':serializers:json')
         compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
-        compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
         testCompile files(project(':serializers:avro').sourceSets.test.output)
         testCompile files(project(':serializers:protobuf').sourceSets.test.output)
@@ -389,7 +377,6 @@ project('serializers') {
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
-        testCompile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
     }
     
     shadowJar {
@@ -513,8 +500,6 @@ project('test') {
         compile project(':serializers:avro')
         compile project(':serializers:json')
         compile project(':serializers:shared')
-        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
         }
