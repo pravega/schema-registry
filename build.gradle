@@ -572,6 +572,34 @@ distributions {
             from 'NOTICE'
         }
     }
+    avroserializer {
+        baseName = "schema-registry-avro-serializer"
+        contents {
+            from { project(":serializers:avro").configurations.runtime }
+            from { project(":serializers:avro").configurations.runtime.allArtifacts.files }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+    protobufserializer {
+        baseName = "schema-registry-protobuf-serializer"
+        contents {
+            from { project(":serializers:protobuf").configurations.runtime }
+            from { project(":serializers:protobuf").configurations.runtime.allArtifacts.files }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+    jsonserializer {
+        baseName = "schema-registry-json-serializer"
+        contents {
+            from { project(":serializers:json").configurations.runtime }
+            from { project(":serializers:json").configurations.runtime.allArtifacts.files }
+            from 'LICENSE'
+            from 'NOTICE'
+        }
+    }
+
 }
 
 task sourceCopy(type: Copy) {
@@ -649,6 +677,10 @@ task pushRegistryImage(type: DockerPushTask) {
 
 task dockerPush(dependsOn: pushRegistryImage) {
     description = "Push all docker images"
+}
+
+task distribution(dependsOn: [assembleDist, assembleClientDist, assembleSerializersDist, assembleAvroserializerDist, assembleProtobufserializerDist, assembleJsonserializerDist]) {
+    description = "Builds a distribution package"
 }
 
 /**
