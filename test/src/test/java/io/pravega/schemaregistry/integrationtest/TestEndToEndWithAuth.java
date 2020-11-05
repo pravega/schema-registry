@@ -9,8 +9,6 @@
  */
 package io.pravega.schemaregistry.integrationtest;
 
-import com.google.common.base.Preconditions;
-import com.google.common.base.Strings;
 import io.pravega.controller.server.security.auth.StrongPasswordProcessor;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
