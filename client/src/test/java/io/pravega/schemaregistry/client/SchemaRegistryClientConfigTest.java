@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.client;
 
+import io.pravega.schemaregistry.common.CredentialProvider;
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -46,9 +47,19 @@ public class SchemaRegistryClientConfigTest {
         SchemaRegistryClientConfig config = SchemaRegistryClientConfig.builder().build();
         assertFalse(config.isAuthEnabled());
 
-        config = SchemaRegistryClientConfig.builder().authentication("method", "token").build();
+        config = SchemaRegistryClientConfig.builder().authentication(new CredentialProvider() {
+            @Override
+            public String getMethod() {
+                return "method";
+            }
+
+            @Override
+            public String getToken() {
+                return "token";
+            }
+        }).build();
         assertTrue(config.isAuthEnabled());
-        assertEquals(config.getAuthMethod(), "method");
-        assertEquals(config.getAuthToken(), "token");
+        assertEquals("method", config.getCredentialProvider().getMethod());
+        assertEquals("token", config.getCredentialProvider().getToken());
     }
 }
