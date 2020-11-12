@@ -28,6 +28,8 @@ serviceAccount:
 service:
   type: LoadBalancer
   port: 9092
+  annotations: {}
+  labels: {}
 
 initContainer: {}
   # name: ""
