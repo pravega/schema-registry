@@ -55,7 +55,7 @@ public class AuthHandlerManager {
                     try {
                         handler.initialize(serverConfig);
                         registerHandler(handler);
-                    } catch (Exception e) {
+                    } catch (Throwable e) {
                         log.warn("Exception while initializing auth handler {}", handler, e);
                     }
                 }
