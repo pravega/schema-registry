@@ -33,10 +33,13 @@ public class ServiceConfig implements ServerConfig {
     private final String tlsKeyStorePasswordFilePath;
     private final boolean authEnabled;
     @ToString.Exclude
+    private final boolean disablePasswordAuth;
+    @ToString.Exclude
     private final String userPasswordFilePath;
 
     private ServiceConfig(String host, int port, boolean tlsEnabled, String tlsCertFilePath, 
-                          String tlsKeyStoreFilePath, String tlsKeyStorePasswordFilePath, boolean authEnabled, String userPasswordFilePath) {
+                          String tlsKeyStoreFilePath, String tlsKeyStorePasswordFilePath, boolean authEnabled, 
+                          boolean disablePasswordAuth, String userPasswordFilePath) {
         Exceptions.checkNotNullOrEmpty(host, "host");
         Exceptions.checkArgument(port > 0, "port", "Should be positive integer");
         if (tlsEnabled) {
@@ -54,6 +57,7 @@ public class ServiceConfig implements ServerConfig {
         this.tlsKeyStoreFilePath = tlsKeyStoreFilePath;
         this.tlsKeyStorePasswordFilePath = tlsKeyStorePasswordFilePath;
         this.authEnabled = authEnabled;
+        this.disablePasswordAuth = disablePasswordAuth;
         this.userPasswordFilePath = userPasswordFilePath;
     }
 
@@ -62,5 +66,6 @@ public class ServiceConfig implements ServerConfig {
         private int port = 9092;
         private boolean tlsEnabled = false;
         private boolean authEnabled = false;
+        private boolean disablePasswordAuth = false;
     }
 }

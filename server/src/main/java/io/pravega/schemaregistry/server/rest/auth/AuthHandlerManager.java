@@ -11,6 +11,7 @@ package io.pravega.schemaregistry.server.rest.auth;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
+import io.pravega.auth.AuthConstants;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
 import io.pravega.controller.server.security.auth.handler.impl.PasswordAuthHandler;
@@ -18,6 +19,8 @@ import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 
 import javax.ws.rs.core.SecurityContext;
+import java.util.Collections;
+import java.util.Map;
 import java.util.ServiceLoader;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -29,6 +32,7 @@ import static io.pravega.schemaregistry.common.AuthHelper.extractMethodAndToken;
 @Slf4j
 public class AuthHandlerManager {
     private final ServiceConfig serverConfig;
+    
     private final ConcurrentHashMap<String, AuthHandler> handlerMap;
 
     public AuthHandlerManager(ServiceConfig serverConfig) {
@@ -42,6 +46,9 @@ public class AuthHandlerManager {
             if (serverConfig.isAuthEnabled()) {
                 ServiceLoader<AuthHandler> loader = ServiceLoader.load(AuthHandler.class);
                 for (AuthHandler handler : loader) {
+                    if (serverConfig.isDisablePasswordAuth() && handler.getHandlerName().equals(AuthConstants.BASIC)) {
+                        continue;
+                    }
                     if (handler instanceof PasswordAuthHandler && !(handler instanceof BasicAuthHandler)) {
                         continue;
                     }
@@ -113,5 +120,14 @@ public class AuthHandlerManager {
     void registerHandler(AuthHandler authHandler) {
         Preconditions.checkNotNull(authHandler, "authHandler");
         this.handlerMap.put(authHandler.getHandlerName(), authHandler);
+    }
+
+    /**
+     * This method is not only visible for testing, but also intended to be used solely for testing. 
+     * This returns the handler map to the test for verification.
+     */
+    @VisibleForTesting
+    Map<String, AuthHandler> getHandlerMap() {
+        return Collections.unmodifiableMap(handlerMap);
     }
 }
