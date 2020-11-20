@@ -30,6 +30,7 @@ import io.pravega.common.util.ContinuationTokenAsyncIterator;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.storage.StoreExceptions;
+import io.pravega.shared.security.auth.AccessOperation;
 import lombok.Data;
 import lombok.NonNull;
 import lombok.SneakyThrows;
@@ -97,7 +98,7 @@ public class TableStore extends AbstractService {
         this.executor = executor;
         this.tokenSupplier = x -> {
             String[] splits = x.split("/");
-            return hostStore.getController().getOrRefreshDelegationTokenFor(splits[0], splits[1]).join();
+            return hostStore.getController().getOrRefreshDelegationTokenFor(splits[0], splits[1], AccessOperation.READ_WRITE).join();
         };
         numOfRetries = NUM_OF_RETRIES;
         this.cache = CacheBuilder.newBuilder()

@@ -103,13 +103,13 @@ public class SchemaRegistryServiceTest {
                 SerializationFormat.Avro).compatibility(
                 Compatibility.forward()).build();
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new Boolean(true));
+            return CompletableFuture.completedFuture(true);
         }).when(store).createGroup(any(), anyString(), any());
         Boolean ans = service.createGroup(null, "mygroup", groupProperties).join();
-        assertEquals(new Boolean(true), ans);
+        assertEquals(true, ans);
         // already exists
         doAnswer(x -> {
-            return CompletableFuture.completedFuture(new Boolean(false));
+            return CompletableFuture.completedFuture(false);
         }).when(store).createGroup(any(), anyString(), any());
         ans = service.createGroup(null, "mygroup", groupProperties).join();
         assertEquals(Boolean.FALSE, ans);

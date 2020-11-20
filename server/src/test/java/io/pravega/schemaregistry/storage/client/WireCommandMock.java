@@ -58,7 +58,7 @@ public class WireCommandMock {
                 .when(hoststore).getHostForTableSegment(anyString());
 
         ControllerImpl controller = mock(ControllerImpl.class);
-        doReturn(CompletableFuture.completedFuture("")).when(controller).getOrRefreshDelegationTokenFor(anyString(), anyString());
+        doReturn(CompletableFuture.completedFuture("")).when(controller).getOrRefreshDelegationTokenFor(anyString(), anyString(), any());
         doReturn(CompletableFuture.completedFuture(true)).when(controller).createScope(anyString());
 
         doReturn(controller).when(hoststore).getController();

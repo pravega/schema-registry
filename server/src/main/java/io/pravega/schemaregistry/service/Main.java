@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.service;
 
 import com.google.common.base.Strings;
 import io.pravega.client.ClientConfig;
-import io.pravega.client.stream.impl.Credentials;
+import io.pravega.shared.security.auth.Credentials;
 import io.pravega.common.concurrent.ExecutorServiceHelpers;
 import io.pravega.schemaregistry.server.rest.RestServer;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;

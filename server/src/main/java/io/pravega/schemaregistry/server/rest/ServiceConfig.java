@@ -10,11 +10,14 @@
 package io.pravega.schemaregistry.server.rest;
 
 import com.google.common.base.Strings;
+import io.pravega.auth.AuthPluginConfig;
 import io.pravega.auth.ServerConfig;
 import io.pravega.common.Exceptions;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
+
+import java.util.Properties;
 
 /**
  * REST server config.
@@ -63,4 +66,14 @@ public class ServiceConfig implements ServerConfig {
         private boolean tlsEnabled = false;
         private boolean authEnabled = false;
     }
+
+    @Override
+    public Properties getProperties() {
+        Properties props = new Properties();
+        if (this.userPasswordFilePath != null) {
+            props.setProperty(AuthPluginConfig.BASIC_AUTHPLUGIN_DATABASE, this.userPasswordFilePath);
+        }
+        return props;
+    }
+
 }

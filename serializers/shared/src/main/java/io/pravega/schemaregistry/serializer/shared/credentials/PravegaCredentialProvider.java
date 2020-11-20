@@ -10,8 +10,8 @@
 package io.pravega.schemaregistry.serializer.shared.credentials;
 
 import io.pravega.client.ClientConfig;
-import io.pravega.client.stream.impl.Credentials;
 import io.pravega.schemaregistry.common.CredentialProvider;
+import io.pravega.shared.security.auth.Credentials;
 
 /**
  * Credential provider that is a wrapper over and uses pravega credentials to authenticate to schema registry.
