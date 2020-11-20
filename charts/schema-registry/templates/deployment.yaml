@@ -41,10 +41,12 @@ spec:
               protocol: TCP
           livenessProbe:
             initialDelaySeconds: 2
-            httpGet:
-              path: /ping
-              port: rest
-          {{- if or .Values.authentication.enabled .Values.tls.enabled }}
+            exec:
+              command:
+                - sh
+                - -c
+                - netstat -ltn 2> /dev/null | grep {{ .Values.service.port }} || ss -ltn 2> /dev/null | grep {{ .Values.service.port }}
+          {{- if or .Values.authentication.enabled .Values.tls.enabled (and .Values.container .Values.container.volume) }}
           volumeMounts:
           {{- if .Values.authentication.enabled }}
           - name: auth-passwd-secret
@@ -56,8 +58,29 @@ spec:
             mountPath: /etc/secret-volume
             readOnly: true
           {{- end }}
+          {{- if and .Values.container .Values.container.volume }}
+          - name: transfer-data
+            mountPath: {{ .Values.container.volume.mountPath }}
           {{- end }}
-      {{- if or .Values.authentication.enabled .Values.tls.enabled }}
+          {{- end }}
+      {{- if .Values.initContainer }}
+      initContainers:
+        - name: {{ .Values.initContainer.name }}
+          image: "{{ .Values.initContainer.image.repository }}:{{ .Values.initContainer.image.tag }}"
+          imagePullPolicy: {{ .Values.initContainer.image.pullPolicy }}
+          command:
+{{ toYaml .Values.initContainer.command | indent 12 }}
+          {{- if .Values.initContainer.resources }}
+          resources:
+{{ toYaml .Values.initContainer.command | indent 12 }}
+          {{- end }}
+          {{- if .Values.initContainer.volume }}
+          volumeMounts:
+          - name: transfer-data
+            mountPath: {{ .Values.initContainer.volume.mountPath }}
+          {{- end }}
+      {{- end }}
+      {{- if or .Values.authentication.enabled .Values.tls.enabled (and .Values.initContainer .Values.initContainer.volume) }}
       volumes:
       {{- if .Values.authentication.enabled }}
       - name: auth-passwd-secret
@@ -68,5 +91,9 @@ spec:
       - name: tls-secret
         secret:
           secretName: {{ .Values.tls.secret }}
+      {{- end }}
+      {{- if and .Values.container .Values.container.volume }}
+      - name: transfer-data
+        emptyDir: {}
       {{- end }}
       {{- end }}

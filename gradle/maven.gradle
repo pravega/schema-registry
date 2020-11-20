@@ -15,7 +15,7 @@ plugins.withId('maven') {
                 // Only configure publishing if a URL was provided
                 if (project.hasProperty("publishUrl")) {
                     if (publishUrl == "mavenCentral") {
-                        repository(url: "https://oss.sonatype.org/io.pravega.service/local/staging/deploy/maven2/") {
+                        repository(url: "https://oss.sonatype.org/service/local/staging/deploy/maven2/") {
                             authentication(userName: publishUsername, password: publishPassword)
                         }
                         snapshotRepository(url: "https://oss.sonatype.org/content/repositories/snapshots/") {
@@ -29,6 +29,9 @@ plugins.withId('maven') {
                             }
                         }
                     }
+                    else if (publishUrl == "localFileRepo") {
+                        repository(url : "file://${buildDir}/repository/snapshots")
+                    }
                     else {
                         repository(url: publishUrl) {
                             // Only configure credentials if they are provided (allows publishing to the filesystem)
@@ -39,15 +42,15 @@ plugins.withId('maven') {
                     }
                 }
 
-                pom.artifactId = "pravega" + project.path.replace(':', '-')
+                pom.artifactId = 'schemaregistry-' + project.path.replaceFirst(':', '').replace(':', '-')
                 pom.project {
                     name "Pravega"
                     url "http://pravega.io"
                     description "Streaming Storage Platform"
                     scm {
-                        url 'https://github.com/pravega/pravega/tree/master'
-                        connection 'scm:git:git://github.com/pravega/pravega.git'
-                        developerConnection 'scm:git:https://github.com/pravega/pravega.git'
+                        url 'https://github.com/pravega/schema-registry/tree/master'
+                        connection 'scm:git:git://github.com/pravega/schema-registry.git'
+                        developerConnection 'scm:git:https://github.com/pravega/schema-registry.git'
                     }
                     licenses {
                         license {
@@ -56,6 +59,10 @@ plugins.withId('maven') {
                         }
                     }
                     developers {
+                        developer {
+                            id 'shiveshr'
+                            name 'Shivesh Ranjan'
+                        }
                         developer {
                             id 'fpj'
                             name 'Flavio Junqueira'
@@ -76,7 +83,7 @@ plugins.withId('maven') {
     install {
         repositories {
             mavenInstaller {
-                pom.artifactId = "pravega" + project.path.replace(':', '-')
+                pom.artifactId = 'schemaregistry-' + project.path.replaceFirst(':', '').replace(':', '-')
             }
         }
     }

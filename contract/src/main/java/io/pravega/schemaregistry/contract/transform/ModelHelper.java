@@ -75,6 +75,9 @@ public class ModelHelper {
 
     public static io.pravega.schemaregistry.contract.data.Compatibility decode(Compatibility compatibility) {
         io.pravega.schemaregistry.contract.data.Compatibility decoded;
+        if (compatibility.getPolicy() == null) {
+            throw new IllegalArgumentException("Unknown compatibility type");
+        }
         switch (compatibility.getPolicy()) {
             case ALLOWANY:
                 decoded = io.pravega.schemaregistry.contract.data.Compatibility.allowAny();
@@ -147,7 +150,7 @@ public class ModelHelper {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.Backward();
         } else if (obj instanceof BackwardTill) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTill(
-                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.BackwardTill) backward.getBackwardPolicy()).getVersionInfo()));
+                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.BackwardTill) obj).getVersionInfo()));
         } else if (obj instanceof BackwardTransitive) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.BackwardTransitive();
         } else {
@@ -176,7 +179,7 @@ public class ModelHelper {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.Forward();
         } else if (obj instanceof ForwardTill) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTill(
-                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.ForwardTill) forward.getForwardPolicy()).getVersionInfo()));
+                    decode(((io.pravega.schemaregistry.contract.generated.rest.model.ForwardTill) obj).getVersionInfo()));
         } else if (obj instanceof ForwardTransitive) {
             return new io.pravega.schemaregistry.contract.data.BackwardAndForward.ForwardTransitive();
         } else {

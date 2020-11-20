@@ -61,7 +61,9 @@ public final class Config {
     public static final String TLS_CERT_FILE;
 
     public static final boolean AUTH_ENABLED;
-    public static final String AUTH_RESOURCE_QUALIFIER;
+    public static final String DOMAIN_RESOURCE_QUALIFIER;
+    public static final String NAMESPACE_RESOURCE_QUALIFIER;
+    public static final String GROUP_RESOURCE_QUALIFIER;
     public static final String USER_PASSWORD_FILE;
     public static final boolean DISABLE_BASIC_AUTHENTICATION;
 
@@ -91,7 +93,9 @@ public final class Config {
 
     private static final Property<Boolean> PROPERTY_AUTH_ENABLED = Property.named("security.auth.enable", false);
     private static final Property<String> PROPERTY_AUTH_PASSWORD_FILE = Property.named("security.pwdAuthHandler.accountsDb.location", "");
-    private static final Property<String> PROPERTY_AUTH_RESOURCE_QUALIFIER = Property.named("security.auth.resource.qualifier", "");
+    private static final Property<String> PROPERTY_DOMAIN_RESOURCE_QUALIFIER = Property.named("security.auth.resource.identifier.domain", "prn");
+    private static final Property<String> PROPERTY_NAMESPACE_RESOURCE_QUALIFIER = Property.named("security.auth.resource.identifier.namespace", "namespace");
+    private static final Property<String> PROPERTY_GROUP_RESOURCE_QUALIFIER = Property.named("security.auth.resource.identifier.group", "group");
     private static final Property<Boolean> PROPERTY_DISABLE_BASIC_AUTHENTICATION = Property.named("security.auth.method.basic.disable", false);
 
     private static final String COMPONENT_CODE = "schemaRegistry";
@@ -124,7 +128,9 @@ public final class Config {
 
         AUTH_ENABLED = p.getBoolean(PROPERTY_AUTH_ENABLED);
         DISABLE_BASIC_AUTHENTICATION = p.getBoolean(PROPERTY_DISABLE_BASIC_AUTHENTICATION);
-        AUTH_RESOURCE_QUALIFIER = p.get(PROPERTY_AUTH_RESOURCE_QUALIFIER);
+        DOMAIN_RESOURCE_QUALIFIER = p.get(PROPERTY_DOMAIN_RESOURCE_QUALIFIER);
+        NAMESPACE_RESOURCE_QUALIFIER = p.get(PROPERTY_NAMESPACE_RESOURCE_QUALIFIER);
+        GROUP_RESOURCE_QUALIFIER = p.get(PROPERTY_GROUP_RESOURCE_QUALIFIER);
         USER_PASSWORD_FILE = p.get(PROPERTY_AUTH_PASSWORD_FILE);
 
         SERVICE_CONFIG = createServiceConfig();
@@ -218,8 +224,8 @@ public final class Config {
                                    .userPasswordFilePath(Config.USER_PASSWORD_FILE)
                                    .tlsEnabled(Config.TLS_ENABLED)
                                    .tlsCertFilePath(Config.TLS_CERT_FILE)
-                                   .serverKeyStoreFilePath(Config.TLS_KEY_FILE)
-                                   .serverKeyStoreFilePath(Config.TLS_KEY_PASSWORD_FILE)
+                                   .tlsKeyStoreFilePath(Config.TLS_KEY_FILE)
+                                   .tlsKeyStorePasswordFilePath(Config.TLS_KEY_PASSWORD_FILE)
                                    .build();
     }
 

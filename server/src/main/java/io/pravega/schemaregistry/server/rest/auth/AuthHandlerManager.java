@@ -13,7 +13,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
-import io.pravega.controller.server.rpc.auth.PasswordAuthHandler;
+import io.pravega.controller.server.security.auth.handler.impl.PasswordAuthHandler;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 
@@ -29,7 +29,6 @@ import static io.pravega.schemaregistry.common.AuthHelper.extractMethodAndToken;
 @Slf4j
 public class AuthHandlerManager {
     private final ServiceConfig serverConfig;
-
     private final ConcurrentHashMap<String, AuthHandler> handlerMap;
 
     public AuthHandlerManager(ServiceConfig serverConfig) {
@@ -43,7 +42,7 @@ public class AuthHandlerManager {
             if (serverConfig.isAuthEnabled()) {
                 ServiceLoader<AuthHandler> loader = ServiceLoader.load(AuthHandler.class);
                 for (AuthHandler handler : loader) {
-                    if (handler instanceof PasswordAuthHandler) {
+                    if (handler instanceof PasswordAuthHandler && !(handler instanceof BasicAuthHandler)) {
                         continue;
                     }
                     try {
