@@ -74,6 +74,7 @@ client:
   method: ""
   token: ""
 
+logLevel: INFO
 storeType: Pravega
 controllerUri: tcp://localhost:9090
 pravega:
@@ -90,7 +91,7 @@ authentication:
   passwordAuthSecret:
   userPasswordFile:
   disableBasicAuthentication: false
-  authResourceDomain: "prn"
+  authDomainResourceIdentifier: "prn"
   authNamespaceResourceIdentifier: "namespace"
   authGroupResourceIdentifier: "group"
 
