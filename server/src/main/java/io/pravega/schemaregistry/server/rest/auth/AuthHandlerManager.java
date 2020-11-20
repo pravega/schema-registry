@@ -28,7 +28,6 @@ import static io.pravega.schemaregistry.common.AuthHelper.extractMethodAndToken;
 @Slf4j
 public class AuthHandlerManager {
     private final ServiceConfig serverConfig;
-
     private final ConcurrentHashMap<String, AuthHandler> handlerMap;
 
     public AuthHandlerManager(ServiceConfig serverConfig) {

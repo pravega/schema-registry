@@ -8,6 +8,7 @@
 #  *     http://www.apache.org/licenses/LICENSE-2.0
 #  */
 
+{{ $svc := .Values.service }}
 apiVersion: v1
 kind: Service
 metadata:
@@ -15,6 +16,11 @@ metadata:
   namespace: {{ .Release.Namespace }}
   labels:
 {{ include "schema-registry.commonLabels" . | indent 4 }}
+{{- if $svc.labels }}
+{{ toYaml $svc.labels | indent 4 }}
+{{- end }}
+  annotations:
+{{ toYaml $svc.annotations | indent 4 }}
 spec:
   type: {{ .Values.service.type }}
   ports:

@@ -49,7 +49,7 @@ import static io.pravega.controller.stream.api.grpc.v1.Controller.NodeUri;
 /**
  * Used for making wire command calls into Segment Store.  
  */
-public class WireCommandClient implements AutoCloseable {
+public class WireCommandClient {
     private static final TagLogger log = new TagLogger(LoggerFactory.getLogger(WireCommandClient.class));
 
     private static final Map<Class<? extends Request>, Set<Class<? extends Reply>>> EXPECTED_SUCCESS_REPLIES =
@@ -413,9 +413,5 @@ public class WireCommandClient implements AutoCloseable {
                     + expectedReplies.stream().map(Object::toString).collect(Collectors.joining(", "))), 
                             type.toString());
         }
-    }
-
-    @Override
-    public void close() {
     }
 }

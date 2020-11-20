@@ -32,10 +32,17 @@ data:
   "DISABLE_BASIC_AUTH": "{{ .Values.authentication.disableBasicAuthentication }}"
   {{- end }}
   {{- if .Values.authentication.authorizationResourceQualifier }}
-  "AUTHORIZATION_RESOURCE_QUALIFIER": "{{ .Values.authentication.authorizationResourceQualifier }}"
+  "AUTHORIZATION_DOMAIN_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authResourceDomain }}"
+  "AUTHORIZATION_NAMESPACE_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authResourceNamespace }}"
+  "AUTHORIZATION_GROUP_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authorizationResourceGroup }}"
   {{- end }}
   {{- if .Values.tls.enabled }}
   "TLS_CERT_FILE": "/etc/secret-volume/{{ .Values.tls.certFile }}"
   "TLS_KEY_FILE": "/etc/secret-volume/{{ .Values.tls.keyFile }}"
   "TLS_KEY_PASSWORD_FILE": "/etc/secret-volume/{{ .Values.tls.keyPasswordFile }}"
+  {{- end }}
+  {{- if and .Values.container .Values.container.command }}
+  "PRE_START_CMD": "{{ .Values.container.command }}"
+  {{- else }}
+  "PRE_START_CMD": ""
   {{- end }}
