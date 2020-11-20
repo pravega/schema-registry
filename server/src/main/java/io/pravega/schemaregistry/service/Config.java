@@ -226,6 +226,7 @@ public final class Config {
                                    .tlsCertFilePath(Config.TLS_CERT_FILE)
                                    .tlsKeyStoreFilePath(Config.TLS_KEY_FILE)
                                    .tlsKeyStorePasswordFilePath(Config.TLS_KEY_PASSWORD_FILE)
+                                   .disablePasswordAuth(Config.DISABLE_BASIC_AUTHENTICATION)
                                    .build();
     }
 
