@@ -73,7 +73,7 @@ public class ServiceConfig implements ServerConfig {
     }
 
     @Override
-    public Properties getProperties() {
+    public Properties toAuthHandlerProperties() {
         Properties props = new Properties();
         if (this.userPasswordFilePath != null) {
             props.setProperty(AuthPluginConfig.BASIC_AUTHPLUGIN_DATABASE, this.userPasswordFilePath);
