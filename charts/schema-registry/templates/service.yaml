@@ -22,10 +22,10 @@ metadata:
   annotations:
 {{ toYaml $svc.annotations | indent 4 }}
 spec:
-  type: {{ .Values.service.type }}
+  type: {{ $svc.type }}
   ports:
-    - port: {{ .Values.service.port }}
-      targetPort: {{ .Values.service.port }}
+    - port: {{ $svc.port }}
+      targetPort: {{ $svc.port }}
       protocol: TCP
       name: rest
   selector:

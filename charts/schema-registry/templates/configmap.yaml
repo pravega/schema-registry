@@ -28,13 +28,19 @@ data:
   "pravega_client_auth_method": "{{ .Values.client.method }}"
   "pravega_client_auth_token": "{{ .Values.client.token }}"
   {{- if .Values.authentication.enabled }}
+  {{- if not .Values.authentication.disableBasicAuthentication }}
   "USER_PASSWORD_FILE": "/etc/auth-passwd-volume/{{ .Values.authentication.userPasswordFile }}"
-  "DISABLE_BASIC_AUTH": "{{ .Values.authentication.disableBasicAuthentication }}"
   {{- end }}
-  {{- if .Values.authentication.authorizationResourceQualifier }}
-  "AUTHORIZATION_DOMAIN_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authResourceDomain }}"
-  "AUTHORIZATION_NAMESPACE_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authResourceNamespace }}"
-  "AUTHORIZATION_GROUP_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authorizationResourceGroup }}"
+  "DISABLE_BASIC_AUTH": "{{ .Values.authentication.disableBasicAuthentication }}"
+  {{- if .Values.authentication.authDomainResourceIdentifier }}
+  "AUTHORIZATION_DOMAIN_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authDomainResourceIdentifier }}"
+  {{- end }}
+  {{- if .Values.authentication.authNamespaceResourceIdentifier }}
+  "AUTHORIZATION_NAMESPACE_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authNamespaceResourceIdentifier }}"
+  {{- end }}
+  {{- if .Values.authentication.authGroupResourceIdentifier }}
+  "AUTHORIZATION_GROUP_RESOURCE_IDENTIFIER": "{{ .Values.authentication.authGroupResourceIdentifier }}"
+  {{- end }}
   {{- end }}
   {{- if .Values.tls.enabled }}
   "TLS_CERT_FILE": "/etc/secret-volume/{{ .Values.tls.certFile }}"
@@ -46,3 +52,4 @@ data:
   {{- else }}
   "PRE_START_CMD": ""
   {{- end }}
+  "log.level": "{{ .Values.logLevel }}"
