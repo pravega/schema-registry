@@ -10,8 +10,8 @@
 package io.pravega.schemaregistry.server.rest.auth;
 
 import io.pravega.auth.AuthConstants;
-import io.pravega.controller.server.security.auth.StrongPasswordProcessor;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
+import io.pravega.shared.security.crypto.StrongPasswordProcessor;
 import org.junit.Test;
 
 import java.io.File;

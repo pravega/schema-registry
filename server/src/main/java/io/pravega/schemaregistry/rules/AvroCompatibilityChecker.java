@@ -9,6 +9,7 @@
  */
 package io.pravega.schemaregistry.rules;
 
+import com.google.common.base.Charsets;
 import com.google.common.base.Preconditions;
 import io.pravega.schemaregistry.contract.data.SchemaInfo;
 import io.pravega.schemaregistry.contract.data.SerializationFormat;
@@ -16,7 +17,6 @@ import org.apache.avro.Schema;
 import org.apache.avro.SchemaValidationException;
 import org.apache.avro.SchemaValidator;
 import org.apache.avro.SchemaValidatorBuilder;
-import org.apache.curator.shaded.com.google.common.base.Charsets;
 
 import java.util.List;
 import java.util.stream.Collectors;

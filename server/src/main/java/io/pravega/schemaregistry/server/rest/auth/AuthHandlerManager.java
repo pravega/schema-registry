@@ -14,7 +14,6 @@ import com.google.common.base.Preconditions;
 import io.pravega.auth.AuthConstants;
 import io.pravega.auth.AuthHandler;
 import io.pravega.auth.AuthenticationException;
-import io.pravega.controller.server.security.auth.handler.impl.PasswordAuthHandler;
 import io.pravega.schemaregistry.server.rest.ServiceConfig;
 import lombok.extern.slf4j.Slf4j;
 
@@ -47,9 +46,6 @@ public class AuthHandlerManager {
                 ServiceLoader<AuthHandler> loader = ServiceLoader.load(AuthHandler.class);
                 for (AuthHandler handler : loader) {
                     if (serverConfig.isDisablePasswordAuth() && handler.getHandlerName().equals(AuthConstants.BASIC)) {
-                        continue;
-                    }
-                    if (handler instanceof PasswordAuthHandler && !(handler instanceof BasicAuthHandler)) {
                         continue;
                     }
                     try {

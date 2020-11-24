@@ -464,7 +464,7 @@ project('server') {
         compile project(':auth')
         compile project(':contract')
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-        compile group: 'io.pravega', name: 'pravega-controller', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-shared-basic-authplugin', version: pravegaVersion
         compile group: 'org.apache.avro', name: 'avro', version: avroVersion
         compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
@@ -476,6 +476,7 @@ project('server') {
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
         }
+        testCompile group: 'io.pravega', name: 'pravega-shared-basic-authplugin', version: pravegaVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
