@@ -79,4 +79,11 @@ public class JsonCompatibilityCheckerUtils {
         }
         return true;
     }
+    
+    public boolean hasSubSchema(JsonNode toCheck) {
+        if(toCheck.has("anyOf") || toCheck.has("allOf") || toCheck.has("oneOf")) {
+            return true;
+        }
+        return false;
+    }
 }

@@ -19,7 +19,8 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
     NumberComparator numberComparator;
     StringComparator stringComparator;
     ArrayTypeComparator arrayTypeComparator;
-
+    SubSchemaComparator subSchemaComparator;
+    
     public JsonCompatibilityChecker() {
         this.enumComparator = new EnumComparator();
         this.jsonCompatibilityCheckerUtils = new JsonCompatibilityCheckerUtils();
@@ -27,6 +28,7 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
         this.numberComparator = new NumberComparator();
         this.stringComparator = new StringComparator();
         this.arrayTypeComparator = new ArrayTypeComparator();
+        this.subSchemaComparator = new SubSchemaComparator();
     }
 
     @Override
@@ -67,6 +69,12 @@ public class JsonCompatibilityChecker implements CompatibilityChecker {
     }
 
     protected BreakingChanges checkNodeType(JsonNode toCheck, JsonNode toCheckAgainst) {
+        if(jsonCompatibilityCheckerUtils.hasSubSchema(toCheck)) {
+            subSchemaComparator.setJsonCompatibilityChecker();
+            BreakingChanges subSchemaChanges = subSchemaComparator.checkSubSchemas(toCheck, toCheckAgainst);
+            if(subSchemaChanges != null)
+                return subSchemaChanges;
+        }
         if (toCheck.has("enum") || toCheckAgainst.has("enum")) {
             BreakingChanges enumChanges = enumComparator.enumComparator(toCheck, toCheckAgainst);
             if (enumChanges != null)
