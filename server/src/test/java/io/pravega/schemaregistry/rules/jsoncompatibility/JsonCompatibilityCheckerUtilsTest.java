@@ -122,4 +122,16 @@ public class JsonCompatibilityCheckerUtilsTest {
         ArrayNode originalArray =(ArrayNode) originalNode;
         Assert.assertTrue(jsonCompatibilityCheckerUtils.arrayComparisionOnlyAddition(finalArray, originalArray));
     }
+    
+    @Test
+    public void testHasSubSchema() throws IOException {
+        String x1 = "{\n" +
+                "\"anyOf\": [\n" +
+                "{ \"type\": \"string\" },\n" +
+                "{ \"type\": \"number\" }\n" +
+                "]\n" +
+                "}\n";
+        JsonNode node  = objectMapper.readTree(ByteBuffer.wrap(x1.getBytes()).array());
+        Assert.assertTrue(jsonCompatibilityCheckerUtils.hasSubSchema(node));
+    }
 }
