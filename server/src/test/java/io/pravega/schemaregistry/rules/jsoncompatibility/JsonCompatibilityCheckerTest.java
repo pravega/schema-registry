@@ -33,26 +33,10 @@ public class JsonCompatibilityCheckerTest {
                 "}\n" +
                 "}\n" +
                 "}\n";
-        String y = "{\n" +
-                "\"type\": \"object\",\n" +
-                "\"properties\": {\n" +
-                "\"name\": { \"type\": \"string\" },\n" +
-                "\"credit_card\": { \"type\": \"number\" }\n" +
-                "},\n" +
-                "\"required\": [\"name\"],\n" +
-                "\"dependencies\": {\n" +
-                "\"credit_card\": {\n" +
-                "\"properties\": {\n" +
-                "\"billing_address\": { \"type\": \"string\" }\n" +
-                "},\n" +
-                "\"required\": [\"billing_address\"]\n" +
-                "}\n" +
-                "}\n" +
-                "}\n";
         SchemaInfo toValidate = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(x.getBytes()),
                 ImmutableMap.of());
         List<SchemaInfo> toValidateAgainst = new ArrayList<>();
-        SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(y.getBytes()),
+        SchemaInfo schemaInfo1 = new SchemaInfo("toValidate", SerializationFormat.Json, ByteBuffer.wrap(x.getBytes()),
                 ImmutableMap.of());
         toValidateAgainst.add(schemaInfo1);
         Assert.assertTrue(jsonCompatibilityChecker.canRead(toValidate, toValidateAgainst));

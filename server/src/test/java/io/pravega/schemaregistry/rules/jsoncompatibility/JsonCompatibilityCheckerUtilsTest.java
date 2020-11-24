@@ -125,13 +125,43 @@ public class JsonCompatibilityCheckerUtilsTest {
     
     @Test
     public void testHasSubSchema() throws IOException {
-        String x1 = "{\n" +
+        String x = "{\n" +
                 "\"anyOf\": [\n" +
                 "{ \"type\": \"string\" },\n" +
                 "{ \"type\": \"number\" }\n" +
                 "]\n" +
                 "}\n";
-        JsonNode node  = objectMapper.readTree(ByteBuffer.wrap(x1.getBytes()).array());
+        JsonNode node  = objectMapper.readTree(ByteBuffer.wrap(x.getBytes()).array());
         Assert.assertTrue(jsonCompatibilityCheckerUtils.hasSubSchema(node));
+        x = "{\n" +
+                "\"oneOf\": [\n" +
+                "{ \"type\": \"string\" },\n" +
+                "{ \"type\": \"number\" }\n" +
+                "]\n" +
+                "}\n";
+        node  = objectMapper.readTree(ByteBuffer.wrap(x.getBytes()).array());
+        Assert.assertTrue(jsonCompatibilityCheckerUtils.hasSubSchema(node));
+        x = "{\n" +
+                "\"allOf\": [\n" +
+                "{ \"type\": \"string\" },\n" +
+                "{ \"type\": \"number\" }\n" +
+                "]\n" +
+                "}\n";
+        node  = objectMapper.readTree(ByteBuffer.wrap(x.getBytes()).array());
+        Assert.assertTrue(jsonCompatibilityCheckerUtils.hasSubSchema(node));
+        x = "{\n" +
+                "\"type\": \"object\",\n" +
+                "\"properties\": {\n" +
+                "\"name\": { \"type\": \"string\" },\n" +
+                "\"credit_card\": { \"type\": \"number\" },\n" +
+                "\"billing_address\": { \"type\": \"string\" }\n" +
+                "},\n" +
+                "\"required\": [\"name\"],\n" +
+                "\"dependencies\": {\n" +
+                "\"credit_card\": [\"billing_address\"]\n" +
+                "}\n" +
+                "}\n";
+        node  = objectMapper.readTree(ByteBuffer.wrap(x.getBytes()).array());
+        Assert.assertFalse(jsonCompatibilityCheckerUtils.hasSubSchema(node));
     }
 }

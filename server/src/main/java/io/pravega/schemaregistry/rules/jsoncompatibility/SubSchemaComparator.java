@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import static io.pravega.schemaregistry.rules.jsoncompatibility.BreakingChangesStore.*;
 
 public class SubSchemaComparator {
-    JsonCompatibilityChecker jsonCompatibilityChecker = new JsonCompatibilityChecker();
+    JsonCompatibilityChecker jsonCompatibilityChecker;
     
     public void setJsonCompatibilityChecker() {
         this.jsonCompatibilityChecker = new JsonCompatibilityChecker();
