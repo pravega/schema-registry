@@ -48,6 +48,8 @@ public final class Config {
     public static final int THREAD_POOL_SIZE;
     public static final String STORE_TYPE;
     public static final int MAX_CHUNK_SIZE_BYTES;
+    public static final int TABLE_ENTRIES_CACHE_SIZE;
+    public static final int TABLE_SEGMENT_CACHE_SIZE;
 
     public static final String PRAVEGA_CONTROLLER_URI;
     public static final String PRAVEGA_CREDENTIALS_AUTH_METHOD;
@@ -86,6 +88,9 @@ public final class Config {
     private static final Property<Integer> PROPERTY_MAX_CHUNK_SIZE_BYTES = Property.named("store.pravega.maxChunk.bytes", 900 * 1024);
     private static final Property<Integer> PROPERTY_THREAD_POOL_SIZE = Property.named("threadPool.size", 50);
 
+    private static final Property<Integer> PROPERTY_TABLE_SEGMENT_CACHE_SIZE = Property.named("store.pravega.tableSegment.chacheSize", 1000);
+    private static final Property<Integer> PROPERTY_TABLE_ENTRIES_CACHE_SIZE = Property.named("store.pravega.tableStore.chacheSize", 10000);
+
     private static final Property<Boolean> PROPERTY_TLS_ENABLED = Property.named("security.tls.enable", false);
     private static final Property<String> PROPERTY_TLS_CERT_FILE = Property.named("security.tls.server.certificate.location", "");
     private static final Property<String> PROPERTY_TLS_KEY_FILE = Property.named("security.tls.server.privateKey.location", "");
@@ -120,6 +125,8 @@ public final class Config {
         THREAD_POOL_SIZE = p.getInt(PROPERTY_THREAD_POOL_SIZE);
         STORE_TYPE = p.get(PROPERTY_STORE_TYPE);
         MAX_CHUNK_SIZE_BYTES = p.getInt(PROPERTY_MAX_CHUNK_SIZE_BYTES);
+        TABLE_SEGMENT_CACHE_SIZE = p.getInt(PROPERTY_TABLE_SEGMENT_CACHE_SIZE);
+        TABLE_ENTRIES_CACHE_SIZE = p.getInt(PROPERTY_TABLE_ENTRIES_CACHE_SIZE);
 
         TLS_ENABLED = p.getBoolean(PROPERTY_TLS_ENABLED);
         TLS_KEY_FILE = p.get(PROPERTY_TLS_KEY_FILE);

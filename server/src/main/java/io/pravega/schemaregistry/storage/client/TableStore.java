@@ -29,6 +29,7 @@ import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.ContinuationTokenAsyncIterator;
 import io.pravega.common.util.Retry;
 import io.pravega.schemaregistry.ResultPage;
+import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.shared.security.auth.AccessOperation;
 import lombok.Data;
@@ -102,11 +103,11 @@ public class TableStore extends AbstractService {
         };
         numOfRetries = NUM_OF_RETRIES;
         this.cache = CacheBuilder.newBuilder()
-                                 .maximumSize(10000)
+                                 .maximumSize(Config.TABLE_SEGMENT_CACHE_SIZE)
                                  .build();
 
         tokenCache = CacheBuilder.newBuilder()
-                    .maximumSize(100)
+                    .maximumSize(Config.TABLE_SEGMENT_CACHE_SIZE)
                     .build(); 
     }
 

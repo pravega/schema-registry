@@ -339,7 +339,7 @@ public class WireCommandClient {
     }
     
     private void closeConnection(Reply reply, RawClient client) {
-        log.info("Closing connection as a result of receiving: {}", reply);
+        log.debug("Closing connection as a result of receiving: {}", reply);
         if (client != null) {
             try {
                 client.close();

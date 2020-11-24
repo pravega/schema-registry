@@ -16,6 +16,7 @@ import io.pravega.client.control.impl.ControllerImpl;
 import io.pravega.client.control.impl.ControllerImplConfig;
 import io.pravega.common.concurrent.Futures;
 import io.pravega.controller.stream.api.grpc.v1.Controller;
+import io.pravega.schemaregistry.service.Config;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import lombok.AccessLevel;
 import lombok.Getter;
@@ -24,8 +25,8 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 
 /**
- * This is a temporary implementation to directly query controller for table segment's location. 
- * Whenever table client is released, replace this class with table client.  
+ * Internal class that is responsible for querying controller for hosts for table segments. 
+ * It maintains a cache of already found hosts. 
  */
 class HostStore {
     @Getter(AccessLevel.PACKAGE)
@@ -33,9 +34,9 @@ class HostStore {
     private final Cache<String, Controller.NodeUri> cache;
 
     HostStore(ClientConfig clientConfig, ScheduledExecutorService executor) {
-        controller = new ControllerImpl(ControllerImplConfig.builder().clientConfig(clientConfig).build(), executor);
+        this.controller = new ControllerImpl(ControllerImplConfig.builder().clientConfig(clientConfig).build(), executor);
         this.cache = CacheBuilder.newBuilder()
-                    .maximumSize(100)
+                    .maximumSize(Config.TABLE_SEGMENT_CACHE_SIZE)
                     .build();
     }
 
@@ -56,7 +57,7 @@ class HostStore {
                 return CompletableFuture.completedFuture(uri);
             }
         } catch (Exception e) {
-            return Futures.failedFuture(StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, "Failed to contact controller"));
+            return Futures.failedFuture(e);
         }
     }
     
