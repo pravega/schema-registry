@@ -365,7 +365,7 @@ public class TableStore extends AbstractService {
             if (cause instanceof StoreExceptions) {
                 if (cause instanceof StoreExceptions.StoreConnectionException) {
                     hostStore.invalidateCache(tableName);
-                } else if (cause instanceof StoreExceptions.AuthenticationException) {
+                } else if (cause instanceof StoreExceptions.TokenException) {
                     tokenCache.invalidate(tableName);
                 }
             } else {

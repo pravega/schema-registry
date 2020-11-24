@@ -98,7 +98,7 @@ public class StoreExceptions extends RuntimeException {
                 exception = new StoreConnectionException(errorMessage, cause);
                 break;
             case AUTH_ERROR:
-                exception = new AuthenticationException(errorMessage, cause);
+                exception = new TokenException(errorMessage, cause);
                 break;
             case UNKNOWN:
                 exception = new UnknownException(errorMessage, cause);
@@ -166,8 +166,8 @@ public class StoreExceptions extends RuntimeException {
     /**
      * Exception type due to failure in authenticating with store.
      */
-    public static class AuthenticationException extends StoreExceptions implements RetryableException {
-        private AuthenticationException(String errorMessage, Throwable cause) {
+    public static class TokenException extends StoreExceptions implements RetryableException {
+        private TokenException(String errorMessage, Throwable cause) {
             super(errorMessage, cause);
         }
     }
