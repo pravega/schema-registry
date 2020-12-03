@@ -192,7 +192,8 @@ public class ModelHelper {
         Preconditions.checkArgument(versionInfo.getType() != null, "type cannot be null");
         Preconditions.checkArgument(versionInfo.getVersion() != null, "version cannot be null");
         Preconditions.checkArgument(versionInfo.getId() != null, "id cannot be null");
-        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getType(), versionInfo.getVersion(), versionInfo.getId());
+        return new io.pravega.schemaregistry.contract.data.VersionInfo(versionInfo.getType(), versionInfo.getSerializationFormat(), 
+                versionInfo.getVersion(), versionInfo.getId());
     }
 
     public static io.pravega.schemaregistry.contract.data.EncodingInfo decode(EncodingInfo encodingInfo) {
@@ -322,7 +323,8 @@ public class ModelHelper {
     }
 
     public static VersionInfo encode(io.pravega.schemaregistry.contract.data.VersionInfo versionInfo) {
-        return new VersionInfo().type(versionInfo.getType()).version(versionInfo.getVersion()).id(versionInfo.getId());
+        return new VersionInfo().type(versionInfo.getType()).serializationFormat(versionInfo.getSerializationFormatName())
+                                .version(versionInfo.getVersion()).id(versionInfo.getId());
     }
 
     public static SchemaInfo encode(io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo) {

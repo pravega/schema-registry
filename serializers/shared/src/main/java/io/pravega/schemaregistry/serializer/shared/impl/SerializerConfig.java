@@ -205,7 +205,7 @@ public class SerializerConfig {
          * Group creation is idempotent.
          *
          * @param serializationFormat {@link GroupProperties#serializationFormat}.
-         * @param allowMultipleTypes  {@link GroupProperties#allowMultipleTypes}
+         * @param allowMultipleTypes  {@link GroupProperties#isAllowMultipleTypes()}
          * @return Builder
          */
         public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, boolean allowMultipleTypes) {
@@ -218,8 +218,8 @@ public class SerializerConfig {
          * Automatically create group with provided group properties. Group creation is idempotent.
          *
          * @param serializationFormat {@link GroupProperties#serializationFormat}.
-         * @param policy              {@link GroupProperties#compatibility}
-         * @param allowMultipleTypes  {@link GroupProperties#allowMultipleTypes}
+         * @param policy              {@link GroupProperties#getCompatibility()}
+         * @param allowMultipleTypes  {@link GroupProperties#isAllowMultipleTypes()}
          * @return Builder
          */
         public SerializerConfigBuilder createGroup(SerializationFormat serializationFormat, Compatibility policy, boolean allowMultipleTypes) {

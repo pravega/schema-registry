@@ -79,7 +79,7 @@ public class SchemaRegistryService {
     private static final Retry.RetryAndThrowConditionally RETRY = Retry.withExpBackoff(1, 2, Integer.MAX_VALUE, 100)
                                                                        .retryWhen(x -> Exceptions.unwrap(x) instanceof StoreExceptions.WriteConflictException);
     private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
-    private static final VersionInfo EMPTY_VERSION = new VersionInfo("", -1, -1);
+    private static final VersionInfo EMPTY_VERSION = new VersionInfo("", "", -1, -1);
 
     static {
         OBJECT_MAPPER.configure(MapperFeature.SORT_PROPERTIES_ALPHABETICALLY, true);
@@ -158,11 +158,11 @@ public class SchemaRegistryService {
 
     /**
      * Gets group's properties.
-     * {@link GroupProperties#serializationFormat} which identifies the serialization format used to describe the schema.
-     * {@link GroupProperties#compatibility} sets the schema compatibility policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#allowMultipleTypes} that specifies multiple schemas with distinct {@link SchemaInfo#type} can
+     * {@link GroupProperties#getSerializationFormat()} which identifies the serialization format used to describe the schema.
+     * {@link GroupProperties#getCompatibility()} sets the schema compatibility policy that needs to be enforced for evolving schemas.
+     * {@link GroupProperties#isAllowMultipleTypes()} that specifies multiple schemas with distinct {@link SchemaInfo#getType()} can
      * be registered.
-     * {@link GroupProperties#properties} properties for a group.
+     * {@link GroupProperties#getProperties()} properties for a group.
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
@@ -222,11 +222,11 @@ public class SchemaRegistryService {
 
     /**
      * Gets list of latest schema versions for all schemas registered in the group. Schemas representing different
-     * object types are identified by {@link SchemaInfo#type}.
+     * object types are identified by {@link SchemaInfo#getType()}.
      *
      * @param namespace  namespace for which the request is scoped to.
      * @param group      Name of group.
-     * @param schemaType type of object as identified by {@link SchemaInfo#type}.
+     * @param schemaType type of object as identified by {@link SchemaInfo#getType()}.
      * @return CompletableFuture which holds list of latest schema versions for different schemas upon completion.
      */
     public CompletableFuture<List<SchemaWithVersion>> getSchemas(String namespace, String group, @Nullable String schemaType) {
@@ -249,11 +249,11 @@ public class SchemaRegistryService {
     }
 
     /**
-     * Adds schema to the group. If group is configured with {@link GroupProperties#allowMultipleTypes}, then
-     * the {@link SchemaInfo#type} is used to filter previous schemas and apply schema compatibility policy against all
+     * Adds schema to the group. If group is configured with {@link GroupProperties#isAllowMultipleTypes()}, then
+     * the {@link SchemaInfo#getType()} is used to filter previous schemas and apply schema compatibility policy against all
      * previous versions of schema.
      * Compatibility that are sent to the registry should be a super set of Compatibility set in
-     * {@link GroupProperties#compatibility}
+     * {@link GroupProperties#getCompatibility()}
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
@@ -323,14 +323,15 @@ public class SchemaRegistryService {
      *
      * @param namespace  namespace for which the request is scoped to.
      * @param group      Name of group.
-     * @param schemaType Schema type as used in {@link SchemaInfo#type}
+     * @param serializationFormat serialization format.
+     * @param schemaType Schema type as used in {@link SchemaInfo#getType()}
      * @param version    Version number which uniquely identifies schema of schemaType within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, String schemaType, int version) {
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String group, String serializationFormat, String schemaType, int version) {
         log.debug("Group {} {}, get schema for version {}/{}.", namespace, group, schemaType, version);
 
-        return store.getSchema(namespace, group, schemaType, version)
+        return store.getSchema(namespace, group, schemaType, version, serializationFormat)
                     .whenComplete((r, e) -> {
                         if (e == null) {
                             log.debug("Group {} {}, return schema for verison {}/{}.", namespace, group, schemaType, version);
@@ -367,15 +368,16 @@ public class SchemaRegistryService {
      *
      * @param namespace  namespace for which the request is scoped to.
      * @param group      Name of group.
-     * @param schemaType schema type as specified in {@link SchemaInfo#type}
+     * @param serializationFormat serialization format full name.
+     * @param schemaType schema type as specified in {@link SchemaInfo#getType()}
      * @param version    Version which uniquely identifies schema of schemaType within a group.
      * @return CompletableFuture that holds Schema info corresponding to the version info.
      */
-    public CompletableFuture<Void> deleteSchema(String namespace, String group, String schemaType, int version) {
+    public CompletableFuture<Void> deleteSchema(String namespace, String group, String serializationFormat, String schemaType, int version) {
         log.debug("Group {} {}, delete schema for version {}/{}.", namespace, group, schemaType, version);
         return RETRY.runAsync(() -> store.getGroupEtag(namespace, group)
                                          .thenCompose(etag ->
-                                                 store.deleteSchema(namespace, group, schemaType, version, etag)
+                                                 store.deleteSchema(namespace, group, schemaType, version, serializationFormat, etag)
                                                       .whenComplete((r, e) -> {
                                                           if (e == null) {
                                                               log.debug("Group {} {}, schema for verison {}/{} deleted.", namespace, group, schemaType, version);
@@ -452,7 +454,7 @@ public class SchemaRegistryService {
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
-     * @param type      Object type identified by {@link SchemaInfo#type}.
+     * @param type      Object type identified by {@link SchemaInfo#getType()}.
      * @return CompletableFuture that holds Ordered list of schemas with versions and compatibility for all schemas in the group.
      */
     public CompletableFuture<List<GroupHistoryRecord>> getGroupHistory(String namespace, String group, @Nullable String type) {
@@ -483,7 +485,7 @@ public class SchemaRegistryService {
 
     /**
      * Gets version corresponding to the schema.
-     * For each unique {@link SchemaInfo#schemaData}, there will be a unique monotonically increasing version assigned.
+     * For each unique {@link SchemaInfo#getSchemaData()}, there will be a unique monotonically increasing version assigned.
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.
@@ -508,10 +510,10 @@ public class SchemaRegistryService {
 
     /**
      * Checks whether given schema is valid by applying compatibility against previous schemas in the group
-     * subject to current {@link GroupProperties#compatibility} policy.
+     * subject to current {@link GroupProperties#getCompatibility()} policy.
      * Optionally a compatibility can be specified to specifically check against that policy. 
-     * If {@link GroupProperties#allowMultipleTypes} is set, the validation is performed against schemas with same
-     * object type identified by {@link SchemaInfo#type}.
+     * If {@link GroupProperties#isAllowMultipleTypes()} is set, the validation is performed against schemas with same
+     * object type identified by {@link SchemaInfo#getType()}.
      *
      * @param namespace namespace for which the request is scoped to.
      * @param group     Name of group.

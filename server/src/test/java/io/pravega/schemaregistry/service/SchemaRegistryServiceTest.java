@@ -171,11 +171,12 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetSchemas() {
         byte[] schemaData = new byte[0];
+        SerializationFormat format = SerializationFormat.custom("a");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
+                        "schemaName", format, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", format.getFullTypeName(), 5, 7);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         List<SchemaWithVersion> schemaWithVersions = new ArrayList<>();
         schemaWithVersions.add(schemaWithVersion);
@@ -202,18 +203,19 @@ public class SchemaRegistryServiceTest {
         doAnswer(x -> {
             return CompletableFuture.completedFuture(new InMemoryGroupTable().toEtag(5));
         }).when(store).getGroupEtag(any(), anyString());
+        SerializationFormat format = SerializationFormat.custom("custom1");
         doAnswer(x -> {
             return CompletableFuture.completedFuture(
                     GroupProperties.builder().allowMultipleTypes(Boolean.FALSE).properties(
                             ImmutableMap.<String, String>builder().build()).serializationFormat(
-                            SerializationFormat.custom("custom1")).compatibility(
+                            format).compatibility(
                             Compatibility.forward()).build());
         }).when(store).getGroupProperties(any(), anyString());
         byte[] schemaData = new byte[0];
-        SchemaInfo schemaInfo = new SchemaInfo("type", SerializationFormat.custom("custom1"),
+        SchemaInfo schemaInfo = new SchemaInfo("type", format,
                 ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", format.getFullTypeName(), 5, 7);
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).addSchema(any(), anyString(), any(), any(),
                 any(), any(), any());
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(),
@@ -238,14 +240,14 @@ public class SchemaRegistryServiceTest {
         doAnswer(x -> CompletableFuture.completedFuture(
                 GroupProperties.builder().allowMultipleTypes(Boolean.FALSE).properties(
                         ImmutableMap.<String, String>builder().build()).serializationFormat(
-                        SerializationFormat.custom("custom1")).compatibility(
+                        format).compatibility(
                         Compatibility.allowAny()).build())).when(store).getGroupProperties(
                 any(), anyString());
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group Not Found"))).when(
                 store).getSchemaVersion(any(), anyString(), any(), any());
         schemaData = new byte[1];
-        SchemaInfo schemaInfo1 = new SchemaInfo("type1", SerializationFormat.custom("custom1"),
+        SchemaInfo schemaInfo1 = new SchemaInfo("type1", format,
                 ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo1, versionInfo);
@@ -297,7 +299,7 @@ public class SchemaRegistryServiceTest {
         byte[] schemaData = new byte[0];
         SchemaInfo schemaInfo = new SchemaInfo("mygroup", SerializationFormat.Protobuf, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("objectType", SerializationFormat.Protobuf.getFullTypeName(), 5, 5);
         EncodingInfo encodingInfo = new EncodingInfo(versionInfo, schemaInfo, new CodecType("gzip"));
         doAnswer(x -> CompletableFuture.completedFuture(encodingInfo)).when(store).getEncodingInfo(any(), anyString(),
                 any());
@@ -325,7 +327,7 @@ public class SchemaRegistryServiceTest {
         // Either - left
         doAnswer(x -> CompletableFuture.completedFuture(Either.left(encodingId))).when(
                 store).getEncodingId(any(), anyString(), any(), any());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("objectType", "a", 5, 5);
         EncodingId encodingId1 = service.getEncodingId(null, "mygroup", versionInfo, "gzip").join();
         assertEquals(7, encodingId1.getId());
         // createEncodingId - Right
@@ -365,7 +367,8 @@ public class SchemaRegistryServiceTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", 5, 5),
+        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName",
+                SerializationFormat.Avro.getFullTypeName(), 5, 5),
                 Compatibility.allowAny(), 100, "describeSchema");
         List<GroupHistoryRecord> groupHistoryRecords = new ArrayList<>();
         groupHistoryRecords.add(groupHistoryRecord);
@@ -409,7 +412,7 @@ public class SchemaRegistryServiceTest {
 
     @Test
     public void testGetSchemaVersion() {
-        VersionInfo versionInfo = new VersionInfo("objectTYpe", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectTYpe", "a", 5, 7);
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(store).getSchemaVersion(any(), anyString(), any(),
                 any());
         byte[] schemaData = new byte[0];
@@ -435,18 +438,19 @@ public class SchemaRegistryServiceTest {
 
     @Test
     public void testValidateSchema() {
+        SerializationFormat format = SerializationFormat.custom("custom1");
         doAnswer(x -> {
             return CompletableFuture.completedFuture(
                     GroupProperties.builder().allowMultipleTypes(Boolean.FALSE).properties(
                             ImmutableMap.<String, String>builder().build()).serializationFormat(
-                            SerializationFormat.Custom).compatibility(Compatibility.forward()).build());
+                            format).compatibility(Compatibility.forward()).build());
         }).when(store).getGroupProperties(any(), anyString());
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SerializationFormat.custom("custom1"), ByteBuffer.wrap(schemaData),
+                        "schemaName", format, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", format.getFullTypeName(), 5, 7);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(
                 any(), anyString());
@@ -469,17 +473,18 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testCanRead() {
         byte[] schemaData = new byte[0];
+        SerializationFormat format = SerializationFormat.custom("a");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "packageName.schemaName", SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
+                        "packageName.schemaName", format, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
         doAnswer(x -> {
             return CompletableFuture.completedFuture(
                     GroupProperties.builder().allowMultipleTypes(Boolean.FALSE).properties(
                             ImmutableMap.<String, String>builder().build()).serializationFormat(
-                            SerializationFormat.Custom).compatibility(Compatibility.forward()).build());
+                            format).compatibility(Compatibility.forward()).build());
         }).when(store).getGroupProperties(any(), anyString());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", format.getFullTypeName(), 5, 7);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doAnswer(x -> CompletableFuture.completedFuture(schemaWithVersion)).when(store).getLatestSchemaVersion(
                 any(), anyString());
@@ -551,11 +556,12 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetSchemaReferences() {
         byte[] schemaData = new byte[0];
+        SerializationFormat format = SerializationFormat.custom("custom1");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SerializationFormat.custom("custom1"), ByteBuffer.wrap(schemaData),
+                        "schemaName", format, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", format.getFullTypeName(), 5, 7);
         String groupName = "mygroup";
         List<String> groupNameList = new ArrayList<>();
         groupNameList.add(groupName);
@@ -581,28 +587,29 @@ public class SchemaRegistryServiceTest {
     @Test
     public void testGetSchemaWithVersionAndType() {
         byte[] schemaData = new byte[0];
+        SerializationFormat format = SerializationFormat.custom("custom1");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
-                        "schemaName", SerializationFormat.custom("custom1"), ByteBuffer.wrap(schemaData),
+                        "schemaName", format, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", format.getFullTypeName(), 5, 7);
         String groupName = "mygroup";
         doAnswer(x -> CompletableFuture.completedFuture(schemaInfo)).when(store).getSchema(any(), anyString(),
-                anyString(), anyInt());
-        SchemaInfo schemaInfo1 = service.getSchema(null, groupName, "schemaName", versionInfo.getVersion()).join();
-        assertTrue(schemaInfo.equals(schemaInfo1));
+                anyString(), anyInt(), anyString());
+        SchemaInfo schemaInfo1 = service.getSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), "schemaName", versionInfo.getVersion()).join();
+        assertEquals(schemaInfo, schemaInfo1);
         //GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(store).getSchema(
-                any(), anyString(), anyString(), anyInt());
+                any(), anyString(), anyString(), anyInt(), anyString());
         AssertExtensions.assertThrows("An Exception should have been thrown",
-                () -> service.getSchema(null, groupName, "schemaName", versionInfo.getVersion()).join(),
+                () -> service.getSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), "schemaName", versionInfo.getVersion()).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
         //Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).getSchema(any(), anyString(),
-                anyString(), anyInt());
+                anyString(), anyInt(), anyString());
         AssertExtensions.assertThrows("An Exception should have been thrown",
-                () -> service.getSchema(null, groupName, "schemaName", versionInfo.getVersion()).join(),
+                () -> service.getSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), "schemaName", versionInfo.getVersion()).join(),
                 e -> e instanceof RuntimeException);
     }
 
@@ -636,21 +643,21 @@ public class SchemaRegistryServiceTest {
         String schemaName = "myschema";
         doAnswer(x -> CompletableFuture.completedFuture(new InMemoryGroupTable().toEtag(5))).when(store).getGroupEtag(
                 any(), anyString());
-        doAnswer(x -> CompletableFuture.completedFuture(null)).when(store).deleteSchema(any(), anyString(), anyString(),
-                anyInt(), any());
-        service.deleteSchema(null, groupName, schemaName, version).join();
+        doAnswer(x -> CompletableFuture.completedFuture(null)).when(store).deleteSchema(any(), anyString(), anyString(), 
+                anyInt(), anyString(), any());
+        service.deleteSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), schemaName, version).join();
         //GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(
                 StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, "Group NotFound"))).when(
-                store).deleteSchema(any(), anyString(), anyString(), anyInt(), any());
+                store).deleteSchema(any(), anyString(), anyString(), anyInt(), anyString(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
-                () -> service.deleteSchema(null, groupName, schemaName, version).join(),
+                () -> service.deleteSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), schemaName, version).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
         //Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(store).deleteSchema(any(), anyString(),
-                anyString(), anyInt(), any());
+                anyString(), anyInt(), anyString(), any());
         AssertExtensions.assertThrows("An Exception should have been thrown",
-                () -> service.deleteSchema(null, groupName, schemaName, version).join(),
+                () -> service.deleteSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), schemaName, version).join(),
                 e -> e instanceof RuntimeException);
     }
     

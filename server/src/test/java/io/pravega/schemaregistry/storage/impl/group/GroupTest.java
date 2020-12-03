@@ -35,8 +35,10 @@ import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.assertEquals;
@@ -67,7 +69,8 @@ public class GroupTest {
 
     @Test
     public void testCreate() {
-        inMemoryGroup.create(SerializationFormat.Custom, ImmutableMap.of(), Boolean.TRUE,
+        SerializationFormat custom = SerializationFormat.custom("a");
+        inMemoryGroup.create(custom, ImmutableMap.of(), Boolean.TRUE,
                 Compatibility.backward()).join();
         List<TableRecords.TableValue> recordList = inMemoryGroupTable.getTable().entrySet().stream().map(
                 x -> x.getValue().getValue()).collect(Collectors.toList());
@@ -173,8 +176,12 @@ public class GroupTest {
         TableRecords.LatestSchemasValue latestSchemaVersionValue =
                 (TableRecords.LatestSchemasValue) tableValueListLatestSchema.get(
                         0);
-        assertEquals(0, latestSchemaVersionValue.getTypes().get(anygroup).getLatestVersion());
-        assertTrue(latestSchemaVersionValue.getTypes().get(anygroup).getDeletedVersions().isEmpty());
+        Function<String, TableRecords.SchemaTypeValue> fn = m -> latestSchemaVersionValue.getTypes().entrySet().stream()
+                                                                                         .filter(x -> x.getKey().getType().equals(m))
+                                                                                         .map(Map.Entry::getValue).findFirst().orElse(null);
+
+        assertEquals(0, fn.apply(anygroup).getLatestVersion());
+        assertTrue(fn.apply(anygroup).getDeletedVersions().isEmpty());
     }
 
     @Test
@@ -580,7 +587,8 @@ public class GroupTest {
         BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
         inMemoryGroup.addSchema(schemaInfo, fingerprint, groupProperties, eTag).join();
         VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, fingerprint).join();
-        SchemaInfo schemaInfo1 = inMemoryGroup.getSchema(versionInfo.getType(), versionInfo.getVersion()).join();
+        SchemaInfo schemaInfo1 = inMemoryGroup.getSchema(versionInfo.getType(), versionInfo.getVersion(),
+                schemaInfo.getSerializationFormat().getFullTypeName()).join();
         assertEquals(schemaInfo, schemaInfo1);
         // testing with 2 schemas
         eTag = inMemoryGroup.getCurrentEtag().join();
@@ -589,11 +597,13 @@ public class GroupTest {
                 ImmutableMap.of());
         inMemoryGroup.addSchema(schemaInfo2, HashUtil.getFingerprint(schemaInfo2.getSchemaData().array()), groupProperties, eTag);
         VersionInfo versionInfo1 = inMemoryGroup.getVersion(schemaInfo2, HashUtil.getFingerprint(schemaInfo2.getSchemaData().array())).join();
-        SchemaInfo schemaInfo3 = inMemoryGroup.getSchema(versionInfo1.getType(), versionInfo1.getVersion()).join();
+        SchemaInfo schemaInfo3 = inMemoryGroup.getSchema(versionInfo1.getType(), versionInfo1.getVersion(),
+                schemaInfo1.getSerializationFormat().getFullTypeName()).join();
         assertEquals(schemaInfo2, schemaInfo3);
         // testing with incorrect input data - getVersionOrdianal will fail
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> inMemoryGroup.getSchema(versionInfo1.getType(), 100).join(),
+                () -> inMemoryGroup.getSchema(versionInfo1.getType(), 100,
+                        schemaInfo1.getSerializationFormat().getFullTypeName()).join(),
                 e -> e instanceof StoreExceptions.DataNotFoundException);
     }
 }

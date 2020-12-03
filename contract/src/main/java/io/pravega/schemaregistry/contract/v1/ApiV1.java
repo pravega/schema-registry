@@ -178,9 +178,9 @@ public class ApiV1 {
         @GET
         @Path("/{groupName}/schemas")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned.", response = SchemaVersionsList.class, tags = {"Schema", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#getType() under a Group. If query param type is specified then latest schema for the type is returned.", response = SchemaVersionsList.class, tags = {"Schema", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#type under the group", response = SchemaVersionsList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#getType() under the group", response = SchemaVersionsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group details", response = Void.class)})
         Response getSchemas(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
@@ -226,20 +226,21 @@ public class ApiV1 {
                                 @ApiParam(value = "version id", required = true) @PathParam("schemaId") Integer schemaId);
 
         @GET
-        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Path("/{groupName}/schemas/format/{serializationFormat}/type/{type}/versions/{version}")
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version id that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
                 @io.swagger.annotations.ApiResponse(code = 200, message = "Schema corresponding to the version", response = SchemaInfo.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
-        public Response getSchemaFromVersion(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
+        Response getSchemaFromVersion(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                                              @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                             @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                             @ApiParam(value = "Serialization format", required = true) @PathParam("format") String serializationFormat,
+                                             @ApiParam(value = "Schema type from SchemaInfo#getType() or VersionInfo#type", required = true) @PathParam("type") String type,
                                              @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version);
 
         @DELETE
-        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Path("/{groupName}/schemas/format/{serializationFormat}/type/{type}/versions/{version}")
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
@@ -248,7 +249,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
         Response deleteSchemaVersion(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                                      @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                     @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                     @ApiParam(value = "Serialization format", required = true) @PathParam("format") String serializationFormat,
+                                     @ApiParam(value = "Schema type from SchemaInfo#getType() or VersionInfo#type", required = true) @PathParam("type") String type,
                                      @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version);
 
         @POST
@@ -438,9 +440,9 @@ public class ApiV1 {
         @GET
         @Path("/{groupName}/schemas")
         @Produces({"application/json"})
-        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned.", response = SchemaVersionsList.class, tags = {"Group", })
+        @io.swagger.annotations.ApiOperation(value = "", notes = "Fetch latest schema versions for all objects identified by SchemaInfo#getType() under a Group. If query param type is specified then latest schema for the type is returned.", response = SchemaVersionsList.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
-                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#type under the group", response = SchemaVersionsList.class),
+                @io.swagger.annotations.ApiResponse(code = 200, message = "Latest schemas for all objects identified by SchemaInfo#getType() under the group", response = SchemaVersionsList.class),
                 @io.swagger.annotations.ApiResponse(code = 404, message = "Group with given name not found", response = Void.class),
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching Group's latest schemas", response = Void.class)})
         void getSchemas(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
@@ -490,7 +492,7 @@ public class ApiV1 {
                                @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse);
 
         @GET
-        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Path("/{groupName}/schemas/format/{serializationFormat}/type/{type}/versions/{version}")
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Get schema from the version id that uniquely identifies the schema in the group.", response = SchemaInfo.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
@@ -499,12 +501,13 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while fetching schema from version", response = Void.class)})
         void getSchemaFromVersion(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                                   @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                  @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                  @ApiParam(value = "Serialization format", required = true) @PathParam("serializationFormat") String serializationFormat,
+                                  @ApiParam(value = "Schema type from SchemaInfo#getType() or VersionInfo#type", required = true) @PathParam("type") String type,
                                   @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version,
                                   @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse);
 
         @DELETE
-        @Path("/{groupName}/schemas/{type}/versions/{version}")
+        @Path("/{groupName}/schemas/format/{serializationFormat}/type/{type}/versions/{version}")
         @Produces({"application/json"})
         @io.swagger.annotations.ApiOperation(value = "", notes = "Delete schema version from the group.", response = Void.class, tags = {"Group", })
         @io.swagger.annotations.ApiResponses(value = {
@@ -513,7 +516,8 @@ public class ApiV1 {
                 @io.swagger.annotations.ApiResponse(code = 500, message = "Internal server error while deleting schema from group", response = Void.class)})
         void deleteSchemaVersion(@ApiParam(value = "namespace") @QueryParam("namespace") String namespace,
                                  @ApiParam(value = "Group name", required = true) @PathParam("groupName") String groupName,
-                                 @ApiParam(value = "Schema type from SchemaInfo#type or VersionInfo#type", required = true) @PathParam("type") String type,
+                                 @ApiParam(value = "Serialization format", required = true) @PathParam("serializationFormat") String serializationFormat,
+                                 @ApiParam(value = "Schema type from SchemaInfo#getType() or VersionInfo#type", required = true) @PathParam("type") String type,
                                  @ApiParam(value = "Version number", required = true) @PathParam("version") Integer version,
                                  @Context SecurityContext securityContext, @Suspended AsyncResponse asyncResponse);
 

@@ -213,12 +213,12 @@ paths:
       tags:
       - "Group"
       operationId: getSchemas
-      description: Fetch latest schema versions for all objects identified by SchemaInfo#type under a Group. If query param type is specified then latest schema for the type is returned. 
+      description: Fetch latest schema versions for all objects identified by SchemaInfo#getType() under a Group. If query param type is specified then latest schema for the type is returned. 
       produces:
         - application/json
       responses:
         200:
-          description: Latest schemas for all objects identified by SchemaInfo#type under the group
+          description: Latest schemas for all objects identified by SchemaInfo#getType() under the group
           schema:
             $ref: "#/definitions/SchemaVersionsList"
         404:
@@ -239,6 +239,66 @@ paths:
           required: true
           schema:
               $ref: "#/definitions/SchemaInfo"
+      produces:
+        - application/json
+      responses:
+        201:
+          description: Successfully added schema to the group
+          schema:
+            $ref: "#/definitions/VersionInfo"
+        404:
+          description: Group not found
+        409:
+          description: Incompatible schema
+        417:
+          description: Invalid serialization format
+        500:
+          description: Internal server error while adding schema to group
+  /groups/{groupName}/schemas/format/{serializationFormat}/type/{type}:
+    parameters:
+      - in: path
+        name: groupName
+        description: Group name
+        required: true
+        type: string
+      - in: query
+        name: type
+        type: string
+        description: Type of object
+      - in: query
+        name: namespace
+        type: string
+        description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
+    get:
+      tags:
+        - "Group"
+      operationId: getSchemas
+      description: Fetch latest schema versions for all objects identified by SchemaInfo#getType() under a Group. If query param type is specified then latest schema for the type is returned.
+      produces:
+        - application/json
+      responses:
+        200:
+          description: Latest schemas for all objects identified by SchemaInfo#getType() under the group
+          schema:
+            $ref: "#/definitions/SchemaVersionsList"
+        404:
+          description: Group with given name not found
+        500:
+          description: Internal server error while fetching Group's latest schemas
+    post:
+      tags:
+        - "Group"
+      operationId: addSchema
+      description: Adds a new schema to the group
+      consumes:
+        - application/json
+      parameters:
+        - in: body
+          name: schemaInfo
+          description: Add new schema to group
+          required: true
+          schema:
+            $ref: "#/definitions/SchemaInfo"
       produces:
         - application/json
       responses:
@@ -369,7 +429,7 @@ paths:
           description: Group with given name not found
         500:
           description: Internal server error while deleting schema from group  
-  /groups/{groupName}/schemas/{type}/versions/{version}:
+  /groups/{groupName}/schemas/format/{serializationFormat}/type/{type}/versions/{version}:
     parameters:
       - in: path
         name: groupName
@@ -380,9 +440,14 @@ paths:
         name: namespace
         type: string
         description: Namespace in which to lookup group. If no namespace is specified, default namespace is used.
+      - in: serializationFormat
+        name: type
+        description: Serialization format
+        required: true
+        type: string
       - in: path
         name: type
-        description: Schema type from SchemaInfo#type or VersionInfo#type
+        description: Schema type from SchemaInfo#getType() or VersionInfo#type
         required: true
         type: string
       - in: path
@@ -743,7 +808,7 @@ definitions:
     type: object
     properties:
       type:
-        description: Type of schema for this version. This is same value used in SchemaInfo#Type for the schema this version identifies.
+        description: Type of schema for this version. This is same value used in SchemaInfo#getType() for the schema this version identifies.
         type: string
       version:
         description: Version number that uniquely identifies the schema version among all schemas in the group that share the same Type. 

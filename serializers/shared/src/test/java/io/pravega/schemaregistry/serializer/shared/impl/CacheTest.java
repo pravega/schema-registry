@@ -34,17 +34,17 @@ public class CacheTest {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         String groupId = "groupId";
         EncodingId encodingId = new EncodingId(0);
-        EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", 0, 0),
+        EncodingInfo encodingInfo = new EncodingInfo(new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 0),
                 new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
                 Codecs.SnappyCompressor.getCodec().getCodecType());
         doAnswer(x -> encodingInfo).when(client).getEncodingInfo(eq(groupId), eq(encodingId));
         EncodingId encodingId2 = new EncodingId(1);
-        EncodingInfo encodingInfo2 = new EncodingInfo(new VersionInfo("name", 0, 1),
+        EncodingInfo encodingInfo2 = new EncodingInfo(new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 1),
                 new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
                 Codecs.SnappyCompressor.getCodec().getCodecType());
         doAnswer(x -> encodingInfo2).when(client).getEncodingInfo(eq(groupId), eq(encodingId2));
         EncodingId encodingId3 = new EncodingId(2);
-        EncodingInfo encodingInfo3 = new EncodingInfo(new VersionInfo("name", 0, 2),
+        EncodingInfo encodingInfo3 = new EncodingInfo(new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 2),
                 new SchemaInfo("name", SerializationFormat.Avro, ByteBuffer.wrap(new byte[0]), ImmutableMap.of()), 
                 Codecs.SnappyCompressor.getCodec().getCodecType());
         doAnswer(x -> encodingInfo3).when(client).getEncodingInfo(eq(groupId), eq(encodingId3));

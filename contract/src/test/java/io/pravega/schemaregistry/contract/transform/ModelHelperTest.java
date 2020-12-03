@@ -49,7 +49,7 @@ public class ModelHelperTest {
                         .backwardPolicy(new Backward().name(Backward.class.getSimpleName()))));
         SchemaInfo schema = new SchemaInfo()
                 .type("a").serializationFormat(type).schemaData(new byte[0]).properties(Collections.emptyMap());
-        VersionInfo version = new VersionInfo().type("a").version(1).id(1);
+        VersionInfo version = new VersionInfo().type("a").serializationFormat("a").version(1).id(1);
         Compatibility backwardTillForwardTill = new Compatibility()
                 .policy(Compatibility.PolicyEnum.ADVANCED)
                 .advanced(new BackwardAndForward().backwardPolicy(new BackwardPolicy()
@@ -109,11 +109,12 @@ public class ModelHelperTest {
         io.pravega.schemaregistry.contract.data.SerializationFormat serializationFormat = io.pravega.schemaregistry.contract.data.SerializationFormat.custom("custom");
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo = new io.pravega.schemaregistry.contract.data.SchemaInfo(
                 "name", serializationFormat, ByteBuffer.wrap(new byte[0]), ImmutableMap.of());
-        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 1);
+        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a",
+                serializationFormat.getFullTypeName(), 0, 1);
         io.pravega.schemaregistry.contract.data.Compatibility compatibility = io.pravega.schemaregistry.contract.data.Compatibility
                 .backwardTillAndForwardTill(
-                        new io.pravega.schemaregistry.contract.data.VersionInfo("a", 0, 0),
-                        new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1, 1));
+                        new io.pravega.schemaregistry.contract.data.VersionInfo("a", serializationFormat.getFullTypeName(), 0, 0),
+                        new io.pravega.schemaregistry.contract.data.VersionInfo("a", serializationFormat.getFullTypeName(), 1, 1));
 
         io.pravega.schemaregistry.contract.data.GroupProperties prop = io.pravega.schemaregistry.contract.data.GroupProperties
                 .builder().serializationFormat(serializationFormat).compatibility(compatibility)
@@ -210,7 +211,7 @@ public class ModelHelperTest {
         decoded = ModelHelper.decode(encoded);
         assertEquals(compatibility, decoded);
 
-        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", 1, 1);
+        io.pravega.schemaregistry.contract.data.VersionInfo versionInfo = new io.pravega.schemaregistry.contract.data.VersionInfo("a", "a", 1, 1);
         compatibility = io.pravega.schemaregistry.contract.data.Compatibility.backwardTill(versionInfo);
         encoded = convert(ModelHelper.encode(compatibility), Compatibility.class);
         decoded = ModelHelper.decode(encoded);

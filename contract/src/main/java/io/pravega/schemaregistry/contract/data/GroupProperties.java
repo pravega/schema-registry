@@ -19,10 +19,10 @@ import lombok.NonNull;
  * Different configuration choices for a group. 
  * 
  * {@link GroupProperties#serializationFormat} identifies the serialization format used to describe the schema.
- * {@link GroupProperties#compatibility} sets the schema compatibility policy that needs to be enforced for evolving schemas.
- * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas with distinct {@link SchemaInfo#type} 
+ * {@link GroupProperties#getCompatibility()} sets the schema compatibility policy that needs to be enforced for evolving schemas.
+ * {@link GroupProperties#isAllowMultipleTypes()} that specifies if multiple schemas with distinct {@link SchemaInfo#getType()} 
  * are allowed to coexist within the group. A schema describes an object and each object type is distinctly identified by
- * {@link SchemaInfo#type}. Registry service validates new schema with existing schema versions of the same name and versions
+ * {@link SchemaInfo#getType()}. Registry service validates new schema with existing schema versions of the same name and versions
  * it accordingly. Allowing multiple schemas, each versioned independently, allows applications to use schema registry groups
  * for streaming scenarios like event sourcing, or message bus where different types of events could be written to the same
  * stream. Similarly, a group with multiple schemas can be used to describe a database catalog with each schema representing 
@@ -44,7 +44,7 @@ public class GroupProperties {
     private @NonNull final Compatibility compatibility;
     /**
      * Flag to indicate whether multiple types of schemas can be added to the group or not. If set to false, all schemas
-     * added to the group should have the same {@link SchemaInfo#type}.
+     * added to the group should have the same {@link SchemaInfo#getType()}.
      */
     private final boolean allowMultipleTypes;
     /**

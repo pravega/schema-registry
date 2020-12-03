@@ -342,13 +342,14 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void getSchemaFromVersion(String namespace, String group, String schemaType, Integer version, SecurityContext securityContext, AsyncResponse asyncResponse) {
+    public void getSchemaFromVersion(String namespace, String group, String serializationFormat, 
+                                     String schemaType, Integer version, SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Get schema from version {} called for group {} {}", version, namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupResource(group) :
                 getGroupResource(group, namespace);
 
         withAuthorization(READ, resource, asyncResponse,
-                () -> getRegistryService().getSchema(namespace, group, schemaType, version)
+                () -> getRegistryService().getSchema(namespace, group, serializationFormat, schemaType, version)
                                                                     .thenApply(schemaWithVersion -> {
                                                                         SchemaInfo schema = ModelHelper.encode(schemaWithVersion);
                                                                         log.info("Schema for version {} for group {} {} found.", version, namespace, group);
@@ -382,14 +383,14 @@ public class GroupResourceImpl extends AbstractResource implements ApiV1.GroupsA
     }
 
     @Override
-    public void deleteSchemaVersion(String namespace, String group, String schemaType, Integer version, 
+    public void deleteSchemaVersion(String namespace, String group, String serializationFormat, String schemaType, Integer version, 
                                     SecurityContext securityContext, AsyncResponse asyncResponse) {
         log.info("Delete schema from version {}/{} called for group {} {}", schemaType, version, namespace, group);
         String resource = Strings.isNullOrEmpty(namespace) ? getGroupSchemaResource(group) :
                 getGroupSchemaResource(group, namespace);
 
         withAuthorization(READ_UPDATE, resource, asyncResponse,
-                () -> getRegistryService().deleteSchema(namespace, group, schemaType, version)
+                () -> getRegistryService().deleteSchema(namespace, group, serializationFormat, schemaType, version)
                                      .thenApply(v -> {
                                          log.info("Schema for version {}/{} for group {} {} deleted.", schemaType, version, namespace, group);
                                          return Response.status(Status.NO_CONTENT).build();
