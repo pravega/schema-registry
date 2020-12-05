@@ -68,7 +68,7 @@ public class SchemaRegistryServiceTest {
     private ScheduledExecutorService executor;
     private SchemaStore store;
 
-    private final String AVRO_UNION_SCHEMA = "[\n" +
+    private String avroUnionSchema = "[\n" +
             "  {\n" +
             "    \"type\": \"record\",\n" +
             "    \"name\": \"Address\",\n" +
@@ -103,7 +103,7 @@ public class SchemaRegistryServiceTest {
             "  }\n" +
             "]"; 
     
-    private final String AVRO_COMPLEX_OBJECT = "{\n" +
+    private String avroComplexObject = "{\n" +
             "    \"name\": \"Person\",\n" +
             "    \"type\": \"record\",\n" +
             "    \"fields\": [\n" +
@@ -781,7 +781,7 @@ public class SchemaRegistryServiceTest {
         
         // case 1: empty type on record. Should take the name from the record
         SchemaInfo withoutType = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Avro)
-                                      .schemaData(ByteBuffer.wrap(AVRO_COMPLEX_OBJECT.getBytes(Charsets.UTF_8)))
+                                      .schemaData(ByteBuffer.wrap(avroComplexObject.getBytes(Charsets.UTF_8)))
                                       .properties(ImmutableMap.of()).build();
         VersionInfo v = service.addSchema(namespace, group, withoutType).join();
         assertEquals(v.getType(), "Person");
@@ -791,15 +791,15 @@ public class SchemaRegistryServiceTest {
         
         // case 2: empty name on union. this should take the name as union
         SchemaInfo withPerson = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Avro)
-                                        .schemaData(ByteBuffer.wrap(AVRO_UNION_SCHEMA.getBytes(Charsets.UTF_8)))
+                                        .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
                                         .properties(ImmutableMap.of()).build();
         VersionInfo v2 = service.addSchema(namespace, group, withPerson).join();
         schema = service.getSchema(namespace, group, v2.getId()).join();
-        assertEquals(schema.getType(), new Schema.Parser().parse(AVRO_UNION_SCHEMA).getName());
+        assertEquals(schema.getType(), new Schema.Parser().parse(avroUnionSchema).getName());
 
         // case 3: name in the union schema
         SchemaInfo withAddress = SchemaInfo.builder().type("Address").serializationFormat(SerializationFormat.Avro)
-                                        .schemaData(ByteBuffer.wrap(AVRO_UNION_SCHEMA.getBytes(Charsets.UTF_8)))
+                                        .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
                                         .properties(ImmutableMap.of()).build();
         VersionInfo v3 = service.addSchema(namespace, group, withAddress).join();
         assertEquals(v3.getType(), "Address");
@@ -808,7 +808,7 @@ public class SchemaRegistryServiceTest {
 
         // case 4: name in the union schema
         SchemaInfo incorrectnamespace = SchemaInfo.builder().type("a.Address").serializationFormat(SerializationFormat.Avro)
-                                        .schemaData(ByteBuffer.wrap(AVRO_UNION_SCHEMA.getBytes(Charsets.UTF_8)))
+                                        .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
                                         .properties(ImmutableMap.of()).build();
         AssertExtensions.assertThrows("Illegal namespace", () -> service.addSchema(namespace, group, incorrectnamespace), 
                 e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
