@@ -818,23 +818,24 @@ public class SchemaRegistryService {
         String type = schemaInfo.getType();
         try {
             String schemaString;
-            String[] tokens;
             switch (schemaInfo.getSerializationFormat()) {
                 case Protobuf:
-                    tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    String[] tokensProto = NameUtil.extractNameAndQualifier(schemaInfo.getType());
                     String protoPackage; 
                     String protoName;
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(
                             schemaInfo.getSchemaData());
-                    if (Strings.isNullOrEmpty(tokens[0])) {
-                        Exceptions.checkArgument(Strings.isNullOrEmpty(tokens[1]), "Package without name not allowed.", schemaInfo.getType());
+                    String nameInSchemaInfo = tokensProto[0];
+                    String qualifierInSchemaInfo = tokensProto[1];
+                    if (Strings.isNullOrEmpty(nameInSchemaInfo)) {
+                        Exceptions.checkArgument(Strings.isNullOrEmpty(qualifierInSchemaInfo), "Package without name not allowed.", schemaInfo.getType());
                         String[] packageAndName = getPackageAndNameFromProtobuf(fileDescriptorSet);
                         protoPackage = packageAndName[0];
                         protoName = packageAndName[1];
                     } else {
-                        protoPackage = Strings.isNullOrEmpty(tokens[1]) ? getPackageAndNameFromProtobuf(fileDescriptorSet)[0]
-                                : tokens[1];
-                        protoName = tokens[0];
+                        protoPackage = Strings.isNullOrEmpty(qualifierInSchemaInfo) ? getPackageAndNameFromProtobuf(fileDescriptorSet)[0]
+                                : qualifierInSchemaInfo;
+                        protoName = nameInSchemaInfo;
                     }
                     type = NameUtil.qualifiedName(protoPackage, protoName);
 
@@ -854,18 +855,21 @@ public class SchemaRegistryService {
                     String avroNamespace;
                     String avroName;
 
-                    tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    String[] tokensAvro = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    String nameFromSchemaInfo = tokensAvro[0];
+                    String qualifierFromSchemaInfo = tokensAvro[1];
+
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
                     
-                    if (Strings.isNullOrEmpty(tokens[0])) { 
-                        Exceptions.checkArgument(Strings.isNullOrEmpty(tokens[1]), "Namespace without name not allowed", schemaInfo.getType());
+                    if (Strings.isNullOrEmpty(nameFromSchemaInfo)) { 
+                        Exceptions.checkArgument(Strings.isNullOrEmpty(qualifierFromSchemaInfo), "Namespace without name not allowed", schemaInfo.getType());
                         // if no name is provided and its not a union, take the name from the schema
                         avroName = schema.getName();
                         avroNamespace = getNamespaceFromAvroSchema(schema);
                     } else {
-                        avroNamespace = Strings.isNullOrEmpty(tokens[1]) ? getNamespaceFromAvroSchema(schema) : tokens[1];
-                        avroName = tokens[0];
+                        avroNamespace = Strings.isNullOrEmpty(qualifierFromSchemaInfo) ? getNamespaceFromAvroSchema(schema) : qualifierFromSchemaInfo;
+                        avroName = nameFromSchemaInfo;
                     }
 
                     // if the schema is a union, we will normalize it by taking the schema corresponding to the intended type.
