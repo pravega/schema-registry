@@ -832,7 +832,8 @@ public class SchemaRegistryService {
                         protoPackage = packageAndName[0];
                         protoName = packageAndName[1];
                     } else {
-                        protoPackage = !Strings.isNullOrEmpty(tokens[1]) ? tokens[1] : getPackageAndNameFromProtobuf(fileDescriptorSet)[0];
+                        protoPackage = Strings.isNullOrEmpty(tokens[1]) ? getPackageAndNameFromProtobuf(fileDescriptorSet)[0]
+                                : tokens[1];
                         protoName = tokens[0];
                     }
                     type = NameUtil.qualifiedName(protoPackage, protoName);
@@ -840,8 +841,8 @@ public class SchemaRegistryService {
                     isValid = fileDescriptorSet
                             .getFileList().stream()
                             .anyMatch(x -> {
-                                boolean qualifierCheck = Strings.isNullOrEmpty(protoPackage) || protoPackage.equals(x.getPackage());
-                                return qualifierCheck && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(protoName));
+                                boolean isPackageValid = Strings.isNullOrEmpty(protoPackage) || protoPackage.equals(x.getPackage());
+                                return isPackageValid && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(protoName));
                             });
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should match one of the protobuf messages in the descriptor set.";
@@ -863,7 +864,7 @@ public class SchemaRegistryService {
                         avroName = schema.getName();
                         avroNamespace = getNamespaceFromAvroSchema(schema);
                     } else {
-                        avroNamespace = !Strings.isNullOrEmpty(tokens[1]) ? tokens[1] : getNamespaceFromAvroSchema(schema);
+                        avroNamespace = Strings.isNullOrEmpty(tokens[1]) ? getNamespaceFromAvroSchema(schema) : tokens[1];
                         avroName = tokens[0];
                     }
 

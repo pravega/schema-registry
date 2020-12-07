@@ -769,7 +769,7 @@ public class SchemaRegistryServiceTest {
     }
     
     @Test
-    public void testSchemaInfoWithAndWithoutTypeAvro() {
+    public void testSchemaInfoWithoutTypeAvro() {
         SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
         SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
         String namespace = "n";
@@ -779,7 +779,6 @@ public class SchemaRegistryServiceTest {
                                .serializationFormat(SerializationFormat.Avro)
                                .compatibility(Compatibility.allowAny()).build()).join();
         
-        // case 1: empty type on record. Should take the name from the record
         SchemaInfo withoutType = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Avro)
                                       .schemaData(ByteBuffer.wrap(avroComplexObject.getBytes(Charsets.UTF_8)))
                                       .properties(ImmutableMap.of()).build();
@@ -788,34 +787,72 @@ public class SchemaRegistryServiceTest {
         SchemaInfo schema = service.getSchema(namespace, group, v.getId()).join();
         assertEquals(schema.getType(), "Person");
         service.deleteSchema(namespace, group, v.getId());
+    }
+    
+    @Test
+    public void testSchemaInfoWithoutTypeUnionAvro() {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "gav";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Avro)
+                               .compatibility(Compatibility.allowAny()).build()).join();
         
-        // case 2: empty name on union. this should take the name as union
         SchemaInfo withPerson = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Avro)
                                         .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
                                         .properties(ImmutableMap.of()).build();
         VersionInfo v2 = service.addSchema(namespace, group, withPerson).join();
-        schema = service.getSchema(namespace, group, v2.getId()).join();
+        SchemaInfo schema = service.getSchema(namespace, group, v2.getId()).join();
         assertEquals(schema.getType(), new Schema.Parser().parse(avroUnionSchema).getName());
-
-        // case 3: name in the union schema
+    }
+    
+    @Test
+    public void testSchemaInfoWithTypeUnionAvro() {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "gav";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Avro)
+                               .compatibility(Compatibility.allowAny()).build()).join();
+        
         SchemaInfo withAddress = SchemaInfo.builder().type("Address").serializationFormat(SerializationFormat.Avro)
                                         .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
                                         .properties(ImmutableMap.of()).build();
         VersionInfo v3 = service.addSchema(namespace, group, withAddress).join();
         assertEquals(v3.getType(), "Address");
-        schema = service.getSchema(namespace, group, v3.getId()).join();
+        SchemaInfo schema = service.getSchema(namespace, group, v3.getId()).join();
         assertEquals(schema.getType(), "Address");
-
-        // case 4: name in the union schema
+    }
+    
+    @Test
+    public void testSchemaInfoIllegalTypeAvro() {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "gav";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Avro)
+                               .compatibility(Compatibility.allowAny()).build()).join();
+        
         SchemaInfo incorrectnamespace = SchemaInfo.builder().type("a.Address").serializationFormat(SerializationFormat.Avro)
                                         .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
                                         .properties(ImmutableMap.of()).build();
         AssertExtensions.assertThrows("Illegal namespace", () -> service.addSchema(namespace, group, incorrectnamespace), 
                 e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
+        SchemaInfo incorrectname = SchemaInfo.builder().type("a").serializationFormat(SerializationFormat.Avro)
+                                        .schemaData(ByteBuffer.wrap(avroUnionSchema.getBytes(Charsets.UTF_8)))
+                                        .properties(ImmutableMap.of()).build();
+        AssertExtensions.assertThrows("Illegal name", () -> service.addSchema(namespace, group, incorrectname), 
+                e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
     }
     
     @Test
-    public void testSchemaInfoWithAndWithoutTypeProto() throws IOException {
+    public void testSchemaInfoWithoutTypeProto() throws IOException {
         SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
         SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
         String namespace = "n";
@@ -835,7 +872,6 @@ public class SchemaRegistryServiceTest {
         AssertExtensions.assertThrows("Illegal package", () -> service.addSchema(namespace, group, incorrectpackage1),
                 e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
 
-        // case 1: empty type on record. Should take the name from the record
         SchemaInfo withoutType = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Protobuf)
                                       .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
                                       .properties(ImmutableMap.of()).build();
@@ -843,27 +879,90 @@ public class SchemaRegistryServiceTest {
         assertEquals(v.getType(), "io.pravega.schemaregistry.testobjs.generated.InternalMessage");
         SchemaInfo schema = service.getSchema(namespace, group, v.getId()).join();
         assertEquals(schema.getType(), "io.pravega.schemaregistry.testobjs.generated.InternalMessage");
+    }
+    
+    @Test
+    public void testSchemaInfoWithTypeWithPackageProto() throws IOException {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "gav";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Protobuf)
+                               .compatibility(Compatibility.allowAny()).build()).join();
+        Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
-        // case 2: name with package
+        SchemaInfo incorrectpackage1 = SchemaInfo.builder().type("io.pravega.schemaregistry.testobjs.generated.")
+                                                .serializationFormat(SerializationFormat.Protobuf)
+                                                .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
+                                                .properties(ImmutableMap.of()).build();
+        AssertExtensions.assertThrows("Illegal package", () -> service.addSchema(namespace, group, incorrectpackage1),
+                e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
+
         SchemaInfo withPackage = SchemaInfo.builder().type("io.pravega.schemaregistry.testobjs.generated.Message2")
                                            .serializationFormat(SerializationFormat.Protobuf)
                                       .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
                                       .properties(ImmutableMap.of()).build();
         VersionInfo v2 = service.addSchema(namespace, group, withPackage).join();
         assertEquals(v2.getType(), "io.pravega.schemaregistry.testobjs.generated.Message2");
-        schema = service.getSchema(namespace, group, v2.getId()).join();
+        SchemaInfo schema = service.getSchema(namespace, group, v2.getId()).join();
         assertEquals(schema.getType(), "io.pravega.schemaregistry.testobjs.generated.Message2");
-        
-        // case 3: name in protobuf message without package
+    }
+    
+    @Test
+    public void testSchemaInfoWithAndWitTypeNoPackageProto() throws IOException {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "gav";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Protobuf)
+                               .compatibility(Compatibility.allowAny()).build()).join();
+        Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
+
+        SchemaInfo incorrectpackage1 = SchemaInfo.builder().type("io.pravega.schemaregistry.testobjs.generated.")
+                                                .serializationFormat(SerializationFormat.Protobuf)
+                                                .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
+                                                .properties(ImmutableMap.of()).build();
+        AssertExtensions.assertThrows("Illegal package", () -> service.addSchema(namespace, group, incorrectpackage1),
+                e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
+
         SchemaInfo withoutPackage = SchemaInfo.builder().type("Message1").serializationFormat(SerializationFormat.Protobuf)
                                         .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
                                         .properties(ImmutableMap.of()).build();
         VersionInfo v3 = service.addSchema(namespace, group, withoutPackage).join();
         assertEquals(v3.getType(), "io.pravega.schemaregistry.testobjs.generated.Message1");
-        schema = service.getSchema(namespace, group, v3.getId()).join();
+        SchemaInfo schema = service.getSchema(namespace, group, v3.getId()).join();
         assertEquals(schema.getType(), "io.pravega.schemaregistry.testobjs.generated.Message1");
+    }
+    
+    @Test
+    public void testSchemaInfoWithInvalidTypeProto() throws IOException {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "n";
+        String group = "gav";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                               .serializationFormat(SerializationFormat.Protobuf)
+                               .compatibility(Compatibility.allowAny()).build()).join();
+        Path path = Paths.get("src/test/resources/proto/protobufTest.pb");
+        byte[] schemaBytes = Files.readAllBytes(path);
+        DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
 
-        // case 4: name in the union schema
+        SchemaInfo incorrectpackage1 = SchemaInfo.builder().type("io.pravega.schemaregistry.testobjs.generated.")
+                                                .serializationFormat(SerializationFormat.Protobuf)
+                                                .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
+                                                .properties(ImmutableMap.of()).build();
+        AssertExtensions.assertThrows("Illegal package", () -> service.addSchema(namespace, group, incorrectpackage1),
+                e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
+
         SchemaInfo incorrectpackage = SchemaInfo.builder().type("io.pravega.schemaregistry.testobjs.generated.")
                                                 .serializationFormat(SerializationFormat.Protobuf)
                                         .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
@@ -871,7 +970,6 @@ public class SchemaRegistryServiceTest {
         AssertExtensions.assertThrows("Illegal package", () -> service.addSchema(namespace, group, incorrectpackage), 
                 e -> Exceptions.unwrap(e) instanceof IllegalArgumentException);
 
-        // case 5: name in protobuf message without package
         SchemaInfo notpresentName = SchemaInfo.builder().type("notpresentName").serializationFormat(SerializationFormat.Protobuf)
                                               .schemaData(ByteBuffer.wrap(descriptorSet.toByteArray()))
                                               .properties(ImmutableMap.of()).build();
