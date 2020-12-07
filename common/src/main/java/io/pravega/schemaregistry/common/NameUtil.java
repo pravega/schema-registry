@@ -48,11 +48,11 @@ public class NameUtil {
     }
 
     /**
-     * QUalified name for generated as 'qualifier.name'. 
+     * Qualified name generated as 'qualifier.name'. 
      * If qualifier is null or empty then the qualified name is simply 'name'.
      * 
-     * @param qualifier qualifier
-     * @param name name
+     * @param qualifier optional qualifier to be used. 
+     * @param name the name part
      * @return Qualified name
      */
     public static String qualifiedName(String qualifier, String name) {
