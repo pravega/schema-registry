@@ -11,8 +11,8 @@ package io.pravega.schemaregistry.serializer.shared.codec;
 
 import io.pravega.schemaregistry.contract.data.CodecType;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 
 /**
@@ -36,5 +36,5 @@ public interface Encoder {
      * @param outputStream ByteArrayOutputStream where the encoded data should be written.
      * @throws IOException IOException can be thrown while reading from or writing to byte buffers.
      */
-    void encode(ByteBuffer data, ByteArrayOutputStream outputStream) throws IOException;
+    void encode(ByteBuffer data, OutputStream outputStream) throws IOException;
 }

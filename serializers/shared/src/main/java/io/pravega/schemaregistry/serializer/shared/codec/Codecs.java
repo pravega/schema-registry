@@ -15,9 +15,9 @@ import lombok.Getter;
 import org.apache.commons.io.IOUtils;
 import org.xerial.snappy.Snappy;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.Map;
 import java.util.zip.GZIPInputStream;
@@ -52,7 +52,7 @@ public enum Codecs {
         }
 
         @Override
-        public void encode(ByteBuffer data, ByteArrayOutputStream bos) {
+        public void encode(ByteBuffer data, OutputStream bos) throws IOException {
             if (data.hasArray()) {
                 bos.write(data.array(), data.arrayOffset() + data.position(), data.remaining());
             } else {
@@ -80,7 +80,7 @@ public enum Codecs {
         }
 
         @Override
-        public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
+        public void encode(ByteBuffer data, OutputStream bos) throws IOException {
             byte[] b = data.hasArray() ? data.array() : getBytes(data);
             int offset = data.hasArray() ? data.arrayOffset() + data.position() : 0;
             try (GZIPOutputStream gzipOS = new GZIPOutputStream(bos)) {
@@ -114,7 +114,7 @@ public enum Codecs {
         }
 
         @Override
-        public void encode(ByteBuffer data, ByteArrayOutputStream bos) throws IOException {
+        public void encode(ByteBuffer data, OutputStream bos) throws IOException {
             int capacity = Snappy.maxCompressedLength(data.remaining());
             byte[] encoded = new byte[capacity];
 

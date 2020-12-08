@@ -10,8 +10,7 @@
 package io.pravega.schemaregistry.serializer.shared.impl;
 
 import com.google.common.base.Preconditions;
-import io.pravega.common.io.EnhancedByteArrayOutputStream;
-import io.pravega.common.util.BitConverter;
+import io.pravega.common.io.ByteBufferOutputStream;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.serializer.shared.codec.Codecs;
 import io.pravega.schemaregistry.serializer.shared.codec.Encoder;
@@ -79,11 +78,11 @@ public abstract class AbstractSerializer<T> extends BaseSerializer<T> {
     @SneakyThrows(IOException.class)
     @Override
     public ByteBuffer serialize(T obj) {
-        EnhancedByteArrayOutputStream outStream = new EnhancedByteArrayOutputStream();
+        ByteBufferOutputStream outStream = new ByteBufferOutputStream();
         ByteBuffer byteBuffer;
         if (this.encodeHeader) {
             outStream.write(PROTOCOL);
-            BitConverter.writeInt(outStream, encodingId.get().getId());
+            outStream.writeInt(encodingId.get().getId());
         }
 
         if (!this.encodeHeader || this.encoder.equals(Codecs.None.getCodec())) {
@@ -91,7 +90,7 @@ public abstract class AbstractSerializer<T> extends BaseSerializer<T> {
             serialize(obj, schemaInfo, outStream);
         } else {
             // encode header is true and encoder is supplied, encode the data
-            EnhancedByteArrayOutputStream serializedStream = new EnhancedByteArrayOutputStream();
+            ByteBufferOutputStream serializedStream = new ByteBufferOutputStream();
 
             serialize(obj, schemaInfo, serializedStream);
             encoder.encode(ByteBuffer.wrap(serializedStream.getData().array()), outStream);

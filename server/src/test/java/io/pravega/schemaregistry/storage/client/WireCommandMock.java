@@ -19,7 +19,6 @@ import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;
 import io.pravega.client.tables.impl.TableSegmentKeyVersion;
 import io.pravega.common.util.BitConverter;
-import io.pravega.common.util.ByteArraySegment;
 import io.pravega.controller.stream.api.grpc.v1.Controller;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.shared.protocol.netty.WireCommandType;
@@ -37,10 +36,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.*;
 import static org.mockito.Mockito.*;
 
 public class WireCommandMock {
@@ -229,7 +225,7 @@ public class WireCommandMock {
                         if (state.equals(IteratorStateImpl.EMPTY)) {
                             floor = 0L;
                         } else {
-                            floor = BitConverter.readLong(new ByteArraySegment(state.toBytes()), 0);
+                            floor = BitConverter.readLong(state.toBytes().array(), 0);
                         }
                         AtomicLong token = new AtomicLong(floor);
                         List<TableSegmentKey> list = tablePos.entrySet().stream()
@@ -267,7 +263,7 @@ public class WireCommandMock {
                         if (state.equals(IteratorStateImpl.EMPTY)) {
                             floor = 0L;
                         } else {
-                            floor = BitConverter.readLong(new ByteArraySegment(state.toBytes()), 0);
+                            floor = BitConverter.readLong(state.toBytes().array(), 0);
                         }
                         AtomicLong token = new AtomicLong(floor);
                         List<TableSegmentEntry> list = tablePos.entrySet().stream()
