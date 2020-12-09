@@ -20,7 +20,7 @@ jobs:
   include:
   - stage: build
     if: type IN (push, pull_request)
-    install: ./gradlew assemble
+    install: ./gradlew assemble || || cat /home/travis/build/pravega/schema-registry/test/build/reports/tests/test/classes/io.pravega.schemaregistry.integrationtest.TestPravegaEndToEnd.html
     script: ./gradlew check || cat /home/travis/build/pravega/schema-registry/test/build/reports/tests/test/classes/io.pravega.schemaregistry.integrationtest.TestPravegaEndToEnd.html
   - stage: javadocs
     install: echo "Building javadocs"
