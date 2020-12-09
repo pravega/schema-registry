@@ -33,7 +33,7 @@ public interface Encoder {
      * The implementation can optionally call flush or close on outputstream with no consequence. 
      * 
      * @param data ByteBuffer to encode.
-     * @param outputStream ByteArrayOutputStream where the encoded data should be written.
+     * @param outputStream OutputStream where the encoded data should be written.
      * @throws IOException IOException can be thrown while reading from or writing to byte buffers.
      */
     void encode(ByteBuffer data, OutputStream outputStream) throws IOException;
