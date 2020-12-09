@@ -21,7 +21,7 @@ jobs:
   - stage: build
     if: type IN (push, pull_request)
     install: ./gradlew assemble || || cat /home/travis/build/pravega/schema-registry/test/build/reports/tests/test/classes/io.pravega.schemaregistry.integrationtest.TestPravegaEndToEnd.html
-    script: ./gradlew check || cat /home/travis/build/pravega/schema-registry/test/build/reports/tests/test/classes/io.pravega.schemaregistry.integrationtest.TestPravegaEndToEnd.html
+    script: for i in {1..20}; do ./gradlew check || cat /home/travis/build/pravega/schema-registry/test/build/reports/tests/test/classes/io.pravega.schemaregistry.integrationtest.TestPravegaEndToEnd.html; break; done
   - stage: javadocs
     install: echo "Building javadocs"
     script: ./gradlew javadocs
