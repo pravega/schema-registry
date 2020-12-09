@@ -346,4 +346,11 @@ public interface SchemaRegistryClient extends AutoCloseable {
      * @throws UnauthorizedException if the user is unauthorized.
      */
     Map<String, VersionInfo> getSchemaReferences(SchemaInfo schemaInfo) throws ResourceNotFoundException, UnauthorizedException;
+
+    /**
+     * The Namespace which is used for making all client requests to registry service. 
+     * 
+     * @return Namespace used for the client. 
+     */
+    String getNamespace();
 }

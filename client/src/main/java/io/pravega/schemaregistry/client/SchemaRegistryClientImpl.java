@@ -35,6 +35,7 @@ import io.pravega.schemaregistry.contract.generated.rest.model.Valid;
 import io.pravega.schemaregistry.contract.generated.rest.model.ValidateRequest;
 import io.pravega.schemaregistry.contract.transform.ModelHelper;
 import io.pravega.schemaregistry.contract.v1.ApiV1;
+import lombok.Getter;
 import lombok.SneakyThrows;
 import org.glassfish.jersey.client.ClientConfig;
 import org.glassfish.jersey.client.proxy.WebResourceFactory;
@@ -83,6 +84,7 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
 
     private final ApiV1.GroupsApi groupProxy;
     private final ApiV1.SchemasApi schemaProxy;
+    @Getter
     private final String namespace;
     private final Client client;
     
