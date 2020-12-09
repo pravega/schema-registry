@@ -10,6 +10,7 @@
 package io.pravega.schemaregistry.common;
 
 import com.google.common.base.Preconditions;
+import com.google.common.base.Strings;
 
 public class NameUtil {
     /**
@@ -44,5 +45,18 @@ public class NameUtil {
         String name = qualifiedName.substring(nameStart + 1);
         String pckg = nameStart < 0 ? "" : qualifiedName.substring(0, nameStart);
         return new String[]{name, pckg};
+    }
+
+    /**
+     * Qualified name generated as 'qualifier.name'. 
+     * If qualifier is null or empty then the qualified name is simply 'name'.
+     * 
+     * @param qualifier optional qualifier to be used. 
+     * @param name the name part
+     * @return Qualified name
+     */
+    public static String qualifiedName(String qualifier, String name) {
+        Preconditions.checkNotNull(name, "Name cannot be null");
+        return Strings.isNullOrEmpty(qualifier) ? name : String.format("%s.%s", qualifier, name);
     }
 }

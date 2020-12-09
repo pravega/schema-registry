@@ -283,7 +283,8 @@ public class SchemaRegistryService {
                                                                   throw new IncompatibleSchemaException(String.format("%s is incompatible", schema.getType()));
                                                               }
                                                               // we will compute the fingerprint from normalized form.
-                                                              return store.addSchema(namespace, group, schemaInfo, schema,
+                                                              SchemaInfo withType = new SchemaInfo(schema.getType(), schemaInfo.getSerializationFormat(), schemaInfo.getSchemaData(), schemaInfo.getProperties());
+                                                              return store.addSchema(namespace, group, withType, schema,
                                                                       getFingerprint(schema), prop, etag);
                                                           });
                                               });
@@ -814,43 +815,76 @@ public class SchemaRegistryService {
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
         boolean isValid = true;
         String invalidityCause = "";
+        String type = schemaInfo.getType();
         try {
             String schemaString;
             switch (schemaInfo.getSerializationFormat()) {
                 case Protobuf:
-                    String[] tokens = NameUtil.extractNameAndQualifier(schemaInfo.getType());
-                    String qualifier = tokens[1]; // this can be empty string if schema info had no qualifier
-                    String name = tokens[0];
+                    String[] tokensProto = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    String protoPackage; 
+                    String protoName;
                     DescriptorProtos.FileDescriptorSet fileDescriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(
                             schemaInfo.getSchemaData());
+                    String nameInSchemaInfo = tokensProto[0];
+                    String qualifierInSchemaInfo = tokensProto[1];
+                    if (Strings.isNullOrEmpty(nameInSchemaInfo)) {
+                        Exceptions.checkArgument(Strings.isNullOrEmpty(qualifierInSchemaInfo), "Package without name not allowed.", schemaInfo.getType());
+                        String[] packageAndName = getPackageAndNameFromProtobuf(fileDescriptorSet);
+                        protoPackage = packageAndName[0];
+                        protoName = packageAndName[1];
+                    } else {
+                        protoPackage = Strings.isNullOrEmpty(qualifierInSchemaInfo) ? getPackageAndNameFromProtobuf(fileDescriptorSet)[0]
+                                : qualifierInSchemaInfo;
+                        protoName = nameInSchemaInfo;
+                    }
+                    type = NameUtil.qualifiedName(protoPackage, protoName);
 
                     isValid = fileDescriptorSet
                             .getFileList().stream()
                             .anyMatch(x -> {
-                                boolean match;
-                                if (x.getPackage() == null) {
-                                    match = Strings.isNullOrEmpty(qualifier);
-                                } else {
-                                    match = x.getPackage().equals(qualifier);
-                                }
-                                return match && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(name));
+                                boolean isPackageValid = Strings.isNullOrEmpty(protoPackage) || protoPackage.equals(x.getPackage());
+                                return isPackageValid && x.getMessageTypeList().stream().anyMatch(y -> y.getName().equals(protoName));
                             });
                     if (!isValid) {
-                        invalidityCause = "Type mismatch. Type should be full name for protobuf message. Hint: package.messageName";
+                        invalidityCause = "Type mismatch. Type should match one of the protobuf messages in the descriptor set.";
                     } else {
                         schemaBinary = ByteBuffer.wrap(fileDescriptorSet.toByteArray());
                     }
                     break;
                 case Avro:
+                    String avroNamespace;
+                    String avroName;
+
+                    String[] tokensAvro = NameUtil.extractNameAndQualifier(schemaInfo.getType());
+                    String nameFromSchemaInfo = tokensAvro[0];
+                    String qualifierFromSchemaInfo = tokensAvro[1];
+
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
                     Schema schema = new Schema.Parser().parse(schemaString);
+                    
+                    if (Strings.isNullOrEmpty(nameFromSchemaInfo)) { 
+                        Exceptions.checkArgument(Strings.isNullOrEmpty(qualifierFromSchemaInfo), "Namespace without name not allowed", schemaInfo.getType());
+                        // if no name is provided and its not a union, take the name from the schema
+                        avroName = schema.getName();
+                        avroNamespace = getNamespaceFromAvroSchema(schema);
+                    } else {
+                        avroNamespace = Strings.isNullOrEmpty(qualifierFromSchemaInfo) ? getNamespaceFromAvroSchema(schema) : qualifierFromSchemaInfo;
+                        avroName = nameFromSchemaInfo;
+                    }
 
-                    isValid = schema.getFullName().equals(schemaInfo.getType());
+                    // if the schema is a union, we will normalize it by taking the schema corresponding to the intended type.
+                    if (schema.isUnion()) {
+                        schema = schema.getTypes().stream().filter(x -> x.getName().equals(avroName))
+                                       .findAny().orElse(schema);
+                    }
+                    isValid = Strings.isNullOrEmpty(avroNamespace) || avroNamespace.equals(schema.getNamespace());
+                    isValid &= schema.getName().equals(avroName);
                     if (!isValid) {
                         invalidityCause = "Type mismatch. Type should be full name for avro message. Hint: namespace.recordname";
                     } else {
                         schemaBinary = ByteBuffer.wrap(schema.toString().getBytes(Charsets.UTF_8));
                     }
+                    type = NameUtil.qualifiedName(avroNamespace, avroName);
                     break;
                 case Json:
                     schemaString = new String(schemaInfo.getSchemaData().array(), Charsets.UTF_8);
@@ -877,7 +911,35 @@ public class SchemaRegistryService {
         if (!isValid) {
             throw new IllegalArgumentException(invalidityCause);
         }
-        return new SchemaInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
+        return new SchemaInfo(type, schemaInfo.getSerializationFormat(), schemaBinary, schemaInfo.getProperties());
+    }
+
+    private String[] getPackageAndNameFromProtobuf(DescriptorProtos.FileDescriptorSet fileDescriptorSet) {
+        if (fileDescriptorSet.getFileList().isEmpty()) {
+            throw new IllegalArgumentException("No file descriptor in protobuf schema.");
+        }
+
+        DescriptorProtos.FileDescriptorProto file = fileDescriptorSet.getFile(0);
+        if (file.getMessageTypeList().isEmpty()) {
+            throw new IllegalArgumentException("No descriptorproto in protobuf schema.");
+        }
+        DescriptorProtos.DescriptorProto proto = file.getMessageType(0);
+        return new String[]{file.getPackage(), proto.getName()};
+    }
+
+    private String getNamespaceFromAvroSchema(Schema schema) {
+        String qualifier;
+        switch (schema.getType()) {
+            case RECORD:
+            case ENUM:
+            case FIXED:
+                qualifier = schema.getNamespace();
+                break;
+            default:
+                qualifier = "";
+                break;
+        }
+        return qualifier;
     }
 
     private void validateJsonSchema(String schemaString) {
