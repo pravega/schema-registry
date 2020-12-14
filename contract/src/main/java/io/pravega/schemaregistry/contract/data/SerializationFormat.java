@@ -12,7 +12,6 @@ package io.pravega.schemaregistry.contract.data;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.Setter;
 
 /**
@@ -32,7 +31,6 @@ public enum SerializationFormat {
     Any,
     Custom;
 
-    @Getter
     @Setter(AccessLevel.PRIVATE)
     private String fullTypeName;
 
@@ -60,5 +58,9 @@ public enum SerializationFormat {
         SerializationFormat type = SerializationFormat.valueOf(format.name());
         type.setFullTypeName(fullTypeName);
         return type;
+    }
+
+    public String getFullTypeName() {
+        return fullTypeName != null ? fullTypeName : this.name();
     }
 }

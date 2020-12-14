@@ -45,7 +45,7 @@ public class AvroDeserializerTest {
     public void init() {
         AvroSchema<User> userAvroSchema = AvroSchema.of(User.class);
         log.info("Aliases: {}", userAvroSchema.getSchema().getAliases());
-        VersionInfo versionInfo1 = new VersionInfo("avroUser1", 0, 0);
+        VersionInfo versionInfo1 = new VersionInfo("avroUser1", SerializationFormat.Avro.getFullTypeName(), 0, 0);
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
         doAnswer(x -> new EncodingId(0)).when(client).getEncodingId(anyString(), any(), any());

@@ -181,12 +181,13 @@ public interface SchemaStore {
      *
      * @param namespace namespace
      * @param group group
+     * @param serializationFormat serialization format
      * @param schemaType schema type
      * @param version schema version
      * @param etag entity tag for the group. 
      * @return Completable future that is completed successfully if the schema is deleted
      */
-    CompletableFuture<Void> deleteSchema(String namespace, String group, String schemaType, int version, Etag etag);
+    CompletableFuture<Void> deleteSchema(String namespace, String group, String schemaType, int version, String serializationFormat, Etag etag);
 
     /**
      * Get the schema corresponding to the schema id. 
@@ -203,11 +204,12 @@ public interface SchemaStore {
      *
      * @param namespace namespace 
      * @param group group 
+     * @param serializationFormat serialization format
      * @param schemaType schema type
      * @param version schema version
      * @return Completablefuture that holds schemainfo for the schema identified by the specified type and verison. 
      */
-    CompletableFuture<SchemaInfo> getSchema(String namespace, String group, String schemaType, int version);
+    CompletableFuture<SchemaInfo> getSchema(String namespace, String group, String schemaType, int version, String serializationFormat);
 
     /**
      * Get the latest schema version for the group across all types. This is the last schema added to the group.  

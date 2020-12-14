@@ -61,8 +61,8 @@ public class SerializerTest {
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
         JSONSchema<DerivedUser2> schema2 = JSONSchema.of(DerivedUser2.class);
         
-        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
-        VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
+        VersionInfo versionInfo1 = new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 1, 1);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
@@ -94,7 +94,7 @@ public class SerializerTest {
         String schemaString = "{\"type\": \"object\",\"title\": \"The external data schema\",\"properties\": {\"content\": {\"type\": \"string\"}}}";
 
         JSONSchema<HashMap> myData = JSONSchema.of("MyData", schemaString, HashMap.class);
-        VersionInfo versionInfo3 = new VersionInfo("myData", 0, 2);
+        VersionInfo versionInfo3 = new VersionInfo("myData", SerializationFormat.Avro.getFullTypeName(), 0, 2);
         doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(myData.getSchemaInfo()));
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
         doAnswer(x -> new EncodingInfo(versionInfo3, myData.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
@@ -109,7 +109,7 @@ public class SerializerTest {
         String stringSchema = new ObjectMapper().writeValueAsString(JsonSchema.minimalForFormat(JsonFormatTypes.STRING));
 
         JSONSchema<String> strSchema = JSONSchema.of("string", stringSchema, String.class);
-        VersionInfo versionInfo4 = new VersionInfo("myData", 0, 3);
+        VersionInfo versionInfo4 = new VersionInfo("myData", SerializationFormat.Avro.getFullTypeName(), 0, 3);
         doAnswer(x -> versionInfo4).when(client).getVersionForSchema(anyString(), eq(strSchema.getSchemaInfo()));
         doAnswer(x -> new EncodingId(3)).when(client).getEncodingId(anyString(), eq(versionInfo4), any());
         doAnswer(x -> new EncodingInfo(versionInfo4, strSchema.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(3)));
@@ -165,7 +165,7 @@ public class SerializerTest {
                                                   .writeEncodingHeader(false).build();
         JSONSchema<DerivedUser1> schema1 = JSONSchema.of(DerivedUser1.class);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        VersionInfo versionInfo1 = new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 0);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any)
                 .properties(ImmutableMap.of()).build())
                 .when(client).getGroupProperties(anyString());

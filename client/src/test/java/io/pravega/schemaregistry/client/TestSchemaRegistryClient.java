@@ -215,7 +215,7 @@ public class TestSchemaRegistryClient {
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("schema1", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("schema1", serializationFormat.getFullTypeName(), 5, 5);
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion schemaVersion = new io.pravega.schemaregistry.contract.generated.rest.model.SchemaWithVersion()
                 .schemaInfo(ModelHelper.encode(schemaInfo)).versionInfo(ModelHelper.encode(versionInfo));
         SchemaVersionsList schemaList = new SchemaVersionsList();
@@ -245,8 +245,8 @@ public class TestSchemaRegistryClient {
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo versionInfo =
-                new io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo().version(
-                        5).type("schema2").id(5);
+                new io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo()
+                        .serializationFormat("a").version(5).type("schema2").id(5);
         doReturn(versionInfo).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class);
         VersionInfo versionInfo1 = client.addSchema("mygroup", schemaInfo);
@@ -285,7 +285,7 @@ public class TestSchemaRegistryClient {
         io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo schemaInfo = 
                 new io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo()
                         .schemaData(schemaData).type("schema1").serializationFormat(serializationFormat).properties(Collections.emptyMap());
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("schema2", serializationFormat.getFullTypeName(), 5, 5);
         doReturn(schemaInfo).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.SchemaInfo.class);
         SchemaInfo schemaInfo1 = client.getSchemaForVersion("mygroup", versionInfo);
@@ -308,8 +308,8 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).getEncodingInfo(any(), anyString(), anyInt());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
+        VersionInfo versionInfo = new VersionInfo("schema2", serializationFormat.getFullTypeName(), 5, 5);
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         CodecType codecType = new CodecType("gzip");
@@ -340,7 +340,7 @@ public class TestSchemaRegistryClient {
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         String codecType = "gzip";
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("schema2", "a", 5, 5);
         io.pravega.schemaregistry.contract.generated.rest.model.EncodingId encodingId = ModelHelper.encode(new EncodingId(5));
         doReturn(encodingId).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.EncodingId.class);
@@ -368,8 +368,8 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).getSchemas(any(), anyString(), any());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
+        VersionInfo versionInfo = new VersionInfo("schema2", serializationFormat.getFullTypeName(), 5, 5);
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
@@ -389,8 +389,8 @@ public class TestSchemaRegistryClient {
                 () -> client.getLatestSchemaVersion("mygroup", null), e -> e instanceof InternalServerError);
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        versionInfo = new VersionInfo("schema2", 5, 5);
         serializationFormat = SerializationFormat.custom("custom");
+        versionInfo = new VersionInfo("schema2", serializationFormat.getFullTypeName(), 5, 5);
         schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         doReturn(ModelHelper.encode(schemaWithVersion)).when(response).readEntity(
@@ -416,8 +416,8 @@ public class TestSchemaRegistryClient {
         doReturn(response).when(proxy).getGroupHistory(any(), anyString());
 
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
+        VersionInfo versionInfo = new VersionInfo("schema2", serializationFormat.getFullTypeName(), 5, 5);
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
         Compatibility compatibility = Compatibility.backward();
@@ -455,7 +455,7 @@ public class TestSchemaRegistryClient {
         SerializationFormat serializationFormat = SerializationFormat.custom("custom");
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("schema2", schemaInfo.getSerializationFormat().getFullTypeName(), 5, 5);
         doReturn(ModelHelper.encode(versionInfo)).when(response).readEntity(
                 io.pravega.schemaregistry.contract.generated.rest.model.VersionInfo.class);
         VersionInfo versionInfo1 = client.getVersionForSchema("mygroup", schemaInfo);
@@ -483,7 +483,7 @@ public class TestSchemaRegistryClient {
         ByteBuffer schemaData = ByteBuffer.wrap(new byte[0]);
 
         SchemaInfo schemaInfo = new SchemaInfo("schema1", serializationFormat, schemaData, ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("schema2", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("schema2", schemaInfo.getSerializationFormat().getFullTypeName(), 5, 5);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         SchemaVersionsList list = new SchemaVersionsList().schemas(Collections.singletonList(ModelHelper.encode(schemaWithVersion)));
         doReturn(list).when(response).readEntity(SchemaVersionsList.class);

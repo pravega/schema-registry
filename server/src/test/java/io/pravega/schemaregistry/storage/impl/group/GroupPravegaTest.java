@@ -45,14 +45,14 @@ import java.net.URI;
 import java.nio.ByteBuffer;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
+import java.util.function.Function;
 
 import static io.pravega.schemaregistry.storage.impl.group.PravegaKVGroupTable.TABLE_NAME_FORMAT;
 import static io.pravega.schemaregistry.storage.impl.groups.PravegaKeyValueGroups.GROUPS;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.*;
 
 public class GroupPravegaTest {
     private static final TableRecords.LatestSchemasKey LATEST_SCHEMA_VERSION_KEY = new TableRecords.LatestSchemasKey();
@@ -198,8 +198,9 @@ public class GroupPravegaTest {
                 x -> TableRecords.fromBytes(TableRecords.LatestSchemasKey.class, x,
                         TableRecords.LatestSchemasValue.class)).join().getRecord();
         assertEquals(1, latestSchemaVersionValue.getTypes().size());
-        assertTrue(latestSchemaVersionValue.getTypes().containsKey(anygroup));
-        assertEquals(0, latestSchemaVersionValue.getTypes().get(anygroup).getLatestId());
+        assertTrue(latestSchemaVersionValue.getTypes().keySet().stream().anyMatch(x -> x.getType().equals(anygroup)));
+        assertEquals(0, latestSchemaVersionValue.getTypes().entrySet().stream().filter(x -> x.getKey().getType().equals(anygroup))
+                                                .map(Map.Entry::getValue).findFirst().orElse(null).getLatestId());
         //LatestSchemaVersionForTypeKey
         //multiple schemas
         SchemaInfo schemaInfo1 = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
@@ -242,8 +243,9 @@ public class GroupPravegaTest {
                 new TableKeySerializer().toBytes(LATEST_SCHEMA_VERSION_KEY),
                 x -> TableRecords.fromBytes(TableRecords.LatestSchemasKey.class, x,
                         TableRecords.LatestSchemasValue.class)).join().getRecord();
-        assertTrue(latestSchemaVersionValue.getTypes().containsKey(anygroup1));
-        assertEquals(versionInfo2.getId(), latestSchemaVersionValue.getTypes().get(anygroup1).getLatestId());
+        assertTrue(latestSchemaVersionValue.getTypes().keySet().stream().anyMatch(x -> x.getType().equals(anygroup1)));
+        assertEquals(versionInfo2.getId(), latestSchemaVersionValue.getTypes().entrySet().stream().filter(x -> x.getKey().getType().equals(anygroup1))
+                                                                   .map(Map.Entry::getValue).findFirst().orElse(null).getLatestId());
     }
 
     @Test
@@ -539,11 +541,15 @@ public class GroupPravegaTest {
                 new TableKeySerializer().toBytes(LATEST_SCHEMA_VERSION_KEY),
                 x -> TableRecords.fromBytes(TableRecords.LatestSchemasKey.class, x,
                         TableRecords.LatestSchemasValue.class)).join().getRecord();
-        assertTrue(latestSchemaVersionValue.getTypes().containsKey(schemaWithVersion.getVersionInfo().getType()));
-        assertEquals(latestSchemaVersionValue.getTypes().get(anygroup).getLatestVersion(), 1);
-        assertEquals(latestSchemaVersionValue.getTypes().get(anygroup).getLatestId(), 1);
-        assertEquals(latestSchemaVersionValue.getTypes().get(anygroup1).getLatestVersion(), 0);
-        assertEquals(latestSchemaVersionValue.getTypes().get(anygroup1).getLatestId(), 2);
+        String type = schemaWithVersion.getVersionInfo().getType();
+        Function<String, TableRecords.SchemaTypeValue> fn = m -> latestSchemaVersionValue.getTypes().entrySet().stream()
+                                                                                               .filter(x -> x.getKey().getType().equals(m))
+                                                                                               .map(Map.Entry::getValue).findFirst().orElse(null);
+        assertTrue(latestSchemaVersionValue.getTypes().keySet().stream().anyMatch(x -> x.getType().equals(type)));
+        assertEquals(fn.apply(anygroup).getLatestVersion(), 1);
+        assertEquals(fn.apply(anygroup).getLatestId(), 1);
+        assertEquals(fn.apply(anygroup1).getLatestVersion(), 0);
+        assertEquals(fn.apply(anygroup1).getLatestId(), 2);
         // withObjectName
         schemaWithVersion = pravegaKeyValueGroups.getGroup(null, groupName).join().getLatestSchemaVersion(
                 anygroup).join();
@@ -692,7 +698,7 @@ public class GroupPravegaTest {
         // using schemaType and version
         etag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         assertNull(pravegaKeyValueGroups.getGroup(null, groupName).join().deleteSchema(schemaInfo.getType(),
-                versionInfo.getVersion(), etag).join());
+                versionInfo.getVersion(), schemaInfo.getSerializationFormat().getFullTypeName(), etag).join());
         // delete schema that does not exist
         eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         Etag finalETag = eTag;
@@ -761,11 +767,13 @@ public class GroupPravegaTest {
                 fingerprint).join();
         SchemaInfo schemaInfo1 = pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(
                 versionInfo1.getType(),
-                versionInfo1.getVersion()).join();
+                versionInfo1.getVersion(),
+                schemaInfo.getSerializationFormat().getFullTypeName()).join();
         assertEquals(schemaInfo, schemaInfo1);
         // test incorrect value of version
         AssertExtensions.assertThrows("An exception should have been thrown",
-                () -> pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(versionInfo1.getType(),
-                        100).join(), e -> e instanceof RuntimeException);
+                () -> pravegaKeyValueGroups.getGroup(null, groupName).join().getSchema(
+                        versionInfo1.getType(), 
+                        100, schemaInfo.getSerializationFormat().getFullTypeName()).join(), e -> e instanceof RuntimeException);
     }
 }

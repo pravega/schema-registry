@@ -106,8 +106,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, String schemaType, int version, Etag etag) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(schemaType, version, etag));
+    public CompletableFuture<Void> deleteSchema(String namespace, String groupId, String schemaType, int version, String serializationFormat, Etag etag) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.deleteSchema(schemaType, version, serializationFormat, etag));
     }
 
     @Override
@@ -116,8 +116,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     }
 
     @Override
-    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, String schemaType, int version) {
-        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(schemaType, version));
+    public CompletableFuture<SchemaInfo> getSchema(String namespace, String groupId, String schemaType, int version, String serializationFormat) {
+        return getGroup(namespace, groupId).thenCompose(grp -> grp.getSchema(schemaType, version, serializationFormat));
     }
 
     @Override
