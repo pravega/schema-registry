@@ -29,6 +29,9 @@ public class VersionInfo   {
   @JsonProperty("type")
   private String type = null;
 
+  @JsonProperty("serializationFormat")
+  private String serializationFormat = null;
+
   @JsonProperty("version")
   private Integer version = null;
 
@@ -41,11 +44,11 @@ public class VersionInfo   {
   }
 
   /**
-   * Type of schema for this version. This is same value used in SchemaInfo#Type for the schema this version identifies.
+   * Type of schema for this version. This is same value used in SchemaInfo#getType() for the schema this version identifies.
    * @return type
    **/
   @JsonProperty("type")
-  @ApiModelProperty(required = true, value = "Type of schema for this version. This is same value used in SchemaInfo#Type for the schema this version identifies.")
+  @ApiModelProperty(required = true, value = "Type of schema for this version. This is same value used in SchemaInfo#getType() for the schema this version identifies.")
   @NotNull
   public String getType() {
     return type;
@@ -53,6 +56,26 @@ public class VersionInfo   {
 
   public void setType(String type) {
     this.type = type;
+  }
+
+  public VersionInfo serializationFormat(String serializationFormat) {
+    this.serializationFormat = serializationFormat;
+    return this;
+  }
+
+  /**
+   * Type of schema for this version. This is same value used in SchemaInfo#getType() for the schema this version identifies.
+   * @return serializationFormat
+   **/
+  @JsonProperty("serializationFormat")
+  @ApiModelProperty(required = true, value = "Serialization format for the schema.")
+  @NotNull
+  public String getSerializationFormat() {
+    return serializationFormat;
+  }
+
+  public void setSerializationFormat(String serializationFormat) {
+    this.serializationFormat = serializationFormat;
   }
 
   public VersionInfo version(Integer version) {

@@ -49,7 +49,7 @@ public interface SchemaRegistryClient extends AutoCloseable {
      * @param groupProperties groupProperties Group properties for the group. These include serialization format, compatibility policy, 
      *                        and flag to declare whether multiple schemas representing distinct object types can be 
      *                        registered with the group. Type identify objects of same type. Schema compatibility checks 
-     *                        are always performed for schemas that share same {@link SchemaInfo#type}.
+     *                        are always performed for schemas that share same {@link SchemaInfo#getType()}.
      *                        Additionally, a user defined map of properties can be supplied.
      * @return True indicates if the group was added successfully, false if it exists. 
      * @throws BadArgumentException if the group properties is rejected by service.
@@ -86,9 +86,9 @@ public interface SchemaRegistryClient extends AutoCloseable {
      * Get group properties for the group identified by the group id. 
      * 
      * {@link GroupProperties#serializationFormat} which identifies the serialization format is used to describe the schema.
-     * {@link GroupProperties#compatibility} sets the schema validation policy that needs to be enforced for evolving schemas.
-     * {@link GroupProperties#allowMultipleTypes} that specifies if multiple schemas are allowed to be registered in the group. 
-     * Schemas are validated against existing schema versions that have the same {@link SchemaInfo#type}. 
+     * {@link GroupProperties#getCompatibility()} sets the schema validation policy that needs to be enforced for evolving schemas.
+     * {@link GroupProperties#isAllowMultipleTypes()} that specifies if multiple schemas are allowed to be registered in the group. 
+     * Schemas are validated against existing schema versions that have the same {@link SchemaInfo#getType()}. 
      * {@link GroupProperties#properties} describes generic properties for a group.
      * 
      * @param groupId Id for the group.
@@ -101,7 +101,7 @@ public interface SchemaRegistryClient extends AutoCloseable {
     /**
      * Update group's schema validation policy. If previous compatibility policy are not supplied, then the update to the policy will be
      * performed unconditionally. However, if previous compatibility policy are supplied, then the update will be performed if and only if
-     * existing {@link GroupProperties#compatibility} match previous compatibility policy. 
+     * existing {@link GroupProperties#getCompatibility()} match previous compatibility policy. 
      * 
      * @param groupId Id for the group. 
      * @param compatibility New Compatibility for the group.
@@ -115,7 +115,7 @@ public interface SchemaRegistryClient extends AutoCloseable {
         throws ResourceNotFoundException, UnauthorizedException;
 
     /**
-     * Gets list of latest schemas for each object types registered under the group. Objects are identified by {@link SchemaInfo#type}.
+     * Gets list of latest schemas for each object types registered under the group. Objects are identified by {@link SchemaInfo#getType()}.
      * Schema registry provides consistency guarantees. So all schemas added before this call will be returned by this call.
      * However, the service side implementation is not guaranteed to be atomic.
      * So if schemas are being added concurrently, the schemas returned by this api may or may not include those. 
@@ -129,9 +129,9 @@ public interface SchemaRegistryClient extends AutoCloseable {
 
     /**
      * Registers schema to the group. Schemas are validated against existing schemas in the group that share the same 
-     * {@link SchemaInfo#type}.
-     * If group is configured with {@link GroupProperties#allowMultipleTypes} then multiple schemas with distinct
-     * type {@link SchemaInfo#type} could be registered. 
+     * {@link SchemaInfo#getType()}.
+     * If group is configured with {@link GroupProperties#isAllowMultipleTypes()} then multiple schemas with distinct
+     * type {@link SchemaInfo#getType()} could be registered. 
      * All schemas with same type are assigned monotonically increasing version numbers. 
      * Implementation of this method is expected to be idempotent. The behaviour of Add Schema API on the schema registry
      * service is idempotent. The service assigns and returns a new version info object to identify the given schema. 
@@ -145,7 +145,7 @@ public interface SchemaRegistryClient extends AutoCloseable {
      * include comparing schema with existing schemas for compatibility in the desired direction. 
      * @throws SerializationMismatchException if serialization format does not match the group's configured serialization format.
      * @throws MalformedSchemaException for known serialization formats, if the service is unable to parse the schema binary or 
-     * for avro and protobuf if the {@link SchemaInfo#type} does not match the name of record/message in the binary.
+     * for avro and protobuf if the {@link SchemaInfo#getType()} does not match the name of record/message in the binary.
      * @throws ResourceNotFoundException if group is not found.
      * @throws UnauthorizedException if the user is unauthorized.
      */
@@ -226,12 +226,12 @@ public interface SchemaRegistryClient extends AutoCloseable {
 
     /**
      * Gets latest schema and version for the group (or type, if specified). 
-     * To get latest schema version for a specific type identified by {@link SchemaInfo#type}, provide the type. 
-     * Otherwise if the group is configured to allow multiple schemas {@link GroupProperties#allowMultipleTypes}, then 
+     * To get latest schema version for a specific type identified by {@link SchemaInfo#getType()}, provide the type. 
+     * Otherwise if the group is configured to allow multiple schemas {@link GroupProperties#isAllowMultipleTypes()}, then 
      * and type is not specified, then last schema added to the group across all types will be returned. 
      * 
      * @param groupId Id for the group. 
-     * @param schemaType Type of object identified by {@link SchemaInfo#type}. 
+     * @param schemaType Type of object identified by {@link SchemaInfo#getType()}. 
      *                 
      * @return Schema with version for the last schema that was added to the group (or type).
      * @throws ResourceNotFoundException if group is not found. 
@@ -242,7 +242,7 @@ public interface SchemaRegistryClient extends AutoCloseable {
 
     /**
      * Gets version corresponding to the schema.  
-     * For each schema type {@link SchemaInfo#type} and {@link SchemaInfo#serializationFormat} a versionInfo object uniquely 
+     * For each schema type {@link SchemaInfo#getType()} and {@link SchemaInfo#serializationFormat} a versionInfo object uniquely 
      * identifies each distinct {@link SchemaInfo#schemaData}. 
      *
      * @param groupId Id for the group. 
@@ -255,12 +255,12 @@ public interface SchemaRegistryClient extends AutoCloseable {
 
     /**
      * Gets all schemas with corresponding versions for the group (or type, if specified). 
-     * For groups configured with {@link GroupProperties#allowMultipleTypes}, the type {@link SchemaInfo#type} should be 
+     * For groups configured with {@link GroupProperties#isAllowMultipleTypes()}, the type {@link SchemaInfo#getType()} should be 
      * supplied to view schemas specific to a type. if type is null, all schemas in the group are returned.  
      * The order in the list matches the order in which schemas were evolved within the group. 
      * 
      * @param groupId Id for the group.
-     * @param schemaType type of object identified by {@link SchemaInfo#type}. 
+     * @param schemaType type of object identified by {@link SchemaInfo#getType()}. 
      * @return Ordered list of schemas with versions and compatibility policy for all schemas in the group. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
@@ -269,14 +269,14 @@ public interface SchemaRegistryClient extends AutoCloseable {
     
     /**
      * Checks whether given schema is valid by applying compatibility policy against previous schemas in the group  
-     * subject to current {@link GroupProperties#compatibility} policy.
+     * subject to current {@link GroupProperties#getCompatibility()} policy.
      * The invocation of this method will perform exactly the same validations as {@link SchemaRegistryClient#addSchema(String, SchemaInfo)}
      * but without registering the schema. This is primarily intended to be used during schema development phase to validate that 
      * the changes to schema are in compliance with compatibility policy for the group.  
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to check for validity. 
-     * @return A schema is valid if it passes all the {@link GroupProperties#compatibility}. The rule supported 
+     * @return A schema is valid if it passes all the {@link GroupProperties#getCompatibility()}. The rule supported 
      * are allow any, deny all or a combination of BackwardAndForward. If desired compatibility is satisfied by the schema then this method returns true, false otherwise. 
      * @throws ResourceNotFoundException if group is not found. 
      * @throws UnauthorizedException if the user is unauthorized.
@@ -285,7 +285,7 @@ public interface SchemaRegistryClient extends AutoCloseable {
 
     /**
      * Checks whether given schema can be used to read by validating it for reads against one or more existing schemas in the group  
-     * subject to current {@link GroupProperties#compatibility} policy.
+     * subject to current {@link GroupProperties#getCompatibility()} policy.
      * 
      * @param groupId Id for the group. 
      * @param schemaInfo Schema to check to be used for reads. 

@@ -20,8 +20,8 @@ import java.nio.ByteBuffer;
 
 /**
  * Encapsulates properties of a schema. 
- * {@link SchemaInfo#type} object type represented by the schema. This is used to identify the exact object type. 
- * If (ref: {@link GroupProperties#allowMultipleTypes}) is set to true, the group will allow multiple schemas to coexist. 
+ * {@link SchemaInfo#getType()} object type represented by the schema. This is used to identify the exact object type. 
+ * If (ref: {@link GroupProperties#isAllowMultipleTypes()}) is set to true, the group will allow multiple schemas to coexist. 
  * {@link SchemaInfo#serializationFormat} Serialization format.
  * {@link SchemaInfo#schemaData} Schema as an array of 8-bit unsigned bytes. This is schema-type specific and to be consumed
  * by schema-type specific parsers. 

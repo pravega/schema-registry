@@ -52,8 +52,8 @@ public class SerializerTest {
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
         AvroSchema<Test1> schema1 = AvroSchema.of(Test1.class);
         AvroSchema<Test2> schema2 = AvroSchema.of(Test2.class);
-        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
-        VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
+        VersionInfo versionInfo1 = new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 1, 1);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
@@ -65,7 +65,7 @@ public class SerializerTest {
         doAnswer(x -> true).when(client).canReadUsing(anyString(), any());
 
         AvroSchema<Object> of = AvroSchema.of(SchemaDefinitions.ENUM);
-        VersionInfo versionInfo3 = new VersionInfo(of.getSchema().getFullName(), 0, 2);
+        VersionInfo versionInfo3 = new VersionInfo(of.getSchema().getFullName(), SerializationFormat.Avro.getFullTypeName(), 0, 2);
         doAnswer(x -> versionInfo3).when(client).getVersionForSchema(anyString(), eq(of.getSchemaInfo()));
         doAnswer(x -> new EncodingId(2)).when(client).getEncodingId(anyString(), eq(versionInfo3), any());
         doAnswer(x -> new EncodingInfo(versionInfo3, of.getSchemaInfo(), Codecs.None.getCodec().getCodecType())).when(client).getEncodingInfo(anyString(), eq(new EncodingId(2)));
@@ -136,7 +136,7 @@ public class SerializerTest {
 
         SerializerConfig config = SerializerConfig.builder().registryClient(client).groupId("groupId").build();
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        VersionInfo versionInfo1 = new VersionInfo("name", SerializationFormat.Avro.getFullTypeName(), 0, 0);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));

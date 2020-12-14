@@ -59,8 +59,8 @@ public class SerializerTest {
         ProtobufSchema<ProtobufTest.Message2> schema1 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
         ProtobufSchema<ProtobufTest.Message3> schema2 = ProtobufSchema.of(ProtobufTest.Message3.class, descriptorSet);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
-        VersionInfo versionInfo2 = new VersionInfo("name", 1, 1);
+        VersionInfo versionInfo1 = new VersionInfo("name", SerializationFormat.Protobuf.getFullTypeName(), 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("name", SerializationFormat.Protobuf.getFullTypeName(), 1, 1);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
         doAnswer(x -> versionInfo1).when(client).getVersionForSchema(anyString(), eq(schema1.getSchemaInfo()));
@@ -126,7 +126,7 @@ public class SerializerTest {
         DescriptorProtos.FileDescriptorSet descriptorSet = DescriptorProtos.FileDescriptorSet.parseFrom(schemaBytes);
         ProtobufSchema<ProtobufTest.Message2> schema1 = ProtobufSchema.of(ProtobufTest.Message2.class, descriptorSet);
 
-        VersionInfo versionInfo1 = new VersionInfo("name", 0, 0);
+        VersionInfo versionInfo1 = new VersionInfo("name", SerializationFormat.Protobuf.getFullTypeName(), 0, 0);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any)
                                      .properties(ImmutableMap.of()).build())
                 .when(client).getGroupProperties(anyString());

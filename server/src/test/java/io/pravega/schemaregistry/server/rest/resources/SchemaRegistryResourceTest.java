@@ -263,7 +263,8 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", 5, 5),
+        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, 
+                new VersionInfo("schemaName", SerializationFormat.Avro.getFullTypeName(), 5, 5),
                 Compatibility.allowAny(), 100, "describeSchema");
         List<GroupHistoryRecord> groupHistoryRecords = new ArrayList<>();
         groupHistoryRecords.add(groupHistoryRecord);
@@ -293,7 +294,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("mystring", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("mystring", SerializationFormat.Avro.getFullTypeName(), 5, 5);
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(service).addSchema(any(), anyString(),
                 any());
         String groupName = "mygroup";
@@ -373,22 +374,22 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        doAnswer(x -> CompletableFuture.completedFuture(schemaInfo)).when(service).getSchema(any(), anyString(),
+        doAnswer(x -> CompletableFuture.completedFuture(schemaInfo)).when(service).getSchema(any(), anyString(), anyString(),
                 anyString(), anyInt());
         Response response = target(
-                GROUPS + "/" + groupName + "/schemas/" + schemaName + "/versions/" + version).request().async().get().get();
+                GROUPS + "/" + groupName + "/schemas/format/avro/type/" + schemaName + "/versions/" + version).request().async().get().get();
         assertEquals(200, response.getStatus());
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                service).getSchema(any(), anyString(), anyString(), anyInt());
+                service).getSchema(any(), anyString(), anyString(), anyString(), anyInt());
         response = target(
                 GROUPS + "/" + groupName + "/schemas/" + schemaName + "/versions/" + version).request().async().get().get();
         assertEquals(404, response.getStatus());
         // Runtime Exception
         doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).getSchema(any(), anyString(),
-                anyString(), anyInt());
+                anyString(), anyString(), anyInt());
         response = target(
-                GROUPS + "/" + groupName + "/schemas/" + schemaName + "/versions/" + version).request().async().get().get();
+                GROUPS + "/" + groupName + "/schemas/format/avro/type/" + schemaName + "/versions/" + version).request().async().get().get();
         assertEquals(500, response.getStatus());
     }
 
@@ -396,7 +397,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     public void testGetEncodingId() throws ExecutionException, InterruptedException {
         String groupName = "mygroup";
         GetEncodingIdRequest getEncodingIdRequest = new GetEncodingIdRequest().codecType(
-                "gzip").versionInfo(ModelHelper.encode(new VersionInfo("myschema", 5, 5)));
+                "gzip").versionInfo(ModelHelper.encode(new VersionInfo("myschema", SerializationFormat.Avro.getFullTypeName(), 5, 5)));
         EncodingId encodingId = new EncodingId(10);
         doAnswer(x -> CompletableFuture.completedFuture(encodingId)).when(service).getEncodingId(any(), anyString(),
                 any(),
@@ -435,7 +436,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.custom("custom1"), ByteBuffer.wrap(schemaData),
                         com.google.common.collect.ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("myschema", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("myschema", SerializationFormat.Avro.getFullTypeName(), 5, 5);
         doAnswer(x -> CompletableFuture.completedFuture(versionInfo)).when(service).getSchemaVersion(any(), anyString(),
                 any());
         Response response = target(GROUPS + "/" + groupName + "/schemas/versions/find").request().async().post(
@@ -465,7 +466,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", 5, 5),
+        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", SerializationFormat.Avro.getFullTypeName(), 5, 5),
                 Compatibility.allowAny(), 100, "describeSchema");
         List<GroupHistoryRecord> groupHistoryRecords = new ArrayList<>();
         groupHistoryRecords.add(groupHistoryRecord);
@@ -497,7 +498,8 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName", 5, 5),
+        GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, new VersionInfo("schemaName",
+                SerializationFormat.Avro.getFullTypeName(), 5, 5),
                 Compatibility.allowAny(), 100, "describeSchema");
         List<GroupHistoryRecord> groupHistoryRecords = new ArrayList<>();
         groupHistoryRecords.add(groupHistoryRecord);
@@ -531,7 +533,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         "schemaName", SerializationFormat.custom("custom1"), ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo("objectType", 5, 7);
+        VersionInfo versionInfo = new VersionInfo("objectType", SerializationFormat.Avro.getFullTypeName(), 5, 7);
         SchemaWithVersion schemaWithVersion = new SchemaWithVersion(schemaInfo, versionInfo);
         List<SchemaWithVersion> schemaWithVersionList = new ArrayList<>();
         schemaWithVersionList.add(schemaWithVersion);
@@ -558,7 +560,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
     public void testGetEncodingInfo() throws ExecutionException, InterruptedException {
         String groupName = "mygroup";
         int encodingId = 7;
-        VersionInfo versionInfo = new VersionInfo("myschema", 5, 5);
+        VersionInfo versionInfo = new VersionInfo("myschema", SerializationFormat.Avro.getFullTypeName(), 5, 5);
         byte[] schemaData = new byte[0];
         io.pravega.schemaregistry.contract.data.SchemaInfo schemaInfo =
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
@@ -635,7 +637,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         schemaName, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo(schemaName, 5, 5);
+        VersionInfo versionInfo = new VersionInfo(schemaName, SerializationFormat.Avro.getFullTypeName(), 5, 5);
         Map<String, VersionInfo> map = Collections.singletonMap("default", versionInfo);
         doAnswer(x -> CompletableFuture.completedFuture(map)).when(service).getSchemaReferences(any(), any());
         Response response = target("v1/schemas/addedTo").request().async().post(
@@ -665,24 +667,24 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         schemaName, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo(schemaName, 5, 5);
+        VersionInfo versionInfo = new VersionInfo(schemaName, SerializationFormat.Avro.getFullTypeName(), 5, 5);
         int version = versionInfo.getVersion();
         doAnswer(x -> CompletableFuture.completedFuture(null)).when(service).deleteSchema(any(), anyString(),
-                anyString(), anyInt());
+                anyString(), anyString(), anyInt());
         Response response = target(
-                GROUPS + "/" + groupName + "/schemas/" + schemaName + "/versions/" + version).request().async().delete().get();
+                GROUPS + "/" + groupName + "/schemas/format/avro/type/" + schemaName + "/versions/" + version).request().async().delete().get();
         assertEquals(204, response.getStatus());
         // GroupNotFound Exception
         doAnswer(x -> Futures.failedFuture(StoreExceptions.create(Type.DATA_NOT_FOUND, "Group Not Found"))).when(
-                service).deleteSchema(any(), anyString(), anyString(), anyInt());
+                service).deleteSchema(any(), anyString(), anyString(), anyString(), anyInt());
         response = target(
                 GROUPS + "/" + groupName + "/schemas/" + schemaName + "/versions/" + version).request().async().delete().get();
         assertEquals(404, response.getStatus());
         //Runtime Exception
-        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).deleteSchema(any(), anyString(),
+        doAnswer(x -> Futures.failedFuture(new RuntimeException())).when(service).deleteSchema(any(), anyString(), anyString(),
                 anyString(), anyInt());
         response = target(
-                GROUPS + "/" + groupName + "/schemas/" + schemaName + "/versions/" + version).request().async().delete().get();
+                GROUPS + "/" + groupName + "/schemas/format/avro/type/" + schemaName + "/versions/" + version).request().async().delete().get();
         assertEquals(500, response.getStatus());
     }
 
@@ -695,7 +697,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         schemaName, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo(schemaName, 5, 5);
+        VersionInfo versionInfo = new VersionInfo(schemaName, SerializationFormat.Avro.getFullTypeName(), 5, 5);
         int ordinal = versionInfo.getId();
         doAnswer(x -> CompletableFuture.completedFuture(null)).when(service).deleteSchema(any(), anyString(), anyInt());
         Response response = target(
@@ -722,7 +724,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         schemaName, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo(schemaName, 5, 5);
+        VersionInfo versionInfo = new VersionInfo(schemaName, SerializationFormat.Avro.getFullTypeName(), 5, 5);
         int ordinal = versionInfo.getId();
         doAnswer(x -> CompletableFuture.completedFuture(schemaInfo)).when(service).getSchema(any(), anyString(),
                 anyInt());
@@ -754,7 +756,7 @@ public class SchemaRegistryResourceTest extends JerseyTest {
                 new io.pravega.schemaregistry.contract.data.SchemaInfo(
                         schemaName, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                         ImmutableMap.of());
-        VersionInfo versionInfo = new VersionInfo(schemaName, 5, 5);
+        VersionInfo versionInfo = new VersionInfo(schemaName, SerializationFormat.Avro.getFullTypeName(), 5, 5);
         GroupHistoryRecord groupHistoryRecord = new GroupHistoryRecord(schemaInfo, versionInfo,
                 Compatibility.backward(), 100, "dummy");
         groupHistoryRecordList.add(groupHistoryRecord);

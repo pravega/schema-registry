@@ -435,6 +435,7 @@ public interface TableRecords {
     class IndexTypeVersionToIdKey implements TableKey {
         public static final Serializer SERIALIZER = new Serializer();
 
+        private final String serializationFormat;
         private final String schemaType;
         private final int version;
 
@@ -886,7 +887,7 @@ public interface TableRecords {
     class LatestSchemasValue implements TableValue {
         public static final Serializer SERIALIZER = new Serializer();
 
-        private final ImmutableMap<String, SchemaTypeValue> types;
+        private final ImmutableMap<FormatAndType, SchemaTypeValue> types;
         private final int nextId;
         private final ImmutableSet<Integer> deletedIds;
         
@@ -916,14 +917,14 @@ public interface TableRecords {
             }
 
             private void write00(LatestSchemasValue e, RevisionDataOutput target) throws IOException {
-                target.writeMap(e.types, DataOutput::writeUTF, SchemaTypeValue.SERIALIZER::serialize);
+                target.writeMap(e.types, FormatAndType.SERIALIZER::serialize, SchemaTypeValue.SERIALIZER::serialize);
                 target.writeCompactInt(e.nextId);
                 target.writeCollection(e.deletedIds, DataOutput::writeInt);
             }
 
             private void read00(RevisionDataInput source, LatestSchemasValue.LatestSchemasValueBuilder b) throws IOException {
-                ImmutableMap.Builder<String, SchemaTypeValue> mapBuilder = ImmutableMap.builder();
-                source.readMap(DataInput::readUTF, SchemaTypeValue.SERIALIZER::deserialize, mapBuilder);
+                ImmutableMap.Builder<FormatAndType, SchemaTypeValue> mapBuilder = ImmutableMap.builder();
+                source.readMap(FormatAndType.SERIALIZER::deserialize, SchemaTypeValue.SERIALIZER::deserialize, mapBuilder);
                 b.types(mapBuilder.build());
                 b.nextId(source.readCompactInt());
                 ImmutableSet.Builder<Integer> builder = ImmutableSet.<Integer>builder();
@@ -936,7 +937,52 @@ public interface TableRecords {
     @Data
     @Builder
     @AllArgsConstructor
-    class SchemaTypeValue implements TableValue {
+    class FormatAndType {
+        public static final Serializer SERIALIZER = new Serializer();
+
+        private final String serializationFormat;
+        private final String type;
+
+        @SneakyThrows(IOException.class)
+        byte[] toBytes() {
+            return SERIALIZER.serialize(this).getCopy();
+        }
+
+        private static class FormatAndTypeBuilder implements ObjectBuilder<FormatAndType> {
+        }
+
+        private static class Serializer extends VersionedSerializer.WithBuilder<FormatAndType, FormatAndType.FormatAndTypeBuilder> {
+            @Override
+            protected FormatAndType.FormatAndTypeBuilder newBuilder() {
+                return FormatAndType.builder();
+            }
+
+            @Override
+            protected byte getWriteVersion() {
+                return 0;
+            }
+
+            @Override
+            protected void declareVersions() {
+                version(0).revision(0, this::write00, this::read00);
+            }
+
+            private void write00(FormatAndType e, RevisionDataOutput target) throws IOException {
+                target.writeUTF(e.getSerializationFormat());
+                target.writeUTF(e.getType());
+            }
+
+            private void read00(RevisionDataInput source, FormatAndType.FormatAndTypeBuilder b) throws IOException {
+                b.serializationFormat(source.readUTF())
+                 .type(source.readUTF());
+            }
+        }
+    }
+
+    @Data
+    @Builder
+    @AllArgsConstructor
+    class SchemaTypeValue {
         public static final Serializer SERIALIZER = new Serializer();
 
         private final int latestVersion;
@@ -946,8 +992,7 @@ public interface TableRecords {
         private final ImmutableSet<Integer> deletedVersions;
         
         @SneakyThrows(IOException.class)
-        @Override
-        public byte[] toBytes() {
+        byte[] toBytes() {
             return SERIALIZER.serialize(this).getCopy();
         }
 

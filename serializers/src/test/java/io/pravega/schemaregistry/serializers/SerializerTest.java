@@ -52,9 +52,9 @@ public class SerializerTest {
         ProtobufSchema<ProtobufTest.Message2> schema2 = ProtobufSchema.of(ProtobufTest.Message2.class);
         JSONSchema<DerivedUser1> schema3 = JSONSchema.of(DerivedUser1.class);
 
-        VersionInfo versionInfo1 = new VersionInfo("avro", 0, 0);
-        VersionInfo versionInfo2 = new VersionInfo("proto", 1, 1);
-        VersionInfo versionInfo3 = new VersionInfo("json", 2, 2);
+        VersionInfo versionInfo1 = new VersionInfo("avro", SerializationFormat.Avro.getFullTypeName(), 0, 0);
+        VersionInfo versionInfo2 = new VersionInfo("proto", SerializationFormat.Protobuf.getFullTypeName(), 1, 1);
+        VersionInfo versionInfo3 = new VersionInfo("json", SerializationFormat.Json.getFullTypeName(), 2, 2);
 
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
@@ -106,7 +106,7 @@ public class SerializerTest {
         SchemaRegistryClient client = mock(SchemaRegistryClient.class);
         doAnswer(x -> GroupProperties.builder().serializationFormat(SerializationFormat.Any).build())
                 .when(client).getGroupProperties(anyString());
-        VersionInfo versionInfo = new VersionInfo("proto", 0, 0);
+        VersionInfo versionInfo = new VersionInfo("proto", SerializationFormat.Protobuf.getFullTypeName(), 0, 0);
         ProtobufSchema<ProtobufTest.Message2> schema = ProtobufSchema.of(ProtobufTest.Message2.class);
 
         doAnswer(x -> versionInfo).when(client).getVersionForSchema(anyString(), eq(schema.getSchemaInfo()));

@@ -60,6 +60,7 @@ import java.util.stream.IntStream;
 
 import static io.pravega.schemaregistry.storage.impl.group.GroupTable.Value;
 import static io.pravega.schemaregistry.storage.impl.group.GroupTable.Entry;
+import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.*;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypeKey;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.CodecTypeValue;
 import static io.pravega.schemaregistry.storage.impl.group.records.TableRecords.LatestSchemasValue;
@@ -156,16 +157,17 @@ public class Group<V> {
     public CompletableFuture<List<SchemaWithVersion>> getLatestSchemas() {
         return groupTable.getEntry(LATEST_SCHEMAS_KEY, LatestSchemasValue.class)
                          .thenCompose(types -> {
-                             ImmutableMap<String, SchemaTypeValue> schemas = types == null ? ImmutableMap.of() : types.getTypes();
-                             List<SchemaIdKey> keys = schemas.entrySet().stream().filter(x -> x.getValue().getLatestVersion() >= 0)
-                                                             .map(x -> new SchemaIdKey(x.getValue().getLatestId()))
+                             ImmutableMap<FormatAndType, SchemaTypeValue> schemas = types == null ? ImmutableMap.of() : types.getTypes();
+                             List<SchemaIdKey> keys = schemas.values().stream().filter(x -> x.getLatestVersion() >= 0)
+                                                             .map(x -> new SchemaIdKey(x.getLatestId()))
                                                              .collect(Collectors.toList());
                              
                              return groupTable.getEntries(keys, SchemaRecord.class)
                                      .thenCompose(entries -> Futures.allOfWithResults(entries
                                              .stream().map(x -> getSchemaInfo(x)
                                                      .thenApply(schemaInfo -> new SchemaWithVersion(schemaInfo,
-                                                             new VersionInfo(x.getType(), x.getVersion(), x.getId()))))
+                                                             new VersionInfo(x.getType(), x.getSerializationFormat().getFullTypeName(),
+                                                                     x.getVersion(), x.getId()))))
                                              .collect(Collectors.toList())));
                          });
     }
@@ -195,7 +197,7 @@ public class Group<V> {
         return getSchemaRecords(fromPos)
                 .thenApply(entries -> entries
                         .stream().map(x -> new SchemaWithVersion(x.getSchemaInfo(), 
-                                new VersionInfo(x.getType(), x.getVersion(), x.getId())))
+                                new VersionInfo(x.getType(), x.getSerializationFormat().getFullTypeName(), x.getVersion(), x.getId())))
                         .collect(Collectors.toList()));
     }
 
@@ -240,19 +242,19 @@ public class Group<V> {
                          });
     }
 
-    private CompletableFuture<Integer> getSchemaId(String schemaType, int version) {
-        return groupTable.getEntry(new IndexTypeVersionToIdKey(schemaType, version), SchemaIdValue.class)
+    private CompletableFuture<Integer> getSchemaId(String schemaType, int version, String serializationFormat) {
+        return groupTable.getEntry(new IndexTypeVersionToIdKey(serializationFormat, schemaType, version), SchemaIdValue.class)
                 .thenApply(x -> {
                     if (x != null) {
                         return x.getId();
                     } else {
-                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version not found %s %s", schemaType, version));
+                        throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version not found %s, %s %s", serializationFormat, schemaType, version));
                     }
                 });
     }
 
-    public CompletableFuture<Void> deleteSchema(String schemaType, int version, Etag etag) {
-        return getSchemaId(schemaType, version)
+    public CompletableFuture<Void> deleteSchema(String schemaType, int version, String serializationFormat, Etag etag) {
+        return getSchemaId(schemaType, version, serializationFormat)
                 .thenCompose(id -> deleteSchema(id, etag));
     }
     
@@ -266,9 +268,12 @@ public class Group<V> {
                     if (schema == null) {
                         throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, String.format("version id found %s", id));
                     }
+                    String serializationFormat = schema.getSerializationFormat().getFullTypeName();
                     String type = schema.getType();
                     LatestSchemasValue types = (LatestSchemasValue) entries.get(2).getValue();
-                    SchemaTypeValue value = types.getTypes().get(type);
+                    SchemaTypeValue value = types.getTypes().entrySet().stream()
+                                                 .filter(x -> x.getKey().getType().equals(type) && x.getKey().getSerializationFormat().equals(serializationFormat))
+                                                 .findFirst().map(Map.Entry::getValue).orElse(null);
 
                     if (versionDeletedRecordValue == null) {
                         assert !types.getDeletedIds().contains(id);
@@ -289,9 +294,9 @@ public class Group<V> {
                         deletedVersionsBuilder.add(schema.getVersion());
                         ImmutableSet<Integer> deletedVersions = deletedVersionsBuilder.build();
 
-                        ImmutableMap.Builder<String, SchemaTypeValue> newTypes = new ImmutableMap.Builder<>();
-                        for (Map.Entry<String, SchemaTypeValue> entry : types.getTypes().entrySet()) {
-                            if (!entry.getKey().equals(type)) {
+                        ImmutableMap.Builder<FormatAndType, SchemaTypeValue> newTypes = new ImmutableMap.Builder<>();
+                        for (Map.Entry<FormatAndType, SchemaTypeValue> entry : types.getTypes().entrySet()) {
+                            if (!(entry.getKey().getType().equals(type) && entry.getKey().getSerializationFormat().equals(serializationFormat))) {
                                 newTypes.put(entry.getKey(), entry.getValue());
                             }
                         }
@@ -316,12 +321,12 @@ public class Group<V> {
                             } else {
                                 // if we have found the previous non deleted version, find the corresponding id for the latest schema version 
                                 // and set the id and version into the new schema value type to be updated.
-                                newValueFuture = getSchemaId(type, previous.get())
+                                newValueFuture = getSchemaId(type, previous.get(), serializationFormat)
                                         .thenApply(i -> new SchemaTypeValue(previous.get(), i, value.getNextVersion(), deletedVersions));
                             }
                         }
                         return newValueFuture.thenCompose(n -> {
-                            newTypes.put(type, n);
+                            newTypes.put(new FormatAndType(serializationFormat, type), n);
                             toUpdate.add(new Entry<>(LATEST_SCHEMAS_KEY, 
                                     new LatestSchemasValue(newTypes.build(), types.getNextId(), deletedIds), typesVersion));
                             return groupTable.updateEntries(toUpdate);
@@ -333,8 +338,8 @@ public class Group<V> {
                 });
     }
 
-    public CompletableFuture<SchemaInfo> getSchema(String schemaType, int version) {
-        return getSchemaId(schemaType, version)
+    public CompletableFuture<SchemaInfo> getSchema(String schemaType, int version, String serializationFormat) {
+        return getSchemaId(schemaType, version, serializationFormat)
                 .thenCompose(id -> getSchema(id, false));
     }
 
@@ -427,7 +432,8 @@ public class Group<V> {
                          .thenCompose(schemaTypeValue -> {
                              if (schemaTypeValue != null) {
                                  return getSchema(schemaTypeValue.getValue().getLatestId(), true)
-                                                 .thenApply(schema -> new SchemaWithVersion(schema, new VersionInfo(schema.getType(), 
+                                                 .thenApply(schema -> new SchemaWithVersion(schema, new VersionInfo(schema.getType(),
+                                                         schemaTypeValue.getKey().getSerializationFormat(),
                                                          schemaTypeValue.getValue().getLatestVersion(), schemaTypeValue.getValue().getLatestId()))); 
                              } else {
                                  return CompletableFuture.completedFuture(null);
@@ -441,7 +447,11 @@ public class Group<V> {
                              if (rec == null) {
                                  return null;
                              } else {
-                                 SchemaTypeValue value = rec.getTypes().get(type);
+                                 SchemaTypeValue value = rec.getTypes().entrySet().stream()
+                                      .filter(x -> x.getKey().getType().equals(type))
+                                      .max(Comparator.comparingInt(x -> x.getValue().getLatestVersion()))
+                                      .map(Map.Entry::getValue).orElse(null);
+
                                  return value == null || value.getLatestVersion() < 0 ? null : value;
                              }
                          })
@@ -449,7 +459,7 @@ public class Group<V> {
                              if (schemaTypeValue != null) {
                                  return getSchema(schemaTypeValue.getLatestId(), true)
                                          .thenApply(schema -> new SchemaWithVersion(schema,
-                                                 new VersionInfo(schema.getType(), 
+                                                 new VersionInfo(schema.getType(), schema.getSerializationFormat().getFullTypeName(),
                                                  schemaTypeValue.getLatestVersion(), schemaTypeValue.getLatestId())));
                              } else {
                                  return CompletableFuture.completedFuture(null);
@@ -507,7 +517,7 @@ public class Group<V> {
     public CompletableFuture<List<GroupHistoryRecord>> getHistory() {
         return getSchemaRecords(0).thenApply(schemaRecords -> schemaRecords
                 .stream().map(x -> new GroupHistoryRecord(x.getSchemaInfo(), 
-                        new VersionInfo(x.getType(), x.getVersion(), x.getId()), 
+                        new VersionInfo(x.getType(), x.getSerializationFormat().getFullTypeName(), x.getVersion(), x.getId()), 
                         x.getCompatibility(), x.getTimestamp(), getSchemaString(x.getSchemaInfo())))
                 .collect(Collectors.toList()));
     }
@@ -548,7 +558,10 @@ public class Group<V> {
             } else {
                 nextOrdinal = schemaTypes.getNextId();
                 deletedSet = schemaTypes.getDeletedIds();
-                schemaTypeValue = schemaTypes.getTypes().get(schemaInfo.getType());
+                schemaTypeValue = schemaTypes.getTypes().entrySet().stream()
+                                             .filter(x -> x.getKey().getType().equals(schemaInfo.getType()) 
+                                                     && x.getKey().getSerializationFormat().equals(schemaInfo.getSerializationFormat().getFullTypeName()))
+                                             .findFirst().map(Map.Entry::getValue).orElse(null);
             }
             int nextVersion;
             ImmutableSet<Integer> deletedVersions;
@@ -559,14 +572,17 @@ public class Group<V> {
                 nextVersion = schemaTypeValue.getNextVersion();
                 deletedVersions = schemaTypeValue.getDeletedVersions();
             }
-            VersionInfo next = new VersionInfo(schemaInfo.getType(), nextVersion, nextOrdinal);
+            VersionInfo next = new VersionInfo(schemaInfo.getType(), schemaInfo.getSerializationFormat().getFullTypeName(), 
+                    nextVersion, nextOrdinal);
 
             List<Entry<V>> entries = new LinkedList<>();
             // 0. etag
             entries.add(new Entry<>(ETAG, ETAG, groupTable.fromEtag(etag)));
             // 1. Schema id to schema record
             // 1.1 index for version to id
-            entries.add(new Entry<>(new IndexTypeVersionToIdKey(next.getType(), next.getVersion()),
+            String serializationFormat = schemaInfo.getSerializationFormat().getFullTypeName();
+            entries.add(new Entry<>(new IndexTypeVersionToIdKey(serializationFormat,
+                    next.getType(), next.getVersion()),
                     new SchemaIdValue(next.getId()), null));
             // break schema binary into smaller chunks.
             List<ByteArraySegment> chunks = ChunkUtil.chunk(schemaInfo.getSchemaData(), Config.MAX_CHUNK_SIZE_BYTES);
@@ -602,17 +618,18 @@ public class Group<V> {
 
             // 3. add to latest schemas which updates the latest and next versions for the schema type
             // and next id for overall group
-            ImmutableMap.Builder<String, SchemaTypeValue> builder = ImmutableMap.builder();
+            ImmutableMap.Builder<FormatAndType, SchemaTypeValue> builder = ImmutableMap.builder();
             if (schemaTypes != null) {
-                for (Map.Entry<String, SchemaTypeValue> entry : schemaTypes.getTypes().entrySet()) {
-                    if (!entry.getKey().equals(schemaInfo.getType())) {
+                for (Map.Entry<FormatAndType, SchemaTypeValue> entry : schemaTypes.getTypes().entrySet()) {
+                    if (!(entry.getKey().getSerializationFormat().equals(serializationFormat) 
+                            && entry.getKey().getType().equals(schemaInfo.getType()))) {
                         builder.put(entry.getKey(), entry.getValue());
                     }
                 }
             }
             SchemaTypeValue newValue = new SchemaTypeValue(nextVersion, nextOrdinal, 
                     nextVersion + 1, deletedVersions);
-            builder.put(schemaInfo.getType(), newValue);
+            builder.put(new FormatAndType(serializationFormat, schemaInfo.getType()), newValue);
             
             entries.add(new Entry<>(LATEST_SCHEMAS_KEY,
                     new LatestSchemasValue(builder.build(), nextOrdinal + 1, deletedSet), schemaTypesVersion));
