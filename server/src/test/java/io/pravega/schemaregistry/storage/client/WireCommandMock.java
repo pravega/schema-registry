@@ -19,7 +19,6 @@ import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;
 import io.pravega.client.tables.impl.TableSegmentKeyVersion;
 import io.pravega.common.util.BitConverter;
-import io.pravega.common.util.ByteArraySegment;
 import io.pravega.controller.stream.api.grpc.v1.Controller;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.shared.protocol.netty.WireCommandType;
@@ -41,7 +40,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.doAnswer;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 
 public class WireCommandMock {
     private static final int SERVICE_PORT = 12345;
@@ -229,7 +231,7 @@ public class WireCommandMock {
                         if (state.equals(IteratorStateImpl.EMPTY)) {
                             floor = 0L;
                         } else {
-                            floor = BitConverter.readLong(new ByteArraySegment(state.toBytes()), 0);
+                            floor = BitConverter.readLong(state.toBytes().array(), 0);
                         }
                         AtomicLong token = new AtomicLong(floor);
                         List<TableSegmentKey> list = tablePos.entrySet().stream()
@@ -267,7 +269,7 @@ public class WireCommandMock {
                         if (state.equals(IteratorStateImpl.EMPTY)) {
                             floor = 0L;
                         } else {
-                            floor = BitConverter.readLong(new ByteArraySegment(state.toBytes()), 0);
+                            floor = BitConverter.readLong(state.toBytes().array(), 0);
                         }
                         AtomicLong token = new AtomicLong(floor);
                         List<TableSegmentEntry> list = tablePos.entrySet().stream()

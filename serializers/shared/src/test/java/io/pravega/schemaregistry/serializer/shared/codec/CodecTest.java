@@ -11,7 +11,7 @@ package io.pravega.schemaregistry.serializer.shared.codec;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
-import io.pravega.common.io.EnhancedByteArrayOutputStream;
+import io.pravega.common.io.ByteBufferOutputStream;
 import org.junit.Test;
 
 import java.io.IOException;
@@ -26,14 +26,14 @@ public class CodecTest {
         byte[] testStringBytes = "this is a test string".getBytes(Charsets.UTF_8);
         Codec snappy = Codecs.SnappyCompressor.getCodec();
         assertEquals(snappy.getCodecType(), Codecs.SnappyCompressor.getCodec().getCodecType());
-        EnhancedByteArrayOutputStream byteArrayOutputStream = new EnhancedByteArrayOutputStream();
+        ByteBufferOutputStream byteArrayOutputStream = new ByteBufferOutputStream();
         snappy.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
         ByteBuffer encoded = ByteBuffer.wrap(byteArrayOutputStream.getData().array(), 0, byteArrayOutputStream.getData().getLength());
         assertNotEquals(encoded.remaining(), testStringBytes.length);
         ByteBuffer decoded = snappy.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
 
-        byteArrayOutputStream = new EnhancedByteArrayOutputStream();
+        byteArrayOutputStream = new ByteBufferOutputStream();
         Codec gzip = Codecs.GzipCompressor.getCodec();
         assertEquals(gzip.getCodecType(), Codecs.GzipCompressor.getCodec().getCodecType());
         gzip.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
@@ -42,7 +42,7 @@ public class CodecTest {
         decoded = gzip.decode(encoded, ImmutableMap.of());
         assertTrue(Arrays.equals(decoded.array(), testStringBytes));
         
-        byteArrayOutputStream = new EnhancedByteArrayOutputStream();
+        byteArrayOutputStream = new ByteBufferOutputStream();
         Codec none = Codecs.None.getCodec();
         assertEquals(none.getCodecType(), Codecs.None.getCodec().getCodecType());
         none.encode(ByteBuffer.wrap(testStringBytes), byteArrayOutputStream);
