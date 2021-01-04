@@ -86,9 +86,6 @@ allprojects {
         maven {
             url "https://repository.apache.org/snapshots"
         }
-        maven {
-            url 'https://repository.mulesoft.org/nexus/content/repositories/public'
-        }
     }
 
     gradle.projectsEvaluated {
@@ -341,7 +338,7 @@ project('serializers:json') {
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:shared')
-        compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
+        compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
         compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
 
@@ -480,7 +477,7 @@ project('server') {
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
-        compile group: 'com.github.everit-org.json-schema', name: 'org.everit.json.schema', version: everitVersion
+        compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion
         runtime group: 'io.pravega', name: 'pravega-keycloak-client', version: pravegaKeyCloakVersion
         compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         compile group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion
