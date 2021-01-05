@@ -228,9 +228,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     private List<SchemaWithVersion> latestSchemas(String groupId, String type) {
         return withRetry(() -> {
             Response response = groupProxy.getSchemas(namespace, groupId, type);
-            SchemaVersionsList objectsList = response.readEntity(SchemaVersionsList.class);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
+                    SchemaVersionsList objectsList = response.readEntity(SchemaVersionsList.class);
                     return objectsList.getSchemas().stream().map(ModelHelper::decode).collect(Collectors.toList());
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");
@@ -448,9 +448,9 @@ public class SchemaRegistryClientImpl implements SchemaRegistryClient {
     public List<CodecType> getCodecTypes(String groupId) {
         return withRetry(() -> {
             Response response = groupProxy.getCodecTypesList(namespace, groupId);
-            CodecTypes list = response.readEntity(CodecTypes.class);
             switch (Response.Status.fromStatusCode(response.getStatus())) {
                 case OK:
+                    CodecTypes list = response.readEntity(CodecTypes.class);
                     return list.getCodecTypes().stream().map(ModelHelper::decode).collect(Collectors.toList());
                 case NOT_FOUND:
                     throw new ResourceNotFoundException("Group not found.");

@@ -94,6 +94,10 @@ public class TableStore extends AbstractService {
     }
     
     TableStore(WireCommandClient wireCommandClient, ScheduledExecutorService executor) {
+        this(wireCommandClient, executor, NUM_OF_RETRIES);    
+    }
+    
+    TableStore(WireCommandClient wireCommandClient, ScheduledExecutorService executor, int retryCount) {
         this.wireCommandClient = wireCommandClient;
         this.hostStore = wireCommandClient.getHostStore();
         this.executor = executor;
@@ -101,7 +105,7 @@ public class TableStore extends AbstractService {
             String[] splits = x.split("/");
             return hostStore.getController().getOrRefreshDelegationTokenFor(splits[0], splits[1], AccessOperation.READ_WRITE).join();
         };
-        numOfRetries = NUM_OF_RETRIES;
+        numOfRetries = retryCount;
         this.cache = CacheBuilder.newBuilder()
                                  .maximumSize(Config.TABLE_SEGMENT_CACHE_SIZE)
                                  .build();
@@ -380,8 +384,11 @@ public class TableStore extends AbstractService {
     private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage,
                                                  String tableName) {
         return Retry.withExpBackoff(RETRY_INIT_DELAY, RETRY_MULTIPLIER, numOfRetries, RETRY_MAX_DELAY)
-                    .retryWhen(e -> Exceptions.unwrap(e) instanceof StoreExceptions.StoreConnectionException)
-                    .runAsync(exceptionalCallback(futureSupplier, errorMessage, tableName), executor);
+                    .retryWhen(e -> {
+                        Throwable unwrap = Exceptions.unwrap(e);
+                        return unwrap instanceof StoreExceptions.StoreConnectionException || 
+                                unwrap instanceof StoreExceptions.TokenException;
+                    }).runAsync(exceptionalCallback(futureSupplier, errorMessage, tableName), executor);
     }
     
     @SneakyThrows(ExecutionException.class)

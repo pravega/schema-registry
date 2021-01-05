@@ -18,6 +18,7 @@ import io.pravega.client.tables.impl.IteratorStateImpl;
 import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;
 import io.pravega.client.tables.impl.TableSegmentKeyVersion;
+import io.pravega.common.concurrent.Futures;
 import io.pravega.common.util.BitConverter;
 import io.pravega.controller.stream.api.grpc.v1.Controller;
 import io.pravega.schemaregistry.storage.StoreExceptions;
@@ -34,6 +35,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static org.mockito.ArgumentMatchers.any;
@@ -288,6 +290,55 @@ public class WireCommandMock {
                 }
             }, executor);
         }).when(helper).readTableEntries(anyString(), anyInt(), any(), anyString());
+        // endregion
+        
+        return helper;
+    }
+    
+    public static WireCommandClient getFailingMock(Supplier<? extends Exception> exceptionSupplier) {
+        WireCommandClient helper = spy(new WireCommandClient(mock(ConnectionPool.class), mock(HostStore.class)));
+
+        HostStore hoststore = mock(HostStore.class);
+        
+        doReturn(CompletableFuture.completedFuture(Controller.NodeUri.newBuilder().setEndpoint("localhost").setPort(SERVICE_PORT).build()))
+                .when(hoststore).getHostForTableSegment(anyString());
+
+        ControllerImpl controller = mock(ControllerImpl.class);
+        doReturn(CompletableFuture.completedFuture("")).when(controller).getOrRefreshDelegationTokenFor(anyString(), anyString(), any());
+        doReturn(CompletableFuture.completedFuture(true)).when(controller).createScope(anyString());
+
+        doReturn(controller).when(hoststore).getController();
+        doReturn(hoststore).when(helper).getHostStore();
+        
+        doReturn(CompletableFuture.completedFuture(Controller.NodeUri.newBuilder().setEndpoint("localhost").setPort(SERVICE_PORT).build()))
+                .when(helper).getTableUri(anyString());
+
+        // region create table
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).createTableSegment(anyString(), anyString());
+        // endregion
+        
+        // region delete table
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).deleteTableSegment(anyString(), anyBoolean(), anyString());
+        // endregion
+        
+        // region update keys
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).updateTableEntries(anyString(), any(), anyString());
+        // endregion
+    
+        // region remove keys    
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).removeTableKeys(anyString(), any(), anyString());
+        // endregion
+
+        // region read keys    
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).readTable(anyString(), any(), anyString());
+        // endregion
+        
+        // region readTableKeys
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).readTableKeys(anyString(), anyInt(), any(), anyString());
+        // endregion        
+        
+        // region readTableEntries
+        doAnswer(x -> Futures.failedFuture(exceptionSupplier.get())).when(helper).readTableEntries(anyString(), anyInt(), any(), anyString());
         // endregion
         
         return helper;
