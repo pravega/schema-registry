@@ -379,6 +379,9 @@ public class TestSchemaRegistryClient {
         SchemaWithVersion schemaWithVersion1 = client.getLatestSchemaVersion("mygroup", null);
         assertEquals(schemaWithVersion.getSchemaInfo(), schemaWithVersion1.getSchemaInfo());
         assertEquals(schemaWithVersion.getVersionInfo(), schemaWithVersion1.getVersionInfo());
+
+        doThrow(new RuntimeException()).when(response).readEntity(
+                SchemaVersionsList.class);
         // NotFound Exception
         doReturn(Response.Status.NOT_FOUND.getStatusCode()).when(response).getStatus();
         AssertExtensions.assertThrows("An exception should have been thrown",
@@ -388,6 +391,8 @@ public class TestSchemaRegistryClient {
         AssertExtensions.assertThrows("An exception should have been thrown",
                 () -> client.getLatestSchemaVersion("mygroup", null), e -> e instanceof InternalServerError);
 
+        doReturn(schemaWithVersions).when(response).readEntity(
+                SchemaVersionsList.class);
         doReturn(Response.Status.OK.getStatusCode()).when(response).getStatus();
         serializationFormat = SerializationFormat.custom("custom");
         versionInfo = new VersionInfo("schema2", serializationFormat.getFullTypeName(), 5, 5);
