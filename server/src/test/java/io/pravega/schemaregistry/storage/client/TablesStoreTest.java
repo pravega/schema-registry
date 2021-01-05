@@ -14,6 +14,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.pravega.common.Exceptions;
 import io.pravega.common.concurrent.ExecutorServiceHelpers;
+import io.pravega.common.util.RetriesExhaustedException;
 import io.pravega.schemaregistry.ResultPage;
 import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.test.common.AssertExtensions;
@@ -31,6 +32,10 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.stream.Collectors;
 
 import static org.junit.Assert.*;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 
 public class TablesStoreTest {
     private static final String SCHEMAREGISTRY_TABLE = "schemaregistry/table";
@@ -171,5 +176,31 @@ public class TablesStoreTest {
         assertEquals(keys.get(1), new String(values.get(1).getRecord()));
         assertSame(values.get(2).getVersion().toLong(), Version.NON_EXISTENT.toLong());
         assertEquals(keys.get(3), new String(values.get(3).getRecord()));
+    }
+
+    @Test
+    public void retryTest() {
+        // connection exception
+        WireCommandClient wireCommandClient = WireCommandMock.getFailingMock(() -> 
+                StoreExceptions.create(StoreExceptions.Type.CONNECTION_ERROR, "my exception"));
+        TableStore tableStore = new TableStore(wireCommandClient, executor, 2);
+        AssertExtensions.assertFutureThrows("retries did not exhaust", 
+                tableStore.createTable("t/t"), e -> Exceptions.unwrap(e) instanceof RetriesExhaustedException);
+        verify(wireCommandClient, times(2)).createTableSegment(any(), any());
+
+        // auth error
+        wireCommandClient = WireCommandMock.getFailingMock(() -> 
+                StoreExceptions.create(StoreExceptions.Type.AUTH_ERROR, "my exception"));
+        tableStore = new TableStore(wireCommandClient, executor, 2);
+        AssertExtensions.assertFutureThrows("retries did not exhaust",
+                tableStore.deleteTable("t/t", true), e -> Exceptions.unwrap(e) instanceof RetriesExhaustedException);
+        verify(wireCommandClient, times(2)).deleteTableSegment(any(), anyBoolean(), any());
+
+        // general error, no retries should be performed
+        wireCommandClient = WireCommandMock.getFailingMock(RuntimeException::new);
+        tableStore = new TableStore(wireCommandClient, executor, 2);
+        AssertExtensions.assertFutureThrows("no retries should be performed",
+                tableStore.removeEntry("t/t", new byte[0]), e -> Exceptions.unwrap(e) instanceof RuntimeException);
+        verify(wireCommandClient, times(1)).removeTableKeys(any(), any(), any());
     }
 }
