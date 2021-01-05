@@ -120,10 +120,17 @@ allprojects {
     }
 }
 
+subprojects {
+    task allDeps(type: DependencyReportTask) {}
+}
+
+def withoutLogger = { exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+    exclude group: 'org.slf4j', module: 'slf4j-simple' }
+
 project('common') {
     dependencies {
-        compile group: 'commons-io', name: 'commons-io', version: commonsioVersion
-        compile group: 'com.google.guava', name: 'guava', version: guavaVersion
+        compile group: 'commons-io', name: 'commons-io', version: commonsioVersion, withoutLogger
+        compile group: 'com.google.guava', name: 'guava', version: guavaVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         testCompile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         //Do NOT add any additional dependencies to common. All other sub projects depend on common and any project specific 
@@ -159,8 +166,8 @@ project('client') {
         compile project(':common')
         compile project(':auth')
         compile project(':contract')
-        compile group: 'org.glassfish.jersey.ext', name: 'jersey-proxy-client', version: jerseyVersion
-        compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion
+        compile group: 'org.glassfish.jersey.ext', name: 'jersey-proxy-client', version: jerseyVersion, withoutLogger
+        compile group: 'org.glassfish.jersey.core', name: 'jersey-client', version: jerseyVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         compileOnly group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
@@ -185,15 +192,15 @@ project('contract') {
         compile project(':common')
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
-        compile group: 'javax.servlet', name: 'javax.servlet-api', version: javaxServletApiVersion
+        compile group: 'javax.servlet', name: 'javax.servlet-api', version: javaxServletApiVersion, withoutLogger
         compile(group: 'io.swagger', name : 'swagger-jersey2-jaxrs', version :swaggerJersey2JaxrsVersion) {
             exclude group: 'com.google.guava', module: 'guava'
         }
-        compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion
-        compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion
-        compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion
-        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion
-        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion
+        compile group: 'org.glassfish.jersey.containers', name: 'jersey-container-grizzly2-http', version: jerseyVersion, withoutLogger
+        compile group: 'org.glassfish.jersey.inject', name: 'jersey-hk2', version: jerseyVersion, withoutLogger
+        compile group: 'org.glassfish.jersey.media', name: 'jersey-media-json-jackson', version: jerseyVersion, withoutLogger
+        compile group: 'javax.xml.bind', name: 'jaxb-api', version: jaxbVersion, withoutLogger
+        compile group: 'org.glassfish.jaxb', name: 'jaxb-runtime', version: jaxbVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         testCompile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
@@ -226,7 +233,7 @@ project('serializers:shared') {
         compile project(':client')
         compileOnly group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
+        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion, withoutLogger
         testCompile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
@@ -248,7 +255,7 @@ project('serializers:avro') {
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:shared')
-        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
+        compile group: 'org.apache.avro', name: 'avro', version: avroVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
 
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
@@ -293,8 +300,8 @@ project('serializers:protobuf') {
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:shared')
-        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
-        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
+        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion, withoutLogger
+        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
 
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
@@ -338,8 +345,8 @@ project('serializers:json') {
     apply plugin: 'com.github.johnrengelman.shadow'
     dependencies {
         compile project(':serializers:shared')
-        compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion
-        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
+        compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion, withoutLogger
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
 
         testCompile project(path:':serializers:shared', configuration:'testRuntime')
@@ -385,7 +392,7 @@ project('serializers') {
         compile project(':serializers:avro')
         compile project(':serializers:protobuf')
         compile project(':serializers:json')
-        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion
+        compile group: 'org.xerial.snappy', name: 'snappy-java', version: snappyVersion, withoutLogger
         compileOnly group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
         compileOnly group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
 
@@ -470,17 +477,19 @@ project('server') {
         compile project(':common')
         compile project(':auth')
         compile project(':contract')
-        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-        compile group: 'io.pravega', name: 'pravega-shared-basic-authplugin', version: pravegaVersion
-        compile group: 'org.apache.avro', name: 'avro', version: avroVersion
-        compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion
-        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion
-        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion
-        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion
-        compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion
+        compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion, withoutLogger
+        compile group: 'io.pravega', name: 'pravega-shared-basic-authplugin', version: pravegaVersion, withoutLogger
+        compile group: 'org.apache.avro', name: 'avro', version: avroVersion, withoutLogger
+        compile group: 'org.apache.avro', name: 'avro-protobuf', version: avroProtobufVersion, withoutLogger
+        compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion, withoutLogger
+        compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion, withoutLogger
+        compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion, withoutLogger
+        compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion, withoutLogger
         runtime group: 'io.pravega', name: 'pravega-keycloak-client', version: pravegaKeyCloakVersion
-        compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
-        compile group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion
+        compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion, withoutLogger
+        compile group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion, withoutLogger
+        compile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
+        compile group: 'org.slf4j', name: 'slf4j-simple', version: slf4jApiVersion
 
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
