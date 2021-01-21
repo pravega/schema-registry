@@ -674,6 +674,11 @@ public class GroupPravegaTest {
                 HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         schemaData = new byte[5];
+        schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
+                ImmutableMap.of());
+        pravegaKeyValueGroups.getGroup(null, groupName).join().addSchema(schemaInfo,
+                HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
+        eTag = pravegaKeyValueGroups.getGroup(null, groupName).join().getCurrentEtag().join();
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Avro, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
         BigInteger fingerprint = HashUtil.getFingerprint(schemaInfo.getSchemaData().array());
