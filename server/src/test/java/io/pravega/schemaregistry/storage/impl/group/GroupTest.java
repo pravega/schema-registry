@@ -525,9 +525,13 @@ public class GroupTest {
         inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         schemaData = new byte[5];
+        schemaInfo = new SchemaInfo(anygroup, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
+                ImmutableMap.of());
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
+        eTag = inMemoryGroup.getCurrentEtag().join();
         schemaInfo = new SchemaInfo(anygroup1, SerializationFormat.Custom, ByteBuffer.wrap(schemaData),
                 ImmutableMap.of());
-        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag);
+        inMemoryGroup.addSchema(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array()), groupProperties, eTag).join();
         VersionInfo versionInfo = inMemoryGroup.getVersion(schemaInfo, HashUtil.getFingerprint(schemaInfo.getSchemaData().array())).join();
         eTag = inMemoryGroup.getCurrentEtag().join();
         inMemoryGroup.deleteSchema(versionInfo.getId(), eTag).join();
