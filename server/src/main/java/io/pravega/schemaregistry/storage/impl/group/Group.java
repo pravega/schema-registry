@@ -309,7 +309,7 @@ public class Group<V> {
                             // we are deleting the latest schema for the type.. we need to find the previous non deleted schema
                             // for the type
                             // first find the highest non deleted version number for the type.  
-                            AtomicInteger previous = new AtomicInteger(value.getLatestId() - 1);
+                            AtomicInteger previous = new AtomicInteger(value.getLatestVersion() - 1);
                             while (deletedVersions.contains(previous.get())) {
                                 previous.decrementAndGet();
                             }
