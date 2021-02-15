@@ -49,7 +49,6 @@ import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Function;
-import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
@@ -64,15 +63,6 @@ public class TableStore extends AbstractService {
     private final static int RETRY_MULTIPLIER = 2;
     private final static long RETRY_MAX_DELAY = Duration.ofSeconds(5).toMillis();
     private static final int NUM_OF_RETRIES = 15; // approximately 1 minute worth of retries
-    private static final Predicate<Throwable> TOKEN_RETRY_PREDICATE = e -> {
-        Throwable unwrap = Exceptions.unwrap(e);
-        return unwrap instanceof StoreExceptions.TokenException;
-    };
-    private static final Predicate<Throwable> RETRY_PREDICATE = e -> {
-        Throwable unwrap = Exceptions.unwrap(e);
-        return unwrap instanceof StoreExceptions.StoreConnectionException ||
-                unwrap instanceof StoreExceptions.TokenException;
-    };
     /**
      * Segment helper to make KVT wire command calls to segment store. 
      */
@@ -144,7 +134,7 @@ public class TableStore extends AbstractService {
 
     private CompletableFuture<Void> createScope() {
         return withRetries(() -> Futures.toVoid(hostStore.getController().createScope(SCHEMA_REGISTRY_SCOPE)),
-                () -> "Failed to create scope. Retrying...", "", RETRY_PREDICATE);
+                () -> "Failed to create scope. Retrying...", "");
     }
     
     public CompletableFuture<Void> createTable(String tableName) {
@@ -152,7 +142,7 @@ public class TableStore extends AbstractService {
 
         return Futures.toVoid(withRetries(() -> wireCommandClient.createTableSegment(
                 tableName, getToken(tableName)),
-                () -> String.format("create table: %s", tableName), tableName, RETRY_PREDICATE))
+                () -> String.format("create table: %s", tableName), tableName))
                       .whenComplete((r, e) -> {
                           if (e != null) {
                               log.warn("create table {} threw exception", tableName, e);
@@ -166,7 +156,7 @@ public class TableStore extends AbstractService {
         log.debug("delete table called for table: {}", tableName);
         return withRetries(() -> wireCommandClient.deleteTableSegment(
                 tableName, mustBeEmpty, getToken(tableName)),
-                () -> String.format("delete table: %s", tableName), tableName, RETRY_PREDICATE)
+                () -> String.format("delete table: %s", tableName), tableName)
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataContainerNotFoundException) {
                         return null;
@@ -205,7 +195,7 @@ public class TableStore extends AbstractService {
                                                    .collect(Collectors.toList()))
                                 .whenComplete((r, e) -> {
                                 releaseEntries(entries);
-                            }), () -> String.format("delete table: %s", tableName), tableName, TOKEN_RETRY_PREDICATE);
+                            }), () -> String.format("delete table: %s", tableName), tableName);
     }
 
     public <T> CompletableFuture<VersionedRecord<T>> getEntry(String tableName, byte[] key, Function<byte[], T> fromBytes) {
@@ -223,7 +213,7 @@ public class TableStore extends AbstractService {
         CompletableFuture<List<VersionedRecord<byte[]>>> result = new CompletableFuture<>();
         String message = "get entries for table: %s";
         withRetries(() -> wireCommandClient.readTable(tableName, keys, getToken(tableName)),
-                () -> String.format(message, tableName), tableName, RETRY_PREDICATE)
+                () -> String.format(message, tableName), tableName)
                 .thenApply(entriesFromStore -> {
                     try {
                         return entriesFromStore.stream().map(y -> {
@@ -258,7 +248,7 @@ public class TableStore extends AbstractService {
         List<TableSegmentKey> keys = Collections.singletonList(TableSegmentKey.unversioned(key));
         return withRetries(() -> wireCommandClient.removeTableKeys(
                 tableName, keys, getToken(tableName)),
-                () -> String.format("remove entry: table: %s", tableName), tableName, RETRY_PREDICATE)
+                () -> String.format("remove entry: table: %s", tableName), tableName)
                 .thenAccept(v -> log.trace("entry for key {} removed from table {}", key, tableName))
                 .exceptionally(e -> {
                     if (Exceptions.unwrap(e) instanceof StoreExceptions.DataNotFoundException) {
@@ -330,7 +320,7 @@ public class TableStore extends AbstractService {
         return withRetries(() ->
                         wireCommandClient.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
                                 getToken(tableName)),
-                () -> String.format("get keys paginated for table: %s", tableName), tableName, RETRY_PREDICATE)
+                () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
                     try {
                         List<K> items = result.getItems().stream().map(x -> fromByteKey.apply(getArray(x.getKey())))
@@ -349,7 +339,7 @@ public class TableStore extends AbstractService {
         log.trace("get entries paginated called for : {}", tableName);
         return withRetries(() -> wireCommandClient.readTableEntries(tableName, limit,
                 IteratorStateImpl.fromBytes(continuationToken), getToken(tableName)),
-                () -> String.format("get entries paginated for table: %s", tableName), tableName, RETRY_PREDICATE)
+                () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
                     try {
                         List<VersionedEntry<K, T>> items = result.getItems().stream().map(x -> {
@@ -392,9 +382,13 @@ public class TableStore extends AbstractService {
     }
 
     private <T> CompletableFuture<T> withRetries(Supplier<CompletableFuture<T>> futureSupplier, Supplier<String> errorMessage,
-                                                 String tableName, Predicate<Throwable> retryPredicate) {
+                                                 String tableName) {
         return Retry.withExpBackoff(RETRY_INIT_DELAY, RETRY_MULTIPLIER, numOfRetries, RETRY_MAX_DELAY)
-                    .retryWhen(retryPredicate::test).runAsync(exceptionalCallback(futureSupplier, errorMessage, tableName), executor);
+                    .retryWhen(e -> {
+                        Throwable unwrap = Exceptions.unwrap(e);
+                        return unwrap instanceof StoreExceptions.StoreConnectionException || 
+                                unwrap instanceof StoreExceptions.TokenException;
+                    }).runAsync(exceptionalCallback(futureSupplier, errorMessage, tableName), executor);
     }
     
     @SneakyThrows(ExecutionException.class)
