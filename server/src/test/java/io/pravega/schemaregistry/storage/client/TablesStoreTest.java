@@ -213,7 +213,7 @@ public class TablesStoreTest {
         Map<byte[], VersionedRecord<byte[]>> map = Collections.singletonMap(new byte[10], new VersionedRecord<>(new byte[10], Version.NO_VERSION));
         AssertExtensions.assertFutureThrows("retries did not exhaust", 
                 tableStore.updateEntries("t/t", map), e -> Exceptions.unwrap(e) instanceof RetriesExhaustedException);
-        // verify it is not retried. 
+        // verify it is retried. 
         verify(wireCommandClient, times(2)).updateTableEntries(any(), any(), any());
 
         // auth error

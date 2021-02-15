@@ -195,7 +195,7 @@ public class TableStore extends AbstractService {
                                                    .collect(Collectors.toList()))
                                 .whenComplete((r, e) -> {
                                 releaseEntries(entries);
-                            }), () -> String.format("delete table: %s", tableName), tableName);
+                            }), () -> String.format("updateEntries in table: %s", tableName), tableName);
     }
 
     public <T> CompletableFuture<VersionedRecord<T>> getEntry(String tableName, byte[] key, Function<byte[], T> fromBytes) {
