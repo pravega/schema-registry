@@ -64,11 +64,11 @@ public class TableStore extends AbstractService {
     private final static int RETRY_MULTIPLIER = 2;
     private final static long RETRY_MAX_DELAY = Duration.ofSeconds(5).toMillis();
     private static final int NUM_OF_RETRIES = 15; // approximately 1 minute worth of retries
-    public static final Predicate<Throwable> TOKEN_RETRY_PREDICATE = e -> {
+    private static final Predicate<Throwable> TOKEN_RETRY_PREDICATE = e -> {
         Throwable unwrap = Exceptions.unwrap(e);
         return unwrap instanceof StoreExceptions.TokenException;
     };
-    public static final Predicate<Throwable> RETRY_PREDICATE = e -> {
+    private static final Predicate<Throwable> RETRY_PREDICATE = e -> {
         Throwable unwrap = Exceptions.unwrap(e);
         return unwrap instanceof StoreExceptions.StoreConnectionException ||
                 unwrap instanceof StoreExceptions.TokenException;
