@@ -190,12 +190,12 @@ public class TableStore extends AbstractService {
                     TableSegmentEntry.notExists(x.getKey(), x.getValue().getRecord()) :
                     TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().toLong());
         }).collect(Collectors.toList());
-        return wireCommandClient.updateTableEntries(tableName, entries, getToken(tableName))
+        return withRetries(() -> wireCommandClient.updateTableEntries(tableName, entries, getToken(tableName))
                                 .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
                                                    .collect(Collectors.toList()))
                                 .whenComplete((r, e) -> {
                                 releaseEntries(entries);
-                            });
+                            }), () -> String.format("updateEntries in table: %s", tableName), tableName);
     }
 
     public <T> CompletableFuture<VersionedRecord<T>> getEntry(String tableName, byte[] key, Function<byte[], T> fromBytes) {
