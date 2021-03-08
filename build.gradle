@@ -131,6 +131,7 @@ project('common') {
     dependencies {
         compile group: 'commons-io', name: 'commons-io', version: commonsioVersion, withoutLogger
         compile group: 'com.google.guava', name: 'guava', version: guavaVersion, withoutLogger
+        compile group: 'javax.activation', name: 'activation', version: javaxActivationVersion
         compileOnly group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         testCompile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion
         //Do NOT add any additional dependencies to common. All other sub projects depend on common and any project specific 
