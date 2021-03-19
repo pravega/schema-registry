@@ -639,9 +639,10 @@ task javadocs(type: Javadoc) {
     description = "Generate main pravega javadoc"
 
     // Include names of any project that is to be included in the javadoc distribution
-    ext.projects = [':client']
+    ext.projects = [':client', ':serializers']
+
     options.links("http://docs.oracle.com/javase/10/docs/api/");
-    title = "Pravega API"
+    title = "Schema Registry API"
     destinationDir = file("${buildDir}/javadocs")
     source = files(projects.collect {
         project(it).sourceSets.main.allJava

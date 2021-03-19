@@ -33,7 +33,7 @@ markdown_extensions:
 pages:
   - Overview: 'overview.md'
   - Understanding Schema Registry:
-      - 'Schema Registry Concepts': 'schemaregistry-concepts.md'
+      - 'Schema Registry Concepts': 'schema-registry-concepts.md'
 
   - Using Schema Registry SDK:
       - 'Java API Reference': 'javadoc.md'
