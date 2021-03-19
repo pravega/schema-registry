@@ -639,7 +639,7 @@ task javadocs(type: Javadoc) {
     description = "Generate main pravega javadoc"
 
     // Include names of any project that is to be included in the javadoc distribution
-    ext.projects = [':client', ':serializers']
+    ext.projects = [':client', ':serializers', ':serializers:json', ':serializers:avro', ':serializers:protobuf']
 
     options.links("http://docs.oracle.com/javase/10/docs/api/");
     title = "Schema Registry API"
