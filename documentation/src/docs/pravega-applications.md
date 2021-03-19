@@ -88,31 +88,6 @@ The following is an example of detailed configuration that tells the SerializerF
     EventRead<User> event = reader.readNextEvent(1000);
 ```
 
-### Schema registry components 
-There are three main components involved in schema registry.
-1.    Service – REST endpoint
-2.    REST client
-3.    Serializers
-
-Registry service exposes management and data path apis. 
-Management apis –
-1.    `createGroup(GroupId, GroupProperties)`
-2.    `addSchemaToGroup(GroupId, SchemaInfo)`
-3.    `addCodecToGroup(GroupId, CodecType)`
-4.    `updateGroupPolicy(GroupId, SchemaValidationRules)`
-5.    `deleteGroup(GroupId)`
-6.    various `Read` apis like getSchemas getLatestSchema etc for getting schemas and codecs within a group. 
-
-Data path apis –
-1.    `getEncodingId(SchemaVersion, CodecType)`
-2.    `getEncodingInfo(encodingId)`
-
-Typically management apis can be invoked using any of the following rest clients:
-1.    Invoking rest api directly
--    Curl, UI etc
-2.    Programmatically
--    Schema Registry rest Client implementation in java
-
 ### Programmatic usage of Schema Registry 
 We will focus on the programatic usage of schema registry in this document. REST api documentation is available [here](https://github.com/pravega/schema-registry/wiki/REST-documentation).
 
@@ -238,7 +213,7 @@ Example of avro serializers and deserializers (similar set of serializers and de
     /**
      * Creates a typed avro serializer for the Schema. The serializer implementation returned from this method is
      * responsible for interacting with schema registry service and ensures that only valid registered schema can be used.
-     * <p>
+     * 
      * Note: the returned serializer only implements {@link Serializer#serialize(Object)}.
      * It does not implement {@link Serializer#deserialize(ByteBuffer)}.
      */
@@ -247,7 +222,7 @@ Example of avro serializers and deserializers (similar set of serializers and de
     /**
      * Creates a typed avro deserializer for the Schema. The deserializer implementation returned from this method is
      * responsible for interacting with schema registry service and validate the writer schema before using it.
-     * <p>
+     * 
      * Note: the returned serializer only implements {@link Serializer#deserialize(ByteBuffer)}.
      * It does not implement {@link Serializer#serialize(Object)}.
      */
