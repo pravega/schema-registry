@@ -15,7 +15,7 @@ This document assumes you are familiar with and know how to use pravega SDK to w
 
 ## Schema Registry Service
 
-Before we deploy schema registry service, make sure you have pravega setup. Please refer to pravega's [getting-started]() to run pravega in standalone mode.
+Before we deploy schema registry service, make sure you have pravega setup. Please refer to pravega's [getting-started](https://github.com/pravega/pravega/blob/master/documentation/src/docs/getting-started.md) to run pravega in standalone mode.
 
 **Verify the following prerequisite**
 
