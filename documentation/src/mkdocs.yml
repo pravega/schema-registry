@@ -36,7 +36,6 @@ pages:
       - 'Schema Registry Concepts': 'schema-registry-concepts.md'
 
   - Using Schema Registry SDK:
-      - 'Java API Reference': 'javadoc.md'
       - 'REST API': 'rest-documentation.md'
       - 'Using schema registry in Pravega Applications': 'pravega-applications.md'
 
