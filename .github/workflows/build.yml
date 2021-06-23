@@ -30,13 +30,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Gradle Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.0
         with:
            path: ${{env.GLOBAL_CACHE_PATH}}
            key: ${{env.GLOBAL_CACHE_KEY}}
            restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
       - name: Build Output Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.0
         with:
            path: ${{env.BUILD_CACHE_PATH}}
            key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
@@ -55,13 +55,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Gradle Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.0
         with:
           path: ${{env.GLOBAL_CACHE_PATH}}
           key: ${{env.GLOBAL_CACHE_KEY}}
           restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
       - name: Build Output Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.0
         with:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
@@ -80,13 +80,13 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
       - name: Gradle Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.0
         with:
           path: ${{env.GLOBAL_CACHE_PATH}}
           key: ${{env.GLOBAL_CACHE_KEY}}
           restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
       - name: Build Output Cache
-        uses: actions/cache@v2
+        uses: actions/cache@v2.1.0
         with:
           path: ${{env.BUILD_CACHE_PATH}}
           key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
