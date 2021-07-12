@@ -1,0 +1,97 @@
+# This workflow includes a basic build job.
+
+name: build
+
+on:
+  [push,pull_request]
+
+env:
+  GLOBAL_CACHE_PATH: |
+    ~/.gradle
+    ~/.m2
+  GLOBAL_CACHE_KEY: gradle-m2-java-11
+  GLOBAL_CACHE_RESTORE_KEYS: |
+    gradle-m2-java-
+    gradle-m2
+  BUILD_CACHE_PATH: |
+    .gradle
+    ./bin
+    **/bin
+    **/build
+
+jobs:
+  build:
+    name: Build
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Build Information
+        run: echo Building a '${{ github.event_name }}' for target '${{ github.ref }}'.
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Gradle Cache
+        uses: actions/cache@v2.1.0
+        with:
+           path: ${{env.GLOBAL_CACHE_PATH}}
+           key: ${{env.GLOBAL_CACHE_KEY}}
+           restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
+      - name: Build Output Cache
+        uses: actions/cache@v2.1.0
+        with:
+           path: ${{env.BUILD_CACHE_PATH}}
+           key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
+           restore-keys: |
+              ${{github.ref}}
+      - name: Gradle Build
+        run: ./gradlew build
+
+  javadocs:
+    name: Javadocs
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Build Information
+        run: echo Building javadocs for a '${{ github.event_name }}' for target '${{ github.ref }}'.
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Gradle Cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{env.GLOBAL_CACHE_PATH}}
+          key: ${{env.GLOBAL_CACHE_KEY}}
+          restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
+      - name: Build Output Cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{env.BUILD_CACHE_PATH}}
+          key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
+          restore-keys: |
+            ${{github.ref}}
+      - name: Gradle Javadocs
+        run: ./gradlew javadocs
+
+
+  snapshot:
+    name: Artifactory Snapshot
+    needs: [Build, Javadocs]
+    if: ${{ github.event_name == 'push' && (github.ref == 'ref/heads/master' || startsWith(github.ref, 'refs/heads/r0.') || startsWith(github.ref, 'refs/heads/r1.')) }}
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v2
+      - name: Gradle Cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{env.GLOBAL_CACHE_PATH}}
+          key: ${{env.GLOBAL_CACHE_KEY}}
+          restore-keys: ${{env.GLOBAL_CACHE_RESTORE_KEYS}}
+      - name: Build Output Cache
+        uses: actions/cache@v2.1.0
+        with:
+          path: ${{env.BUILD_CACHE_PATH}}
+          key: ${{github.ref}}-${{github.run_id}}-${{github.job}}
+          restore-keys: |
+            ${{github.ref}}-${{github.run_id}}
+            ${{github.ref}}
+      - name: Publish Snapshot
+        run: ./gradlew publish - PpublishUrl=jcenterSnapshot -PpublishUsername=${{secrets.BINTRAY_USER}} -PpublishPassword=${{secrets.BINTRAY_KEY}} ${{env.GRADLE_OPTS}}
