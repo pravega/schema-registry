@@ -1,0 +1,50 @@
+# Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+
+site_name: 'Exploring Pravega'
+site_url: 'https://pravega.io/'
+site_description: 'Documentation to help you get familiar with Pravega'
+
+repo_url: 'https://github.com/pravega/schema-registry'
+edit_uri: 'tree/master/documentation/src/docs'
+
+theme: 'material'
+
+
+# Extensions
+markdown_extensions:
+  - admonition
+  - codehilite(guess_lang=false)
+  - footnotes
+  - meta
+  - toc(permalink=true)
+  - pymdownx.betterem(smart_enable=all)
+  - pymdownx.caret
+  - pymdownx.inlinehilite
+  - pymdownx.magiclink
+  - pymdownx.smartsymbols
+  - pymdownx.superfences
+
+pages:
+  - Overview: 'overview.md'
+  - Understanding Schema Registry:
+      - 'Schema Registry Concepts': 'schema-registry-concepts.md'
+
+  - Using Schema Registry SDK:
+      - 'REST API': 'rest-documentation.md'
+      - 'Using schema registry in Pravega Applications': 'pravega-applications.md'
+
+  - Running Schema Registry:
+      - 'Deployment Overview': 'installation-guide.md'
+
+  - Security:
+      - 'Security(TLS) and Authorization/Authentication': 'security.md'
+extra:
+    version: 0.1
+
+google_analytics: ['UA-1508605-1', 'pravega.io']
