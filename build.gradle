@@ -284,7 +284,7 @@ project('serializers:avro') {
         classifier ='all'
         mergeServiceFiles()
     }
-    
+
     tasks.build.dependsOn tasks.shadowJar
     artifacts { archives shadowJar }
     javadoc {
@@ -408,6 +408,18 @@ project('serializers') {
     }
     
     shadowJar {
+        //classifier = 'tests'
+        //from sourceSets.test.output
+        //configurations = [project.configurations.testRuntime]
+        zip64 true
+        relocate 'org.apache.avro', 'io.pravega.schemaregistry.shaded.org.apache.avro'
+        classifier ='all'
+        mergeServiceFiles()
+    }
+    
+    tasks.build.dependsOn tasks.shadowJar
+
+    shadowJar {
         zip64 true
         relocate 'org.xerial.snappy' , 'io.pravega.schemaregistry.shaded.org.xerial.snappy'
         relocate 'org.glassfish.jersey.ext' , 'io.pravega.schemaregistry.shaded.org.glassfish.jersey.ext'
@@ -424,7 +436,7 @@ project('serializers') {
         classifier ='all'
         mergeServiceFiles()
     }
-    
+
     tasks.build.dependsOn tasks.shadowJar
     artifacts { archives shadowJar }
     javadoc {
@@ -527,7 +539,7 @@ project('test') {
         compile project(':common')
         compile project(':contract')
         compile project(':client')
-        compile project(':server') 
+        compile project(':server')
         compile project(':serializers')
         compile project(':serializers:protobuf')
         compile project(':serializers:avro')
@@ -754,4 +766,3 @@ class DockerPushTask extends Exec {
         }
     }
 }
-
