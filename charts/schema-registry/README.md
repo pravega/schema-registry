@@ -57,6 +57,7 @@ The following table lists the configurable parameters of the schema registry cha
 | `serviceAccount.annotations` | Annotations to be added to the service account | |
 | `service.type` | Schema registry service type | `LoadBalancer` |
 | `service.port` | Schema registry service port | `9092` |
+| `podAnnotations` | Custom Annotations that should be applied to the POD | `{}` |
 | `initContainer` | Configuration for the init container | `{}` |
 | `container` | Additional configuration for the schema registry container, to be provided if an init container has been configured | `{}` |
 | `ingress.enabled` | Whether to expose as an ingress resource | `false` |
