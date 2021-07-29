@@ -26,6 +26,8 @@ spec:
     metadata:
       labels:
 {{ include "schema-registry.selectorLabels" . | indent 8 }}
+      annotations:
+{{ toYaml .Values.podAnnotations | indent 8 }}
     spec:
       {{- if .Values.serviceAccount.create }}
       serviceAccountName: {{ .Values.serviceAccount.name }}
