@@ -51,6 +51,9 @@ container: {}
   # volume:
   #   mountPath: /additional_libs
 
+## Custom annotations to be applied to the POD
+podAnnotations: {}
+
 ## Ingress configuration.
 ingress:
   enabled: false
