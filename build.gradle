@@ -535,7 +535,6 @@ project('test') {
         compile project(':serializers:json')
         compile project(':serializers:shared')
         compile group: 'io.pravega', name: 'pravega-client', version: pravegaVersion
-        compile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
 
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
