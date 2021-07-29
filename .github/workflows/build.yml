@@ -94,4 +94,4 @@ jobs:
             ${{github.ref}}-${{github.run_id}}
             ${{github.ref}}
       - name: Publish Snapshot
-        run: ./gradlew publish - PpublishUrl=https://maven.pkg.github.com/${{github.repository}} -PpublishUsername==${{github.actor}} -PpublishPassword=${{secrets.GITHUB_TOKEN}} ${{env.GRADLE_OPTS}}
+        run: ./gradlew publish -PpublishUrl=https://maven.pkg.github.com/${{github.repository}} -PpublishUsername==${{github.actor}} -PpublishPassword=${{secrets.GITHUB_TOKEN}} ${{env.GRADLE_OPTS}}
