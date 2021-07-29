@@ -484,6 +484,7 @@ project('server') {
         compile group: 'com.google.protobuf', name: 'protobuf-java-util', version: protobufUtilVersion, withoutLogger
         compile group: 'com.google.protobuf', name: 'protobuf-java', version: protobufProtocVersion, withoutLogger
         compile group: 'com.fasterxml.jackson.module', name: 'jackson-module-jsonSchema', version: jacksonVersion, withoutLogger
+        compile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion, withoutLogger
         runtime group: 'io.pravega', name: 'pravega-keycloak-client', version: pravegaKeyCloakVersion
         compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion, withoutLogger
@@ -497,7 +498,6 @@ project('server') {
         testCompile group: 'io.pravega', name: 'pravega-shared-basic-authplugin', version: pravegaVersion
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
-        testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
     }
 
@@ -638,9 +638,10 @@ task javadocs(type: Javadoc) {
     description = "Generate main pravega javadoc"
 
     // Include names of any project that is to be included in the javadoc distribution
-    ext.projects = [':client']
+    ext.projects = [':client', ':serializers', ':serializers:json', ':serializers:avro', ':serializers:protobuf']
+
     options.links("http://docs.oracle.com/javase/10/docs/api/");
-    title = "Pravega API"
+    title = "Schema Registry API"
     destinationDir = file("${buildDir}/javadocs")
     source = files(projects.collect {
         project(it).sourceSets.main.allJava
