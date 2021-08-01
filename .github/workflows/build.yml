@@ -74,7 +74,7 @@ jobs:
   snapshot:
     name: Artifactory Snapshot
     needs: [Build, Javadocs]
-    if: ${{ github.event_name == 'push' && (github.ref == 'ref/heads/master' || startsWith(github.ref, 'refs/heads/r0.') || startsWith(github.ref, 'refs/heads/r1.')) }}
+    if: ${{ github.event_name == 'push' && (github.ref == 'refs/heads/master' || startsWith(github.ref, 'refs/heads/r0.') || startsWith(github.ref, 'refs/heads/r1.')) }}
     runs-on: ubuntu-20.04
     steps:
       - name: Checkout
