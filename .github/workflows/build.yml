@@ -29,6 +29,9 @@ jobs:
         run: echo Building a '${{ github.event_name }}' for target '${{ github.ref }}'.
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # pull all the commits, so the commit count will be correct
+          fetch-depth: 0
       - name: Gradle Cache
         uses: actions/cache@v2.1.0
         with:
@@ -79,6 +82,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v2
+        with:
+          # pull all the commits, so the commit count will be correct
+          fetch-depth: 0
       - name: Gradle Cache
         uses: actions/cache@v2.1.0
         with:
