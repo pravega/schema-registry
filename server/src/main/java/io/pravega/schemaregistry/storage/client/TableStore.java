@@ -20,7 +20,7 @@ import io.pravega.client.ClientConfig;
 import io.pravega.client.connection.impl.ConnectionPoolImpl;
 import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
 import io.pravega.client.tables.IteratorItem;
-import io.pravega.client.tables.impl.IteratorStateImpl;
+import io.pravega.client.tables.impl.HashTableIteratorItem;
 import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;
 import io.pravega.client.tables.impl.TableSegmentKeyVersion;
@@ -269,7 +269,7 @@ public class TableStore extends AbstractService {
                             token.release();
                             return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
                         }),
-                IteratorStateImpl.EMPTY.getToken());
+                HashTableIteratorItem.State.EMPTY.getToken());
 
         return iterator.collectRemaining(keys::add)
                        .thenApply(v -> keys);
@@ -285,7 +285,7 @@ public class TableStore extends AbstractService {
                             token.release();
                             return new AbstractMap.SimpleEntry<>(result.getToken(), result.getList());
                         }),
-                IteratorStateImpl.EMPTY.getToken());
+                HashTableIteratorItem.State.EMPTY.getToken());
 
         return iterator.collectRemaining(entries::add).thenApply(v -> entries);
     }
@@ -318,7 +318,7 @@ public class TableStore extends AbstractService {
         log.trace("get keys paginated called for : {}", tableName);
 
         return withRetries(() ->
-                        wireCommandClient.readTableKeys(tableName, limit, IteratorStateImpl.fromBytes(continuationToken),
+                        wireCommandClient.readTableKeys(tableName, limit, HashTableIteratorItem.State.fromBytes(continuationToken),
                                 getToken(tableName)),
                 () -> String.format("get keys paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
@@ -338,7 +338,7 @@ public class TableStore extends AbstractService {
             Function<byte[], T> fromBytesValue) {
         log.trace("get entries paginated called for : {}", tableName);
         return withRetries(() -> wireCommandClient.readTableEntries(tableName, limit,
-                IteratorStateImpl.fromBytes(continuationToken), getToken(tableName)),
+                        HashTableIteratorItem.State.fromBytes(continuationToken), getToken(tableName)),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
                     try {
@@ -356,7 +356,7 @@ public class TableStore extends AbstractService {
                 });
     }
 
-    private ByteBuf getNextToken(ByteBuf continuationToken, IteratorItem<?> result) {
+    private ByteBuf getNextToken(ByteBuf continuationToken, HashTableIteratorItem<?> result) {
         return result.getItems().isEmpty() && result.getState().isEmpty() ?
                 continuationToken : Unpooled.wrappedBuffer(result.getState().toBytes());
     }
