@@ -33,9 +33,7 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.client.tables.KeyValueTable;
-import io.pravega.client.tables.KeyValueTableClientConfiguration;
-import io.pravega.client.tables.KeyValueTableConfiguration;
+import io.pravega.client.tables.*;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
@@ -72,10 +70,7 @@ import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.shared.NameUtils;
 import io.pravega.test.common.AssertExtensions;
 import io.pravega.test.common.TestUtils;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.SneakyThrows;
+import lombok.*;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -371,7 +366,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 writer.writeEvent(record).join();
                 // endregion
 
-                // region writer with codec gzip 
+                // region writer with codec gzip
                 serializerConfig = SerializerConfig.builder()
                                                    .groupId(groupId)
                                                    .registerSchema(true)
@@ -470,7 +465,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer5, EventWriterConfig.builder().build());
                 String bigString3 = generateBigString(300);
                 writer2.writeEvent(new Test1(bigString3, 1)).join();
-                // endregion 
+                // endregion
 
                 list = client.getCodecTypes(groupId);
                 assertEquals(4, list.size());
@@ -1349,7 +1344,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
                 Function<EventRead, String> eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
 
-                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, 
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig,
                         new SocketConnectionFactoryImpl(clientConfig));
                 String rg = "rg" + stream;
                 readerGroupManager.createReaderGroup(rg,
@@ -1404,16 +1399,13 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                                                             .build();
         KeyValueTableFactory tableFactory =
                 KeyValueTableFactory.withScope(scope, clientConfig);
-        Serializer<ProtobufTest.Message1> keySerializer = new KVSerializer<>(ProtobufTest.Message1.class, serializerConfig);
-
-        Serializer<ProtobufTest.Message2> valueSerializer = new KVSerializer<>(ProtobufTest.Message2.class, serializerConfig);
-
-        KeyValueTable<ProtobufTest.Message1, ProtobufTest.Message2> table =
-                tableFactory.forKeyValueTable(tableName, keySerializer, valueSerializer,
+        KeyValueTable table =
+                tableFactory.forKeyValueTable(tableName,
                         KeyValueTableClientConfiguration.builder().build());
 
         ProtobufTest.Message1 key1 = ProtobufTest.Message1.newBuilder().setName("key").build();
         ProtobufTest.Message2 value1 = ProtobufTest.Message2.newBuilder().setName("value").setField1(0).build();
+        table.update();
         table.put("k", key1, value1).join();
 
         ProtobufTest.Message1 key2 = ProtobufTest.Message1.newBuilder().setName("test2").build();
