@@ -33,7 +33,11 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.client.tables.*;
+import io.pravega.client.tables.KeyValueTable;
+import io.pravega.client.tables.KeyValueTableClientConfiguration;
+import io.pravega.client.tables.KeyValueTableConfiguration;
+import io.pravega.client.tables.TableKey;
+import io.pravega.client.tables.Put;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
@@ -70,7 +74,10 @@ import io.pravega.schemaregistry.storage.SchemaStoreFactory;
 import io.pravega.shared.NameUtils;
 import io.pravega.test.common.AssertExtensions;
 import io.pravega.test.common.TestUtils;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaBuilder;
@@ -87,6 +94,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -1403,15 +1411,10 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 tableFactory.forKeyValueTable(tableName,
                         KeyValueTableClientConfiguration.builder().build());
 
-        ProtobufTest.Message1 key1 = ProtobufTest.Message1.newBuilder().setName("key").build();
-        ProtobufTest.Message2 value1 = ProtobufTest.Message2.newBuilder().setName("value").setField1(0).build();
-        table.update();
-        table.put("k", key1, value1).join();
+        table.update(new Put(new TableKey(ByteBuffer.wrap("k".getBytes(StandardCharsets.US_ASCII)),
+                ByteBuffer.wrap("key".getBytes(StandardCharsets.US_ASCII))), ByteBuffer.wrap("value".getBytes(StandardCharsets.US_ASCII)))).join();
 
-        ProtobufTest.Message1 key2 = ProtobufTest.Message1.newBuilder().setName("test2").build();
-        ProtobufTest.Message2 value2 = ProtobufTest.Message2.newBuilder().setName("test2").setField1(0).build();
-
-        table.get("k", key1).join();
+        table.get(new TableKey(ByteBuffer.wrap("k".getBytes(StandardCharsets.US_ASCII)), ByteBuffer.wrap("key".getBytes(StandardCharsets.US_ASCII)))).join();
     }
 
     private static class KVSerializer<T extends GeneratedMessageV3> implements Serializer<T> {

@@ -19,7 +19,6 @@ import io.netty.util.ReferenceCountUtil;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.connection.impl.ConnectionPoolImpl;
 import io.pravega.client.connection.impl.SocketConnectionFactoryImpl;
-import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.impl.HashTableIteratorItem;
 import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;

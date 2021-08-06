@@ -128,6 +128,7 @@ allprojects {
             force "io.netty:netty-tcnative-boringssl-static:" + nettyBoringSSLVersion
             force "io.netty:netty-transport:" + nettyVersion
             force "io.netty:netty-handler:" + nettyVersion
+            force "org.apache.zookeeper:zookeeper:" + apacheZookeeperVersion
         }
     }
 }
