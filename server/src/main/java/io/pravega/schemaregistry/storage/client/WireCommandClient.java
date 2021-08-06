@@ -17,7 +17,6 @@ import io.pravega.client.connection.impl.ConnectionPool;
 import io.pravega.client.connection.impl.RawClient;
 import io.pravega.client.control.impl.ModelHelper;
 import io.pravega.client.stream.impl.ConnectionClosedException;
-import io.pravega.client.tables.IteratorItem;
 import io.pravega.client.tables.impl.HashTableIteratorItem;
 import io.pravega.client.tables.impl.TableSegmentEntry;
 import io.pravega.client.tables.impl.TableSegmentKey;
