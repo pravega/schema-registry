@@ -1395,7 +1395,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
 
         String tableName = "table";
         tableManager.createKeyValueTable(scope, tableName,
-                KeyValueTableConfiguration.builder().partitionCount(1).build());
+                KeyValueTableConfiguration.builder().partitionCount(1).primaryKeyLength(1).secondaryKeyLength(3).build());
         SerializerConfig serializerConfig = SerializerConfig.builder()
                                                             .namespace(scope)
                                                             .groupId(tableName)
@@ -1417,28 +1417,5 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         table.get(new TableKey(ByteBuffer.wrap("k".getBytes(StandardCharsets.US_ASCII)), ByteBuffer.wrap("key".getBytes(StandardCharsets.US_ASCII)))).join();
     }
 
-    private static class KVSerializer<T extends GeneratedMessageV3> implements Serializer<T> {
-        Serializer<T> serializer;
-        Serializer<T> deserializer;
-
-        // schema registry de/serializers implement one or the other
-        // use a wrapper class to provide to kv table api which needs both
-        KVSerializer(Class<T> clazz, SerializerConfig serializerConfig) {
-            this.serializer = SerializerFactory.protobufSerializer(
-                    serializerConfig, ProtobufSchema.of(clazz));
-            this.deserializer = SerializerFactory.protobufDeserializer(
-                    serializerConfig, ProtobufSchema.of(clazz));
-        }
-
-        @Override
-        public ByteBuffer serialize(T value) {
-            return this.serializer.serialize(value);
-        }
-
-        @Override
-        public T deserialize(ByteBuffer serializedValue) {
-            return this.deserializer.deserialize(serializedValue);
-        }
-    }
 }
 
