@@ -1380,42 +1380,5 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         }
     }
 
-    @Test
-    public void testKeyValue() {
-        String scope = "scope";
-        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
-            streamManager.createScope(scope);
-        }
-        client.addGroup("g1",
-                new GroupProperties(SerializationFormat.Protobuf,
-                        Compatibility.allowAny(),
-                        true));
-
-        KeyValueTableManager tableManager = KeyValueTableManager.create(clientConfig);
-
-        String tableName = "table";
-        tableManager.createKeyValueTable(scope, tableName,
-                KeyValueTableConfiguration.builder().partitionCount(1).primaryKeyLength(1).secondaryKeyLength(3).build());
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .namespace(scope)
-                                                            .groupId(tableName)
-                                                            .createGroup(SerializationFormat.Protobuf,
-                                                                    Compatibility.allowAny(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
-        KeyValueTableFactory tableFactory =
-                KeyValueTableFactory.withScope(scope, clientConfig);
-        KeyValueTable table =
-                tableFactory.forKeyValueTable(tableName,
-                        KeyValueTableClientConfiguration.builder().build());
-
-        table.update(new Put(new TableKey(ByteBuffer.wrap("k".getBytes(StandardCharsets.US_ASCII)),
-                ByteBuffer.wrap("key".getBytes(StandardCharsets.US_ASCII))), ByteBuffer.wrap("value".getBytes(StandardCharsets.US_ASCII)))).join();
-
-        table.get(new TableKey(ByteBuffer.wrap("k".getBytes(StandardCharsets.US_ASCII)), ByteBuffer.wrap("key".getBytes(StandardCharsets.US_ASCII)))).join();
-    }
-
 }
 
