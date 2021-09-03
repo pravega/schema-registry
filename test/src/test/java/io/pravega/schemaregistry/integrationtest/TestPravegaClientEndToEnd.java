@@ -1372,5 +1372,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         }
     }
 
+    // TODO: Write the test case for testKeyValue (with issue #222)
+
 }
 

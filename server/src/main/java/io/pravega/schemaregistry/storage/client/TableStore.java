@@ -337,7 +337,7 @@ public class TableStore extends AbstractService {
             Function<byte[], T> fromBytesValue) {
         log.trace("get entries paginated called for : {}", tableName);
         return withRetries(() -> wireCommandClient.readTableEntries(tableName, limit,
-                        HashTableIteratorItem.State.fromBytes(continuationToken), getToken(tableName)),
+                HashTableIteratorItem.State.fromBytes(continuationToken), getToken(tableName)),
                 () -> String.format("get entries paginated for table: %s", tableName), tableName)
                 .thenApply(result -> {
                     try {
