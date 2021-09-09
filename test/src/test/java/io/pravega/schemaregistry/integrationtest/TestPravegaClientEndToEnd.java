@@ -17,8 +17,6 @@ import com.google.protobuf.DynamicMessage;
 import com.google.protobuf.GeneratedMessageV3;
 import io.pravega.client.ClientConfig;
 import io.pravega.client.EventStreamClientFactory;
-import io.pravega.client.KeyValueTableFactory;
-import io.pravega.client.admin.KeyValueTableManager;
 import io.pravega.client.admin.ReaderGroupManager;
 import io.pravega.client.admin.StreamManager;
 import io.pravega.client.admin.impl.ReaderGroupManagerImpl;
@@ -33,9 +31,6 @@ import io.pravega.client.stream.ReaderGroupConfig;
 import io.pravega.client.stream.ScalingPolicy;
 import io.pravega.client.stream.Serializer;
 import io.pravega.client.stream.StreamConfiguration;
-import io.pravega.client.tables.KeyValueTable;
-import io.pravega.client.tables.KeyValueTableClientConfiguration;
-import io.pravega.client.tables.KeyValueTableConfiguration;
 import io.pravega.common.Exceptions;
 import io.pravega.schemaregistry.client.SchemaRegistryClient;
 import io.pravega.schemaregistry.client.SchemaRegistryClientConfig;
@@ -371,7 +366,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 writer.writeEvent(record).join();
                 // endregion
 
-                // region writer with codec gzip 
+                // region writer with codec gzip
                 serializerConfig = SerializerConfig.builder()
                                                    .groupId(groupId)
                                                    .registerSchema(true)
@@ -470,7 +465,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 EventStreamWriter<Test1> writer2 = clientFactory.createEventWriter(stream, serializer5, EventWriterConfig.builder().build());
                 String bigString3 = generateBigString(300);
                 writer2.writeEvent(new Test1(bigString3, 1)).join();
-                // endregion 
+                // endregion
 
                 list = client.getCodecTypes(groupId);
                 assertEquals(4, list.size());
@@ -1349,7 +1344,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
                 Serializer<WithSchema<Object>> deserializer = SerializerFactory.deserializerWithSchema(serializerConfig);
                 Function<EventRead, String> eventContentSupplier = x -> ((WithSchema) x.getEvent()).getJsonString();
 
-                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig, 
+                ReaderGroupManager readerGroupManager = new ReaderGroupManagerImpl(scope, clientConfig,
                         new SocketConnectionFactoryImpl(clientConfig));
                 String rg = "rg" + stream;
                 readerGroupManager.createReaderGroup(rg,
@@ -1377,73 +1372,7 @@ public class TestPravegaClientEndToEnd implements AutoCloseable {
         }
     }
 
-    @Test
-    public void testKeyValue() {
-        String scope = "scope";
-        try (StreamManager streamManager = new StreamManagerImpl(clientConfig)) {
-            streamManager.createScope(scope);
-        }
-        client.addGroup("g1",
-                new GroupProperties(SerializationFormat.Protobuf,
-                        Compatibility.allowAny(),
-                        true));
+    // TODO: Write the test case for testKeyValue (with issue #222)
 
-        KeyValueTableManager tableManager = KeyValueTableManager.create(clientConfig);
-
-        String tableName = "table";
-        tableManager.createKeyValueTable(scope, tableName,
-                KeyValueTableConfiguration.builder().partitionCount(1).build());
-        SerializerConfig serializerConfig = SerializerConfig.builder()
-                                                            .namespace(scope)
-                                                            .groupId(tableName)
-                                                            .createGroup(SerializationFormat.Protobuf,
-                                                                    Compatibility.allowAny(),
-                                                                    true)
-                                                            .registerSchema(true)
-                                                            .registryClient(client)
-                                                            .build();
-        KeyValueTableFactory tableFactory =
-                KeyValueTableFactory.withScope(scope, clientConfig);
-        Serializer<ProtobufTest.Message1> keySerializer = new KVSerializer<>(ProtobufTest.Message1.class, serializerConfig);
-
-        Serializer<ProtobufTest.Message2> valueSerializer = new KVSerializer<>(ProtobufTest.Message2.class, serializerConfig);
-
-        KeyValueTable<ProtobufTest.Message1, ProtobufTest.Message2> table =
-                tableFactory.forKeyValueTable(tableName, keySerializer, valueSerializer,
-                        KeyValueTableClientConfiguration.builder().build());
-
-        ProtobufTest.Message1 key1 = ProtobufTest.Message1.newBuilder().setName("key").build();
-        ProtobufTest.Message2 value1 = ProtobufTest.Message2.newBuilder().setName("value").setField1(0).build();
-        table.put("k", key1, value1).join();
-
-        ProtobufTest.Message1 key2 = ProtobufTest.Message1.newBuilder().setName("test2").build();
-        ProtobufTest.Message2 value2 = ProtobufTest.Message2.newBuilder().setName("test2").setField1(0).build();
-
-        table.get("k", key1).join();
-    }
-
-    private static class KVSerializer<T extends GeneratedMessageV3> implements Serializer<T> {
-        Serializer<T> serializer;
-        Serializer<T> deserializer;
-
-        // schema registry de/serializers implement one or the other
-        // use a wrapper class to provide to kv table api which needs both
-        KVSerializer(Class<T> clazz, SerializerConfig serializerConfig) {
-            this.serializer = SerializerFactory.protobufSerializer(
-                    serializerConfig, ProtobufSchema.of(clazz));
-            this.deserializer = SerializerFactory.protobufDeserializer(
-                    serializerConfig, ProtobufSchema.of(clazz));
-        }
-
-        @Override
-        public ByteBuffer serialize(T value) {
-            return this.serializer.serialize(value);
-        }
-
-        @Override
-        public T deserialize(ByteBuffer serializedValue) {
-            return this.deserializer.deserialize(serializedValue);
-        }
-    }
 }
 
