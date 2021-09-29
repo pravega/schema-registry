@@ -16,7 +16,7 @@ replicas: 2
 
 image:
   repository: pravega/schemaregistry
-  tag: 0.1.0
+  tag: 0.2.0
   pullPolicy: IfNotPresent
 
 ## Service account name and whether to create it.
