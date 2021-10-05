@@ -263,7 +263,7 @@ public class SchemaRegistryService {
     public CompletableFuture<VersionInfo> addSchema(String namespace, String group, SchemaInfo schemaInfo) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
-        log.debug("addSchema called for group {} {}. schema {}", namespace, group, schemaInfo.getType());
+        log.info("addSchema called for group {} {}. schema {}", namespace, group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
         // 1. get group policy
         // 2. get checker for serialization format.
@@ -525,7 +525,7 @@ public class SchemaRegistryService {
     public CompletableFuture<Boolean> validateSchema(String namespace, String group, SchemaInfo schemaInfo, Compatibility compatibility) {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
-        log.debug("Group {} {}, validateSchema for {}.", namespace, group, schemaInfo.getType());
+        log.info("Group {} {}, validateSchema for {}.", namespace, group, schemaInfo.getType());
         SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
 
         return store.getGroupProperties(namespace, group)
@@ -543,7 +543,7 @@ public class SchemaRegistryService {
                     })
                     .whenComplete((r, e) -> {
                         if (e == null) {
-                            log.debug("Group {} {}, validateSchema response = {}.", namespace, group, r);
+                            log.info("Group {} {}, validateSchema response = {}.", namespace, group, r);
                         } else {
                             log.warn("Group {} {}, validateSchema failed with error", namespace, group, e);
                         }
@@ -663,6 +663,7 @@ public class SchemaRegistryService {
 
     private CompletableFuture<List<SchemaWithVersion>> getSchemasForValidation(String namespace, String group, SchemaInfo schema, 
                                                                                GroupProperties groupProperties) {
+        log.info("Get Schema for Validation with group property type = {}", groupProperties.getCompatibility().getType());
         switch (groupProperties.getCompatibility().getType()) {
             case AllowAny:
             case DenyAll:

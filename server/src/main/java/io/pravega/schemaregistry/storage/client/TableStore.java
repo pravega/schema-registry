@@ -183,6 +183,7 @@ public class TableStore extends AbstractService {
     }
 
     public CompletableFuture<List<Version>> updateEntries(String tableName, Map<byte[], VersionedRecord<byte[]>> batch) {
+        log.info("Update entries in table store");
         Preconditions.checkNotNull(batch);
         List<TableSegmentEntry> entries = batch.entrySet().stream().map(x -> {
             return x.getValue().getVersion() == null ?

@@ -150,6 +150,7 @@ public class WireCommandClient {
     CompletableFuture<List<TableSegmentKeyVersion>> updateTableEntries(final String tableName,
                                                                        final List<TableSegmentEntry> entries,
                                                                        String delegationToken) {
+        log.info("Update entries called via wirecommand");
         return getTableUri(tableName).thenCompose(uri -> {
             final WireCommandType type = WireCommandType.UPDATE_TABLE_ENTRIES;
             List<Map.Entry<WireCommands.TableKey, WireCommands.TableValue>> wireCommandEntries = entries.stream().map(te -> {

@@ -22,6 +22,7 @@ import io.pravega.schemaregistry.storage.client.Version;
 import io.pravega.schemaregistry.storage.client.VersionedRecord;
 import io.pravega.schemaregistry.common.ChunkUtil;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.nio.ByteBuffer;
@@ -48,7 +49,7 @@ import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.Schem
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.SchemaChunkRecord;
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.KeySerializer;
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.fromBytes;
-
+@Slf4j
 public class PravegaKeyValueSchemas implements Schemas<Version> {
     private static final String SCHEMAS = TableStore.SCHEMA_REGISTRY_SCOPE + "/schemas/0";
     private static final KeySerializer KEY_SERIALIZER = new KeySerializer();
@@ -61,6 +62,8 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
 
     @Override
     public CompletableFuture<Void> addSchema(SchemaInfo schemaInfo, String nameSpace, String group) {
+        log.info("Add Schema called with schemaInfo = {} and namespace = {} and group = {}",
+                schemaInfo, nameSpace, group);
         String namespace = nameSpace == null ? "" : nameSpace;
         // 1. check if schema exists -- get fingerprint -- get all schemas in the fingerprint list.. 
         // 2. if it doesnt exist, generate a new id and add it to id and fingerprint list and add schema id entry atomically. 
@@ -77,8 +80,10 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
                           return findSchemaId(schemaInfo, fingerprintEntry)
                                   .thenCompose(schemaId -> {
                                       if (schemaId == null) {
+                                          log.info("Schema id is null, add a new record");
                                           return addNewSchemaRecord(schemaInfo, fingerprintKey, fingerprintEntry);
                                       } else {
+                                          log.info("schema id is = {}", schemaId);
                                           return CompletableFuture.completedFuture(schemaId);
                                       }
                                   })
@@ -109,6 +114,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
 
     private CompletionStage<String> addNewSchemaRecord(SchemaInfo schemaInfo, SchemaFingerprintKey fingerprintKey,
                                                        VersionedRecord<SchemaIdList> fingerprintEntry) {
+        log.info("Add new Schema record");
         String id;
         Map<byte[], VersionedRecord<byte[]>> entries = new HashMap<>();
         Version fingerprintKeyVersion = fingerprintEntry == null ? null : fingerprintEntry.getVersion();
@@ -137,9 +143,11 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
     }
 
     private CompletableFuture<String> findSchemaId(SchemaInfo schemaInfo, VersionedRecord<SchemaIdList> fingerprintEntry) {
+        log.info("FInd schema id");
         CompletableFuture<String> future;
         if (fingerprintEntry != null) {
             // findSchema
+            log.info("finger print entry is null");
             future = Futures.allOfWithResults(fingerprintEntry
                     .getRecord().getSchemaIds().stream()
                     .collect(Collectors.toMap(x -> x, x -> {
@@ -213,6 +221,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
     }
 
     private <T> CompletableFuture<T> withCreateSchemasTableIfAbsent(Supplier<CompletableFuture<T>> supplier) {
+        log.info("WIth create Schema if absent");
         return Futures.exceptionallyComposeExpecting(supplier.get(),
                 e -> Exceptions.unwrap(e) instanceof StoreExceptions.DataContainerNotFoundException,
                 () -> tableStore.createTable(SCHEMAS).thenCompose(v -> supplier.get()));

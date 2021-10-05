@@ -27,12 +27,13 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.Group;
 import io.pravega.schemaregistry.storage.impl.groups.Groups;
 import io.pravega.schemaregistry.storage.impl.schemas.Schemas;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
-
+@Slf4j
 public class SchemaStoreImpl<T> implements SchemaStore {
     private final Groups<T> groups;
     private final Schemas<T> schemas;
@@ -133,7 +134,9 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     @Override
     public CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, SchemaInfo normalized,
                                                     BigInteger fingerprint, GroupProperties prop, Etag etag) {
-        // Store normalized form of schema with the global schemas while the original form is stored within the group.  
+        // Store normalized form of schema with the global schemas while the original form is stored within the group.
+        log.info("Add Schema called with params namespace = {}, groupId = {}, schemaInfo = {}, normalized = {}," +
+                "etag = {}", namespace, groupId, schemaInfo, normalized, etag);
         return schemas.addSchema(normalized, namespace, groupId)
                 .thenCompose(v -> getGroup(namespace, groupId).thenCompose(grp -> grp.addSchema(schemaInfo, fingerprint, prop, etag)));
     }
@@ -187,8 +190,10 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     // endregion
 
     private CompletableFuture<Group<T>> getGroup(String namespace, String groupId) {
+        log.info("GetGroup for namespace {} and groupId {}", namespace, groupId);
         return groups.getGroup(namespace, groupId).thenApply(grp -> {
                                            if (grp == null) {
+                                               log.info("Get group is null");
                                                String errorMessage = String.format("group=%s/%s", namespace, groupId);
                                                throw StoreExceptions.create(StoreExceptions.Type.DATA_NOT_FOUND, errorMessage);
                                            }
