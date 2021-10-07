@@ -896,11 +896,18 @@ public class SchemaRegistryService {
                     // treated to be equal. 
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
                     Object obj = OBJECT_MAPPER.treeToValue(jsonNode, Object.class);
+
+                    if (Strings.isNullOrEmpty(type)){
+                        type = jsonNode.fields().next().getValue().asText();
+                    }
                     schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(obj).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
                 case Custom:
+                    if (Strings.isNullOrEmpty(type)) {
+                        type = schemaInfo.getSerializationFormat().getFullTypeName();
+                    }
                     break;
                 default:
                     break;
