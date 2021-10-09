@@ -760,7 +760,7 @@ public class SchemaRegistryServiceTest {
                 .properties(ImmutableMap.of()).build();
         VersionInfo v = service.addSchema(namespace, group, original).join();
         SchemaInfo schema = service.getSchema(namespace, group, v.getId()).join();
-        SchemaInfo addedType = SchemaInfo.builder().type("Person").serializationFormat(SerializationFormat.Json)
+        SchemaInfo addedType = SchemaInfo.builder().type("namespace.group").serializationFormat(SerializationFormat.Json)
                 .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
                 .properties(ImmutableMap.of()).build();
         assertEquals(schema, addedType);
@@ -770,7 +770,7 @@ public class SchemaRegistryServiceTest {
                 .properties(ImmutableMap.of()).build();
         VersionInfo v1 = service.addSchema(namespace, group, custom).join();
         SchemaInfo schema1 = service.getSchema(namespace, group, v1.getId()).join();
-        SchemaInfo customAddedType = SchemaInfo.builder().type("cust").serializationFormat(SerializationFormat.custom("cust"))
+        SchemaInfo customAddedType = SchemaInfo.builder().type("namespace.group").serializationFormat(SerializationFormat.custom("cust"))
                 .schemaData(ByteBuffer.wrap(jsonSchemaString2.getBytes(Charsets.UTF_8)))
                 .properties(ImmutableMap.of()).build();
         assertEquals(schema1, customAddedType);
