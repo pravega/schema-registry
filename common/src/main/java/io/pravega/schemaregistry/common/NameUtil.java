@@ -59,4 +59,17 @@ public class NameUtil {
         Preconditions.checkNotNull(name, "Name cannot be null");
         return Strings.isNullOrEmpty(qualifier) ? name : String.format("%s.%s", qualifier, name);
     }
+
+    /**
+     * Type value if the 'type' is not null of empty.
+     * If type is null or empty then the created name is simply 'namespace.groupName'.
+     *
+     * @param type the value provided with API call (schemaInfo.getType()).
+     * @param groupName the name of the group for schema
+     * @param namespace the namespace for the schema
+     * @return Provided name or Created name for type in SchemaInfo
+     */
+    public static String createTypeIfAbsent(String type, String groupName, String namespace) {
+        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", namespace, groupName) : type;
+    }
 }

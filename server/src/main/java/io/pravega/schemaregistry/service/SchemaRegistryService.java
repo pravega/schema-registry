@@ -897,17 +897,13 @@ public class SchemaRegistryService {
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
                     Object obj = OBJECT_MAPPER.treeToValue(jsonNode, Object.class);
 
-                    if (Strings.isNullOrEmpty(type)) {
-                        type = NameUtil.qualifiedName(namespace, group);
-                    }
+                    type = NameUtil.createTypeIfAbsent(type, group, namespace);
                     schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(obj).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
                 case Custom:
-                    if (Strings.isNullOrEmpty(type)) {
-                        type = NameUtil.qualifiedName(namespace, group);
-                    }
+                        type = NameUtil.createTypeIfAbsent(type, group, namespace);
                     break;
                 default:
                     break;
@@ -1039,7 +1035,7 @@ public class SchemaRegistryService {
      * @return Map of group id to version that identifies the schema in the group.
      */
     public CompletableFuture<Map<String, VersionInfo>> getSchemaReferences(String namespace, SchemaInfo schemaInfo) {
-        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, "", namespace);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, CodecType.NONE.getName(), namespace);
 
         return store.getGroupsUsing(namespace, schema)
                     .thenCompose(groups -> Futures.allOfWithResults(
