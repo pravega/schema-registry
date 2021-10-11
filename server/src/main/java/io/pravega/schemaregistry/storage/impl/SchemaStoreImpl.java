@@ -136,7 +136,7 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     public CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, SchemaInfo normalized,
                                                     BigInteger fingerprint, GroupProperties prop, Etag etag) {
         // Store normalized form of schema with the global schemas while the original form is stored within the group.
-        log.debug("Add schema called to add a new schema in namespace {} and groupId {}", namespace, groupId);
+        log.info("Add schema called to add a new schema in namespace {} and groupId {}", namespace, groupId);
         return schemas.addSchema(normalized, namespace, groupId)
                 .thenCompose(v -> getGroup(namespace, groupId).thenCompose(grp -> grp.addSchema(schemaInfo, fingerprint, prop, etag)));
     }

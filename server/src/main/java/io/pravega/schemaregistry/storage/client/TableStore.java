@@ -183,14 +183,13 @@ public class TableStore extends AbstractService {
     }
 
     public CompletableFuture<List<Version>> updateEntries(String tableName, Map<byte[], VersionedRecord<byte[]>> batch) {
-        log.info("Update entries called");
+        log.debug("Update entries called for table {}", tableName);
         Preconditions.checkNotNull(batch);
         List<TableSegmentEntry> entries = batch.entrySet().stream().map(x -> {
             return x.getValue().getVersion() == null ?
                     TableSegmentEntry.notExists(x.getKey(), x.getValue().getRecord()) :
                     TableSegmentEntry.versioned(x.getKey(), x.getValue().getRecord(), x.getValue().getVersion().toLong());
         }).collect(Collectors.toList());
-        log.debug("Wirecommand to update entry is being called");
         return withRetries(() -> wireCommandClient.updateTableEntries(tableName, entries, getToken(tableName))
                                 .thenApply(list -> list.stream().map(x -> new Version(x.getSegmentVersion()))
                                                    .collect(Collectors.toList()))

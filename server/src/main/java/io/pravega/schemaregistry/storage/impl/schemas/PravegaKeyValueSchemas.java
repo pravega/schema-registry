@@ -111,7 +111,6 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
 
     private CompletionStage<String> addNewSchemaRecord(SchemaInfo schemaInfo, SchemaFingerprintKey fingerprintKey,
                                                        VersionedRecord<SchemaIdList> fingerprintEntry) {
-        log.debug("Add new schema record called");
         String id;
         Map<byte[], VersionedRecord<byte[]>> entries = new HashMap<>();
         Version fingerprintKeyVersion = fingerprintEntry == null ? null : fingerprintEntry.getVersion();
