@@ -774,6 +774,22 @@ public class SchemaRegistryServiceTest {
                 .schemaData(ByteBuffer.wrap(jsonSchemaString2.getBytes(Charsets.UTF_8)))
                 .properties(ImmutableMap.of()).build();
         assertEquals(schema1, customAddedType);
+
+        // Check if namespace is null or empty
+        service.createGroup(null, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                        .serializationFormat(SerializationFormat.Any)
+                        .compatibility(Compatibility.allowAny()).build()).join();
+        SchemaInfo original2 = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Json)
+                .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
+                .properties(ImmutableMap.of()).build();
+        VersionInfo v2 = service.addSchema(null, group, original2).join();
+        SchemaInfo schema2 = service.getSchema(null, group, v2.getId()).join();
+        System.out.println(schema);
+        SchemaInfo addedType2 = SchemaInfo.builder().type("default_type.group").serializationFormat(SerializationFormat.Json)
+                .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
+                .properties(ImmutableMap.of()).build();
+        assertEquals(schema2, addedType2);
     }
 
     @Test

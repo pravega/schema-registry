@@ -13,6 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 public class NameUtil {
+    private static final String DEFAULT_TYPE = "default_type";
     /**
      * Extracts the name from the fully qualified type name. Name represents the last token after ".". 
      * If the qualified name does not contain "." then the name is same as qualified name. 
@@ -70,6 +71,7 @@ public class NameUtil {
      * @return Provided name or Created name for type in SchemaInfo
      */
     public static String createTypeIfAbsent(String type, String groupName, String namespace) {
-        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", namespace, groupName) : type;
+        String nameSpace = Strings.isNullOrEmpty(namespace) ? DEFAULT_TYPE : namespace;
+        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", nameSpace, groupName) : type;
     }
 }
