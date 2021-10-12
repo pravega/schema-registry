@@ -12,6 +12,8 @@ package io.pravega.schemaregistry.common;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.UUID;
+
 public class NameUtil {
     private static final String DEFAULT_TYPE = "default_namespace";
     /**
@@ -63,17 +65,16 @@ public class NameUtil {
 
     /**
      * Type value if the 'type' is not null of empty.
-     * If type is null or empty and the namespace is null or empty created name is 'default_namespace.groupName'.
-     * If type is null or empty and namespace is not null or empty then created name is 'namespace.groupName'.
+     * If type is null or empty and the namespace is null or empty created name is 'default_namespace.randomUUID'.
+     * If type is null or empty and namespace is not null or empty then created name is 'namespace.randomUUID'.
      *
      * @param type the value provided with API call (schemaInfo.getType()).
-     * @param groupName the name of the group for schema
      * @param namespace the namespace for the schema
      * @return Provided name or Created name for type in SchemaInfo
      */
-    public static String createTypeIfAbsent(String type, String groupName, String namespace) {
-        Preconditions.checkNotNull(groupName, "Group can not be null");
+    public static String createTypeIfAbsent(String type, String namespace) {
         String typeName = Strings.isNullOrEmpty(namespace) ? DEFAULT_TYPE : namespace;
-        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", typeName, groupName) : type;
+        String uuid = UUID.randomUUID().toString();
+        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", typeName, uuid) : type;
     }
 }

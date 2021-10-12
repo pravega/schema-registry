@@ -760,20 +760,14 @@ public class SchemaRegistryServiceTest {
                 .properties(ImmutableMap.of()).build();
         VersionInfo v = service.addSchema(namespace, group, original).join();
         SchemaInfo schema = service.getSchema(namespace, group, v.getId()).join();
-        SchemaInfo addedType = SchemaInfo.builder().type("namespace.group").serializationFormat(SerializationFormat.Json)
-                .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
-                .properties(ImmutableMap.of()).build();
-        assertEquals(schema, addedType);
+        assertTrue(schema.getType().contains("namespace."));
 
         SchemaInfo custom = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.custom("cust"))
                 .schemaData(ByteBuffer.wrap(jsonSchemaString2.getBytes(Charsets.UTF_8)))
                 .properties(ImmutableMap.of()).build();
         VersionInfo v1 = service.addSchema(namespace, group, custom).join();
         SchemaInfo schema1 = service.getSchema(namespace, group, v1.getId()).join();
-        SchemaInfo customAddedType = SchemaInfo.builder().type("namespace.group").serializationFormat(SerializationFormat.custom("cust"))
-                .schemaData(ByteBuffer.wrap(jsonSchemaString2.getBytes(Charsets.UTF_8)))
-                .properties(ImmutableMap.of()).build();
-        assertEquals(schema1, customAddedType);
+        assertTrue(schema1.getType().contains("namespace."));
 
         // Check if namespace is null or empty
         service.createGroup(null, group,
@@ -785,11 +779,7 @@ public class SchemaRegistryServiceTest {
                 .properties(ImmutableMap.of()).build();
         VersionInfo v2 = service.addSchema(null, group, original2).join();
         SchemaInfo schema2 = service.getSchema(null, group, v2.getId()).join();
-        System.out.println(schema);
-        SchemaInfo addedType2 = SchemaInfo.builder().type("default_namespace.group").serializationFormat(SerializationFormat.Json)
-                .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
-                .properties(ImmutableMap.of()).build();
-        assertEquals(schema2, addedType2);
+        assertTrue(schema2.getType().contains("default_namespace."));
     }
 
     @Test
