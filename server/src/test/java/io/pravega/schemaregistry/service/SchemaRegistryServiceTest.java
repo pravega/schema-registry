@@ -786,7 +786,7 @@ public class SchemaRegistryServiceTest {
         VersionInfo v2 = service.addSchema(null, group, original2).join();
         SchemaInfo schema2 = service.getSchema(null, group, v2.getId()).join();
         System.out.println(schema);
-        SchemaInfo addedType2 = SchemaInfo.builder().type("default_type.group").serializationFormat(SerializationFormat.Json)
+        SchemaInfo addedType2 = SchemaInfo.builder().type("default_namespace.group").serializationFormat(SerializationFormat.Json)
                 .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
                 .properties(ImmutableMap.of()).build();
         assertEquals(schema2, addedType2);
