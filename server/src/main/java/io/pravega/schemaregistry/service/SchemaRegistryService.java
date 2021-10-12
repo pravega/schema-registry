@@ -813,7 +813,6 @@ public class SchemaRegistryService {
     }
 
     private SchemaInfo normalizeSchemaBinary(SchemaInfo schemaInfo, String group, String namespace) {
-        Preconditions.checkNotNull(group, "Group can not be null");
         // validates and the schema binary. 
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
         boolean isValid = true;

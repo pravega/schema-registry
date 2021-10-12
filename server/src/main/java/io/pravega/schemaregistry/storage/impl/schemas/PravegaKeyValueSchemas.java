@@ -134,7 +134,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
             entries.put(KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, i)),
                     new VersionedRecord<>(bytes, null));
         }
-        log.info("Calling update entries for new schema addition");
+        log.trace("Call for update entries for new schema addition with schema {}", schemaInfo);
         return tableStore.updateEntries(SCHEMAS, entries)
                          .thenApply(v -> id);
     }

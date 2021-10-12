@@ -13,7 +13,7 @@ import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
 public class NameUtil {
-    private static final String DEFAULT_TYPE = "default_type";
+    private static final String DEFAULT_TYPE = "default_namespace";
     /**
      * Extracts the name from the fully qualified type name. Name represents the last token after ".". 
      * If the qualified name does not contain "." then the name is same as qualified name. 
@@ -63,7 +63,8 @@ public class NameUtil {
 
     /**
      * Type value if the 'type' is not null of empty.
-     * If type is null or empty then the created name is simply 'namespace.groupName'.
+     * If type is null or empty and the namespace is null or empty created name is 'default_namespace.groupName'.
+     * If type is null or empty and namespace is not null or empty then created name is 'namespace.groupName'.
      *
      * @param type the value provided with API call (schemaInfo.getType()).
      * @param groupName the name of the group for schema
@@ -71,7 +72,8 @@ public class NameUtil {
      * @return Provided name or Created name for type in SchemaInfo
      */
     public static String createTypeIfAbsent(String type, String groupName, String namespace) {
-        String nameSpace = Strings.isNullOrEmpty(namespace) ? DEFAULT_TYPE : namespace;
-        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", nameSpace, groupName) : type;
+        Preconditions.checkNotNull(groupName, "Group can not be null");
+        String typeName = Strings.isNullOrEmpty(namespace) ? DEFAULT_TYPE : namespace;
+        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", typeName, groupName) : type;
     }
 }
