@@ -15,7 +15,7 @@ import com.google.common.base.Strings;
 import java.util.UUID;
 
 public class NameUtil {
-    private static final String DEFAULT_TYPE = "default_namespace";
+    private static final String DEFAULT_TYPE = "DEFAULT_NAMESPACE";
     /**
      * Extracts the name from the fully qualified type name. Name represents the last token after ".". 
      * If the qualified name does not contain "." then the name is same as qualified name. 
