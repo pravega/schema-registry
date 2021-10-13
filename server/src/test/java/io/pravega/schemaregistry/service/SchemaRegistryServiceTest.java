@@ -779,7 +779,7 @@ public class SchemaRegistryServiceTest {
                 .properties(ImmutableMap.of()).build();
         VersionInfo v2 = service.addSchema(null, group, original2).join();
         SchemaInfo schema2 = service.getSchema(null, group, v2.getId()).join();
-        assertTrue(schema2.getType().contains("default_namespace."));
+        assertTrue(schema2.getType().contains("DEFAULT_NAMESPACE."));
     }
 
     @Test
