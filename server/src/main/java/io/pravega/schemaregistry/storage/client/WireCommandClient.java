@@ -106,7 +106,7 @@ public class WireCommandClient {
                     RawClient connection = new RawClient(ModelHelper.encode(uri), connectionPool);
                     final long requestId = connection.getFlow().asLong();
 
-                    return sendRequest(connection, requestId, new WireCommands.CreateTableSegment(requestId, tableName, false, 0, delegationToken))
+                    return sendRequest(connection, requestId, new WireCommands.CreateTableSegment(requestId, tableName, false, 0, delegationToken, 0))
                             .thenAccept(rpl -> handleReply(rpl, connection, tableName, WireCommands.CreateTableSegment.class, type));
                 });
     }
