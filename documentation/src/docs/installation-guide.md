@@ -1,3 +1,4 @@
+# Installation Guide
 <!--
 Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
 
@@ -8,8 +9,7 @@ You may obtain a copy of the License at
     http://www.apache.org/licenses/LICENSE-2.0
 -->
 
-
-Prepare your environment 
+## Prepare your environment
 Schema Registry uses Pravega to store the schemas durably. Following steps assumes you have pravega deployed and running. 
 
 ### Helm Chart
