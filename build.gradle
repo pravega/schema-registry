@@ -126,8 +126,6 @@ allprojects {
             force "org.glassfish.jersey.core:jersey-server:" + jerseyVersion
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
             force "io.netty:netty-tcnative-boringssl-static:" + nettyBoringSSLVersion
-            force "io.netty:netty-transport:" + nettyVersion
-            force "io.netty:netty-handler:" + nettyVersion
             force "org.apache.zookeeper:zookeeper:" + apacheZookeeperVersion
         }
     }
