@@ -1,4 +1,4 @@
-import com.github.spotbugs.SpotBugsTask
+import com.github.spotbugs.snom.SpotBugsTask
 import org.gradle.internal.jvm.Jvm
 import com.github.jengelman.gradle.plugins.shadow.tasks.ShadowJar
 /**
@@ -29,8 +29,9 @@ buildscript {
         classpath group: 'com.github.jengelman.gradle.plugins', name:'shadow', version: shadowGradlePlugin
         classpath "gradle.plugin.org.nosphere.apache:creadur-rat-gradle:0.3.0"
         classpath group: 'org.hidetake', name: 'gradle-ssh-plugin', version: gradleSshPluginVersion
-        classpath group: 'gradle.plugin.com.github.spotbugs', name: 'spotbugs-gradle-plugin', version: spotbugsPluginVersion
-        classpath "org.ajoberstar:grgit:${gradleGitPluginVersion}"
+        classpath "gradle.plugin.com.github.spotbugs.snom:spotbugs-gradle-plugin:${spotbugsPluginVersion}"
+        classpath "org.ajoberstar.grgit:grgit-gradle:${gradleGitPluginVersion}"
+        classpath "org.ajoberstar.grgit:grgit-core:${gradleGitPluginVersion}"
         classpath "io.franzbecker:gradle-lombok:${gradleLombokPluginVersion}"
     }
 }
@@ -106,7 +107,6 @@ allprojects {
         }
     }
     tasks.withType(SpotBugsTask) {
-        classpath += sourceSets."${(it.name - ~/^spotbugs/).uncapitalize()}".compileClasspath
         reports {
             xml.enabled = false
             html.enabled = true
@@ -499,6 +499,7 @@ project('server') {
         compile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
         compile group: 'com.github.erosb', name: 'everit-json-schema', version: everitVersion, withoutLogger
         runtime group: 'io.pravega', name: 'pravega-keycloak-client', version: pravegaKeyCloakVersion
+        runtime group: 'io.netty', name: 'netty-tcnative-boringssl-static', version: nettyBoringSSLVersion
         compile group: 'io.pravega', name: 'pravega-common', version: pravegaVersion, withoutLogger
         compile group: 'io.pravega', name: 'pravega-shared-authplugin', version: pravegaVersion, withoutLogger
         compile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
@@ -549,10 +550,11 @@ project('test') {
         testCompile (group: 'io.pravega', name: 'pravega-standalone', version: pravegaVersion) {
             exclude group: 'javax.ws.rs', module: 'jsr311-api'
         }
+
         testCompile group: 'io.pravega', name: 'pravega-test-testcommon', version: pravegaVersion
         testCompile group: 'org.slf4j', name: 'log4j-over-slf4j', version: slf4jApiVersion
         testCompile group: 'ch.qos.logback', name: 'logback-classic', version: qosLogbackVersion
-        testCompile files(project(':server').sourceSets.test.output.classesDir)
+        testCompile files(project(':server').sourceSets.test.output.classesDirs)
         testCompile group: 'org.glassfish.jersey.test-framework.providers', name: 'jersey-test-framework-provider-grizzly2', version: jerseyVersion
     }
 
