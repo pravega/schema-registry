@@ -635,6 +635,10 @@ distributions {
 
 }
 
+tasks.withType(Tar) {
+    compression = Compression.GZIP
+}
+
 task sourceCopy(type: Copy) {
     from rootDir
     into 'source'
