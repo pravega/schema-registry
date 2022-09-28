@@ -16,7 +16,7 @@ replicas: 2
 
 image:
   repository: pravega/schemaregistry
-  tag: 0.2.0
+  tag: 0.4.0
   pullPolicy: IfNotPresent
 
 ## Service account name and whether to create it.
@@ -79,7 +79,7 @@ client:
 
 logLevel: INFO
 storeType: Pravega
-controllerUri: tcp://localhost:9090
+controllerUri: tcp://pravega-pravega-controller:9090
 pravega:
   ## following values should be configured if TLS is required for
   ## talking to pravega and we want to perform server auth certificate
