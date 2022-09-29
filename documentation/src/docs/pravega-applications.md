@@ -22,28 +22,28 @@ all:
  <dependency>
         <groupId>io.pravega</groupId>
             <artifactId>schemaregistry-serializers</artifactId>
-            <version>0.2.0</version>
+            <version>0.5.0</version>
  </dependency>
 
 json only:
  <dependency>
         <groupId>io.pravega</groupId>
             <artifactId>schemaregistry-serializers-json</artifactId>
-            <version>0.2.0</version>
+            <version>0.5.0</version>
  </dependency>
 
 avro only:
  <dependency>
         <groupId>io.pravega</groupId>
             <artifactId>schemaregistry-serializers-avro</artifactId>
-            <version>0.2.0</version>
+            <version>0.5.0</version>
  </dependency>
 
 protobuf only:
  <dependency>
         <groupId>io.pravega</groupId>
             <artifactId>schemaregistry-serializers-protobuf</artifactId>
-            <version>0.2.0</version>
+            <version>0.5.0</version>
  </dependency>
 ```
 
