@@ -22,7 +22,7 @@ all:
  <dependency>
         <groupId>io.pravega</groupId>
             <artifactId>schemaregistry-serializers</artifactId>
-            <version>0.2.0</version>
+            <version>0.5.0</version>
  </dependency>
 
 json only:
