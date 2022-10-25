@@ -127,6 +127,7 @@ allprojects {
             force "org.slf4j:slf4j-api:" + slf4jApiVersion
             force "io.netty:netty-tcnative-boringssl-static:" + nettyBoringSSLVersion
             force "org.apache.zookeeper:zookeeper:" + apacheZookeeperVersion
+ 	    force "org.yaml:snakeyaml:" +snakeYamlVersion
         }
     }
 }
