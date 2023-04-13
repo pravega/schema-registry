@@ -7,23 +7,30 @@
 #
 #     http://www.apache.org/licenses/LICENSE-2.0
 #
-FROM openjdk:8u212-jre-alpine3.9
+FROM openjdk:11.0-jre-slim
 
-RUN apk add --update \
-    rpcbind \
+RUN apt-get update && apt-get install -y -q \
     curl \
-    gcompat \
+    rpcbind \
     python \
     jq \
+    curl \
+    net-tools \
+    iproute2  \
 
-  && rm -rf /var/cache/apk/*
+  && rm -rf /var/lib/apt/lists/*
 
-EXPOSE 9092 
+EXPOSE 9092
 
 WORKDIR /opt/schema-registry
 
 COPY pravega-schema-registry/ /opt/schema-registry/
 COPY scripts/ /opt/schema-registry/scripts/
+
+# Default shell of jdk11 image is dash
+# Creating symlink to point to bash
+RUN ln -sf /bin/bash /bin/sh
+
 RUN chmod +x -R /opt/schema-registry/scripts/
 
 ENTRYPOINT [ "/opt/schema-registry/scripts/entrypoint.sh" ]

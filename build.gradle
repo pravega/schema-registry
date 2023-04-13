@@ -697,11 +697,7 @@ task prepareRegistryImage(type: Copy) {
 task buildRegistryImage(type: DockerBuildTask, dependsOn: prepareRegistryImage) {
     baseTag = schemaregistryBaseTag
     dockerDir = prepareRegistryImage.destinationDir.absolutePath
-    if (JavaVersion.current().isJava11Compatible()) {
-        dockerFile = "${dockerDir}/Dockerfile-java-11"
-    } else {
-        dockerFile = "${dockerDir}/Dockerfile"
-    }
+    dockerFile = "${dockerDir}/Dockerfile"
 }
 
 task docker(dependsOn: buildRegistryImage) {
