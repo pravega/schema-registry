@@ -86,7 +86,7 @@ public class InMemoryGroupTable implements GroupTable<Integer> {
             TableKey key = update.getKey();
             Integer version = update.getVersion();
             Value<TableValue, Integer> val = table.get(key);
-            return version == null || (val != null && version.equals(val.getVersion()));
+            return version == null || val != null && version.equals(val.getVersion());
         });
 
         if (isValid) {
