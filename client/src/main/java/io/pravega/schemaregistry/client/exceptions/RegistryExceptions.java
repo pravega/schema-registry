@@ -55,7 +55,6 @@ public class RegistryExceptions extends RuntimeException {
      * @param type         Type of Exception.
      * @param errorMessage The detailed error message.
      * @return Instance of type of StoreException.
-     * @throws IllegalArgumentException
      */
     public static RegistryExceptions create(final Type type, final String errorMessage) {
         Preconditions.checkArgument(errorMessage != null && !errorMessage.isEmpty(),

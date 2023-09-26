@@ -136,7 +136,6 @@ public class JSONSchema<T> implements Schema<T> {
      * @param tDerived Class whose schema should be used.
      * @param <T> Type of base class.
      * @return Returns an JsonSchema of type T.
-     * @throws IllegalArgumentException
      */
     public static <T> JSONSchema<T> ofBaseType(Class<? extends T> tDerived, Class<T> tBase) {
         Preconditions.checkNotNull(tDerived);

@@ -73,7 +73,6 @@ public class StoreExceptions extends RuntimeException {
      * @param cause        Exception cause.
      * @param errorMessage The detailed error message.
      * @return Instance of type of StoreException.
-     * @throws IllegalArgumentException
      */
     public static StoreExceptions create(final Type type, final Throwable cause, final String errorMessage) {
         Preconditions.checkArgument(cause != null || errorMessage != null && !errorMessage.isEmpty(),

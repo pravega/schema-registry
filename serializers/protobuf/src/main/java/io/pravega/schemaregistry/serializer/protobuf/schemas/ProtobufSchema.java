@@ -153,7 +153,6 @@ public class ProtobufSchema<T extends Message> implements Schema<T> {
      *
      * @param schemaInfo              Schema Info
      * @return {@link ProtobufSchema} with generic type {@link DynamicMessage} that captures protobuf schema.
-     * @throws IllegalArgumentException
      */
     public static ProtobufSchema<DynamicMessage> from(SchemaInfo schemaInfo) {
         try {

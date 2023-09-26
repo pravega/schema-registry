@@ -1246,7 +1246,7 @@ public interface TableRecords {
     @SneakyThrows(IOException.class)
     @SuppressWarnings("unchecked")
     static <T extends TableValue> T fromBytes(Class<? extends TableKey> keyClass, byte[] bytes, Class<T> valueClass) {
-        val versionSerializer =   SERIALIZERS_BY_KEY_TYPE.get(keyClass);
+        val versionSerializer = SERIALIZERS_BY_KEY_TYPE.get(keyClass);
         if (versionSerializer == null) {
             throw new SerializationException(String.format("No serializer found for the class %s", keyClass.toGenericString()));
         }

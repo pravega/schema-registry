@@ -154,7 +154,6 @@ public class WithSchema<T> {
      * Applies the transform on the deserialized object. 
      * 
      * @return Transformed object of type T.
-     * @throws IllegalArgumentException
      */
     public T getTransformed() {
         if (schema == null) {
@@ -167,7 +166,6 @@ public class WithSchema<T> {
      * Applies JsonString transformation to convert the deserialized object into a json string. 
      * 
      * @return Json String for the object.
-     * @throws IllegalArgumentException
      */
     public String getJsonString() {
         if (schema == null) {
