@@ -75,7 +75,6 @@ public class JSONSchema<T> implements Schema<T> {
      * @param tClass Class whose object's schema is used.
      * @param <T> Type of the Java class. 
      * @return {@link JSONSchema} with generic type T that extracts and captures the json schema.
-     * @throws IllegalArgumentException
      */
     public static <T> JSONSchema<T> of(Class<T> tClass) {
         Preconditions.checkNotNull(tClass);
@@ -98,7 +97,6 @@ public class JSONSchema<T> implements Schema<T> {
      * @param tClass class for the type of object
      * @param <T> Type of object
      * @return Returns an JSONSchema with {@link Object} type.
-     * @throws IllegalArgumentException
      */
     public static <T> JSONSchema<T> of(String type, JsonSchema schema, Class<T> tClass) {
         Preconditions.checkNotNull(type);
