@@ -13,6 +13,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
 import io.pravega.common.ObjectBuilder;
+import io.pravega.common.io.SerializationException;
 import io.pravega.common.io.serialization.RevisionDataInput;
 import io.pravega.common.io.serialization.RevisionDataOutput;
 import io.pravega.common.io.serialization.VersionedSerializer;
@@ -27,6 +28,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.val;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -1244,6 +1246,10 @@ public interface TableRecords {
     @SneakyThrows(IOException.class)
     @SuppressWarnings("unchecked")
     static <T extends TableValue> T fromBytes(Class<? extends TableKey> keyClass, byte[] bytes, Class<T> valueClass) {
-        return (T) SERIALIZERS_BY_KEY_TYPE.get(keyClass).deserialize(bytes);
+        val versionSerializer =   SERIALIZERS_BY_KEY_TYPE.get(keyClass);
+        if (versionSerializer == null) {
+            throw new SerializationException(String.format("No serializer found for the class %s", keyClass.toGenericString()));
+        }
+        return (T) versionSerializer.deserialize(bytes);
     }
 }
