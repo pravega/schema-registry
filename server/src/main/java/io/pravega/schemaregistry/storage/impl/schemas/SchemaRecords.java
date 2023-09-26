@@ -427,7 +427,7 @@ public interface SchemaRecords {
         if ( versionSerializer == null ) {
             throw new SerializationException(String.format("No serializer found for the class %s", keyClass.toGenericString()));
         }
-        return (T) SERIALIZERS_BY_KEY_TYPE.get(keyClass).deserialize(bytes);
+        return (T) versionSerializer.deserialize(bytes);
     }
 
     public class KeySerializer extends VersionedSerializer.MultiType<Key> {

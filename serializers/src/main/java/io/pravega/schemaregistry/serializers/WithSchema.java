@@ -165,7 +165,7 @@ public class WithSchema<T> {
     /**
      * Applies JsonString transformation to convert the deserialized object into a json string. 
      * 
-     * @return Json String for the object.
+     * @return Json String for the object. 
      */
     public String getJsonString() {
         if (schema == null) {
