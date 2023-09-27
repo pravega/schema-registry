@@ -372,6 +372,7 @@ public class WireCommandClient {
      * @param client              RawClient for sending request
      * @param qualifiedStreamSegmentName StreamSegmentName
      * @param requestType         request which reply need to be transformed
+     * @param type                Wire command Type
      */
     private void handleReply(Reply reply,
                              RawClient client,

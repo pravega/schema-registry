@@ -110,7 +110,6 @@
     <module name="AvoidNestedBlocks"/>
     <module name="InvalidJavadocPosition"/>
     <module name="JavadocStyle">
-      <property name="scope" value="protected"/>
       <property name="checkFirstSentence" value="true"/>
       <property name="checkEmptyJavadoc" value="true"/>
       <property name="checkHtml" value="true"/>
@@ -124,16 +123,9 @@
         <property name="tokens" value="VARIABLE_DEF"/>
     </module>
     <module name="JavadocMethod">
-      <property name="scope" value="protected"/>
-      <property name="validateThrows" value="true"/>
-      <property name="allowUndeclaredRTE" value="true"/>
-      <property name="allowMissingThrowsTags" value="false"/>
+      <property name="validateThrows" value="false"/>
       <property name="allowMissingParamTags" value="false"/>
       <property name="allowMissingReturnTag" value="true"/>
-      <property name="allowMissingJavadoc" value="true"/> <!--TODO: this should be enabled at one point. -->
-      <property name="ignoreMethodNamesRegex" value="^get.*$"/> <!--It would be nice if we could allow checking that the doc exists without also verifying the @returns is there also, but checkstyle does not allow that. -->
-      <property name="ignoreMethodNamesRegex" value="^has.*$"/> <!-- accessor for boolean e.g. hasVersion -->
-      <property name="suppressLoadErrors" value="false"/>
     </module>
   </module>
 </module>

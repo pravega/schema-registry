@@ -153,7 +153,7 @@ public class WithSchema<T> {
     /**
      * Applies the transform on the deserialized object. 
      * 
-     * @return Transformed object of type T. 
+     * @return Transformed object of type T.
      */
     public T getTransformed() {
         if (schema == null) {

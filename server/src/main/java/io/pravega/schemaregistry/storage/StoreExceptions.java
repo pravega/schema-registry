@@ -75,7 +75,7 @@ public class StoreExceptions extends RuntimeException {
      * @return Instance of type of StoreException.
      */
     public static StoreExceptions create(final Type type, final Throwable cause, final String errorMessage) {
-        Preconditions.checkArgument(cause != null || (errorMessage != null && !errorMessage.isEmpty()),
+        Preconditions.checkArgument(cause != null || errorMessage != null && !errorMessage.isEmpty(),
                 "Either cause or errorMessage should be non-empty");
         StoreExceptions exception;
         switch (type) {
