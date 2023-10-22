@@ -12,7 +12,10 @@ package io.pravega.schemaregistry.common;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 
+import java.util.UUID;
+
 public class NameUtil {
+    private static final String DEFAULT_TYPE = "DEFAULT_NAMESPACE";
     /**
      * Extracts the name from the fully qualified type name. Name represents the last token after ".". 
      * If the qualified name does not contain "." then the name is same as qualified name. 
@@ -58,5 +61,20 @@ public class NameUtil {
     public static String qualifiedName(String qualifier, String name) {
         Preconditions.checkNotNull(name, "Name cannot be null");
         return Strings.isNullOrEmpty(qualifier) ? name : String.format("%s.%s", qualifier, name);
+    }
+
+    /**
+     * Type value if the 'type' is not null of empty.
+     * If type is null or empty and the namespace is null or empty created name is 'default_namespace.randomUUID'.
+     * If type is null or empty and namespace is not null or empty then created name is 'namespace.randomUUID'.
+     *
+     * @param type the value provided with API call (schemaInfo.getType()).
+     * @param namespace the namespace for the schema
+     * @return Provided name or Created name for type in SchemaInfo
+     */
+    public static String createTypeIfAbsent(String type, String namespace) {
+        String typeName = Strings.isNullOrEmpty(namespace) ? DEFAULT_TYPE : namespace;
+        String uuid = UUID.randomUUID().toString();
+        return Strings.isNullOrEmpty(type) ? String.format("%s.%s", typeName, uuid) : type;
     }
 }

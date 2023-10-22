@@ -720,7 +720,68 @@ public class SchemaRegistryServiceTest {
                 () -> service.deleteSchema(null, groupName, SerializationFormat.Avro.getFullTypeName(), schemaName, version).join(),
                 e -> e instanceof RuntimeException);
     }
-    
+
+    @Test
+    public void testAddCustomSchema() {
+        SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);
+        SchemaRegistryService service = new SchemaRegistryService(schemaStore, executor);
+        String namespace = "namespace";
+        String group = "group";
+        service.createGroup(namespace, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                        .serializationFormat(SerializationFormat.Any)
+                        .compatibility(Compatibility.allowAny()).build()).join();
+        String jsonSchemaString = "{" +
+                "\"title\": \"Person\", " +
+                "\"type\": \"object\", " +
+                "\"properties\": { " +
+                "\"name\": {" +
+                "\"type\": \"string\"" +
+                "}," +
+                "\"age\": {" +
+                "\"type\": \"integer\", \"minimum\": 0" +
+                "}" +
+                "}" +
+                "}";
+        String jsonSchemaString2 = "{" +
+                "\"title\": \"Person\", " +
+                "\"type\": \"object\", " +
+                "\"properties\": { " +
+                "\"age\": {" +
+                "\"type\": \"integer\", \"minimum\": 0" +
+                "}," +
+                "\"name\": {" +
+                "\"type\": \"string\"" +
+                "}" +
+                "}" +
+                "}";
+        SchemaInfo original = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Json)
+                .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
+                .properties(ImmutableMap.of()).build();
+        VersionInfo v = service.addSchema(namespace, group, original).join();
+        SchemaInfo schema = service.getSchema(namespace, group, v.getId()).join();
+        assertTrue(schema.getType().contains("namespace."));
+
+        SchemaInfo custom = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.custom("cust"))
+                .schemaData(ByteBuffer.wrap(jsonSchemaString2.getBytes(Charsets.UTF_8)))
+                .properties(ImmutableMap.of()).build();
+        VersionInfo v1 = service.addSchema(namespace, group, custom).join();
+        SchemaInfo schema1 = service.getSchema(namespace, group, v1.getId()).join();
+        assertTrue(schema1.getType().contains("namespace."));
+
+        // Check if namespace is null or empty
+        service.createGroup(null, group,
+                GroupProperties.builder().allowMultipleTypes(true).properties(ImmutableMap.<String, String>builder().build())
+                        .serializationFormat(SerializationFormat.Any)
+                        .compatibility(Compatibility.allowAny()).build()).join();
+        SchemaInfo original2 = SchemaInfo.builder().type("").serializationFormat(SerializationFormat.Json)
+                .schemaData(ByteBuffer.wrap(jsonSchemaString.getBytes(Charsets.UTF_8)))
+                .properties(ImmutableMap.of()).build();
+        VersionInfo v2 = service.addSchema(null, group, original2).join();
+        SchemaInfo schema2 = service.getSchema(null, group, v2.getId()).join();
+        assertTrue(schema2.getType().contains("DEFAULT_NAMESPACE."));
+    }
+
     @Test
     public void testSchemaNormalization() {
         SchemaStore schemaStore = SchemaStoreFactory.createInMemoryStore(executor);

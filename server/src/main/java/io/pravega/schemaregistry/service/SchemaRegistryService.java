@@ -264,7 +264,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("addSchema called for group {} {}. schema {}", namespace, group, schemaInfo.getType());
-        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, namespace);
         // 1. get group policy
         // 2. get checker for serialization format.
         // validate schema against group compatibility policy on schema
@@ -497,7 +497,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, getSchemaVersion for {}.", namespace, group, schemaInfo.getType());
-        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, namespace);
 
         return store.getSchemaVersion(namespace, group, schema, getFingerprint(schema))
                     .whenComplete((r, e) -> {
@@ -526,7 +526,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(group != null);
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, validateSchema for {}.", namespace, group, schemaInfo.getType());
-        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, namespace);
 
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> {
@@ -563,7 +563,7 @@ public class SchemaRegistryService {
         Preconditions.checkArgument(schemaInfo != null);
         log.debug("Group {} {}, canRead for {}.", namespace, group, schemaInfo.getType());
 
-        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, namespace);
         return store.getGroupProperties(namespace, group)
                     .thenCompose(prop -> getSchemasForValidation(namespace, group, schema, prop)
                             .thenApply(schemasWithVersion -> canReadChecker(schema, prop, schemasWithVersion)))
@@ -812,7 +812,7 @@ public class SchemaRegistryService {
         }
     }
 
-    private SchemaInfo normalizeSchemaBinary(SchemaInfo schemaInfo) {
+    private SchemaInfo normalizeSchemaBinary(SchemaInfo schemaInfo, String namespace) {
         // validates and the schema binary. 
         ByteBuffer schemaBinary = schemaInfo.getSchemaData();
         boolean isValid = true;
@@ -896,11 +896,14 @@ public class SchemaRegistryService {
                     // treated to be equal. 
                     JsonNode jsonNode = OBJECT_MAPPER.readTree(schemaString);
                     Object obj = OBJECT_MAPPER.treeToValue(jsonNode, Object.class);
+
+                    type = NameUtil.createTypeIfAbsent(type, namespace);
                     schemaBinary = ByteBuffer.wrap(OBJECT_MAPPER.writeValueAsString(obj).getBytes(Charsets.UTF_8));
                     break;
                 case Any:
                     break;
                 case Custom:
+                        type = NameUtil.createTypeIfAbsent(type, namespace);
                     break;
                 default:
                     break;
@@ -1032,7 +1035,7 @@ public class SchemaRegistryService {
      * @return Map of group id to version that identifies the schema in the group.
      */
     public CompletableFuture<Map<String, VersionInfo>> getSchemaReferences(String namespace, SchemaInfo schemaInfo) {
-        SchemaInfo schema = normalizeSchemaBinary(schemaInfo);
+        SchemaInfo schema = normalizeSchemaBinary(schemaInfo, namespace);
 
         return store.getGroupsUsing(namespace, schema)
                     .thenCompose(groups -> Futures.allOfWithResults(

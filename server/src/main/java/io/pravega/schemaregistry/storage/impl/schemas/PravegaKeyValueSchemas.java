@@ -22,6 +22,7 @@ import io.pravega.schemaregistry.storage.client.Version;
 import io.pravega.schemaregistry.storage.client.VersionedRecord;
 import io.pravega.schemaregistry.common.ChunkUtil;
 import io.pravega.schemaregistry.storage.impl.group.records.NamespaceAndGroup;
+import lombok.extern.slf4j.Slf4j;
 import lombok.val;
 
 import java.nio.ByteBuffer;
@@ -49,6 +50,7 @@ import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.Schem
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.KeySerializer;
 import static io.pravega.schemaregistry.storage.impl.schemas.SchemaRecords.fromBytes;
 
+@Slf4j
 public class PravegaKeyValueSchemas implements Schemas<Version> {
     private static final String SCHEMAS = TableStore.SCHEMA_REGISTRY_SCOPE + "/schemas/0";
     private static final KeySerializer KEY_SERIALIZER = new KeySerializer();
@@ -132,6 +134,7 @@ public class PravegaKeyValueSchemas implements Schemas<Version> {
             entries.put(KEY_SERIALIZER.toBytes(new SchemaIdChunkKey(id, i)),
                     new VersionedRecord<>(bytes, null));
         }
+        log.trace("Call for update entries for new schema addition with schema {}", schemaInfo);
         return tableStore.updateEntries(SCHEMAS, entries)
                          .thenApply(v -> id);
     }

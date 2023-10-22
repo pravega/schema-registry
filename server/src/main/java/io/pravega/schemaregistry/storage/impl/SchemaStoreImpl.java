@@ -27,12 +27,14 @@ import io.pravega.schemaregistry.storage.StoreExceptions;
 import io.pravega.schemaregistry.storage.impl.group.Group;
 import io.pravega.schemaregistry.storage.impl.groups.Groups;
 import io.pravega.schemaregistry.storage.impl.schemas.Schemas;
+import lombok.extern.slf4j.Slf4j;
 
 import javax.annotation.Nullable;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
+@Slf4j
 public class SchemaStoreImpl<T> implements SchemaStore {
     private final Groups<T> groups;
     private final Schemas<T> schemas;
@@ -133,7 +135,8 @@ public class SchemaStoreImpl<T> implements SchemaStore {
     @Override
     public CompletableFuture<VersionInfo> addSchema(String namespace, String groupId, SchemaInfo schemaInfo, SchemaInfo normalized,
                                                     BigInteger fingerprint, GroupProperties prop, Etag etag) {
-        // Store normalized form of schema with the global schemas while the original form is stored within the group.  
+        // Store normalized form of schema with the global schemas while the original form is stored within the group.
+        log.info("Add schema called to add a new schema in namespace {} and groupId {}", namespace, groupId);
         return schemas.addSchema(normalized, namespace, groupId)
                 .thenCompose(v -> getGroup(namespace, groupId).thenCompose(grp -> grp.addSchema(schemaInfo, fingerprint, prop, etag)));
     }
