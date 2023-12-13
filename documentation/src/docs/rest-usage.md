@@ -1,3 +1,4 @@
+# REST API Usage
 <!--
 Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
 
@@ -7,6 +8,7 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
+
 ## REST API Sample curl commands
 Schema Registry Service provides a RESTful interface for storing and managing schemas under schema groups. Users create a named schema group under which they store and evolve the schemas according to desired compatibility policy. 
 

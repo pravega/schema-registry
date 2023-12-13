@@ -1,3 +1,4 @@
+# Overview
 <!--
 Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
 
@@ -7,7 +8,6 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
-# Schema Registry Overview
 
 Pravega Schema Registry is the latest service offering from Pravega family. The registry service is designed to store and manage schemas for the unstructured data stored in Pravega streams. The service is designed to not be limited to the data stored in Pravega and can serve as a general purpose management solution for storing and evolving schemas in wide variety of streaming and non streaming use cases.
 

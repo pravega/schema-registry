@@ -1,3 +1,4 @@
+# REST API Documentation
 <!--
 Copyright (c) Dell Inc., or its subsidiaries. All Rights Reserved.
 
@@ -7,9 +8,6 @@ You may obtain a copy of the License at
 
     http://www.apache.org/licenses/LICENSE-2.0
 -->
-
-# Pravega Schema Registry APIs
-REST APIs for Pravega Schema Registry.
 
 ## Version: 0.0.1
 
